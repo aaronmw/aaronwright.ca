@@ -1,8 +1,7 @@
-'use client';
-
 import { Square } from '@/components/Square';
 import sample from 'lodash/sample';
 import Head from 'next/head';
+import { useEffect, useState } from 'react';
 
 const colorOptions = [
   'bg-amber-500',
@@ -14,8 +13,14 @@ const colorOptions = [
 ];
 
 export default function Home() {
+  const [color, setColor] = useState(sample(colorOptions));
+
+  useEffect(() => {
+    setColor(sample(colorOptions));
+  }, []);
+
   const squareProps = {
-    className: sample(colorOptions),
+    className: color,
   };
 
   return (

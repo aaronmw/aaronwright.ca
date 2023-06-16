@@ -1,4 +1,3 @@
-import sample from 'lodash/sample';
 import { ComponentProps } from 'react';
 import { twMerge } from 'tailwind-merge';
 
