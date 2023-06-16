@@ -1,3 +1,5 @@
+'use client';
+
 import { Square } from '@/components/Square';
 import sample from 'lodash/sample';
 import Head from 'next/head';
