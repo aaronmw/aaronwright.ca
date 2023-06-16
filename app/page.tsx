@@ -15,8 +15,10 @@ const colorOptions = [
 ];
 
 export default function Home() {
+  const [color] = useState(sample(colorOptions));
+
   const squareProps = {
-    className: sample(colorOptions),
+    className: color,
   };
 
   return (
