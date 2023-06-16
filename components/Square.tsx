@@ -10,6 +10,8 @@ function Square({ className, ...otherProps }: ComponentProps<'div'>) {
         `
           h-2
           w-2
+          transition-all
+          duration-1000
         `,
         className
       )}

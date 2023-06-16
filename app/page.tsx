@@ -3,7 +3,7 @@
 import { Square } from '@/components/Square';
 import sample from 'lodash/sample';
 import Head from 'next/head';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 const colorOptions = [
   'bg-amber-500',
@@ -15,7 +15,13 @@ const colorOptions = [
 ];
 
 export default function Home() {
-  const [color] = useState(sample(colorOptions));
+  const [color, setColor] = useState<string>('bg-neutral-900');
+
+  useEffect(() => {
+    const randomColor = sample(colorOptions)!;
+
+    setColor(randomColor);
+  });
 
   const squareProps = {
     className: color,
