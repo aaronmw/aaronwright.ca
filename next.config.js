@@ -1,5 +1,3 @@
 module.exports = {
-  experimental: {
-    turbo: {},
-  },
+  reactStrictMode: false,
 };
