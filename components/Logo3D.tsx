@@ -24,27 +24,70 @@ function Cube({
   position,
   phase,
   speed,
+  index,
+  rotationTrigger,
+  rotationDuration,
 }: {
   position: [number, number, number];
   phase: number;
   speed: number;
+  index: number;
+  rotationTrigger: number;
+  rotationDuration: number;
 }) {
+  const groupRef = useRef<THREE.Group>(null);
   const lightRef = useRef<THREE.PointLight>(null);
   const materialRef = useRef<THREE.MeshStandardMaterial>(null);
   const currentColor = useRef(new THREE.Color(colorStore.getColor()));
   const targetColorRef = useRef(new THREE.Color(colorStore.getColor()));
+  const animRef = useRef({
+    lastTrigger: 0,
+    startTime: 0,
+    baseRotation: 0,
+    targetRotation: 0,
+  });
 
   useFrame((state, delta) => {
-    targetColorRef.current.set(colorStore.getColor());
-    const t = state.clock.elapsedTime;
+    const { elapsedTime } = state.clock;
+    const t = elapsedTime;
+
+    if (rotationTrigger !== animRef.current.lastTrigger && groupRef.current) {
+      const current = groupRef.current.rotation.y;
+      const normalized =
+        ((current % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+      animRef.current.lastTrigger = rotationTrigger;
+      animRef.current.startTime = elapsedTime + index * 0.1;
+      animRef.current.baseRotation = normalized;
+      animRef.current.targetRotation =
+        (Math.floor(normalized / Math.PI) + 1) * Math.PI;
+    }
+
+    let rotationProgress = 0;
+    if (groupRef.current && animRef.current.lastTrigger === rotationTrigger) {
+      const { baseRotation, targetRotation, startTime } = animRef.current;
+      rotationProgress = Math.max(
+        0,
+        Math.min(1, (elapsedTime - startTime) / rotationDuration)
+      );
+      const r = baseRotation + (targetRotation - baseRotation) * rotationProgress;
+      groupRef.current.rotation.y =
+        rotationProgress >= 1
+          ? ((targetRotation % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI)
+          : r;
+    }
+
     if (lightRef.current) {
       lightRef.current.intensity =
         BASE_INTENSITY + Math.sin(t * speed + phase) * FLICKER_AMOUNT;
     }
-    currentColor.current.lerp(
-      targetColorRef.current,
-      Math.min(1, delta * COLOR_LERP_SPEED)
-    );
+
+    if (rotationProgress >= 0.5) {
+      targetColorRef.current.set(colorStore.getColor());
+      currentColor.current.lerp(
+        targetColorRef.current,
+        Math.min(1, delta * COLOR_LERP_SPEED)
+      );
+    }
     const flicker = Math.sin(t * speed + phase);
     const emissiveScale = 0.5 + flicker * 0.3;
     if (lightRef.current) lightRef.current.color.copy(currentColor.current);
@@ -56,7 +99,7 @@ function Cube({
   });
 
   return (
-    <group position={position}>
+    <group ref={groupRef} position={position}>
       <pointLight
         ref={lightRef}
         color={currentColor.current}
@@ -79,7 +122,13 @@ function Cube({
   );
 }
 
-function Logo({ onColorChange }: { onColorChange: () => void }) {
+function Logo({
+  onColorChange,
+  rotationTrigger,
+}: {
+  onColorChange: () => void;
+  rotationTrigger: number;
+}) {
   const cells = useMemo(
     () =>
       GRID.flatMap((cols, row) =>
@@ -87,6 +136,7 @@ function Logo({ onColorChange }: { onColorChange: () => void }) {
           position: [col - 2, 2 - row, 0] as [number, number, number],
           phase: Math.random() * Math.PI * 2,
           speed: 2 + Math.random() * 4,
+          rotationDuration: 0.4 + Math.random() * 0.2,
           key: `${row}-${col}`,
         }))
       ),
@@ -94,8 +144,16 @@ function Logo({ onColorChange }: { onColorChange: () => void }) {
   );
   return (
     <group>
-      {cells.map(({ position, phase, speed, key }) => (
-        <Cube key={key} position={position} phase={phase} speed={speed} />
+      {cells.map(({ position, phase, speed, rotationDuration, key }, index) => (
+        <Cube
+          key={key}
+          position={position}
+          phase={phase}
+          speed={speed}
+          index={index}
+          rotationTrigger={rotationTrigger}
+          rotationDuration={rotationDuration}
+        />
       ))}
     </group>
   );
@@ -105,10 +163,12 @@ export function Logo3D({
   onColorChange,
   canvasKey,
   onContextLost,
+  rotationTrigger,
 }: {
   onColorChange: () => void;
   canvasKey: number;
   onContextLost: () => void;
+  rotationTrigger: number;
 }) {
   return (
     <Canvas
@@ -140,7 +200,10 @@ export function Logo3D({
         <meshStandardMaterial color="#000000" side={THREE.DoubleSide} />
       </mesh>
       <Center>
-        <Logo onColorChange={onColorChange} />
+        <Logo
+          onColorChange={onColorChange}
+          rotationTrigger={rotationTrigger}
+        />
       </Center>
       <OrbitControls makeDefault enableDamping dampingFactor={0.05} />
     </Canvas>
