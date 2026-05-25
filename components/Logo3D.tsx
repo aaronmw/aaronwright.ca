@@ -23,6 +23,7 @@ const CUBE_SIZE = 0.9;
 const FLOOR_SCALE = 150;
 const FLOOR_Y = -2.5;
 const LOGO_Y = 1.5;
+const FLOOR_UNDERSIDE_OPACITY = 0.35;
 const FLICKER_AMOUNT = 1.5;
 const BASE_INTENSITY = 3;
 const COLOR_LERP_SPEED = 3;
@@ -215,6 +216,20 @@ export function Logo3D({
           samples={6}
           resolution={256}
           side={THREE.FrontSide}
+          depthWrite={false}
+        />
+      </mesh>
+      <mesh
+        rotation={[-Math.PI / 2, 0, 0]}
+        position={[0, FLOOR_Y, 0]}
+        scale={FLOOR_SCALE}
+      >
+        <planeGeometry args={[1, 1]} />
+        <meshBasicMaterial
+          color="#000000"
+          transparent
+          opacity={FLOOR_UNDERSIDE_OPACITY}
+          side={THREE.BackSide}
           depthWrite={false}
         />
       </mesh>
