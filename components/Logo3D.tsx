@@ -23,7 +23,11 @@ const CUBE_SIZE = 0.9;
 const FLOOR_SCALE = 150;
 const FLOOR_Y = -2.5;
 const LOGO_Y = 1.5;
-const FLOOR_UNDERSIDE_OPACITY = 0.35;
+const CAMERA_POSITION: [number, number, number] = [0, 0, 40];
+const CAMERA_FLOOR_CLEARANCE = 2;
+const MIN_CAMERA_Y = FLOOR_Y + CAMERA_FLOOR_CLEARANCE;
+const CAMERA_DISTANCE = Math.hypot(...CAMERA_POSITION);
+const MAX_POLAR_ANGLE = Math.acos(MIN_CAMERA_Y / CAMERA_DISTANCE);
 const FLICKER_AMOUNT = 1.5;
 const BASE_INTENSITY = 3;
 const COLOR_LERP_SPEED = 3;
@@ -181,7 +185,7 @@ export function Logo3D({
   return (
     <Canvas
       key={canvasKey}
-      camera={{ position: [0, 0, 40], fov: 60 }}
+      camera={{ position: CAMERA_POSITION, fov: 60 }}
       gl={{ antialias: true, toneMappingExposure: 1.2 }}
       onCreated={({ scene, gl }) => {
         scene.background = new THREE.Color('black');
@@ -219,27 +223,20 @@ export function Logo3D({
           depthWrite={false}
         />
       </mesh>
-      <mesh
-        rotation={[-Math.PI / 2, 0, 0]}
-        position={[0, FLOOR_Y, 0]}
-        scale={FLOOR_SCALE}
-      >
-        <planeGeometry args={[1, 1]} />
-        <meshBasicMaterial
-          color="#000000"
-          transparent
-          opacity={FLOOR_UNDERSIDE_OPACITY}
-          side={THREE.BackSide}
-          depthWrite={false}
-        />
-      </mesh>
       <Center position={[0, LOGO_Y, 0]}>
         <Logo
           onColorChange={onColorChange}
           rotationTrigger={rotationTrigger}
         />
       </Center>
-      <OrbitControls makeDefault enableDamping dampingFactor={0.05} />
+      <OrbitControls
+        makeDefault
+        enableDamping
+        dampingFactor={0.05}
+        enablePan={false}
+        maxDistance={CAMERA_DISTANCE}
+        maxPolarAngle={MAX_POLAR_ANGLE}
+      />
     </Canvas>
   );
 }
