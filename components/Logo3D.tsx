@@ -1,7 +1,12 @@
 'use client';
 
 import { useRef, useMemo } from 'react';
-import { Center, OrbitControls, RoundedBox } from '@react-three/drei';
+import {
+  Center,
+  MeshTransmissionMaterial,
+  OrbitControls,
+  RoundedBox,
+} from '@react-three/drei';
 import { Canvas, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { colorStore } from '@/stores/colorStore';
@@ -197,7 +202,19 @@ export function Logo3D({
         onPointerDown={(e) => e.stopPropagation()}
       >
         <planeGeometry args={[1, 1]} />
-        <meshStandardMaterial color="#000000" side={THREE.DoubleSide} />
+        <MeshTransmissionMaterial
+          color="#000000"
+          transparent
+          opacity={0.8}
+          transmission={0.25}
+          roughness={0.6}
+          thickness={0.35}
+          anisotropicBlur={0.35}
+          samples={6}
+          resolution={256}
+          side={THREE.DoubleSide}
+          depthWrite={false}
+        />
       </mesh>
       <Center>
         <Logo
