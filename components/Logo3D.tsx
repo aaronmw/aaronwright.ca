@@ -21,6 +21,8 @@ const GRID = [
 
 const CUBE_SIZE = 0.9;
 const FLOOR_SCALE = 150;
+const FLOOR_Y = -2.5;
+const LOGO_Y = 1.5;
 const FLICKER_AMOUNT = 1.5;
 const BASE_INTENSITY = 3;
 const COLOR_LERP_SPEED = 3;
@@ -196,7 +198,7 @@ export function Logo3D({
     >
       <mesh
         rotation={[-Math.PI / 2, 0, 0]}
-        position={[0, -2.5, 0]}
+        position={[0, FLOOR_Y, 0]}
         scale={FLOOR_SCALE}
         onClick={onColorChange}
         onPointerDown={(e) => e.stopPropagation()}
@@ -212,11 +214,11 @@ export function Logo3D({
           anisotropicBlur={0.35}
           samples={6}
           resolution={256}
-          side={THREE.DoubleSide}
+          side={THREE.FrontSide}
           depthWrite={false}
         />
       </mesh>
-      <Center>
+      <Center position={[0, LOGO_Y, 0]}>
         <Logo
           onColorChange={onColorChange}
           rotationTrigger={rotationTrigger}
