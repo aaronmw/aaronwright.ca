@@ -7,7 +7,7 @@ import {
   OrbitControls,
   RoundedBox,
 } from '@react-three/drei';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { colorStore } from '@/stores/colorStore';
 
@@ -23,7 +23,7 @@ const CUBE_SIZE = 0.9;
 const FLOOR_SCALE = 150;
 const FLOOR_Y = -2.5;
 const LOGO_Y = 1.5;
-const CAMERA_POSITION: [number, number, number] = [0, 0, 40];
+const CAMERA_POSITION: [number, number, number] = [0, 2.5, 40];
 const CAMERA_FLOOR_CLEARANCE = 2;
 const MIN_CAMERA_Y = FLOOR_Y + CAMERA_FLOOR_CLEARANCE;
 const CAMERA_DISTANCE = Math.hypot(...CAMERA_POSITION);
@@ -31,6 +31,8 @@ const MAX_POLAR_ANGLE = Math.acos(MIN_CAMERA_Y / CAMERA_DISTANCE);
 const FLICKER_AMOUNT = 1.5;
 const BASE_INTENSITY = 3;
 const COLOR_LERP_SPEED = 3;
+const AMBIENT_TINT_INTENSITY = 0.06;
+const BACKGROUND_TINT_INTENSITY = 0.006;
 
 type RotationAxis = 'x' | 'y' | 'z';
 type CubeRotation = Record<RotationAxis, number>;
@@ -44,6 +46,39 @@ function getCubeRotationSnapshot(group: THREE.Group): CubeRotation {
     y: group.rotation.y,
     z: group.rotation.z,
   };
+}
+
+function SceneTint() {
+  const { scene } = useThree();
+  const lightRef = useRef<THREE.AmbientLight>(null);
+  const currentColor = useRef(new THREE.Color(colorStore.getColor()));
+  const targetColor = useRef(new THREE.Color(colorStore.getColor()));
+  const backgroundColor = useRef(new THREE.Color('black'));
+
+  useFrame((_, delta) => {
+    targetColor.current.set(colorStore.getColor());
+    currentColor.current.lerp(
+      targetColor.current,
+      Math.min(1, delta * COLOR_LERP_SPEED)
+    );
+
+    if (lightRef.current) {
+      lightRef.current.color.copy(currentColor.current);
+    }
+
+    backgroundColor.current
+      .copy(currentColor.current)
+      .multiplyScalar(BACKGROUND_TINT_INTENSITY);
+    scene.background = backgroundColor.current;
+  });
+
+  return (
+    <ambientLight
+      ref={lightRef}
+      color={currentColor.current}
+      intensity={AMBIENT_TINT_INTENSITY}
+    />
+  );
 }
 
 function Cube({
@@ -225,6 +260,7 @@ export function Logo3D({
       onPointerMissed={onColorChange}
       style={{ width: '100%', height: '100%' }}
     >
+      <SceneTint />
       <mesh
         rotation={[-Math.PI / 2, 0, 0]}
         position={[0, FLOOR_Y, 0]}
