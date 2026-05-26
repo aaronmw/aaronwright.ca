@@ -31,20 +31,9 @@ const MAX_POLAR_ANGLE = Math.acos(MIN_CAMERA_Y / CAMERA_DISTANCE);
 const FLICKER_AMOUNT = 1.5;
 const BASE_INTENSITY = 3;
 const COLOR_LERP_SPEED = 3;
-
-type RotationAxis = 'x' | 'y' | 'z';
-type CubeRotation = Record<RotationAxis, number>;
-
-const ROTATION_AXES: RotationAxis[] = ['x', 'y', 'z'];
 const FULL_ROTATION = Math.PI * 2;
-
-function getCubeRotationSnapshot(group: THREE.Group): CubeRotation {
-  return {
-    x: group.rotation.x,
-    y: group.rotation.y,
-    z: group.rotation.z,
-  };
-}
+const IDENTITY_QUATERNION = new THREE.Quaternion();
+const SLANTED_ROTATION_AXIS = new THREE.Vector3(1, 1, 0).normalize();
 
 function Cube({
   position,
@@ -69,8 +58,9 @@ function Cube({
   const animRef = useRef({
     lastTrigger: 0,
     startTime: 0,
-    baseRotation: { x: 0, y: 0, z: 0 },
-    targetRotation: { x: 0, y: 0, z: 0 },
+    baseQuaternion: new THREE.Quaternion(),
+    settleQuaternion: new THREE.Quaternion(),
+    spinQuaternion: new THREE.Quaternion(),
   });
 
   useFrame((state, delta) => {
@@ -78,31 +68,30 @@ function Cube({
     const t = elapsedTime;
 
     if (rotationTrigger !== animRef.current.lastTrigger && groupRef.current) {
-      const axis = ROTATION_AXES[Math.floor(Math.random() * ROTATION_AXES.length)];
-      const direction = Math.random() < 0.5 ? -1 : 1;
-      const targetRotation = { x: 0, y: 0, z: 0 };
-      targetRotation[axis] = direction * FULL_ROTATION;
       animRef.current.lastTrigger = rotationTrigger;
       animRef.current.startTime = elapsedTime + index * 0.1;
-      animRef.current.baseRotation = getCubeRotationSnapshot(groupRef.current);
-      animRef.current.targetRotation = targetRotation;
+      animRef.current.baseQuaternion.copy(groupRef.current.quaternion);
     }
 
     let rotationProgress = 0;
     if (groupRef.current && animRef.current.lastTrigger === rotationTrigger) {
-      const { baseRotation, targetRotation, startTime } = animRef.current;
+      const { baseQuaternion, settleQuaternion, spinQuaternion, startTime } =
+        animRef.current;
       rotationProgress = Math.max(
         0,
         Math.min(1, (elapsedTime - startTime) / rotationDuration)
       );
       if (rotationProgress >= 1) {
-        groupRef.current.rotation.set(0, 0, 0);
+        groupRef.current.quaternion.identity();
       } else {
-        ROTATION_AXES.forEach((axis) => {
-          groupRef.current!.rotation[axis] =
-            baseRotation[axis] +
-            (targetRotation[axis] - baseRotation[axis]) * rotationProgress;
-        });
+        settleQuaternion
+          .copy(baseQuaternion)
+          .slerp(IDENTITY_QUATERNION, rotationProgress);
+        spinQuaternion.setFromAxisAngle(
+          SLANTED_ROTATION_AXIS,
+          FULL_ROTATION * rotationProgress
+        );
+        groupRef.current.quaternion.copy(spinQuaternion).multiply(settleQuaternion);
       }
     }
 
