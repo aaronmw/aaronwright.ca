@@ -33,11 +33,17 @@ const BASE_INTENSITY = 3;
 const COLOR_LERP_SPEED = 3;
 
 type RotationAxis = 'x' | 'y' | 'z';
+type CubeRotation = Record<RotationAxis, number>;
 
 const ROTATION_AXES: RotationAxis[] = ['x', 'y', 'z'];
+const FULL_ROTATION = Math.PI * 2;
 
-function normalizeRotation(rotation: number) {
-  return ((rotation % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+function getCubeRotationSnapshot(group: THREE.Group): CubeRotation {
+  return {
+    x: group.rotation.x,
+    y: group.rotation.y,
+    z: group.rotation.z,
+  };
 }
 
 function Cube({
@@ -63,9 +69,8 @@ function Cube({
   const animRef = useRef({
     lastTrigger: 0,
     startTime: 0,
-    axis: 'y' as RotationAxis,
-    baseRotation: 0,
-    targetRotation: 0,
+    baseRotation: { x: 0, y: 0, z: 0 },
+    targetRotation: { x: 0, y: 0, z: 0 },
   });
 
   useFrame((state, delta) => {
@@ -75,24 +80,30 @@ function Cube({
     if (rotationTrigger !== animRef.current.lastTrigger && groupRef.current) {
       const axis = ROTATION_AXES[Math.floor(Math.random() * ROTATION_AXES.length)];
       const direction = Math.random() < 0.5 ? -1 : 1;
-      const normalized = normalizeRotation(groupRef.current.rotation[axis]);
+      const targetRotation = { x: 0, y: 0, z: 0 };
+      targetRotation[axis] = direction * FULL_ROTATION;
       animRef.current.lastTrigger = rotationTrigger;
       animRef.current.startTime = elapsedTime + index * 0.1;
-      animRef.current.axis = axis;
-      animRef.current.baseRotation = normalized;
-      animRef.current.targetRotation = normalized + direction * Math.PI;
+      animRef.current.baseRotation = getCubeRotationSnapshot(groupRef.current);
+      animRef.current.targetRotation = targetRotation;
     }
 
     let rotationProgress = 0;
     if (groupRef.current && animRef.current.lastTrigger === rotationTrigger) {
-      const { axis, baseRotation, targetRotation, startTime } = animRef.current;
+      const { baseRotation, targetRotation, startTime } = animRef.current;
       rotationProgress = Math.max(
         0,
         Math.min(1, (elapsedTime - startTime) / rotationDuration)
       );
-      const r = baseRotation + (targetRotation - baseRotation) * rotationProgress;
-      groupRef.current.rotation[axis] =
-        rotationProgress >= 1 ? normalizeRotation(targetRotation) : r;
+      if (rotationProgress >= 1) {
+        groupRef.current.rotation.set(0, 0, 0);
+      } else {
+        ROTATION_AXES.forEach((axis) => {
+          groupRef.current!.rotation[axis] =
+            baseRotation[axis] +
+            (targetRotation[axis] - baseRotation[axis]) * rotationProgress;
+        });
+      }
     }
 
     if (lightRef.current) {
