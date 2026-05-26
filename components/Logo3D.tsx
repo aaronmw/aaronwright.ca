@@ -32,6 +32,14 @@ const FLICKER_AMOUNT = 1.5;
 const BASE_INTENSITY = 3;
 const COLOR_LERP_SPEED = 3;
 
+type RotationAxis = 'x' | 'y' | 'z';
+
+const ROTATION_AXES: RotationAxis[] = ['x', 'y', 'z'];
+
+function normalizeRotation(rotation: number) {
+  return ((rotation % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+}
+
 function Cube({
   position,
   phase,
@@ -55,6 +63,7 @@ function Cube({
   const animRef = useRef({
     lastTrigger: 0,
     startTime: 0,
+    axis: 'y' as RotationAxis,
     baseRotation: 0,
     targetRotation: 0,
   });
@@ -64,28 +73,26 @@ function Cube({
     const t = elapsedTime;
 
     if (rotationTrigger !== animRef.current.lastTrigger && groupRef.current) {
-      const current = groupRef.current.rotation.y;
-      const normalized =
-        ((current % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+      const axis = ROTATION_AXES[Math.floor(Math.random() * ROTATION_AXES.length)];
+      const direction = Math.random() < 0.5 ? -1 : 1;
+      const normalized = normalizeRotation(groupRef.current.rotation[axis]);
       animRef.current.lastTrigger = rotationTrigger;
       animRef.current.startTime = elapsedTime + index * 0.1;
+      animRef.current.axis = axis;
       animRef.current.baseRotation = normalized;
-      animRef.current.targetRotation =
-        (Math.floor(normalized / Math.PI) + 1) * Math.PI;
+      animRef.current.targetRotation = normalized + direction * Math.PI;
     }
 
     let rotationProgress = 0;
     if (groupRef.current && animRef.current.lastTrigger === rotationTrigger) {
-      const { baseRotation, targetRotation, startTime } = animRef.current;
+      const { axis, baseRotation, targetRotation, startTime } = animRef.current;
       rotationProgress = Math.max(
         0,
         Math.min(1, (elapsedTime - startTime) / rotationDuration)
       );
       const r = baseRotation + (targetRotation - baseRotation) * rotationProgress;
-      groupRef.current.rotation.y =
-        rotationProgress >= 1
-          ? ((targetRotation % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI)
-          : r;
+      groupRef.current.rotation[axis] =
+        rotationProgress >= 1 ? normalizeRotation(targetRotation) : r;
     }
 
     if (lightRef.current) {
