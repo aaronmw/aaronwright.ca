@@ -155,7 +155,12 @@ function Logo({
     []
   );
   return (
-    <group>
+    <group
+      onClick={(e) => {
+        e.stopPropagation();
+        onColorChange();
+      }}
+    >
       {cells.map(({ position, phase, speed, rotationDuration, key }, index) => (
         <Cube
           key={key}
@@ -199,6 +204,7 @@ export function Logo3D({
           { once: true }
         );
       }}
+      onPointerMissed={onColorChange}
       style={{ width: '100%', height: '100%' }}
     >
       <mesh
