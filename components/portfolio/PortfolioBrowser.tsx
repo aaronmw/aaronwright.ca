@@ -98,6 +98,7 @@ export function PortfolioBrowser({
   initialProjectSlug,
   initialScreenshotSlug,
 }: PortfolioBrowserProps) {
+  const keyboardSurfaceRef = useRef<HTMLElement>(null);
   const verticalRef = useRef<HTMLDivElement>(null);
   const horizontalRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const descriptionRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -161,6 +162,10 @@ export function PortfolioBrowser({
   const activeScreenshot =
     activeSlide?.kind === 'screenshot' ? activeSlide.screenshot : undefined;
   const shouldShowModal = isModalOpen && Boolean(activeScreenshot);
+
+  const focusKeyboardSurface = useCallback(() => {
+    keyboardSurfaceRef.current?.focus({ preventScroll: true });
+  }, []);
 
   const resetDescriptionScroll = useCallback((project: PortfolioProject) => {
     descriptionRefs.current[project.slug]?.scrollTo({ top: 0 });
@@ -649,7 +654,11 @@ export function PortfolioBrowser({
   }, [shouldShowModal]);
 
   return (
-    <main className="h-dvh overflow-hidden bg-black text-white">
+    <main
+      ref={keyboardSurfaceRef}
+      tabIndex={-1}
+      className="h-dvh overflow-hidden bg-black text-white outline-none"
+    >
       <div
         ref={verticalRef}
         className="h-dvh snap-y snap-mandatory overflow-y-auto overscroll-none portfolio-scrollbar-none"
@@ -666,6 +675,7 @@ export function PortfolioBrowser({
                   type="button"
                   className="flex min-h-24 w-full items-center justify-between gap-6 py-6 text-left text-white outline-none transition-colors hover:text-portfolio-red focus-visible:text-portfolio-red sm:min-h-28"
                   onClick={() => {
+                    focusKeyboardSurface();
                     setActiveSlide(index, 0, 'replace', 'auto');
                     setActiveProject(index, 'push');
                   }}
@@ -722,7 +732,10 @@ export function PortfolioBrowser({
             type="button"
             className="fixed left-3 top-1/2 z-20 grid h-12 w-12 -translate-y-1/2 place-items-center rounded-full bg-portfolio-red text-white shadow-lg shadow-black/40 outline-none transition-transform hover:scale-105 focus-visible:scale-105 sm:left-6"
             aria-label="Previous screen"
-            onClick={() => moveHorizontal(-1)}
+            onClick={() => {
+              focusKeyboardSurface();
+              moveHorizontal(-1);
+            }}
           >
             <FontAwesomeIcon icon={faCaretLeft} className="h-7 w-7" />
           </button>
@@ -730,7 +743,10 @@ export function PortfolioBrowser({
             type="button"
             className="fixed right-3 top-1/2 z-20 grid h-12 w-12 -translate-y-1/2 place-items-center rounded-full bg-portfolio-red text-white shadow-lg shadow-black/40 outline-none transition-transform hover:scale-105 focus-visible:scale-105 sm:right-6"
             aria-label="Next screen"
-            onClick={() => moveHorizontal(1)}
+            onClick={() => {
+              focusKeyboardSurface();
+              moveHorizontal(1);
+            }}
           >
             <FontAwesomeIcon icon={faCaretRight} className="h-7 w-7" />
           </button>
@@ -750,9 +766,10 @@ export function PortfolioBrowser({
                       : `Show ${slide.screenshot.alt}`
                   }
                   aria-current={activeSlideIndex === index ? 'true' : undefined}
-                  onClick={() =>
-                    setActiveSlide(activeProjectIndex, index, 'push', 'smooth')
-                  }
+                  onClick={() => {
+                    focusKeyboardSurface();
+                    setActiveSlide(activeProjectIndex, index, 'push', 'smooth');
+                  }}
                 >
                   <FontAwesomeIcon
                     icon={activeSlideIndex === index ? faSolidSquare : faRegularSquare}
