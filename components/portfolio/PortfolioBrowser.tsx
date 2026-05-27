@@ -814,7 +814,7 @@ export function PortfolioBrowser({
               <ProjectDescription
                 project={project}
                 setDescriptionRef={setDescriptionRef(project.slug)}
-                className="hidden landscape:absolute landscape:bottom-10 landscape:left-16 landscape:top-10 landscape:z-10 landscape:block landscape:w-[min(34vw,32rem)] landscape:overflow-y-auto landscape:bg-black/80 landscape:p-6 landscape:backdrop-blur-md"
+                className="hidden landscape:absolute landscape:bottom-10 landscape:left-0 landscape:top-10 landscape:z-10 landscape:block landscape:w-[calc(4rem+min(34vw,32rem))] landscape:overflow-y-auto landscape:bg-black/80 landscape:py-6 landscape:pl-[5.5rem] landscape:pr-6 landscape:backdrop-blur-md"
               />
               <div
                 ref={setHorizontalRef(project.slug)}
