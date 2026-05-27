@@ -991,7 +991,7 @@ function ProjectPanel({
       />
 
       <div
-        className={`grid min-h-0 place-items-center ${
+        className={`grid min-h-0 place-items-center landscape:grid-cols-[minmax(calc(4rem+min(34vw,32rem)),1fr)_auto] ${
           slide.kind === 'description' ? 'hidden landscape:hidden' : ''
         }`}
       >
@@ -1004,7 +1004,7 @@ function ProjectPanel({
         ) : (
           <button
             type="button"
-            className="relative aspect-square max-h-[calc(100dvh-8rem)] w-full max-w-[calc(100dvh-8rem)] overflow-hidden border border-white/15 bg-white/5 outline-none transition-colors hover:border-portfolio-red focus-visible:border-portfolio-red landscape:max-h-[calc(100dvh-5rem)] landscape:max-w-[calc(100dvh-5rem)]"
+            className="relative aspect-square max-h-[calc(100dvh-8rem)] w-full max-w-[calc(100dvh-8rem)] overflow-hidden border border-white/15 bg-white/5 outline-none transition-colors hover:border-portfolio-red focus-visible:border-portfolio-red landscape:col-start-2 landscape:h-[min(100dvh,calc(100vw-4rem-min(34vw,32rem)))] landscape:max-h-none landscape:w-[min(100dvh,calc(100vw-4rem-min(34vw,32rem)))] landscape:max-w-none landscape:self-center landscape:justify-self-end"
             onClick={() => onScreenshotClick(slide)}
             aria-label={`Open ${slide.screenshot.alt} fullscreen`}
           >
