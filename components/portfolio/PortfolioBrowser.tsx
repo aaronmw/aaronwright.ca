@@ -7,14 +7,18 @@ import {
   WheelEvent as ReactWheelEvent,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
 } from 'react';
 import Image from 'next/image';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCaretLeft, faCaretRight, faSquare as faSolidSquare } from '@fortawesome/free-solid-svg-icons';
+import {
+  faCaretLeft,
+  faCaretRight,
+  faSquare as faSolidSquare,
+} from '@fortawesome/free-solid-svg-icons';
 import { faSquare as faRegularSquare } from '@fortawesome/free-regular-svg-icons';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -56,6 +60,18 @@ function projectUrl(project: PortfolioProject, slide: ProjectSlide) {
   return `/projects/${project.slug}/${slide.slug}`;
 }
 
+function pageTitle(project?: PortfolioProject, slide?: ProjectSlide) {
+  if (!project || !slide) {
+    return 'Projects | Aaron M. Wright';
+  }
+
+  if (slide.kind === 'description') {
+    return `${project.title} | Aaron M. Wright`;
+  }
+
+  return `${project.title}: ${slide.slug} | Aaron M. Wright`;
+}
+
 function isEditableTarget(target: EventTarget | null) {
   if (!(target instanceof HTMLElement)) {
     return false;
@@ -82,14 +98,12 @@ export function PortfolioBrowser({
   initialProjectSlug,
   initialScreenshotSlug,
 }: PortfolioBrowserProps) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
   const verticalRef = useRef<HTMLDivElement>(null);
   const horizontalRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const descriptionRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const userMovedRef = useRef(false);
   const scrollSyncRef = useRef(false);
+  const modalHistoryEntryRef = useRef(false);
 
   const projectSlides = useMemo(
     () =>
@@ -125,6 +139,7 @@ export function PortfolioBrowser({
     normalizedInitialProjectIndex
   );
   const [activeSlideIndexes, setActiveSlideIndexes] = useState(initialSlideIndexes);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalScale, setModalScale] = useState(1);
   const [modalOffset, setModalOffset] = useState({ x: 0, y: 0 });
   const modalDragRef = useRef({
@@ -145,8 +160,7 @@ export function PortfolioBrowser({
   const activeSlide = activeSlides[activeSlideIndex];
   const activeScreenshot =
     activeSlide?.kind === 'screenshot' ? activeSlide.screenshot : undefined;
-  const isModalOpen =
-    searchParams.get('modal') === 'image' && Boolean(activeScreenshot);
+  const shouldShowModal = isModalOpen && Boolean(activeScreenshot);
 
   const resetDescriptionScroll = useCallback((project: PortfolioProject) => {
     descriptionRefs.current[project.slug]?.scrollTo({ top: 0 });
@@ -182,6 +196,120 @@ export function PortfolioBrowser({
     []
   );
 
+  const syncViewport = useCallback(
+    (
+      projectIndex: number,
+      slideIndexes: number[],
+      behavior: ScrollBehavior
+    ) => {
+      const vertical = verticalRef.current;
+
+      if (vertical) {
+        vertical.scrollTo({
+          top: vertical.clientHeight * (projectIndex + 1),
+          behavior,
+        });
+      }
+
+      portfolioProjects.forEach((project, currentProjectIndex) => {
+        scrollHorizontalToRealIndex(
+          project,
+          slideIndexes[currentProjectIndex] ?? 0,
+          behavior
+        );
+      });
+    },
+    [scrollHorizontalToRealIndex]
+  );
+
+  const readLocationState = useCallback(() => {
+    const { pathname, search } = window.location;
+    const segments = pathname.split('/').filter(Boolean);
+
+    if (segments[0] !== 'projects') {
+      return null;
+    }
+
+    if (segments.length === 1) {
+      return {
+        projectIndex: START_SCREEN_INDEX,
+        slideIndex: 0,
+        modalOpen: false,
+      };
+    }
+
+    const projectIndex = portfolioProjects.findIndex(
+      (project) => project.slug === segments[1]
+    );
+
+    if (projectIndex < 0) {
+      return null;
+    }
+
+    const project = portfolioProjects[projectIndex];
+    const slides = projectSlides[project.slug];
+    const screenshotSlug = segments[2];
+    const slideIndex = screenshotSlug
+      ? slides.findIndex(
+          (slide) => slide.kind === 'screenshot' && slide.slug === screenshotSlug
+        )
+      : 0;
+
+    if (segments.length > 3 || slideIndex < 0) {
+      return null;
+    }
+
+    const modalOpen =
+      new URLSearchParams(search).get('modal') === 'image' &&
+      slides[slideIndex].kind === 'screenshot';
+
+    return { projectIndex, slideIndex, modalOpen };
+  }, [projectSlides]);
+
+  const applyLocationState = useCallback(
+    (behavior: ScrollBehavior) => {
+      const locationState = readLocationState();
+
+      if (!locationState) {
+        window.location.assign(window.location.href);
+        return;
+      }
+
+      const nextSlideIndexes = portfolioProjects.map((_, projectIndex) =>
+        projectIndex === locationState.projectIndex
+          ? locationState.slideIndex
+          : activeSlideIndexes[projectIndex] ?? 0
+      );
+
+      setActiveProjectIndex(locationState.projectIndex);
+      setActiveSlideIndexes(nextSlideIndexes);
+      setIsModalOpen(locationState.modalOpen);
+
+      if (locationState.projectIndex === START_SCREEN_INDEX) {
+        document.title = pageTitle();
+      }
+
+      if (locationState.projectIndex >= 0) {
+        const project = portfolioProjects[locationState.projectIndex];
+        const slide = projectSlides[project.slug][locationState.slideIndex];
+        document.title = pageTitle(project, slide);
+
+        if (slide.kind === 'description') {
+          resetDescriptionScroll(project);
+        }
+      }
+
+      syncViewport(locationState.projectIndex, nextSlideIndexes, behavior);
+    },
+    [
+      activeSlideIndexes,
+      projectSlides,
+      readLocationState,
+      resetDescriptionScroll,
+      syncViewport,
+    ]
+  );
+
   const updateUrl = useCallback(
     (
       project: PortfolioProject | undefined,
@@ -189,14 +317,18 @@ export function PortfolioBrowser({
       mode: 'push' | 'replace'
     ) => {
       const nextPath = project && slide ? projectUrl(project, slide) : '/projects';
+      const currentPath = `${window.location.pathname}${window.location.search}`;
 
-      if (pathname === nextPath && searchParams.get('modal') !== 'image') {
+      if (currentPath === nextPath) {
         return;
       }
 
-      router[mode](nextPath, { scroll: false });
+      window.history[`${mode}State`]({}, '', nextPath);
+      document.title = pageTitle(project, slide);
+      modalHistoryEntryRef.current = false;
+      setIsModalOpen(false);
     },
-    [pathname, router, searchParams]
+    []
   );
 
   const setActiveSlide = useCallback(
@@ -299,35 +431,38 @@ export function PortfolioBrowser({
 
     setModalScale(1);
     setModalOffset({ x: 0, y: 0 });
-    router.push(`${projectUrl(activeProject, activeSlide)}?modal=image`, {
-      scroll: false,
-    });
-  }, [activeProject, activeSlide, router]);
+    window.history.pushState({}, '', `${projectUrl(activeProject, activeSlide)}?modal=image`);
+    modalHistoryEntryRef.current = true;
+    setIsModalOpen(true);
+  }, [activeProject, activeSlide]);
 
   const closeModal = useCallback(() => {
     setModalScale(1);
     setModalOffset({ x: 0, y: 0 });
-    router.back();
-  }, [router]);
+    setIsModalOpen(false);
 
-  useEffect(() => {
+    if (modalHistoryEntryRef.current) {
+      modalHistoryEntryRef.current = false;
+      window.history.back();
+      return;
+    }
+
+    if (activeProject && activeSlide) {
+      window.history.replaceState({}, '', projectUrl(activeProject, activeSlide));
+    }
+  }, [activeProject, activeSlide]);
+
+  useLayoutEffect(() => {
     const syncInitialScroll = () => {
-      const vertical = verticalRef.current;
+      syncViewport(normalizedInitialProjectIndex, initialSlideIndexes, 'auto');
 
-      if (vertical) {
-        vertical.scrollTo({
-          top: vertical.clientHeight * (normalizedInitialProjectIndex + 1),
-          behavior: 'auto',
-        });
+      if (
+        window.location.search.includes('modal=image') &&
+        normalizedInitialProjectIndex >= 0 &&
+        (initialSlideIndexes[normalizedInitialProjectIndex] ?? 0) > 0
+      ) {
+        setIsModalOpen(true);
       }
-
-      portfolioProjects.forEach((project, projectIndex) => {
-        scrollHorizontalToRealIndex(
-          project,
-          initialSlideIndexes[projectIndex] ?? 0,
-          'auto'
-        );
-      });
     };
 
     const rafId = requestAnimationFrame(() => requestAnimationFrame(syncInitialScroll));
@@ -336,32 +471,29 @@ export function PortfolioBrowser({
   }, [
     initialSlideIndexes,
     normalizedInitialProjectIndex,
-    scrollHorizontalToRealIndex,
+    syncViewport,
   ]);
 
   useEffect(() => {
+    window.history.scrollRestoration = 'manual';
+
+    const handlePopState = () => {
+      modalHistoryEntryRef.current = false;
+      applyLocationState('auto');
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [applyLocationState]);
+
+  useEffect(() => {
     const handleResize = () => {
-      const vertical = verticalRef.current;
-
-      if (vertical) {
-        vertical.scrollTo({
-          top: vertical.clientHeight * (activeProjectIndex + 1),
-          behavior: 'auto',
-        });
-      }
-
-      portfolioProjects.forEach((project, projectIndex) => {
-        scrollHorizontalToRealIndex(
-          project,
-          activeSlideIndexes[projectIndex] ?? 0,
-          'auto'
-        );
-      });
+      syncViewport(activeProjectIndex, activeSlideIndexes, 'auto');
     };
 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [activeProjectIndex, activeSlideIndexes, scrollHorizontalToRealIndex]);
+  }, [activeProjectIndex, activeSlideIndexes, syncViewport]);
 
   useEffect(() => {
     const vertical = verticalRef.current;
@@ -510,17 +642,17 @@ export function PortfolioBrowser({
   ]);
 
   useEffect(() => {
-    if (!isModalOpen) {
+    if (!shouldShowModal) {
       setModalScale(1);
       setModalOffset({ x: 0, y: 0 });
     }
-  }, [isModalOpen]);
+  }, [shouldShowModal]);
 
   return (
     <main className="h-dvh overflow-hidden bg-black text-white">
       <div
         ref={verticalRef}
-        className="h-dvh snap-y snap-mandatory overflow-y-auto overscroll-none scroll-smooth portfolio-scrollbar-none"
+        className="h-dvh snap-y snap-mandatory overflow-y-auto overscroll-none portfolio-scrollbar-none"
       >
         <section className="flex h-dvh snap-start snap-always flex-col justify-center px-6 py-16 sm:px-10 lg:px-16">
           <div className="mx-auto w-full max-w-6xl">
@@ -562,7 +694,7 @@ export function PortfolioBrowser({
             >
               <div
                 ref={setHorizontalRef(project.slug)}
-                className="flex h-dvh snap-x snap-mandatory overflow-x-auto overflow-y-hidden overscroll-x-contain scroll-smooth portfolio-scrollbar-none"
+                className="flex h-dvh snap-x snap-mandatory overflow-x-auto overflow-y-hidden overscroll-x-contain portfolio-scrollbar-none"
               >
                 {renderedSlides.map((slide, renderedIndex) => (
                   <ProjectPanel
@@ -633,7 +765,7 @@ export function PortfolioBrowser({
         </>
       ) : null}
 
-      {isModalOpen && activeProject && activeScreenshot ? (
+      {shouldShowModal && activeProject && activeScreenshot ? (
         <ImageModal
           project={activeProject}
           screenshot={activeScreenshot}
