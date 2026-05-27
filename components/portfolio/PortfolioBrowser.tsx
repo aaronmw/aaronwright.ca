@@ -804,6 +804,7 @@ export function PortfolioBrowser({
         {portfolioProjects.map((project, projectIndex) => {
           const slides = getCarouselSlides(project);
           const renderedSlides = [slides[slides.length - 1], ...slides, slides[0]];
+          const projectNumber = String(projectIndex + 1).padStart(2, '0');
 
           return (
             <section
@@ -813,6 +814,7 @@ export function PortfolioBrowser({
             >
               <ProjectDescription
                 project={project}
+                projectNumber={projectNumber}
                 setDescriptionRef={setDescriptionRef(project.slug)}
                 className="hidden landscape:absolute landscape:bottom-10 landscape:left-0 landscape:top-10 landscape:z-10 landscape:block landscape:w-[min(calc(100vw-4rem),calc(7rem+48ch))] landscape:overflow-y-auto landscape:bg-black/80 landscape:py-6 landscape:pl-[5.5rem] landscape:pr-6 landscape:text-xl landscape:backdrop-blur-md"
               />
@@ -824,6 +826,7 @@ export function PortfolioBrowser({
                   <ProjectPanel
                     key={`${project.id}-${slide.id}-${renderedIndex}`}
                     project={project}
+                    projectNumber={projectNumber}
                     slide={slide}
                     isActive={
                       activeProjectIndex === projectIndex &&
@@ -935,10 +938,12 @@ export function PortfolioBrowser({
 
 function ProjectDescription({
   project,
+  projectNumber,
   setDescriptionRef,
   className,
 }: {
   project: PortfolioProject;
+  projectNumber: string;
   setDescriptionRef: (node: HTMLDivElement | null) => void;
   className?: string;
 }) {
@@ -948,7 +953,7 @@ function ProjectDescription({
       className={`portfolio-scrollbar-none min-h-0 pr-1 ${className ?? ''}`}
     >
       <p className="mb-5 text-xs font-light uppercase tracking-[0.35em] text-white/45">
-        {project.slug}
+        PROJECT {projectNumber}
       </p>
       <h1 className="mb-8 w-full max-w-[12ch] text-[clamp(3rem,14vw,7rem)] font-black uppercase leading-none tracking-normal landscape:text-[clamp(3.5rem,4vw,4.75rem)]">
         {project.title}
@@ -964,12 +969,14 @@ function ProjectDescription({
 
 function ProjectPanel({
   project,
+  projectNumber,
   slide,
   isActive,
   setDescriptionRef,
   onScreenshotClick,
 }: {
   project: PortfolioProject;
+  projectNumber: string;
   slide: ProjectSlide;
   isActive: boolean;
   setDescriptionRef: (node: HTMLDivElement | null) => void;
@@ -982,6 +989,7 @@ function ProjectPanel({
     >
       <ProjectDescription
         project={project}
+        projectNumber={projectNumber}
         setDescriptionRef={setDescriptionRef}
         className={`overflow-y-auto landscape:hidden ${
           slide.kind === 'description'
