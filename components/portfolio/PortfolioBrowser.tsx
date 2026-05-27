@@ -599,7 +599,7 @@ export function PortfolioBrowser({
 
   useEffect(() => {
     syncViewport(activeProjectIndex, activeSlideIndexes, 'auto');
-  }, [activeProjectIndex, activeSlideIndexes, isLandscape, syncViewport]);
+  }, [isLandscape, syncViewport]);
 
   useEffect(() => {
     const vertical = verticalRef.current;
@@ -808,17 +808,17 @@ export function PortfolioBrowser({
           return (
             <section
               key={project.id}
-              className="relative h-dvh snap-start snap-always overflow-hidden bg-black landscape:grid landscape:grid-cols-[minmax(18rem,34vw)_minmax(0,1fr)] landscape:px-16 landscape:py-10"
+              className="relative h-dvh snap-start snap-always overflow-hidden bg-black"
               aria-label={project.title}
             >
               <ProjectDescription
                 project={project}
                 setDescriptionRef={setDescriptionRef(project.slug)}
-                className="hidden landscape:block landscape:max-h-[calc(100dvh-5rem)] landscape:overflow-y-auto landscape:pr-8"
+                className="hidden landscape:absolute landscape:bottom-10 landscape:left-16 landscape:top-10 landscape:z-10 landscape:block landscape:w-[min(34vw,32rem)] landscape:overflow-y-auto landscape:bg-black/80 landscape:p-6 landscape:backdrop-blur-md"
               />
               <div
                 ref={setHorizontalRef(project.slug)}
-                className="flex h-dvh snap-x snap-mandatory overflow-x-auto overflow-y-hidden overscroll-x-contain portfolio-scrollbar-none landscape:h-full landscape:min-w-0"
+                className="flex h-dvh snap-x snap-mandatory overflow-x-auto overflow-y-hidden overscroll-x-contain portfolio-scrollbar-none landscape:w-screen"
               >
                 {renderedSlides.map((slide, renderedIndex) => (
                   <ProjectPanel
@@ -977,7 +977,7 @@ function ProjectPanel({
 }) {
   return (
     <article
-      className="grid h-dvh w-screen shrink-0 snap-start snap-always grid-rows-[1fr] bg-black px-6 pb-24 pt-8 sm:px-10 landscape:h-full landscape:w-full landscape:px-0 landscape:py-0"
+      className="grid h-dvh w-screen shrink-0 snap-start snap-always grid-rows-[1fr] bg-black px-6 pb-24 pt-8 sm:px-10 landscape:px-0 landscape:py-0"
       aria-hidden={!isActive}
     >
       <ProjectDescription
