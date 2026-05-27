@@ -814,7 +814,7 @@ export function PortfolioBrowser({
               <ProjectDescription
                 project={project}
                 setDescriptionRef={setDescriptionRef(project.slug)}
-                className="hidden landscape:absolute landscape:bottom-10 landscape:left-0 landscape:top-10 landscape:z-10 landscape:block landscape:w-[calc(4rem+min(34vw,32rem))] landscape:overflow-y-auto landscape:bg-black/80 landscape:py-6 landscape:pl-[5.5rem] landscape:pr-6 landscape:backdrop-blur-md"
+                className="hidden landscape:absolute landscape:bottom-10 landscape:left-0 landscape:top-10 landscape:z-10 landscape:block landscape:w-[min(calc(100vw-4rem),calc(7rem+12ch))] landscape:overflow-y-auto landscape:bg-black/80 landscape:py-6 landscape:pl-[5.5rem] landscape:pr-6 landscape:text-[clamp(3.5rem,6vw,7rem)] landscape:backdrop-blur-md"
               />
               <div
                 ref={setHorizontalRef(project.slug)}
@@ -950,10 +950,10 @@ function ProjectDescription({
       <p className="mb-5 text-xs font-light uppercase tracking-[0.35em] text-white/45">
         {project.slug}
       </p>
-      <h1 className="mb-8 text-[clamp(3rem,14vw,7rem)] font-black uppercase leading-none tracking-normal landscape:text-[clamp(3.5rem,6vw,7rem)]">
+      <h1 className="mb-8 w-full max-w-[12ch] text-[clamp(3rem,14vw,7rem)] font-black uppercase leading-none tracking-normal landscape:text-[inherit]">
         {project.title}
       </h1>
-      <div className="portfolio-markdown max-w-prose text-lg font-light leading-relaxed text-white/82 landscape:text-xl">
+      <div className="portfolio-markdown w-full max-w-[48ch] text-lg font-light leading-relaxed text-white/82 landscape:text-xl">
         <ReactMarkdown remarkPlugins={[remarkGfm]}>
           {project.descriptionMarkdown}
         </ReactMarkdown>
