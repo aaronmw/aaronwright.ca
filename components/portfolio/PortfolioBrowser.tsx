@@ -105,6 +105,7 @@ export function PortfolioBrowser({
   const userMovedRef = useRef(false);
   const scrollSyncRef = useRef(false);
   const modalHistoryEntryRef = useRef(false);
+  const initialScrollSyncedRef = useRef(false);
 
   const projectSlides = useMemo(
     () =>
@@ -140,6 +141,7 @@ export function PortfolioBrowser({
     normalizedInitialProjectIndex
   );
   const [activeSlideIndexes, setActiveSlideIndexes] = useState(initialSlideIndexes);
+  const [isLandscape, setIsLandscape] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalScale, setModalScale] = useState(1);
   const [modalOffset, setModalOffset] = useState({ x: 0, y: 0 });
@@ -185,8 +187,57 @@ export function PortfolioBrowser({
     []
   );
 
+  const getCarouselSlides = useCallback(
+    (project: PortfolioProject) => {
+      const slides = projectSlides[project.slug];
+
+      if (!isLandscape) {
+        return slides;
+      }
+
+      return slides.filter((slide) => slide.kind === 'screenshot');
+    },
+    [isLandscape, projectSlides]
+  );
+
+  const getCarouselIndexFromSlideIndex = useCallback(
+    (project: PortfolioProject, slideIndex: number) => {
+      if (!isLandscape) {
+        return slideIndex;
+      }
+
+      const slide = projectSlides[project.slug][slideIndex];
+
+      if (slide?.kind !== 'screenshot') {
+        return 0;
+      }
+
+      return Math.max(
+        0,
+        getCarouselSlides(project).findIndex(
+          (carouselSlide) => carouselSlide.id === slide.id
+        )
+      );
+    },
+    [getCarouselSlides, isLandscape, projectSlides]
+  );
+
+  const getSlideIndexFromCarouselIndex = useCallback(
+    (project: PortfolioProject, carouselIndex: number) => {
+      const carouselSlides = getCarouselSlides(project);
+      const carouselSlide =
+        carouselSlides[positiveModulo(carouselIndex, carouselSlides.length)];
+
+      return Math.max(
+        0,
+        projectSlides[project.slug].findIndex((slide) => slide.id === carouselSlide.id)
+      );
+    },
+    [getCarouselSlides, projectSlides]
+  );
+
   const scrollHorizontalToRealIndex = useCallback(
-    (project: PortfolioProject, realIndex: number, behavior: ScrollBehavior) => {
+    (project: PortfolioProject, slideIndex: number, behavior: ScrollBehavior) => {
       const carousel = horizontalRefs.current[project.slug];
 
       if (!carousel) {
@@ -194,11 +245,13 @@ export function PortfolioBrowser({
       }
 
       carousel.scrollTo({
-        left: carousel.clientWidth * (realIndex + 1),
+        left:
+          carousel.clientWidth *
+          (getCarouselIndexFromSlideIndex(project, slideIndex) + 1),
         behavior,
       });
     },
-    []
+    [getCarouselIndexFromSlideIndex]
   );
 
   const syncViewport = useCallback(
@@ -418,28 +471,56 @@ export function PortfolioBrowser({
       }
 
       const currentProject = portfolioProjects[activeProjectIndex];
-      const slides = projectSlides[currentProject.slug];
-      const nextIndex = positiveModulo(
-        (activeSlideIndexes[activeProjectIndex] ?? 0) + direction,
+      const slides = getCarouselSlides(currentProject);
+      const currentCarouselIndex = getCarouselIndexFromSlideIndex(
+        currentProject,
+        activeSlideIndexes[activeProjectIndex] ?? 0
+      );
+      const nextCarouselIndex = positiveModulo(
+        currentCarouselIndex + direction,
         slides.length
+      );
+      const nextIndex = getSlideIndexFromCarouselIndex(
+        currentProject,
+        nextCarouselIndex
       );
 
       setActiveSlide(activeProjectIndex, nextIndex, 'push', 'smooth');
     },
-    [activeProjectIndex, activeSlideIndexes, projectSlides, setActiveSlide]
+    [
+      activeProjectIndex,
+      activeSlideIndexes,
+      getCarouselIndexFromSlideIndex,
+      getCarouselSlides,
+      getSlideIndexFromCarouselIndex,
+      setActiveSlide,
+    ]
   );
 
-  const openModal = useCallback(() => {
-    if (!activeProject || !activeSlide || activeSlide.kind !== 'screenshot') {
+  const openModal = useCallback((slide: ProjectSlide = activeSlide) => {
+    if (!activeProject || !slide || slide.kind !== 'screenshot') {
       return;
     }
 
+    const slideIndex = Math.max(
+      0,
+      projectSlides[activeProject.slug].findIndex(
+        (projectSlide) => projectSlide.id === slide.id
+      )
+    );
+
+    setActiveSlideIndexes((indexes) =>
+      indexes.map((index, currentProjectIndex) =>
+        currentProjectIndex === activeProjectIndex ? slideIndex : index
+      )
+    );
     setModalScale(1);
     setModalOffset({ x: 0, y: 0 });
-    window.history.pushState({}, '', `${projectUrl(activeProject, activeSlide)}?modal=image`);
+    window.history.pushState({}, '', `${projectUrl(activeProject, slide)}?modal=image`);
+    document.title = pageTitle(activeProject, slide);
     modalHistoryEntryRef.current = true;
     setIsModalOpen(true);
-  }, [activeProject, activeSlide]);
+  }, [activeProject, activeProjectIndex, activeSlide, projectSlides]);
 
   const closeModal = useCallback(() => {
     setModalScale(1);
@@ -458,6 +539,12 @@ export function PortfolioBrowser({
   }, [activeProject, activeSlide]);
 
   useLayoutEffect(() => {
+    if (initialScrollSyncedRef.current) {
+      return;
+    }
+
+    initialScrollSyncedRef.current = true;
+
     const syncInitialScroll = () => {
       syncViewport(normalizedInitialProjectIndex, initialSlideIndexes, 'auto');
 
@@ -480,6 +567,16 @@ export function PortfolioBrowser({
   ]);
 
   useEffect(() => {
+    const mediaQuery = window.matchMedia('(orientation: landscape)');
+    const updateOrientation = () => setIsLandscape(mediaQuery.matches);
+
+    updateOrientation();
+    mediaQuery.addEventListener('change', updateOrientation);
+
+    return () => mediaQuery.removeEventListener('change', updateOrientation);
+  }, []);
+
+  useEffect(() => {
     window.history.scrollRestoration = 'manual';
 
     const handlePopState = () => {
@@ -499,6 +596,10 @@ export function PortfolioBrowser({
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, [activeProjectIndex, activeSlideIndexes, syncViewport]);
+
+  useEffect(() => {
+    syncViewport(activeProjectIndex, activeSlideIndexes, 'auto');
+  }, [activeProjectIndex, activeSlideIndexes, isLandscape, syncViewport]);
 
   useEffect(() => {
     const vertical = verticalRef.current;
@@ -543,7 +644,7 @@ export function PortfolioBrowser({
   useEffect(() => {
     const cleanupFns = portfolioProjects.map((project, projectIndex) => {
       const carousel = horizontalRefs.current[project.slug];
-      const slides = projectSlides[project.slug];
+      const slides = getCarouselSlides(project);
 
       if (!carousel) {
         return () => {};
@@ -575,11 +676,12 @@ export function PortfolioBrowser({
         }
 
         const nextIndex = positiveModulo(realIndex, slides.length);
-        const nextSlide = slides[nextIndex];
+        const nextSlideIndex = getSlideIndexFromCarouselIndex(project, nextIndex);
+        const nextSlide = projectSlides[project.slug][nextSlideIndex];
 
         setActiveSlideIndexes((indexes) =>
           indexes.map((index, currentProjectIndex) =>
-            currentProjectIndex === projectIndex ? nextIndex : index
+            currentProjectIndex === projectIndex ? nextSlideIndex : index
           )
         );
 
@@ -598,7 +700,14 @@ export function PortfolioBrowser({
     });
 
     return () => cleanupFns.forEach((cleanup) => cleanup());
-  }, [activeProjectIndex, projectSlides, resetDescriptionScroll, updateUrl]);
+  }, [
+    activeProjectIndex,
+    getCarouselSlides,
+    getSlideIndexFromCarouselIndex,
+    projectSlides,
+    resetDescriptionScroll,
+    updateUrl,
+  ]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -693,18 +802,23 @@ export function PortfolioBrowser({
         </section>
 
         {portfolioProjects.map((project, projectIndex) => {
-          const slides = projectSlides[project.slug];
+          const slides = getCarouselSlides(project);
           const renderedSlides = [slides[slides.length - 1], ...slides, slides[0]];
 
           return (
             <section
               key={project.id}
-              className="relative h-dvh snap-start snap-always overflow-hidden bg-black"
+              className="relative h-dvh snap-start snap-always overflow-hidden bg-black landscape:grid landscape:grid-cols-[minmax(18rem,34vw)_minmax(0,1fr)] landscape:px-16 landscape:py-10"
               aria-label={project.title}
             >
+              <ProjectDescription
+                project={project}
+                setDescriptionRef={setDescriptionRef(project.slug)}
+                className="hidden landscape:block landscape:max-h-[calc(100dvh-5rem)] landscape:overflow-y-auto landscape:pr-8"
+              />
               <div
                 ref={setHorizontalRef(project.slug)}
-                className="flex h-dvh snap-x snap-mandatory overflow-x-auto overflow-y-hidden overscroll-x-contain portfolio-scrollbar-none"
+                className="flex h-dvh snap-x snap-mandatory overflow-x-auto overflow-y-hidden overscroll-x-contain portfolio-scrollbar-none landscape:h-full landscape:min-w-0"
               >
                 {renderedSlides.map((slide, renderedIndex) => (
                   <ProjectPanel
@@ -714,7 +828,10 @@ export function PortfolioBrowser({
                     isActive={
                       activeProjectIndex === projectIndex &&
                       activeSlideIndexes[projectIndex] ===
-                        positiveModulo(renderedIndex - 1, slides.length)
+                        getSlideIndexFromCarouselIndex(
+                          project,
+                          positiveModulo(renderedIndex - 1, slides.length)
+                        )
                     }
                     setDescriptionRef={setDescriptionRef(project.slug)}
                     onScreenshotClick={openModal}
@@ -755,7 +872,7 @@ export function PortfolioBrowser({
             aria-label={`${activeProject.title} screens`}
           >
             <div className="flex items-center gap-3 rounded-full bg-black/55 px-4 py-3 backdrop-blur">
-              {activeSlides.map((slide, index) => (
+              {getCarouselSlides(activeProject).map((slide, index) => (
                 <button
                   key={slide.id}
                   type="button"
@@ -765,14 +882,31 @@ export function PortfolioBrowser({
                       ? `Show ${activeProject.title} description`
                       : `Show ${slide.screenshot.alt}`
                   }
-                  aria-current={activeSlideIndex === index ? 'true' : undefined}
+                  aria-current={
+                    getCarouselIndexFromSlideIndex(activeProject, activeSlideIndex) ===
+                    index
+                      ? 'true'
+                      : undefined
+                  }
                   onClick={() => {
                     focusKeyboardSurface();
-                    setActiveSlide(activeProjectIndex, index, 'push', 'smooth');
+                    setActiveSlide(
+                      activeProjectIndex,
+                      getSlideIndexFromCarouselIndex(activeProject, index),
+                      'push',
+                      'smooth'
+                    );
                   }}
                 >
                   <FontAwesomeIcon
-                    icon={activeSlideIndex === index ? faSolidSquare : faRegularSquare}
+                    icon={
+                      getCarouselIndexFromSlideIndex(
+                        activeProject,
+                        activeSlideIndex
+                      ) === index
+                        ? faSolidSquare
+                        : faRegularSquare
+                    }
                     className="h-3.5 w-3.5"
                   />
                 </button>
@@ -799,6 +933,35 @@ export function PortfolioBrowser({
   );
 }
 
+function ProjectDescription({
+  project,
+  setDescriptionRef,
+  className,
+}: {
+  project: PortfolioProject;
+  setDescriptionRef: (node: HTMLDivElement | null) => void;
+  className?: string;
+}) {
+  return (
+    <div
+      ref={setDescriptionRef}
+      className={`portfolio-scrollbar-none min-h-0 pr-1 ${className ?? ''}`}
+    >
+      <p className="mb-5 text-xs font-light uppercase tracking-[0.35em] text-white/45">
+        {project.slug}
+      </p>
+      <h1 className="mb-8 text-[clamp(3rem,14vw,7rem)] font-black uppercase leading-none tracking-normal landscape:text-[clamp(3.5rem,6vw,7rem)]">
+        {project.title}
+      </h1>
+      <div className="portfolio-markdown max-w-prose text-lg font-light leading-relaxed text-white/82 landscape:text-xl">
+        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+          {project.descriptionMarkdown}
+        </ReactMarkdown>
+      </div>
+    </div>
+  );
+}
+
 function ProjectPanel({
   project,
   slide,
@@ -810,37 +973,26 @@ function ProjectPanel({
   slide: ProjectSlide;
   isActive: boolean;
   setDescriptionRef: (node: HTMLDivElement | null) => void;
-  onScreenshotClick: () => void;
+  onScreenshotClick: (slide: ProjectSlide) => void;
 }) {
   return (
     <article
-      className="grid h-dvh w-screen shrink-0 snap-start snap-always grid-rows-[1fr] bg-black px-6 pb-24 pt-8 sm:px-10 lg:grid-cols-[minmax(18rem,34vw)_minmax(0,1fr)] lg:px-16 lg:py-10"
+      className="grid h-dvh w-screen shrink-0 snap-start snap-always grid-rows-[1fr] bg-black px-6 pb-24 pt-8 sm:px-10 landscape:h-full landscape:w-full landscape:px-0 landscape:py-0"
       aria-hidden={!isActive}
     >
-      <div
-        ref={slide.kind === 'description' ? setDescriptionRef : undefined}
-        className={`portfolio-scrollbar-none min-h-0 overflow-y-auto pr-1 lg:max-h-[calc(100dvh-5rem)] lg:pr-8 ${
+      <ProjectDescription
+        project={project}
+        setDescriptionRef={setDescriptionRef}
+        className={`overflow-y-auto landscape:hidden ${
           slide.kind === 'description'
-            ? 'flex flex-col justify-center lg:block'
-            : 'hidden lg:block'
+            ? 'flex flex-col justify-center'
+            : 'hidden'
         }`}
-      >
-        <p className="mb-5 text-xs font-light uppercase tracking-[0.35em] text-white/45">
-          {project.slug}
-        </p>
-        <h1 className="mb-8 text-[clamp(3rem,14vw,7rem)] font-black uppercase leading-none tracking-normal lg:text-[clamp(3.5rem,6vw,7rem)]">
-          {project.title}
-        </h1>
-        <div className="portfolio-markdown max-w-prose text-lg font-light leading-relaxed text-white/82 lg:text-xl">
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>
-            {project.descriptionMarkdown}
-          </ReactMarkdown>
-        </div>
-      </div>
+      />
 
       <div
         className={`grid min-h-0 place-items-center ${
-          slide.kind === 'description' ? 'hidden lg:grid' : ''
+          slide.kind === 'description' ? 'hidden landscape:hidden' : ''
         }`}
       >
         {slide.kind === 'description' ? (
@@ -852,8 +1004,8 @@ function ProjectPanel({
         ) : (
           <button
             type="button"
-            className="relative aspect-square max-h-[calc(100dvh-8rem)] w-full max-w-[calc(100dvh-8rem)] overflow-hidden border border-white/15 bg-white/5 outline-none transition-colors hover:border-portfolio-red focus-visible:border-portfolio-red"
-            onClick={onScreenshotClick}
+            className="relative aspect-square max-h-[calc(100dvh-8rem)] w-full max-w-[calc(100dvh-8rem)] overflow-hidden border border-white/15 bg-white/5 outline-none transition-colors hover:border-portfolio-red focus-visible:border-portfolio-red landscape:max-h-[calc(100dvh-5rem)] landscape:max-w-[calc(100dvh-5rem)]"
+            onClick={() => onScreenshotClick(slide)}
             aria-label={`Open ${slide.screenshot.alt} fullscreen`}
           >
             <Image
