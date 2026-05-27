@@ -1,3 +1,41 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/forms";
 @plugin "@tailwindcss/typography";
+
+@theme {
+  --color-portfolio-red: #e00000;
+}
+
+html,
+body {
+  min-height: 100%;
+  margin: 0;
+  background: #000;
+}
+
+button {
+  cursor: pointer;
+}
+
+@utility portfolio-scrollbar-none {
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.portfolio-markdown p {
+  margin-bottom: 1.2em;
+}
+
+.portfolio-markdown a {
+  color: var(--color-portfolio-red);
+  text-decoration: underline;
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.18em;
+}
+
+.portfolio-markdown strong {
+  font-weight: 900;
+}

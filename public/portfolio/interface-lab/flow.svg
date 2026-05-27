@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1600" role="img" aria-label="Interface Lab flow placeholder">
+  <rect width="1600" height="1600" fill="#050505"/>
+  <rect x="130" y="130" width="1340" height="1340" fill="#0f0f0f" stroke="#e00000" stroke-width="10"/>
+  <g fill="#171717" stroke="#fff" stroke-width="8">
+    <rect x="250" y="360" width="270" height="180"/>
+    <rect x="665" y="360" width="270" height="180"/>
+    <rect x="1080" y="360" width="270" height="180"/>
+    <rect x="458" y="800" width="270" height="180"/>
+    <rect x="872" y="800" width="270" height="180"/>
+  </g>
+  <path d="M520 450h145M935 450h145M800 540v160M800 700H593v100M800 700h207v100" stroke="#e00000" stroke-width="18" fill="none" stroke-linecap="round"/>
+  <text x="250" y="1280" fill="#fff" font-family="Arial, sans-serif" font-size="86" font-weight="700">FLOW STUDY</text>
+</svg>

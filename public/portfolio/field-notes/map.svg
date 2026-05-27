@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1600" role="img" aria-label="Field Notes map placeholder">
+  <rect width="1600" height="1600" fill="#050505"/>
+  <rect x="120" y="120" width="1360" height="1360" fill="#111" stroke="#e00000" stroke-width="10"/>
+  <path d="M210 460h1180M210 740h1180M210 1020h1180M460 210v1180M800 210v1180M1140 210v1180" stroke="#303030" stroke-width="8"/>
+  <circle cx="485" cy="625" r="58" fill="#e00000"/>
+  <circle cx="1060" cy="410" r="42" fill="#fff"/>
+  <circle cx="890" cy="980" r="74" fill="#e00000"/>
+  <path d="M485 625 890 980 1060 410" fill="none" stroke="#fff" stroke-width="16" stroke-linecap="round"/>
+  <text x="170" y="1410" fill="#fff" font-family="Arial, sans-serif" font-size="86" font-weight="700">FIELD NOTES / MAP</text>
+</svg>

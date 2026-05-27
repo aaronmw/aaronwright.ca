@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1600" role="img" aria-label="Archive Room record placeholder">
+  <rect width="1600" height="1600" fill="#050505"/>
+  <rect x="140" y="140" width="1320" height="1320" fill="#101010" stroke="#e00000" stroke-width="10"/>
+  <rect x="250" y="260" width="430" height="610" fill="#222" stroke="#555" stroke-width="6"/>
+  <rect x="780" y="285" width="500" height="48" fill="#fff"/>
+  <rect x="780" y="410" width="560" height="30" fill="#666"/>
+  <rect x="780" y="480" width="520" height="30" fill="#666"/>
+  <rect x="780" y="550" width="470" height="30" fill="#666"/>
+  <rect x="250" y="1010" width="1090" height="190" fill="#191919" stroke="#444" stroke-width="6"/>
+  <rect x="310" y="1080" width="300" height="34" fill="#e00000"/>
+  <text x="250" y="1350" fill="#fff" font-family="Arial, sans-serif" font-size="86" font-weight="700">RECORD VIEW</text>
+</svg>
