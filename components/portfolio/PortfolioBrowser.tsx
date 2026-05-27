@@ -871,7 +871,7 @@ export function PortfolioBrowser({
             className="fixed inset-x-0 bottom-5 z-20 flex justify-center px-6"
             aria-label={`${activeProject.title} screens`}
           >
-            <div className="flex items-center gap-3 rounded-full bg-black/55 px-4 py-3 backdrop-blur">
+            <div className="flex items-center gap-3 px-4 py-3">
               {getCarouselSlides(activeProject).map((slide, index) => (
                 <button
                   key={slide.id}
@@ -1004,7 +1004,7 @@ function ProjectPanel({
         ) : (
           <button
             type="button"
-            className="relative aspect-square max-h-[calc(100dvh-8rem)] w-full max-w-[calc(100dvh-8rem)] overflow-hidden border border-white/15 bg-white/5 outline-none transition-colors hover:border-portfolio-red focus-visible:border-portfolio-red landscape:col-start-2 landscape:h-[min(100dvh,calc(100vw-4rem-min(34vw,32rem)))] landscape:max-h-none landscape:w-[min(100dvh,calc(100vw-4rem-min(34vw,32rem)))] landscape:max-w-none landscape:self-center landscape:justify-self-end"
+            className="relative aspect-square max-h-[calc(100dvh-8rem)] w-full max-w-[calc(100dvh-8rem)] overflow-hidden border border-white/15 outline-none transition-colors hover:border-portfolio-red focus-visible:border-portfolio-red landscape:col-start-2 landscape:h-[min(100dvh,calc(100vw-4rem-min(34vw,32rem)))] landscape:max-h-none landscape:w-[min(100dvh,calc(100vw-4rem-min(34vw,32rem)))] landscape:max-w-none landscape:self-center landscape:justify-self-end"
             onClick={() => onScreenshotClick(slide)}
             aria-label={`Open ${slide.screenshot.alt} fullscreen`}
           >
