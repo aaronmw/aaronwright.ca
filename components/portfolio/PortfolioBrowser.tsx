@@ -1022,7 +1022,7 @@ function ProjectPanel({
               fill
               priority={isActive}
               sizes="(orientation: landscape) calc(100dvh - 8rem), 100vw"
-              className={`object-contain transition-[filter] duration-[2000ms] ease-in ${
+              className={`object-contain transition-[filter] duration-1000 ease-in-out ${
                 isActive ? 'blur-0' : 'blur-[20px]'
               }`}
             />
