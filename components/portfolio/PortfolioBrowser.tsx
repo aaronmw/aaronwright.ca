@@ -1178,6 +1178,7 @@ function ImageModal({
   ) => void;
   onClose: () => void;
 }) {
+  const [isDragging, setIsDragging] = useState(false);
   const clampScale = useCallback((nextScale: number) => {
     return Math.min(6, Math.max(1, nextScale));
   }, []);
@@ -1196,7 +1197,12 @@ function ImageModal({
         return;
       }
 
-      event.currentTarget.setPointerCapture(event.pointerId);
+      setIsDragging(true);
+      try {
+        event.currentTarget.setPointerCapture(event.pointerId);
+      } catch {
+        // Synthetic pointer events in tests do not always have an active pointer.
+      }
       dragRef.current = {
         pointerId: event.pointerId,
         startX: event.clientX,
@@ -1229,6 +1235,7 @@ function ImageModal({
     (event: ReactPointerEvent<HTMLDivElement>) => {
       if (dragRef.current.pointerId === event.pointerId) {
         dragRef.current.dragging = false;
+        setIsDragging(false);
       }
     },
     [dragRef]
@@ -1268,9 +1275,12 @@ function ImageModal({
     pinchRef.current = null;
   }, [pinchRef]);
 
+  const panCursorClass =
+    scale > 1 ? (isDragging ? 'cursor-grabbing' : 'cursor-grab') : '';
+
   return (
     <div
-      className="fixed inset-0 z-50 grid touch-none place-items-center overflow-hidden bg-black"
+      className={`fixed inset-0 z-50 grid touch-none place-items-center overflow-hidden bg-black ${panCursorClass}`}
       role="dialog"
       aria-modal="true"
       aria-label={`${project.title}: ${screenshot.alt}`}
@@ -1291,7 +1301,7 @@ function ImageModal({
         Close
       </button>
       <div
-        className="relative h-[92dvh] w-[92vw]"
+        className={`relative h-[92dvh] w-[92vw] ${panCursorClass}`}
         style={{
           transform: `translate3d(${offset.x}px, ${offset.y}px, 0) scale(${scale})`,
           transition: dragRef.current.dragging ? 'none' : 'transform 160ms ease-out',
