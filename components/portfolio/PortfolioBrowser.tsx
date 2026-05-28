@@ -107,6 +107,10 @@ function getProjectSlides(project: PortfolioProject): ProjectSlide[] {
   ];
 }
 
+function isVideoScreenshot(screenshot: PortfolioScreenshot) {
+  return /\.(webm|mp4|m4v|ogv|ogg)(?:$|\?)/i.test(screenshot.src);
+}
+
 export function PortfolioBrowser({
   initialProjectSlug,
   initialScreenshotSlug,
@@ -1085,12 +1089,10 @@ function ProjectPanel({
             onClick={() => onScreenshotClick(slide)}
             aria-label={`Open ${slide.screenshot.alt} fullscreen`}
           >
-            <Image
-              src={slide.screenshot.src}
-              alt={slide.screenshot.alt}
-              fill
+            <ScreenshotMedia
+              screenshot={slide.screenshot}
               priority={isActive}
-              sizes="(orientation: landscape) calc(100dvh - 8rem), 100vw"
+              sizes="(min-aspect-ratio: 3/2) calc(100dvh - 8rem), 100vw"
               className={`object-contain transition-[filter] duration-1000 ease-in-out ${
                 isActive ? 'blur-0' : 'blur-[20px]'
               }`}
@@ -1099,6 +1101,44 @@ function ProjectPanel({
         )}
       </div>
     </article>
+  );
+}
+
+function ScreenshotMedia({
+  screenshot,
+  priority,
+  sizes,
+  className,
+}: {
+  screenshot: PortfolioScreenshot;
+  priority?: boolean;
+  sizes: string;
+  className: string;
+}) {
+  if (isVideoScreenshot(screenshot)) {
+    return (
+      <video
+        src={screenshot.src}
+        aria-label={screenshot.alt}
+        autoPlay
+        loop
+        muted
+        playsInline
+        preload={priority ? 'auto' : 'metadata'}
+        className={`absolute inset-0 h-full w-full ${className}`}
+      />
+    );
+  }
+
+  return (
+    <Image
+      src={screenshot.src}
+      alt={screenshot.alt}
+      fill
+      priority={priority}
+      sizes={sizes}
+      className={className}
+    />
   );
 }
 
@@ -1253,10 +1293,8 @@ function ImageModal({
           transition: dragRef.current.dragging ? 'none' : 'transform 160ms ease-out',
         }}
       >
-        <Image
-          src={screenshot.src}
-          alt={screenshot.alt}
-          fill
+        <ScreenshotMedia
+          screenshot={screenshot}
           priority
           sizes="92vw"
           className="object-contain"
