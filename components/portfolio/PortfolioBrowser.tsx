@@ -1188,7 +1188,7 @@ function ImageModal({
 
   const handlePointerDown = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>) => {
-      if (scale <= 1) {
+      if (scale <= 1 || isEditableTarget(event.target)) {
         return;
       }
 
