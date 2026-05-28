@@ -3,6 +3,7 @@
 import {
   CSSProperties,
   KeyboardEvent as ReactKeyboardEvent,
+  MouseEvent as ReactMouseEvent,
   PointerEvent as ReactPointerEvent,
   TouchEvent as ReactTouchEvent,
   WheelEvent as ReactWheelEvent,
@@ -1191,6 +1192,22 @@ function ImageModal({
     [clampScale, setScale]
   );
 
+  const handleDoubleClick = useCallback(
+    (event: ReactMouseEvent<HTMLDivElement>) => {
+      if (isEditableTarget(event.target)) {
+        return;
+      }
+
+      event.preventDefault();
+      dragRef.current.dragging = false;
+      pinchRef.current = null;
+      setIsDragging(false);
+      setScale(1);
+      setOffset({ x: 0, y: 0 });
+    },
+    [dragRef, pinchRef, setOffset, setScale]
+  );
+
   const handlePointerDown = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>) => {
       if (scale <= 1 || isEditableTarget(event.target)) {
@@ -1284,6 +1301,7 @@ function ImageModal({
       role="dialog"
       aria-modal="true"
       aria-label={`${project.title}: ${screenshot.alt}`}
+      onDoubleClick={handleDoubleClick}
       onWheel={handleWheel}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
