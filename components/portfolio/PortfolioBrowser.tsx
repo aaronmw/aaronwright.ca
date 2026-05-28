@@ -1121,11 +1121,13 @@ function ScreenshotMedia({
         src={screenshot.src}
         aria-label={screenshot.alt}
         autoPlay
+        draggable={false}
         loop
         muted
+        onDragStart={(event) => event.preventDefault()}
         playsInline
         preload={priority ? 'auto' : 'metadata'}
-        className={`absolute inset-0 h-full w-full ${className}`}
+        className={`absolute inset-0 h-full w-full select-none ${className}`}
       />
     );
   }
@@ -1135,9 +1137,11 @@ function ScreenshotMedia({
       src={screenshot.src}
       alt={screenshot.alt}
       fill
+      draggable={false}
+      onDragStart={(event) => event.preventDefault()}
       priority={priority}
       sizes={sizes}
-      className={className}
+      className={`select-none ${className}`}
     />
   );
 }
