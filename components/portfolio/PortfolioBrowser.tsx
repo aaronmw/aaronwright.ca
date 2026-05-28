@@ -826,6 +826,10 @@ export function PortfolioBrowser({
           const slides = getCarouselSlides(project);
           const renderedSlides = [slides[slides.length - 1], ...slides, slides[0]];
           const projectNumber = String(projectIndex + 1).padStart(2, '0');
+          const activeCarouselIndex = getCarouselIndexFromSlideIndex(
+            project,
+            activeSlideIndexes[projectIndex] ?? 0
+          );
 
           return (
             <section
@@ -851,11 +855,8 @@ export function PortfolioBrowser({
                     slide={slide}
                     isActive={
                       activeProjectIndex === projectIndex &&
-                      activeSlideIndexes[projectIndex] ===
-                        getSlideIndexFromCarouselIndex(
-                          project,
-                          positiveModulo(renderedIndex - 1, slides.length)
-                        )
+                      activeCarouselIndex ===
+                        positiveModulo(renderedIndex - 1, slides.length)
                     }
                     setDescriptionRef={setDescriptionRef(project.slug)}
                     onScreenshotClick={openModal}
