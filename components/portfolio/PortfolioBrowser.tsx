@@ -650,6 +650,22 @@ export function PortfolioBrowser({
         return () => {};
       }
 
+      const updateActiveSlideFromScroll = () => {
+        const clonedIndex = Math.round(carousel.scrollLeft / carousel.clientWidth);
+        const realIndex = positiveModulo(clonedIndex - 1, slides.length);
+        const nextSlideIndex = getSlideIndexFromCarouselIndex(project, realIndex);
+
+        setActiveSlideIndexes((indexes) => {
+          if (indexes[projectIndex] === nextSlideIndex) {
+            return indexes;
+          }
+
+          return indexes.map((index, currentProjectIndex) =>
+            currentProjectIndex === projectIndex ? nextSlideIndex : index
+          );
+        });
+      };
+
       const handleHorizontalScrollEnd = () => {
         const clonedIndex = Math.round(carousel.scrollLeft / carousel.clientWidth);
         let realIndex = clonedIndex - 1;
@@ -694,9 +710,14 @@ export function PortfolioBrowser({
         }
       };
 
+      carousel.addEventListener('scroll', updateActiveSlideFromScroll, {
+        passive: true,
+      });
       carousel.addEventListener('scrollend', handleHorizontalScrollEnd);
-      return () =>
+      return () => {
+        carousel.removeEventListener('scroll', updateActiveSlideFromScroll);
         carousel.removeEventListener('scrollend', handleHorizontalScrollEnd);
+      };
     });
 
     return () => cleanupFns.forEach((cleanup) => cleanup());
