@@ -1,6 +1,7 @@
 'use client';
 
 import {
+  CSSProperties,
   KeyboardEvent as ReactKeyboardEvent,
   PointerEvent as ReactPointerEvent,
   TouchEvent as ReactTouchEvent,
@@ -47,6 +48,18 @@ type ProjectSlide =
     };
 
 const START_SCREEN_INDEX = -1;
+const WIDE_LAYOUT_MEDIA_QUERY =
+  '(min-aspect-ratio: 3/2) and (min-width: 43rem)';
+type WideLayoutStyle = CSSProperties & {
+  '--portfolio-description-rail-width': string;
+  '--portfolio-screenshot-size': string;
+};
+const WIDE_LAYOUT_STYLE: WideLayoutStyle = {
+  '--portfolio-description-rail-width':
+    'min(calc(100vw - 4rem), calc(7rem + max(32rem, 48ch)))',
+  '--portfolio-screenshot-size':
+    'min(100dvh, calc(100vw - var(--portfolio-description-rail-width)))',
+};
 
 function positiveModulo(value: number, length: number) {
   return ((value % length) + length) % length;
@@ -141,7 +154,7 @@ export function PortfolioBrowser({
     normalizedInitialProjectIndex
   );
   const [activeSlideIndexes, setActiveSlideIndexes] = useState(initialSlideIndexes);
-  const [isLandscape, setIsLandscape] = useState(false);
+  const [isWideLayout, setIsWideLayout] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalScale, setModalScale] = useState(1);
   const [modalOffset, setModalOffset] = useState({ x: 0, y: 0 });
@@ -191,18 +204,18 @@ export function PortfolioBrowser({
     (project: PortfolioProject) => {
       const slides = projectSlides[project.slug];
 
-      if (!isLandscape) {
+      if (!isWideLayout) {
         return slides;
       }
 
       return slides.filter((slide) => slide.kind === 'screenshot');
     },
-    [isLandscape, projectSlides]
+    [isWideLayout, projectSlides]
   );
 
   const getCarouselIndexFromSlideIndex = useCallback(
     (project: PortfolioProject, slideIndex: number) => {
-      if (!isLandscape) {
+      if (!isWideLayout) {
         return slideIndex;
       }
 
@@ -219,7 +232,7 @@ export function PortfolioBrowser({
         )
       );
     },
-    [getCarouselSlides, isLandscape, projectSlides]
+    [getCarouselSlides, isWideLayout, projectSlides]
   );
 
   const getSlideIndexFromCarouselIndex = useCallback(
@@ -567,13 +580,13 @@ export function PortfolioBrowser({
   ]);
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia('(orientation: landscape)');
-    const updateOrientation = () => setIsLandscape(mediaQuery.matches);
+    const mediaQuery = window.matchMedia(WIDE_LAYOUT_MEDIA_QUERY);
+    const updateWideLayout = () => setIsWideLayout(mediaQuery.matches);
 
-    updateOrientation();
-    mediaQuery.addEventListener('change', updateOrientation);
+    updateWideLayout();
+    mediaQuery.addEventListener('change', updateWideLayout);
 
-    return () => mediaQuery.removeEventListener('change', updateOrientation);
+    return () => mediaQuery.removeEventListener('change', updateWideLayout);
   }, []);
 
   useEffect(() => {
@@ -599,7 +612,7 @@ export function PortfolioBrowser({
 
   useEffect(() => {
     syncViewport(activeProjectIndex, activeSlideIndexes, 'auto');
-  }, [isLandscape, syncViewport]);
+  }, [isWideLayout, syncViewport]);
 
   useEffect(() => {
     const vertical = verticalRef.current;
@@ -836,16 +849,24 @@ export function PortfolioBrowser({
               key={project.id}
               className="relative h-dvh snap-start snap-always overflow-hidden bg-black"
               aria-label={project.title}
+              style={WIDE_LAYOUT_STYLE}
             >
               <ProjectDescription
                 project={project}
                 projectNumber={projectNumber}
                 setDescriptionRef={setDescriptionRef(project.slug)}
-                className="hidden landscape:absolute landscape:bottom-10 landscape:left-0 landscape:top-10 landscape:z-10 landscape:block landscape:w-[min(calc(100vw-4rem),calc(7rem+48ch))] landscape:overflow-y-auto landscape:bg-black/80 landscape:py-6 landscape:pl-[5.5rem] landscape:pr-6 landscape:text-xl landscape:backdrop-blur-md"
+                isWideLayout={isWideLayout}
+                className={
+                  isWideLayout
+                    ? 'absolute bottom-10 left-0 top-10 z-10 block w-[var(--portfolio-description-rail-width)] overflow-y-auto bg-black/80 py-6 pl-[5.5rem] pr-6 backdrop-blur-md'
+                    : 'hidden'
+                }
               />
               <div
                 ref={setHorizontalRef(project.slug)}
-                className="flex h-dvh snap-x snap-mandatory overflow-x-auto overflow-y-hidden overscroll-x-contain portfolio-scrollbar-none landscape:w-screen"
+                className={`flex h-dvh snap-x snap-mandatory overflow-x-auto overflow-y-hidden overscroll-x-contain portfolio-scrollbar-none ${
+                  isWideLayout ? 'w-screen' : ''
+                }`}
               >
                 {renderedSlides.map((slide, renderedIndex) => (
                   <ProjectPanel
@@ -853,6 +874,7 @@ export function PortfolioBrowser({
                     project={project}
                     projectNumber={projectNumber}
                     slide={slide}
+                    isWideLayout={isWideLayout}
                     isActive={
                       activeProjectIndex === projectIndex &&
                       activeCarouselIndex ===
@@ -962,11 +984,13 @@ function ProjectDescription({
   project,
   projectNumber,
   setDescriptionRef,
+  isWideLayout,
   className,
 }: {
   project: PortfolioProject;
   projectNumber: string;
   setDescriptionRef: (node: HTMLDivElement | null) => void;
+  isWideLayout: boolean;
   className?: string;
 }) {
   return (
@@ -977,10 +1001,20 @@ function ProjectDescription({
       <p className="mb-5 text-xs font-light uppercase tracking-[0.35em] text-white/45">
         PROJECT {projectNumber}
       </p>
-      <h1 className="mb-8 w-full max-w-[12ch] text-[clamp(3rem,14vw,7rem)] font-black uppercase leading-none tracking-normal landscape:text-[clamp(3.5rem,4vw,4.75rem)]">
+      <h1
+        className={`mb-8 w-full max-w-[12ch] font-black uppercase leading-none tracking-normal ${
+          isWideLayout
+            ? 'text-[clamp(3.5rem,4vw,4.75rem)]'
+            : 'text-[clamp(3rem,14vw,7rem)]'
+        }`}
+      >
         {project.title}
       </h1>
-      <div className="portfolio-markdown w-full max-w-[48ch] text-lg font-light leading-relaxed text-white/82 landscape:text-xl">
+      <div
+        className={`portfolio-markdown w-full max-w-[48ch] font-light leading-relaxed text-white/82 ${
+          isWideLayout ? 'min-w-[32rem] text-xl' : 'text-lg'
+        }`}
+      >
         <ReactMarkdown remarkPlugins={[remarkGfm]}>
           {project.descriptionMarkdown}
         </ReactMarkdown>
@@ -993,6 +1027,7 @@ function ProjectPanel({
   project,
   projectNumber,
   slide,
+  isWideLayout,
   isActive,
   setDescriptionRef,
   onScreenshotClick,
@@ -1000,29 +1035,37 @@ function ProjectPanel({
   project: PortfolioProject;
   projectNumber: string;
   slide: ProjectSlide;
+  isWideLayout: boolean;
   isActive: boolean;
   setDescriptionRef: (node: HTMLDivElement | null) => void;
   onScreenshotClick: (slide: ProjectSlide) => void;
 }) {
   return (
     <article
-      className="grid h-dvh w-screen shrink-0 snap-start snap-always grid-rows-[1fr] bg-black px-6 pb-24 pt-8 sm:px-10 landscape:px-0 landscape:py-0"
+      className={`grid h-dvh w-screen shrink-0 snap-start snap-always grid-rows-[1fr] bg-black ${
+        isWideLayout ? 'px-0 py-0' : 'px-6 pb-24 pt-8 sm:px-10'
+      }`}
       aria-hidden={!isActive}
     >
       <ProjectDescription
         project={project}
         projectNumber={projectNumber}
         setDescriptionRef={setDescriptionRef}
-        className={`overflow-y-auto landscape:hidden ${
-          slide.kind === 'description'
+        isWideLayout={isWideLayout}
+        className={`overflow-y-auto ${
+          !isWideLayout && slide.kind === 'description'
             ? 'flex flex-col justify-center'
             : 'hidden'
         }`}
       />
 
       <div
-        className={`grid min-h-0 place-items-center landscape:grid-cols-[minmax(calc(4rem+min(34vw,32rem)),1fr)_auto] ${
-          slide.kind === 'description' ? 'hidden landscape:hidden' : ''
+        className={`grid min-h-0 place-items-center ${
+          isWideLayout
+            ? 'grid-cols-[minmax(var(--portfolio-description-rail-width),1fr)_auto]'
+            : ''
+        } ${
+          slide.kind === 'description' ? 'hidden' : ''
         }`}
       >
         {slide.kind === 'description' ? (
@@ -1034,7 +1077,11 @@ function ProjectPanel({
         ) : (
           <button
             type="button"
-            className="relative aspect-square max-h-[calc(100dvh-8rem)] w-full max-w-[calc(100dvh-8rem)] overflow-hidden border border-white/15 outline-none transition-colors hover:border-portfolio-red focus-visible:border-portfolio-red landscape:col-start-2 landscape:h-[min(100dvh,calc(100vw-4rem-min(34vw,32rem)))] landscape:max-h-none landscape:w-[min(100dvh,calc(100vw-4rem-min(34vw,32rem)))] landscape:max-w-none landscape:self-center landscape:justify-self-end"
+            className={`relative aspect-square overflow-hidden border border-white/15 outline-none transition-colors hover:border-portfolio-red focus-visible:border-portfolio-red ${
+              isWideLayout
+                ? 'col-start-2 h-[var(--portfolio-screenshot-size)] max-h-none w-[var(--portfolio-screenshot-size)] max-w-none self-center justify-self-end'
+                : 'max-h-[calc(100dvh-8rem)] w-full max-w-[calc(100dvh-8rem)]'
+            }`}
             onClick={() => onScreenshotClick(slide)}
             aria-label={`Open ${slide.screenshot.alt} fullscreen`}
           >
