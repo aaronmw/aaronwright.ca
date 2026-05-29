@@ -18,12 +18,14 @@ import {
   useSyncExternalStore,
 } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faArrowDown,
   faArrowLeft,
   faArrowRight,
   faArrowUp,
+  faFilePdf,
 } from '@fortawesome/free-solid-svg-icons';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -53,7 +55,7 @@ type ProjectSlide =
 
 const START_SCREEN_INDEX = -1;
 const WIDE_LAYOUT_MEDIA_QUERY =
-  '(min-aspect-ratio: 3/2) and (min-width: 43rem)';
+  '(min-aspect-ratio: 5/4) and (min-width: 43rem)';
 type WideLayoutStyle = CSSProperties & {
   '--portfolio-description-rail-width': string;
   '--portfolio-control-gutter-width': string;
@@ -1051,6 +1053,17 @@ export function PortfolioBrowser({
                     aaronmw@gmail.com
                   </a>
                 </p>
+                <p>
+                  <Link
+                    className="inline-flex items-center gap-2 transition-colors hover:text-white focus-visible:text-white"
+                    href="/resume.pdf"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    <FontAwesomeIcon icon={faFilePdf} className="size-4" />
+                    <span>Resume</span>
+                  </Link>
+                </p>
               </address>
             </div>
           </div>
@@ -1451,7 +1464,7 @@ function ProjectPanel({
             <ScreenshotMedia
               screenshot={slide.screenshot}
               priority={isActive}
-              sizes="(min-aspect-ratio: 3/2) calc(100dvh - 8rem), 100vw"
+              sizes="(min-aspect-ratio: 5/4) calc(100dvh - 8rem), 100vw"
               className={`object-contain transition-[filter] duration-1000 ease-in-out ${
                 isActive ? 'blur-0' : 'blur-[20px]'
               }`}

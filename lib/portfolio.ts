@@ -19,11 +19,13 @@ export const portfolioSlides = [
     slug: 'building-with-ai',
     title: 'Building with AI',
     descriptionMarkdown: `
-Over the last few years, AI has become a core part of how I design and build software. What started as experimentation with ChatGPT quickly evolved into a daily workflow involving tools like Cursor, Claude, and Codex. Rather than treating AI as a novelty or replacement for engineering judgment, I've approached it as a design problem: how do you build a reliable collaborator out of an inherently ambiguous system?
+Over the last few years, AI and I have become real good pals. To quote the Frank's Red Hot people, "I put that **** on everything." What began as casual experimentation with ChatGPT quickly evolved into serious, daily work with all the big ones: Cursor, Claude, Codex and their various models, harnesses, etc. I had been souring on the tedious parts of software development right when these tools hit the scene and could competantly take over (mostly). Since then, I've been developing my AI-foo and have so far crafted a handy set of rules, skills, and components to codify some of the more ambiguous parts of UI/UX and its implementation.
 
-My solution has been to develop a growing collection of workflows, prompts, audits, heuristics, and persistent context that allow AI tools to produce increasingly reliable results. Every failure becomes an opportunity to identify ambiguity, refine instructions, and improve the system. Over time, this has evolved into a personal toolkit that helps me prototype, debug, implement, and refine products far more quickly than traditional workflows allow.
+I still run into silly issues, but there's a satisfying cycle that begins with realising how my words or even my own mental model are riddled with ambiguity, then adding clarification, and then codifying the learning in such a way that we can spot it in older work while avoiding it altogether it net-new work. Each mistake is an opportunity to level-up my robot and know that I won't have to articulate that nuance ever again.
 
-The most interesting lesson has been that AI doesn't replace expertise. It amplifies it. The better I understand product design, frontend architecture, interaction design, and implementation constraints, the more effectively I can direct and evaluate AI-generated solutions. The result is a workflow that lets me spend less time on repetitive implementation work and more time solving meaningful problems.
+Instead of dreading having to push through the friction of starting something new, AI's turned it into air hockey. Finally, it's nearly trivial to make sweeping changes. The better we understand the problems, the better our code can reflect the best solutions. I am so grateful that I can now operate exclusively at the design and archicture altitude and not get bogged down by, for example, having to implement form validation for the millionth time.
+
+Building solid design systems and documentation for them has always been important, but the gains are exponential with AI in the game.
 `,
     screenshots: [
       {
@@ -41,7 +43,7 @@ The most interesting lesson has been that AI doesn't replace expertise. It ampli
     descriptionMarkdown: `
 I love Figma, and I love building tools.
 
-Figma Toolbox is a collection of utilities I've built to solve problems I repeatedly encounter in my own design work. Some automate repetitive tasks, others simplify common workflows, and a few are evolutions of plugins I'd already built and refined over years of use.
+Figma Toolbox is a collection of utilities I've built to solve problems I repeatedly encounter in my own design work. Some automate repetitive tasks, others simplify common workflows, and two are actually evolutions of plugins I'd already built and refined over years of use (both with tens of thousands of users in Figma Community).
 
 Over time I found myself maintaining a growing collection of small, focused tools. Rather than treating them as separate efforts, I began rethinking them as parts of a larger system: a single toolbox that could bring together proven workflows, remove unnecessary friction, and make common tasks faster and easier to access.
 
