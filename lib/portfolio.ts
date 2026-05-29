@@ -15,86 +15,96 @@ export type PortfolioProject = {
 
 export const portfolioProjects = [
   {
-    id: 'field-notes',
-    slug: 'field-notes',
-    title: 'Field Notes',
+    id: 'building-with-ai',
+    slug: 'building-with-ai',
+    title: 'Building with AI',
     descriptionMarkdown: `
-Field Notes is a placeholder case study for a compact product surface that helps teams collect, compare, and act on observations from the field.
+Over the last few years, AI has become a core part of how I design and build software. What started as experimentation with ChatGPT quickly evolved into a daily workflow involving tools like Cursor, Claude, and Codex. Rather than treating AI as a novelty or replacement for engineering judgment, I've approached it as a design problem: how do you build a reliable collaborator out of an inherently ambiguous system?
 
-The final version can use this area for the full project story: the problem, the constraints, the role, the outcome, and links to live work or deeper writing.
+My solution has been to develop a growing collection of workflows, prompts, audits, heuristics, and persistent context that allow AI tools to produce increasingly reliable results. Every failure becomes an opportunity to identify ambiguity, refine instructions, and improve the system. Over time, this has evolved into a personal toolkit that helps me prototype, debug, implement, and refine products far more quickly than traditional workflows allow.
 
-For now, the screenshots are intentionally simple local assets. Replace the image paths in this file with real exported PNGs when the portfolio content is ready.
+The most interesting lesson has been that AI doesn't replace expertise. It amplifies it. The better I understand product design, frontend architecture, interaction design, and implementation constraints, the more effectively I can direct and evaluate AI-generated solutions. The result is a workflow that lets me spend less time on repetitive implementation work and more time solving meaningful problems.
 `,
     screenshots: [
       {
-        id: 'field-notes-map',
-        slug: 'map',
-        src: '/portfolio/field-notes/map.svg',
-        alt: 'Placeholder map dashboard for Field Notes',
-      },
-      {
-        id: 'field-notes-detail',
-        slug: 'detail',
-        src: '/portfolio/field-notes/detail.svg',
-        alt: 'Placeholder observation detail screen for Field Notes',
+        id: 'building-with-ai-home-page',
+        slug: 'home-page',
+        src: '/portfolio/building-with-ai/building-with-ai.png',
+        alt: 'A snippet and visualization of the rules for building UI',
       },
     ],
   },
   {
-    id: 'interface-lab',
-    slug: 'interface-lab',
-    title: 'Interface Lab',
+    id: 'figma-toolbox',
+    slug: 'figma-toolbox',
+    title: 'Figma Toolbox',
     descriptionMarkdown: `
-Interface Lab is a placeholder project for rapid interaction studies, design systems, and small UI tools.
+I love Figma, and I love building tools.
 
-This description is Markdown, so it can include **emphasis**, lists, and links like [aaronwright.ca](https://aaronwright.ca) without changing the rendering code.
+Figma Toolbox is a collection of utilities I've built to solve problems I repeatedly encounter in my own design work. Some automate repetitive tasks, others simplify common workflows, and a few are evolutions of plugins I'd already built and refined over years of use.
 
-Use this record as the template for adding more projects. Each screenshot gets its own slug so it can be routed and shared directly.
+Over time I found myself maintaining a growing collection of small, focused tools. Rather than treating them as separate projects, I began rethinking them as parts of a larger system: a single toolbox that could bring together proven workflows, remove unnecessary friction, and make common tasks faster and easier to access.
+
+Building these tools gives me a playground for exploring the intersection of product design, interaction design, and software development. Each feature starts with a small annoyance or inefficiency and becomes an opportunity to improve how work gets done. Saving a few seconds once isn't interesting. Saving a few seconds hundreds of times a day is.
 `,
     screenshots: [
       {
-        id: 'interface-lab-components',
-        slug: 'components',
-        src: '/portfolio/interface-lab/components.svg',
+        id: 'normalizer',
+        slug: 'normalizer',
+        src: '/portfolio/figma-toolbox/normalizer.png',
+        alt: 'Normalizer in Figma Toolbox',
+      },
+      {
+        id: 'randomizer',
+        slug: 'randomizer',
+        src: '/portfolio/figma-toolbox/randomizer.png',
+        alt: 'Randomizer in Figma Toolbox',
+      },
+      {
+        id: 'componentizer',
+        slug: 'componentizer',
+        src: '/portfolio/figma-toolbox/componentizer.png',
+        alt: 'Componentizer in Figma Toolbox',
+      },
+      {
+        id: 'node-wrangler',
+        slug: 'node-wrangler',
+        src: '/portfolio/figma-toolbox/node-wrangler.png',
+        alt: 'Node Wrangler in Figma Toolbox',
+      },
+    ],
+  },
+  {
+    id: 'informal-systems',
+    slug: 'informal-systems',
+    title: 'Informal Systems',
+    descriptionMarkdown: `
+When I joined Informal Systems, one challenge quickly became apparent: the people closest to the company's projects and content weren't the people updating the website. Changes flowed through a small number of technical contributors, creating unnecessary bottlenecks and slowing down communication.
+
+I helped redesign the publishing workflow by introducing a content management system that gave teams direct control over their own content while preserving consistency and presentation quality across the site. Contributors could edit and manage information themselves without needing engineering support, dramatically reducing the operational overhead involved in maintaining the website.
+
+The technical implementation was straightforward. The interesting problem was organizational. Multiple teams needed autonomy, but the overall experience still needed to feel coherent. My role was to create a system that balanced flexibility with structure, allowing experts to focus on their work instead of wrestling with publishing tools or waiting for someone else to make updates.
+
+The result was a publishing workflow that scaled with the organization and removed me from the critical path—a success metric I always appreciate.
+`,
+    screenshots: [
+      {
+        id: 'informal-systems-home-page',
+        slug: 'home-page',
+        src: '/portfolio/informal-systems/home-page.png',
         alt: 'Placeholder component overview for Interface Lab',
       },
       {
-        id: 'interface-lab-flow',
-        slug: 'flow',
-        src: '/portfolio/interface-lab/flow.svg',
+        id: 'informal-systems-hover-to-edit',
+        slug: 'hover-to-edit',
+        src: '/portfolio/informal-systems/hover-to-edit.png',
         alt: 'Placeholder flow editor for Interface Lab',
       },
       {
-        id: 'interface-lab-mobile',
-        slug: 'mobile',
-        src: '/portfolio/interface-lab/mobile.svg',
+        id: 'informal-staking',
+        slug: 'informal-staking',
+        src: '/portfolio/informal-systems/informal-staking.png',
         alt: 'Placeholder mobile interface for Interface Lab',
-      },
-    ],
-  },
-  {
-    id: 'archive-room',
-    slug: 'archive-room',
-    title: 'Archive Room',
-    descriptionMarkdown: `
-Archive Room is a placeholder for a content-heavy project with browsing, retrieval, and comparison workflows.
-
-The portfolio browser treats this text as the first screen in portrait and keeps it beside the image area in landscape, making longer written case studies possible without losing the visual browsing rhythm.
-
-Replace this copy with a real multi-paragraph narrative when the screenshots are finalized.
-`,
-    screenshots: [
-      {
-        id: 'archive-room-library',
-        slug: 'library',
-        src: '/portfolio/archive-room/library.svg',
-        alt: 'Placeholder archive library screen',
-      },
-      {
-        id: 'archive-room-record',
-        slug: 'record',
-        src: '/portfolio/archive-room/record.svg',
-        alt: 'Placeholder archive record screen',
       },
     ],
   },
