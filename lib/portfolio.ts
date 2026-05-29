@@ -13,7 +13,7 @@ export type PortfolioProject = {
   screenshots: PortfolioScreenshot[];
 };
 
-export const portfolioProjects = [
+export const portfolioSlides = [
   {
     id: 'building-with-ai',
     slug: 'building-with-ai',
@@ -43,7 +43,7 @@ I love Figma, and I love building tools.
 
 Figma Toolbox is a collection of utilities I've built to solve problems I repeatedly encounter in my own design work. Some automate repetitive tasks, others simplify common workflows, and a few are evolutions of plugins I'd already built and refined over years of use.
 
-Over time I found myself maintaining a growing collection of small, focused tools. Rather than treating them as separate projects, I began rethinking them as parts of a larger system: a single toolbox that could bring together proven workflows, remove unnecessary friction, and make common tasks faster and easier to access.
+Over time I found myself maintaining a growing collection of small, focused tools. Rather than treating them as separate efforts, I began rethinking them as parts of a larger system: a single toolbox that could bring together proven workflows, remove unnecessary friction, and make common tasks faster and easier to access.
 
 Building these tools gives me a playground for exploring the intersection of product design, interaction design, and software development. Each feature starts with a small annoyance or inefficiency and becomes an opportunity to improve how work gets done. Saving a few seconds once isn't interesting. Saving a few seconds hundreds of times a day is.
 `,
@@ -52,25 +52,25 @@ Building these tools gives me a playground for exploring the intersection of pro
         id: 'normalizer',
         slug: 'normalizer',
         src: '/portfolio/figma-toolbox/normalizer.png',
-        alt: 'Normalizer in Figma Toolbox',
+        alt: '1 of 4: Normalizer',
       },
       {
         id: 'randomizer',
         slug: 'randomizer',
         src: '/portfolio/figma-toolbox/randomizer.png',
-        alt: 'Randomizer in Figma Toolbox',
+        alt: '2 of 4: Randomizer',
       },
       {
         id: 'componentizer',
         slug: 'componentizer',
         src: '/portfolio/figma-toolbox/componentizer.png',
-        alt: 'Componentizer in Figma Toolbox',
+        alt: '3 of 4: Componentizer',
       },
       {
         id: 'node-wrangler',
         slug: 'node-wrangler',
         src: '/portfolio/figma-toolbox/node-wrangler.png',
-        alt: 'Node Wrangler in Figma Toolbox',
+        alt: '4 of 4: Node Wrangler',
       },
     ],
   },
@@ -79,7 +79,7 @@ Building these tools gives me a playground for exploring the intersection of pro
     slug: 'informal-systems',
     title: 'Informal Systems',
     descriptionMarkdown: `
-When I joined Informal Systems, one challenge quickly became apparent: the people closest to the company's projects and content weren't the people updating the website. Changes flowed through a small number of technical contributors, creating unnecessary bottlenecks and slowing down communication.
+When I joined Informal Systems, one challenge quickly became apparent: the people closest to the company's work and content weren't the people updating the website. Changes flowed through a small number of technical contributors, creating unnecessary bottlenecks and slowing down communication.
 
 I helped redesign the publishing workflow by introducing a content management system that gave teams direct control over their own content while preserving consistency and presentation quality across the site. Contributors could edit and manage information themselves without needing engineering support, dramatically reducing the operational overhead involved in maintaining the website.
 
@@ -92,26 +92,26 @@ The result was a publishing workflow that scaled with the organization and remov
         id: 'informal-systems-home-page',
         slug: 'home-page',
         src: '/portfolio/informal-systems/home-page.png',
-        alt: 'Placeholder component overview for Interface Lab',
+        alt: '1 of 3: Homepage Overview',
       },
       {
         id: 'informal-systems-hover-to-edit',
         slug: 'hover-to-edit',
         src: '/portfolio/informal-systems/hover-to-edit.png',
-        alt: 'Placeholder flow editor for Interface Lab',
+        alt: '2 of 3: Hover-to-Edit',
       },
       {
         id: 'informal-staking',
         slug: 'informal-staking',
         src: '/portfolio/informal-systems/informal-staking.png',
-        alt: 'Placeholder mobile interface for Interface Lab',
+        alt: '3 of 3: Informal Staking',
       },
     ],
   },
 ] satisfies PortfolioProject[];
 
 export function getPortfolioProject(slug: string) {
-  return portfolioProjects.find((project) => project.slug === slug);
+  return portfolioSlides.find((project) => project.slug === slug);
 }
 
 export function getPortfolioScreenshot(

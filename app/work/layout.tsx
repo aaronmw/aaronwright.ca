@@ -7,11 +7,11 @@ const openSans = Open_Sans({
 });
 
 export const metadata: Metadata = {
-  title: 'Projects | Aaron M. Wright',
+  title: 'Work | Aaron M. Wright',
   description: 'A viewport-sized portfolio browser for Aaron M. Wright.',
 };
 
-export default function ProjectsLayout({
+export default function WorkLayout({
   children,
 }: {
   children: React.ReactNode;

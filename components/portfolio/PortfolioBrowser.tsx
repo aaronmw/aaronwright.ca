@@ -20,17 +20,17 @@ import {
 import Image from 'next/image';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  faCaretDown,
-  faCaretLeft,
-  faCaretRight,
-  faCaretUp,
+  faArrowDown,
+  faArrowLeft,
+  faArrowRight,
+  faArrowUp,
 } from '@fortawesome/free-solid-svg-icons';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import {
   PortfolioProject,
   PortfolioScreenshot,
-  portfolioProjects,
+  portfolioSlides,
 } from '@/lib/portfolio';
 
 type PortfolioBrowserProps = {
@@ -71,7 +71,7 @@ const WIDE_LAYOUT_STYLE: WideLayoutStyle = {
 };
 const NAVIGATION_SQUARE_CLASS =
   'block size-[1.3125rem] border border-current transition-colors';
-const TOP_SCREEN_COLOR = 'hsl(0 0% 48%)';
+const TOP_SCREEN_COLOR = 'hsl(0 0% 100%)';
 const PROJECT_COLORS = [
   'hsl(342 78% 52%)',
   'hsl(88 74% 44%)',
@@ -105,7 +105,7 @@ function getVerticalTargetProjectIndex(
   currentProjectIndex: number,
   direction: -1 | 1
 ) {
-  const screenCount = portfolioProjects.length + 1;
+  const screenCount = portfolioSlides.length + 1;
   const currentScreenIndex = currentProjectIndex + 1;
   const nextScreenIndex = positiveModulo(
     currentScreenIndex + direction,
@@ -115,31 +115,17 @@ function getVerticalTargetProjectIndex(
   return nextScreenIndex - 1;
 }
 
-function getVerticalNavigationColor(
-  currentProjectIndex: number,
-  direction: -1 | 1
-) {
-  const targetProjectIndex = getVerticalTargetProjectIndex(
-    currentProjectIndex,
-    direction
-  );
-
-  return targetProjectIndex >= 0
-    ? getProjectColor(targetProjectIndex)
-    : TOP_SCREEN_COLOR;
-}
-
 function projectUrl(project: PortfolioProject, slide: ProjectSlide) {
   if (slide.kind === 'description') {
-    return `/projects/${project.slug}`;
+    return `/work/${project.slug}`;
   }
 
-  return `/projects/${project.slug}/${slide.slug}`;
+  return `/work/${project.slug}/${slide.slug}`;
 }
 
 function pageTitle(project?: PortfolioProject, slide?: ProjectSlide) {
   if (!project || !slide) {
-    return 'Projects | Aaron M. Wright';
+    return 'Work | Aaron M. Wright';
   }
 
   if (slide.kind === 'description') {
@@ -147,14 +133,6 @@ function pageTitle(project?: PortfolioProject, slide?: ProjectSlide) {
   }
 
   return `${project.title}: ${slide.slug} | Aaron M. Wright`;
-}
-
-function projectNavigationTitle(projectIndex: number) {
-  if (projectIndex === START_SCREEN_INDEX) {
-    return 'Projects';
-  }
-
-  return portfolioProjects[projectIndex]?.title ?? 'Projects';
 }
 
 function slideNavigationTitle(project: PortfolioProject, slide: ProjectSlide) {
@@ -207,20 +185,20 @@ export function PortfolioBrowser({
   const projectSlides = useMemo(
     () =>
       Object.fromEntries(
-        portfolioProjects.map((project) => [project.slug, getProjectSlides(project)])
+        portfolioSlides.map((project) => [project.slug, getProjectSlides(project)])
       ) as Record<string, ProjectSlide[]>,
     []
   );
 
   const initialProjectIndex = initialProjectSlug
-    ? portfolioProjects.findIndex((project) => project.slug === initialProjectSlug)
+    ? portfolioSlides.findIndex((project) => project.slug === initialProjectSlug)
     : START_SCREEN_INDEX;
   const normalizedInitialProjectIndex =
     initialProjectIndex >= 0 ? initialProjectIndex : START_SCREEN_INDEX;
 
   const initialSlideIndexes = useMemo(
     () =>
-      portfolioProjects.map((project) => {
+      portfolioSlides.map((project) => {
         if (project.slug !== initialProjectSlug || !initialScreenshotSlug) {
           return 0;
         }
@@ -257,7 +235,7 @@ export function PortfolioBrowser({
   const pinchRef = useRef<{ distance: number; scale: number } | null>(null);
 
   const activeProject =
-    activeProjectIndex >= 0 ? portfolioProjects[activeProjectIndex] : undefined;
+    activeProjectIndex >= 0 ? portfolioSlides[activeProjectIndex] : undefined;
   const activeSlides = activeProject ? projectSlides[activeProject.slug] : [];
   const activeSlideIndex =
     activeProjectIndex >= 0 ? activeSlideIndexes[activeProjectIndex] : 0;
@@ -267,14 +245,6 @@ export function PortfolioBrowser({
   const shouldShowModal = isModalOpen && Boolean(activeScreenshot);
   const activeProjectColor =
     activeProjectIndex >= 0 ? getProjectColor(activeProjectIndex) : undefined;
-  const previousProjectColor =
-    activeProjectIndex >= 0
-      ? getVerticalNavigationColor(activeProjectIndex, -1)
-      : undefined;
-  const nextProjectColor =
-    activeProjectIndex >= 0
-      ? getVerticalNavigationColor(activeProjectIndex, 1)
-      : undefined;
 
   const focusKeyboardSurface = useCallback(() => {
     keyboardSurfaceRef.current?.focus({ preventScroll: true });
@@ -290,15 +260,15 @@ export function PortfolioBrowser({
   }, []);
 
   const setHorizontalRef = useCallback(
-    (projectSlug: string) => (node: HTMLDivElement | null) => {
-      horizontalRefs.current[projectSlug] = node;
+    (slideSlug: string) => (node: HTMLDivElement | null) => {
+      horizontalRefs.current[slideSlug] = node;
     },
     []
   );
 
   const setDescriptionRef = useCallback(
-    (projectSlug: string) => (node: HTMLDivElement | null) => {
-      descriptionRefs.current[projectSlug] = node;
+    (slideSlug: string) => (node: HTMLDivElement | null) => {
+      descriptionRefs.current[slideSlug] = node;
     },
     []
   );
@@ -385,7 +355,7 @@ export function PortfolioBrowser({
         });
       }
 
-      portfolioProjects.forEach((project, currentProjectIndex) => {
+      portfolioSlides.forEach((project, currentProjectIndex) => {
         scrollHorizontalToRealIndex(
           project,
           slideIndexes[currentProjectIndex] ?? 0,
@@ -400,7 +370,7 @@ export function PortfolioBrowser({
     const { pathname, search } = window.location;
     const segments = pathname.split('/').filter(Boolean);
 
-    if (segments[0] !== 'projects') {
+    if (segments[0] !== 'work') {
       return null;
     }
 
@@ -412,7 +382,7 @@ export function PortfolioBrowser({
       };
     }
 
-    const projectIndex = portfolioProjects.findIndex(
+    const projectIndex = portfolioSlides.findIndex(
       (project) => project.slug === segments[1]
     );
 
@@ -420,7 +390,7 @@ export function PortfolioBrowser({
       return null;
     }
 
-    const project = portfolioProjects[projectIndex];
+    const project = portfolioSlides[projectIndex];
     const slides = projectSlides[project.slug];
     const screenshotSlug = segments[2];
     const slideIndex = screenshotSlug
@@ -449,7 +419,7 @@ export function PortfolioBrowser({
         return;
       }
 
-      const nextSlideIndexes = portfolioProjects.map((_, projectIndex) =>
+      const nextSlideIndexes = portfolioSlides.map((_, projectIndex) =>
         projectIndex === locationState.projectIndex
           ? locationState.slideIndex
           : activeSlideIndexes[projectIndex] ?? 0
@@ -468,7 +438,7 @@ export function PortfolioBrowser({
       }
 
       if (locationState.projectIndex >= 0) {
-        const project = portfolioProjects[locationState.projectIndex];
+        const project = portfolioSlides[locationState.projectIndex];
         const slide = projectSlides[project.slug][locationState.slideIndex];
         document.title = pageTitle(project, slide);
 
@@ -495,7 +465,7 @@ export function PortfolioBrowser({
       slide: ProjectSlide | undefined,
       mode: 'push' | 'replace'
     ) => {
-      const nextPath = project && slide ? projectUrl(project, slide) : '/projects';
+      const nextPath = project && slide ? projectUrl(project, slide) : '/work';
       const currentPath = `${window.location.pathname}${window.location.search}`;
 
       if (currentPath === nextPath) {
@@ -518,7 +488,7 @@ export function PortfolioBrowser({
       mode: 'push' | 'replace',
       scrollBehavior: ScrollBehavior
     ) => {
-      const project = portfolioProjects[projectIndex];
+      const project = portfolioSlides[projectIndex];
       const slides = projectSlides[project.slug];
       const nextIndex = positiveModulo(realIndex, slides.length);
       const nextSlide = slides[nextIndex];
@@ -543,11 +513,12 @@ export function PortfolioBrowser({
     (
       nextProjectIndex: number,
       mode: 'push' | 'replace',
-      behavior: ScrollBehavior = 'smooth'
+      behavior: ScrollBehavior = 'smooth',
+      targetSlideIndex?: number
     ) => {
       const boundedIndex = Math.max(
         START_SCREEN_INDEX,
-        Math.min(portfolioProjects.length - 1, nextProjectIndex)
+        Math.min(portfolioSlides.length - 1, nextProjectIndex)
       );
       const vertical = verticalRef.current;
 
@@ -566,9 +537,17 @@ export function PortfolioBrowser({
         return;
       }
 
-      const project = portfolioProjects[boundedIndex];
-      const slideIndex = activeSlideIndexes[boundedIndex] ?? 0;
+      const project = portfolioSlides[boundedIndex];
+      const slideIndex = targetSlideIndex ?? activeSlideIndexes[boundedIndex] ?? 0;
       const slide = projectSlides[project.slug][slideIndex];
+
+      if (targetSlideIndex !== undefined) {
+        setActiveSlideIndexes((indexes) =>
+          indexes.map((index, currentProjectIndex) =>
+            currentProjectIndex === boundedIndex ? slideIndex : index
+          )
+        );
+      }
 
       if (slide.kind === 'description') {
         resetDescriptionScroll(project);
@@ -592,7 +571,7 @@ export function PortfolioBrowser({
         return;
       }
 
-      const currentProject = portfolioProjects[activeProjectIndex];
+      const currentProject = portfolioSlides[activeProjectIndex];
       const slides = getCarouselSlides(currentProject);
       const currentCarouselIndex = getCarouselIndexFromSlideIndex(
         currentProject,
@@ -697,7 +676,7 @@ export function PortfolioBrowser({
     const screenIndex = Math.round(vertical.scrollTop / vertical.clientHeight) - 1;
     const nextProjectIndex = Math.max(
       START_SCREEN_INDEX,
-      Math.min(portfolioProjects.length - 1, screenIndex)
+      Math.min(portfolioSlides.length - 1, screenIndex)
     );
 
     setActiveProjectIndex(nextProjectIndex);
@@ -707,7 +686,7 @@ export function PortfolioBrowser({
       return;
     }
 
-    const project = portfolioProjects[nextProjectIndex];
+    const project = portfolioSlides[nextProjectIndex];
     const slideIndex = activeSlideIndexes[nextProjectIndex] ?? 0;
     const slide = projectSlides[project.slug][slideIndex];
 
@@ -870,7 +849,7 @@ export function PortfolioBrowser({
   }, []);
 
   useEffect(() => {
-    const cleanupFns = portfolioProjects.map((project, projectIndex) => {
+    const cleanupFns = portfolioSlides.map((project, projectIndex) => {
       const carousel = horizontalRefs.current[project.slug];
 
       if (!carousel) {
@@ -899,17 +878,8 @@ export function PortfolioBrowser({
     return () => window.removeEventListener('keydown', handleKeyDownEvent);
   }, []);
 
-  const previousProjectTitle =
-    activeProjectIndex >= 0
-      ? projectNavigationTitle(
-          getVerticalTargetProjectIndex(activeProjectIndex, -1)
-        )
-      : '';
-  const nextProjectTitle =
-    activeProjectIndex >= 0
-      ? projectNavigationTitle(getVerticalTargetProjectIndex(activeProjectIndex, 1))
-      : '';
   const activeCarouselSlides = activeProject ? getCarouselSlides(activeProject) : [];
+  const canMoveHorizontally = (activeProject?.screenshots.length ?? 0) > 1;
   const activeCarouselIndex = activeProject
     ? getCarouselIndexFromSlideIndex(activeProject, activeSlideIndex)
     : 0;
@@ -929,6 +899,87 @@ export function PortfolioBrowser({
       : '';
   const nextSlideTitle =
     activeProject && nextSlide ? slideNavigationTitle(activeProject, nextSlide) : '';
+  const sectionNavItems = [
+    {
+      id: 'work',
+      projectIndex: START_SCREEN_INDEX,
+      title: 'Work',
+      color: TOP_SCREEN_COLOR,
+    },
+    ...portfolioSlides.map((project, projectIndex) => ({
+      id: project.id,
+      projectIndex,
+      title: project.title,
+      color: getProjectColor(projectIndex),
+    })),
+  ];
+  const renderSectionNavButton = (
+    item: (typeof sectionNavItems)[number],
+    side: 'left' | 'right'
+  ) => {
+    const isActiveSection = item.projectIndex === activeProjectIndex;
+    const isActiveProjectSection =
+      isActiveSection && item.projectIndex !== START_SCREEN_INDEX;
+    const isLeftSide = side === 'left';
+    const tooltipId = `portfolio-${side}-section-${item.id}-tooltip`;
+    const hasHorizontalAction = isActiveProjectSection && canMoveHorizontally;
+
+    const Icon = hasHorizontalAction
+      ? isLeftSide
+        ? faArrowLeft
+        : faArrowRight
+      : item.projectIndex < activeProjectIndex
+        ? faArrowUp
+        : faArrowDown;
+    const label = hasHorizontalAction
+      ? isLeftSide
+        ? 'Previous screen'
+        : 'Next screen'
+      : isActiveSection
+        ? `Current section: ${item.title}`
+        : `Show ${item.title}`;
+    const tooltipTitle = hasHorizontalAction
+      ? isLeftSide
+        ? previousSlideTitle
+        : nextSlideTitle
+      : item.title;
+
+    return (
+      <SideNavButton
+        key={`${side}-${item.id}`}
+        label={label}
+        tooltipTitle={tooltipTitle}
+        tooltipId={tooltipId}
+        side={side}
+        color={item.color}
+        activeButton={isActiveSection}
+        compactActiveButton={isActiveSection && !hasHorizontalAction}
+        onClick={() => {
+          focusKeyboardSurface();
+
+          if (hasHorizontalAction) {
+            moveHorizontal(isLeftSide ? -1 : 1);
+            return;
+          }
+
+          if (!isActiveSection) {
+            setActiveProject(item.projectIndex, 'push');
+          }
+        }}
+      >
+        {isActiveSection && !hasHorizontalAction ? (
+          <span className="block size-7" aria-hidden="true" />
+        ) : (
+          <span className="grid size-7 place-items-center" aria-hidden="true">
+            <FontAwesomeIcon
+              icon={Icon}
+              className="size-7 drop-shadow-[1px_1px_0_black]"
+            />
+          </span>
+        )}
+      </SideNavButton>
+    );
+  };
 
   return (
     <main
@@ -940,21 +991,82 @@ export function PortfolioBrowser({
         ref={verticalRef}
         className="h-dvh snap-y snap-mandatory overflow-y-auto overscroll-none portfolio-scrollbar-none"
       >
-        <section className="flex h-dvh snap-start snap-always flex-col justify-center px-6 py-16 sm:px-10 lg:px-16">
+        <section className="relative flex h-dvh snap-start snap-always flex-col justify-center px-6 py-16 sm:px-10 lg:px-16">
+          <div className="absolute inset-x-0 top-6 px-6 sm:px-10 lg:px-16">
+            <div
+              className={`mx-auto flex w-full max-w-6xl gap-4 ${
+                isWideLayout
+                  ? 'items-center justify-between'
+                  : 'flex-col items-start justify-start'
+              }`}
+            >
+              <div className="flex shrink-0 items-center gap-5">
+                <svg
+                  className="size-12 shrink-0 text-white"
+                  viewBox="0 0 7 7"
+                  aria-hidden="true"
+                >
+                  <rect x="1" y="1" width="1" height="1" fill="currentColor" />
+                  <rect x="5" y="1" width="1" height="1" fill="currentColor" />
+                  <rect x="1" y="2" width="1" height="1" fill="currentColor" />
+                  <rect x="3" y="2" width="1" height="1" fill="currentColor" />
+                  <rect x="5" y="2" width="1" height="1" fill="currentColor" />
+                  <rect x="1" y="3" width="1" height="1" fill="currentColor" />
+                  <rect x="5" y="3" width="1" height="1" fill="currentColor" />
+                  <rect x="1" y="4" width="1" height="1" fill="currentColor" />
+                  <rect x="3" y="4" width="1" height="1" fill="currentColor" />
+                  <rect x="5" y="4" width="1" height="1" fill="currentColor" />
+                  <rect x="1" y="5" width="1" height="1" fill="currentColor" />
+                  <rect x="2" y="5" width="1" height="1" fill="currentColor" />
+                  <rect x="3" y="5" width="1" height="1" fill="currentColor" />
+                  <rect x="4" y="5" width="1" height="1" fill="currentColor" />
+                  <rect x="5" y="5" width="1" height="1" fill="currentColor" />
+                </svg>
+                <p className="text-base font-light text-white/70">Aaron M. Wright</p>
+              </div>
+              <address
+                className={`flex min-w-0 flex-col gap-1 text-base font-light not-italic leading-relaxed text-white/70 ${
+                  isWideLayout ? 'items-end text-right' : 'items-start text-left'
+                }`}
+              >
+                <p>302-70 Dyrgas Gate</p>
+                <p>
+                  Canmore, Alberta <span className="whitespace-nowrap">T1W 3J6</span>
+                </p>
+                <p
+                  className={`flex flex-wrap gap-x-3 gap-y-1 ${
+                    isWideLayout ? 'justify-end' : 'justify-start'
+                  }`}
+                >
+                  <a
+                    className="transition-colors hover:text-white focus-visible:text-white"
+                    href="tel:+16477469426"
+                  >
+                    +1-647-746-9426
+                  </a>
+                  <a
+                    className="transition-colors hover:text-white focus-visible:text-white"
+                    href="mailto:aaronmw@gmail.com"
+                  >
+                    aaronmw@gmail.com
+                  </a>
+                </p>
+              </address>
+            </div>
+          </div>
           <div className="mx-auto w-full max-w-6xl">
             <p className="mb-8 text-xs font-light uppercase tracking-[0.35em] text-white/45">
-              Projects
+              Work
             </p>
             <div className="divide-y divide-white/15 border-y border-white/15">
-              {portfolioProjects.map((project, index) => (
+              {portfolioSlides.map((project, index) => (
                 <button
                   key={project.id}
                   type="button"
                   className="flex min-h-24 w-full items-center justify-between gap-6 py-6 text-left text-white outline-none transition-colors hover:text-portfolio-red focus-visible:text-portfolio-red sm:min-h-28"
                   onClick={() => {
                     focusKeyboardSurface();
-                    setActiveSlide(index, 0, 'replace', 'auto');
-                    setActiveProject(index, 'push');
+                    setActiveProject(index, 'push', 'smooth', 0);
                   }}
                 >
                   <span
@@ -972,7 +1084,7 @@ export function PortfolioBrowser({
           </div>
         </section>
 
-        {portfolioProjects.map((project, projectIndex) => {
+        {portfolioSlides.map((project, projectIndex) => {
           const slides = getCarouselSlides(project);
           const renderedSlides = [slides[slides.length - 1], ...slides, slides[0]];
           const projectNumber = String(projectIndex + 1).padStart(2, '0');
@@ -1029,96 +1141,43 @@ export function PortfolioBrowser({
         })}
       </div>
 
-      {activeProject && activeSlides.length > 0 ? (
+      {isWideLayout ? (
         <>
           <div className="fixed left-3 top-1/2 z-20 flex -translate-y-1/2 flex-col gap-3 sm:left-6">
-            <SideNavButton
-              label="Previous project"
-              tooltipTitle={previousProjectTitle}
-              tooltipId="portfolio-left-previous-project-tooltip"
-              side="left"
-              color={previousProjectColor}
-              dimButton
-              onClick={() => {
-                focusKeyboardSurface();
-                moveVertical(-1);
-              }}
-            >
-              <FontAwesomeIcon icon={faCaretUp} className="size-7" />
-            </SideNavButton>
-            <SideNavButton
-              label="Previous screen"
-              tooltipTitle={previousSlideTitle}
-              tooltipId="portfolio-left-previous-screen-tooltip"
-              side="left"
-              color={activeProjectColor}
-              onClick={() => {
-                focusKeyboardSurface();
-                moveHorizontal(-1);
-              }}
-            >
-              <FontAwesomeIcon icon={faCaretLeft} className="size-7" />
-            </SideNavButton>
-            <SideNavButton
-              label="Next project"
-              tooltipTitle={nextProjectTitle}
-              tooltipId="portfolio-left-next-project-tooltip"
-              side="left"
-              color={nextProjectColor}
-              dimButton
-              onClick={() => {
-                focusKeyboardSurface();
-                moveVertical(1);
-              }}
-            >
-              <FontAwesomeIcon icon={faCaretDown} className="size-7" />
-            </SideNavButton>
+            {sectionNavItems.map((item) => renderSectionNavButton(item, 'left'))}
           </div>
           <div className="fixed right-3 top-1/2 z-20 flex -translate-y-1/2 flex-col gap-3 sm:right-6">
-            <SideNavButton
-              label="Previous project"
-              tooltipTitle={previousProjectTitle}
-              tooltipId="portfolio-right-previous-project-tooltip"
-              side="right"
-              color={previousProjectColor}
-              dimButton
-              onClick={() => {
-                focusKeyboardSurface();
-                moveVertical(-1);
-              }}
-            >
-              <FontAwesomeIcon icon={faCaretUp} className="size-7" />
-            </SideNavButton>
-            <SideNavButton
-              label="Next screen"
-              tooltipTitle={nextSlideTitle}
-              tooltipId="portfolio-right-next-screen-tooltip"
-              side="right"
-              color={activeProjectColor}
-              onClick={() => {
-                focusKeyboardSurface();
-                moveHorizontal(1);
-              }}
-            >
-              <FontAwesomeIcon icon={faCaretRight} className="size-7" />
-            </SideNavButton>
-            <SideNavButton
-              label="Next project"
-              tooltipTitle={nextProjectTitle}
-              tooltipId="portfolio-right-next-project-tooltip"
-              side="right"
-              color={nextProjectColor}
-              dimButton
-              onClick={() => {
-                focusKeyboardSurface();
-                moveVertical(1);
-              }}
-            >
-              <FontAwesomeIcon icon={faCaretDown} className="size-7" />
-            </SideNavButton>
+            {sectionNavItems.map((item) => renderSectionNavButton(item, 'right'))}
           </div>
+        </>
+      ) : null}
+
+      {!isWideLayout ? (
+        <div
+          className={`fixed bottom-5 right-5 z-30 grid size-12 place-items-center transition-opacity duration-300 ease-out ${
+            activeProjectIndex === START_SCREEN_INDEX
+              ? 'pointer-events-none opacity-0'
+              : 'opacity-100'
+          }`}
+        >
+          <button
+            type="button"
+            className="grid place-items-center border-4 border-white bg-white p-1.5 text-black outline-none transition-[background-color,border-color,border-width,color,padding] duration-500 ease-out"
+            aria-label="Back to work"
+            onClick={() => {
+              focusKeyboardSurface();
+              setActiveProject(START_SCREEN_INDEX, 'push');
+            }}
+          >
+            <ArrowUpToLineIcon className="size-7 drop-shadow-[1px_1px_0_black]" />
+          </button>
+        </div>
+      ) : null}
+
+      {activeProject && activeCarouselSlides.length > 1 ? (
+        <>
           <nav
-            className="fixed inset-x-0 bottom-5 z-20 flex justify-center px-6"
+            className="pointer-events-none fixed inset-x-0 bottom-5 z-20 flex justify-center px-6"
             aria-label={`${activeProject.title} screens`}
             style={
               {
@@ -1127,11 +1186,11 @@ export function PortfolioBrowser({
             }
           >
             <div className="flex items-center gap-3 px-4 py-3">
-              {getCarouselSlides(activeProject).map((slide, index) => (
+              {activeCarouselSlides.map((slide, index) => (
                 <button
                   key={slide.id}
                   type="button"
-                  className={`grid size-7 place-items-center outline-none transition-colors hover:text-[var(--project-color)] focus-visible:text-[var(--project-color)] ${
+                  className={`pointer-events-auto grid size-7 place-items-center outline-none transition-colors hover:text-[var(--project-color)] focus-visible:text-[var(--project-color)] ${
                     getCarouselIndexFromSlideIndex(
                       activeProject,
                       activeSlideIndex
@@ -1201,7 +1260,8 @@ function SideNavButton({
   tooltipId,
   side,
   color,
-  dimButton = false,
+  activeButton = false,
+  compactActiveButton = false,
   onClick,
   children,
 }: {
@@ -1210,14 +1270,20 @@ function SideNavButton({
   tooltipId: string;
   side: 'left' | 'right';
   color?: string;
-  dimButton?: boolean;
+  activeButton?: boolean;
+  compactActiveButton?: boolean;
   onClick: () => void;
   children: ReactNode;
 }) {
   const projectColor = color ?? PROJECT_COLORS[0];
-  const buttonOpacityClass = dimButton
-    ? 'opacity-50 hover:opacity-100 focus:opacity-100 focus-visible:opacity-100'
-    : '';
+  const buttonPaddingClass = compactActiveButton
+    ? 'rounded-full border-4 p-0'
+    : activeButton
+      ? 'border-4 p-1.5'
+      : 'border-0 p-1 hover:border-4 hover:p-1.5 focus:border-4 focus:p-1.5 focus-visible:border-4 focus-visible:p-1.5';
+  const buttonSurfaceClass = activeButton
+    ? 'border-[var(--project-color)] bg-[var(--project-color)] text-white'
+    : 'border-transparent bg-transparent text-[var(--project-color)] hover:border-[var(--project-color)] hover:bg-[var(--project-color)] hover:text-white focus:border-[var(--project-color)] focus:bg-[var(--project-color)] focus:text-white focus-visible:border-[var(--project-color)] focus-visible:bg-[var(--project-color)] focus-visible:text-white';
   const tooltipPositionClass =
     side === 'left'
       ? 'left-full ml-3 -translate-x-1 group-hover/nav-tooltip:translate-x-0 group-focus-within/nav-tooltip:translate-x-0'
@@ -1225,7 +1291,7 @@ function SideNavButton({
 
   return (
     <div
-      className="group/nav-tooltip relative size-12"
+      className="group/nav-tooltip relative grid size-12 place-items-center"
       style={
         {
           '--project-color': projectColor,
@@ -1234,7 +1300,7 @@ function SideNavButton({
     >
       <button
         type="button"
-        className={`grid size-12 place-items-center bg-[var(--project-color)] text-white shadow-lg shadow-black/40 outline-none transition-[opacity,transform] hover:scale-105 focus-visible:scale-105 ${buttonOpacityClass}`}
+        className={`grid place-items-center transition-[background-color,border-color,border-radius,border-width,color,padding] duration-500 ease-out ${buttonPaddingClass} ${buttonSurfaceClass}`}
         aria-label={label}
         aria-describedby={tooltipId}
         onClick={onClick}
@@ -1244,11 +1310,30 @@ function SideNavButton({
       <span
         id={tooltipId}
         role="tooltip"
-        className={`pointer-events-none absolute top-1/2 z-30 whitespace-nowrap bg-black px-3 py-2 text-[0.6875rem] font-black uppercase leading-none tracking-[0.24em] text-[var(--project-color)] opacity-0 shadow-[0_10px_30px_rgba(0,0,0,0.45)] transition-[opacity,transform] duration-150 ease-out -translate-y-1/2 group-hover/nav-tooltip:opacity-100 group-focus-within/nav-tooltip:opacity-100 ${tooltipPositionClass}`}
+        className={`pointer-events-none absolute top-1/2 z-30 whitespace-nowrap bg-black px-3 py-2 text-[0.6875rem] font-black uppercase leading-none tracking-[0.24em] text-[var(--project-color)] opacity-0 transition-[opacity,transform] duration-150 ease-out -translate-y-1/2 group-hover/nav-tooltip:opacity-100 group-focus-within/nav-tooltip:opacity-100 ${tooltipPositionClass}`}
       >
         {tooltipTitle}
       </span>
     </div>
+  );
+}
+
+function ArrowUpToLineIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.25"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M5 4h14" />
+      <path d="M12 20V8" />
+      <path d="m6 14 6-6 6 6" />
+    </svg>
   );
 }
 
@@ -1332,7 +1417,7 @@ function ProjectPanel({
         isWideLayout={isWideLayout}
         className={`overflow-y-auto ${
           !isWideLayout && slide.kind === 'description'
-            ? 'flex flex-col justify-center'
+            ? 'block'
             : 'hidden'
         }`}
       />
@@ -1355,10 +1440,10 @@ function ProjectPanel({
         ) : (
           <button
             type="button"
-            className={`relative aspect-square overflow-hidden border border-transparent outline-none transition-colors hover:border-portfolio-red focus-visible:border-portfolio-red ${
+            className={`relative overflow-hidden border border-transparent outline-none transition-colors hover:border-portfolio-red focus-visible:border-portfolio-red ${
               isWideLayout
-                ? 'col-start-2 h-[var(--portfolio-screenshot-size)] max-h-none w-[var(--portfolio-screenshot-size)] max-w-none self-center justify-self-end'
-                : 'max-h-[calc(100dvh-8rem)] w-full max-w-[calc(100dvh-8rem)]'
+                ? 'col-start-2 aspect-square h-[var(--portfolio-screenshot-size)] max-h-none w-[var(--portfolio-screenshot-size)] max-w-none self-center justify-self-end'
+                : 'h-full min-h-0 w-full'
             }`}
             onClick={() => onScreenshotClick(slide)}
             aria-label={`Open ${slide.screenshot.alt} fullscreen`}

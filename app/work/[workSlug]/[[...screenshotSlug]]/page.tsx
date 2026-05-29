@@ -4,29 +4,29 @@ import { PortfolioBrowser } from '@/components/portfolio/PortfolioBrowser';
 import {
   getPortfolioProject,
   getPortfolioScreenshot,
-  portfolioProjects,
+  portfolioSlides,
 } from '@/lib/portfolio';
 
-type ProjectPageProps = {
+type SlidePageProps = {
   params: Promise<{
-    projectSlug: string;
+    workSlug: string;
     screenshotSlug?: string[];
   }>;
 };
 
 export function generateStaticParams() {
-  return portfolioProjects.flatMap((project) => [
-    { projectSlug: project.slug, screenshotSlug: [] },
+  return portfolioSlides.flatMap((project) => [
+    { workSlug: project.slug, screenshotSlug: [] },
     ...project.screenshots.map((screenshot) => ({
-      projectSlug: project.slug,
+      workSlug: project.slug,
       screenshotSlug: [screenshot.slug],
     })),
   ]);
 }
 
-export async function generateMetadata({ params }: ProjectPageProps) {
-  const { projectSlug, screenshotSlug = [] } = await params;
-  const project = getPortfolioProject(projectSlug);
+export async function generateMetadata({ params }: SlidePageProps) {
+  const { workSlug, screenshotSlug = [] } = await params;
+  const project = getPortfolioProject(workSlug);
 
   if (!project || screenshotSlug.length > 1) {
     return {};
@@ -45,9 +45,9 @@ export async function generateMetadata({ params }: ProjectPageProps) {
   };
 }
 
-export default async function ProjectPage({ params }: ProjectPageProps) {
-  const { projectSlug, screenshotSlug = [] } = await params;
-  const project = getPortfolioProject(projectSlug);
+export default async function SlidePage({ params }: SlidePageProps) {
+  const { workSlug, screenshotSlug = [] } = await params;
+  const project = getPortfolioProject(workSlug);
 
   if (!project || screenshotSlug.length > 1) {
     notFound();
