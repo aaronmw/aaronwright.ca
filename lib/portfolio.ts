@@ -43,11 +43,11 @@ Building solid design systems and documentation for them has always been importa
     descriptionMarkdown: `
 I love Figma, and I love building tools.
 
-Figma Toolbox is a collection of utilities I've built to solve problems I repeatedly encounter in my own design work. Some automate repetitive tasks, others simplify common workflows, and two are actually evolutions of plugins I'd already built and refined over years of use (both with tens of thousands of users in Figma Community).
+Figma Toolbox is a collection of utilities I've built to solve problems I repeatedly encounter in my own design work. Some automate repetitive tasks, others simplify common workflows, and two are actually evolutions of plugins I'd already built and refined over years of use (both with tens of thousands of users in the Figma Community).
 
-Over time I found myself maintaining a growing collection of small, focused tools. Rather than treating them as separate efforts, I began rethinking them as parts of a larger system: a single toolbox that could bring together proven workflows, remove unnecessary friction, and make common tasks faster and easier to access.
+My first Figma plugins were simple replacements for features I'd missed from other apps: "Saved Selections" is straight out of Adobe Illustrator's feature of the same name. "Find and Replace" was built because I needed to do a RegExp replace in a Figma file and couldn't, and I'd rather spend an hour or two building a tool than an even 30 minutes panning and scrolling and updating text by hand. "Property Randomizer" exists because I was assigned a Dashboard project and wanted my charts and data to look real enough that they wouldn't be distracting.
 
-Building these tools gives me a playground for exploring the intersection of product design, interaction design, and software development. Each feature starts with a small annoyance or inefficiency and becomes an opportunity to improve how work gets done. Saving a few seconds once isn't interesting. Saving a few seconds hundreds of times a day is.
+There are few things from which I derive more satisfaction than my Figma plugins. They were useful to me, sure, but knowing that so many others have been spared the same tedium is just 👩‍🍳🤌 They're the best expression of what I'm all about.
 `,
     screenshots: [
       {
@@ -85,9 +85,9 @@ When I joined Informal Systems, one challenge quickly became apparent: the peopl
 
 I helped redesign the publishing workflow by introducing a content management system that gave teams direct control over their own content while preserving consistency and presentation quality across the site. Contributors could edit and manage information themselves without needing engineering support, dramatically reducing the operational overhead involved in maintaining the website.
 
-The technical implementation was straightforward. The interesting problem was organizational. Multiple teams needed autonomy, but the overall experience still needed to feel coherent. My role was to create a system that balanced flexibility with structure, allowing experts to focus on their work instead of wrestling with publishing tools or waiting for someone else to make updates.
+The technical implementation was straightforward. The interesting problem was organizational. Multiple teams needed autonomy, but the overall experience still needed to feel coherent. My role was to create a system that balanced flexibility with structure, allowing experts to focus on their work instead of wrestling with publishing tools or waiting for someone else (me!) to make updates for them.
 
-The result was a publishing workflow that scaled with the organization and removed me from the critical path—a success metric I always appreciate.
+The result was a publishing workflow that scaled with the organization and conveniently (for everyone) removed me from the critical path.
 `,
     screenshots: [
       {
