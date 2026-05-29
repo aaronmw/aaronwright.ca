@@ -5,23 +5,26 @@ import {
   KeyboardEvent as ReactKeyboardEvent,
   MouseEvent as ReactMouseEvent,
   PointerEvent as ReactPointerEvent,
+  ReactNode,
   TouchEvent as ReactTouchEvent,
   WheelEvent as ReactWheelEvent,
   useCallback,
   useEffect,
+  useEffectEvent,
   useLayoutEffect,
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
 } from 'react';
 import Image from 'next/image';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
+  faCaretDown,
   faCaretLeft,
   faCaretRight,
-  faSquare as faSolidSquare,
+  faCaretUp,
 } from '@fortawesome/free-solid-svg-icons';
-import { faSquare as faRegularSquare } from '@fortawesome/free-regular-svg-icons';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import {
@@ -53,17 +56,77 @@ const WIDE_LAYOUT_MEDIA_QUERY =
   '(min-aspect-ratio: 3/2) and (min-width: 43rem)';
 type WideLayoutStyle = CSSProperties & {
   '--portfolio-description-rail-width': string;
+  '--portfolio-control-gutter-width': string;
   '--portfolio-screenshot-size': string;
+};
+type ProjectColorStyle = CSSProperties & {
+  '--project-color': string;
 };
 const WIDE_LAYOUT_STYLE: WideLayoutStyle = {
   '--portfolio-description-rail-width':
     'min(calc(100vw - 4rem), calc(7rem + max(32rem, 48ch)))',
+  '--portfolio-control-gutter-width': '6rem',
   '--portfolio-screenshot-size':
-    'min(100dvh, calc(100vw - var(--portfolio-description-rail-width)))',
+    'min(100dvh, calc(100vw - var(--portfolio-description-rail-width) - var(--portfolio-control-gutter-width)))',
 };
+const NAVIGATION_SQUARE_CLASS =
+  'block size-[1.3125rem] border border-current transition-colors';
+const TOP_SCREEN_COLOR = 'hsl(0 0% 48%)';
+const PROJECT_COLORS = [
+  'hsl(342 78% 52%)',
+  'hsl(88 74% 44%)',
+  'hsl(192 82% 48%)',
+];
+
+function getWideLayoutSnapshot() {
+  return window.matchMedia(WIDE_LAYOUT_MEDIA_QUERY).matches;
+}
+
+function getWideLayoutServerSnapshot() {
+  return false;
+}
+
+function subscribeToWideLayout(callback: () => void) {
+  const mediaQuery = window.matchMedia(WIDE_LAYOUT_MEDIA_QUERY);
+  mediaQuery.addEventListener('change', callback);
+
+  return () => mediaQuery.removeEventListener('change', callback);
+}
 
 function positiveModulo(value: number, length: number) {
   return ((value % length) + length) % length;
+}
+
+function getProjectColor(projectIndex: number) {
+  return PROJECT_COLORS[positiveModulo(projectIndex, PROJECT_COLORS.length)];
+}
+
+function getVerticalTargetProjectIndex(
+  currentProjectIndex: number,
+  direction: -1 | 1
+) {
+  const screenCount = portfolioProjects.length + 1;
+  const currentScreenIndex = currentProjectIndex + 1;
+  const nextScreenIndex = positiveModulo(
+    currentScreenIndex + direction,
+    screenCount
+  );
+
+  return nextScreenIndex - 1;
+}
+
+function getVerticalNavigationColor(
+  currentProjectIndex: number,
+  direction: -1 | 1
+) {
+  const targetProjectIndex = getVerticalTargetProjectIndex(
+    currentProjectIndex,
+    direction
+  );
+
+  return targetProjectIndex >= 0
+    ? getProjectColor(targetProjectIndex)
+    : TOP_SCREEN_COLOR;
 }
 
 function projectUrl(project: PortfolioProject, slide: ProjectSlide) {
@@ -84,6 +147,22 @@ function pageTitle(project?: PortfolioProject, slide?: ProjectSlide) {
   }
 
   return `${project.title}: ${slide.slug} | Aaron M. Wright`;
+}
+
+function projectNavigationTitle(projectIndex: number) {
+  if (projectIndex === START_SCREEN_INDEX) {
+    return 'Projects';
+  }
+
+  return portfolioProjects[projectIndex]?.title ?? 'Projects';
+}
+
+function slideNavigationTitle(project: PortfolioProject, slide: ProjectSlide) {
+  if (slide.kind === 'description') {
+    return project.title;
+  }
+
+  return slide.screenshot.alt;
 }
 
 function isEditableTarget(target: EventTarget | null) {
@@ -159,7 +238,11 @@ export function PortfolioBrowser({
     normalizedInitialProjectIndex
   );
   const [activeSlideIndexes, setActiveSlideIndexes] = useState(initialSlideIndexes);
-  const [isWideLayout, setIsWideLayout] = useState(false);
+  const isWideLayout = useSyncExternalStore(
+    subscribeToWideLayout,
+    getWideLayoutSnapshot,
+    getWideLayoutServerSnapshot
+  );
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalScale, setModalScale] = useState(1);
   const [modalOffset, setModalOffset] = useState({ x: 0, y: 0 });
@@ -182,9 +265,24 @@ export function PortfolioBrowser({
   const activeScreenshot =
     activeSlide?.kind === 'screenshot' ? activeSlide.screenshot : undefined;
   const shouldShowModal = isModalOpen && Boolean(activeScreenshot);
+  const activeProjectColor =
+    activeProjectIndex >= 0 ? getProjectColor(activeProjectIndex) : undefined;
+  const previousProjectColor =
+    activeProjectIndex >= 0
+      ? getVerticalNavigationColor(activeProjectIndex, -1)
+      : undefined;
+  const nextProjectColor =
+    activeProjectIndex >= 0
+      ? getVerticalNavigationColor(activeProjectIndex, 1)
+      : undefined;
 
   const focusKeyboardSurface = useCallback(() => {
     keyboardSurfaceRef.current?.focus({ preventScroll: true });
+  }, []);
+
+  const resetModalView = useCallback(() => {
+    setModalScale(1);
+    setModalOffset({ x: 0, y: 0 });
   }, []);
 
   const resetDescriptionScroll = useCallback((project: PortfolioProject) => {
@@ -361,6 +459,10 @@ export function PortfolioBrowser({
       setActiveSlideIndexes(nextSlideIndexes);
       setIsModalOpen(locationState.modalOpen);
 
+      if (!locationState.modalOpen) {
+        resetModalView();
+      }
+
       if (locationState.projectIndex === START_SCREEN_INDEX) {
         document.title = pageTitle();
       }
@@ -382,6 +484,7 @@ export function PortfolioBrowser({
       projectSlides,
       readLocationState,
       resetDescriptionScroll,
+      resetModalView,
       syncViewport,
     ]
   );
@@ -402,9 +505,10 @@ export function PortfolioBrowser({
       window.history[`${mode}State`]({}, '', nextPath);
       document.title = pageTitle(project, slide);
       modalHistoryEntryRef.current = false;
+      resetModalView();
       setIsModalOpen(false);
     },
-    []
+    [resetModalView]
   );
 
   const setActiveSlide = useCallback(
@@ -515,6 +619,16 @@ export function PortfolioBrowser({
     ]
   );
 
+  const moveVertical = useCallback(
+    (direction: -1 | 1) => {
+      setActiveProject(
+        getVerticalTargetProjectIndex(activeProjectIndex, direction),
+        'push'
+      );
+    },
+    [activeProjectIndex, setActiveProject]
+  );
+
   const openModal = useCallback((slide: ProjectSlide = activeSlide) => {
     if (!activeProject || !slide || slide.kind !== 'screenshot') {
       return;
@@ -532,17 +646,15 @@ export function PortfolioBrowser({
         currentProjectIndex === activeProjectIndex ? slideIndex : index
       )
     );
-    setModalScale(1);
-    setModalOffset({ x: 0, y: 0 });
+    resetModalView();
     window.history.pushState({}, '', `${projectUrl(activeProject, slide)}?modal=image`);
     document.title = pageTitle(activeProject, slide);
     modalHistoryEntryRef.current = true;
     setIsModalOpen(true);
-  }, [activeProject, activeProjectIndex, activeSlide, projectSlides]);
+  }, [activeProject, activeProjectIndex, activeSlide, projectSlides, resetModalView]);
 
   const closeModal = useCallback(() => {
-    setModalScale(1);
-    setModalOffset({ x: 0, y: 0 });
+    resetModalView();
     setIsModalOpen(false);
 
     if (modalHistoryEntryRef.current) {
@@ -554,7 +666,166 @@ export function PortfolioBrowser({
     if (activeProject && activeSlide) {
       window.history.replaceState({}, '', projectUrl(activeProject, activeSlide));
     }
-  }, [activeProject, activeSlide]);
+  }, [activeProject, activeSlide, resetModalView]);
+
+  const syncInitialScrollEvent = useEffectEvent(() => {
+    syncViewport(normalizedInitialProjectIndex, initialSlideIndexes, 'auto');
+
+    if (
+      window.location.search.includes('modal=image') &&
+      normalizedInitialProjectIndex >= 0 &&
+      (initialSlideIndexes[normalizedInitialProjectIndex] ?? 0) > 0
+    ) {
+      setIsModalOpen(true);
+    }
+  });
+
+  const handlePopStateEvent = useEffectEvent(() => {
+    modalHistoryEntryRef.current = false;
+    applyLocationState('auto');
+  });
+
+  const syncCurrentViewportEvent = useEffectEvent(() => {
+    syncViewport(activeProjectIndex, activeSlideIndexes, 'auto');
+  });
+
+  const handleVerticalScrollEndEvent = useEffectEvent((vertical: HTMLDivElement) => {
+    if (scrollSyncRef.current) {
+      return;
+    }
+
+    const screenIndex = Math.round(vertical.scrollTop / vertical.clientHeight) - 1;
+    const nextProjectIndex = Math.max(
+      START_SCREEN_INDEX,
+      Math.min(portfolioProjects.length - 1, screenIndex)
+    );
+
+    setActiveProjectIndex(nextProjectIndex);
+
+    if (nextProjectIndex === START_SCREEN_INDEX) {
+      updateUrl(undefined, undefined, 'replace');
+      return;
+    }
+
+    const project = portfolioProjects[nextProjectIndex];
+    const slideIndex = activeSlideIndexes[nextProjectIndex] ?? 0;
+    const slide = projectSlides[project.slug][slideIndex];
+
+    if (slide.kind === 'description') {
+      resetDescriptionScroll(project);
+    }
+
+    updateUrl(project, slide, 'replace');
+  });
+
+  const updateActiveSlideFromScrollEvent = useEffectEvent(
+    (
+      project: PortfolioProject,
+      projectIndex: number,
+      carousel: HTMLDivElement
+    ) => {
+      const slides = getCarouselSlides(project);
+      const clonedIndex = Math.round(carousel.scrollLeft / carousel.clientWidth);
+      const realIndex = positiveModulo(clonedIndex - 1, slides.length);
+      const nextSlideIndex = getSlideIndexFromCarouselIndex(project, realIndex);
+
+      setActiveSlideIndexes((indexes) => {
+        if (indexes[projectIndex] === nextSlideIndex) {
+          return indexes;
+        }
+
+        return indexes.map((index, currentProjectIndex) =>
+          currentProjectIndex === projectIndex ? nextSlideIndex : index
+        );
+      });
+    }
+  );
+
+  const handleHorizontalScrollEndEvent = useEffectEvent(
+    (
+      project: PortfolioProject,
+      projectIndex: number,
+      carousel: HTMLDivElement
+    ) => {
+      const slides = getCarouselSlides(project);
+      const clonedIndex = Math.round(carousel.scrollLeft / carousel.clientWidth);
+      let realIndex = clonedIndex - 1;
+
+      if (clonedIndex === 0) {
+        realIndex = slides.length - 1;
+        scrollSyncRef.current = true;
+        carousel.scrollTo({
+          left: carousel.clientWidth * slides.length,
+          behavior: 'auto',
+        });
+        requestAnimationFrame(() => {
+          scrollSyncRef.current = false;
+        });
+      }
+
+      if (clonedIndex === slides.length + 1) {
+        realIndex = 0;
+        scrollSyncRef.current = true;
+        carousel.scrollTo({ left: carousel.clientWidth, behavior: 'auto' });
+        requestAnimationFrame(() => {
+          scrollSyncRef.current = false;
+        });
+      }
+
+      const nextIndex = positiveModulo(realIndex, slides.length);
+      const nextSlideIndex = getSlideIndexFromCarouselIndex(project, nextIndex);
+      const nextSlide = projectSlides[project.slug][nextSlideIndex];
+
+      setActiveSlideIndexes((indexes) =>
+        indexes.map((index, currentProjectIndex) =>
+          currentProjectIndex === projectIndex ? nextSlideIndex : index
+        )
+      );
+
+      if (nextSlide.kind === 'description') {
+        resetDescriptionScroll(project);
+      }
+
+      if (projectIndex === activeProjectIndex) {
+        updateUrl(project, nextSlide, 'replace');
+      }
+    }
+  );
+
+  const handleKeyDownEvent = useEffectEvent((event: KeyboardEvent) => {
+    if (isModalOpen) {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        closeModal();
+      }
+
+      return;
+    }
+
+    if (isEditableTarget(event.target)) {
+      return;
+    }
+
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      moveVertical(1);
+    }
+
+    if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      moveVertical(-1);
+    }
+
+    if (event.key === 'ArrowRight') {
+      event.preventDefault();
+      moveHorizontal(1);
+    }
+
+    if (event.key === 'ArrowLeft') {
+      event.preventDefault();
+      moveHorizontal(-1);
+    }
+  });
 
   useLayoutEffect(() => {
     if (initialScrollSyncedRef.current) {
@@ -563,61 +834,28 @@ export function PortfolioBrowser({
 
     initialScrollSyncedRef.current = true;
 
-    const syncInitialScroll = () => {
-      syncViewport(normalizedInitialProjectIndex, initialSlideIndexes, 'auto');
-
-      if (
-        window.location.search.includes('modal=image') &&
-        normalizedInitialProjectIndex >= 0 &&
-        (initialSlideIndexes[normalizedInitialProjectIndex] ?? 0) > 0
-      ) {
-        setIsModalOpen(true);
-      }
-    };
-
-    const rafId = requestAnimationFrame(() => requestAnimationFrame(syncInitialScroll));
+    const rafId = requestAnimationFrame(() =>
+      requestAnimationFrame(syncInitialScrollEvent)
+    );
 
     return () => cancelAnimationFrame(rafId);
-  }, [
-    initialSlideIndexes,
-    normalizedInitialProjectIndex,
-    syncViewport,
-  ]);
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia(WIDE_LAYOUT_MEDIA_QUERY);
-    const updateWideLayout = () => setIsWideLayout(mediaQuery.matches);
-
-    updateWideLayout();
-    mediaQuery.addEventListener('change', updateWideLayout);
-
-    return () => mediaQuery.removeEventListener('change', updateWideLayout);
   }, []);
 
   useEffect(() => {
     window.history.scrollRestoration = 'manual';
 
-    const handlePopState = () => {
-      modalHistoryEntryRef.current = false;
-      applyLocationState('auto');
-    };
-
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, [applyLocationState]);
+    window.addEventListener('popstate', handlePopStateEvent);
+    return () => window.removeEventListener('popstate', handlePopStateEvent);
+  }, []);
 
   useEffect(() => {
-    const handleResize = () => {
-      syncViewport(activeProjectIndex, activeSlideIndexes, 'auto');
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [activeProjectIndex, activeSlideIndexes, syncViewport]);
+    window.addEventListener('resize', syncCurrentViewportEvent);
+    return () => window.removeEventListener('resize', syncCurrentViewportEvent);
+  }, []);
 
   useEffect(() => {
-    syncViewport(activeProjectIndex, activeSlideIndexes, 'auto');
-  }, [isWideLayout, syncViewport]);
+    syncCurrentViewportEvent();
+  }, [isWideLayout]);
 
   useEffect(() => {
     const vertical = verticalRef.current;
@@ -626,108 +864,23 @@ export function PortfolioBrowser({
       return;
     }
 
-    const handleVerticalScrollEnd = () => {
-      if (scrollSyncRef.current) {
-        return;
-      }
-
-      const screenIndex = Math.round(vertical.scrollTop / vertical.clientHeight) - 1;
-      const nextProjectIndex = Math.max(
-        START_SCREEN_INDEX,
-        Math.min(portfolioProjects.length - 1, screenIndex)
-      );
-
-      setActiveProjectIndex(nextProjectIndex);
-
-      if (nextProjectIndex === START_SCREEN_INDEX) {
-        updateUrl(undefined, undefined, 'replace');
-        return;
-      }
-
-      const project = portfolioProjects[nextProjectIndex];
-      const slideIndex = activeSlideIndexes[nextProjectIndex] ?? 0;
-      const slide = projectSlides[project.slug][slideIndex];
-
-      if (slide.kind === 'description') {
-        resetDescriptionScroll(project);
-      }
-
-      updateUrl(project, slide, userMovedRef.current ? 'replace' : 'replace');
-    };
-
+    const handleVerticalScrollEnd = () => handleVerticalScrollEndEvent(vertical);
     vertical.addEventListener('scrollend', handleVerticalScrollEnd);
     return () => vertical.removeEventListener('scrollend', handleVerticalScrollEnd);
-  }, [activeSlideIndexes, projectSlides, resetDescriptionScroll, updateUrl]);
+  }, []);
 
   useEffect(() => {
     const cleanupFns = portfolioProjects.map((project, projectIndex) => {
       const carousel = horizontalRefs.current[project.slug];
-      const slides = getCarouselSlides(project);
 
       if (!carousel) {
         return () => {};
       }
 
-      const updateActiveSlideFromScroll = () => {
-        const clonedIndex = Math.round(carousel.scrollLeft / carousel.clientWidth);
-        const realIndex = positiveModulo(clonedIndex - 1, slides.length);
-        const nextSlideIndex = getSlideIndexFromCarouselIndex(project, realIndex);
-
-        setActiveSlideIndexes((indexes) => {
-          if (indexes[projectIndex] === nextSlideIndex) {
-            return indexes;
-          }
-
-          return indexes.map((index, currentProjectIndex) =>
-            currentProjectIndex === projectIndex ? nextSlideIndex : index
-          );
-        });
-      };
-
-      const handleHorizontalScrollEnd = () => {
-        const clonedIndex = Math.round(carousel.scrollLeft / carousel.clientWidth);
-        let realIndex = clonedIndex - 1;
-
-        if (clonedIndex === 0) {
-          realIndex = slides.length - 1;
-          scrollSyncRef.current = true;
-          carousel.scrollTo({
-            left: carousel.clientWidth * slides.length,
-            behavior: 'auto',
-          });
-          requestAnimationFrame(() => {
-            scrollSyncRef.current = false;
-          });
-        }
-
-        if (clonedIndex === slides.length + 1) {
-          realIndex = 0;
-          scrollSyncRef.current = true;
-          carousel.scrollTo({ left: carousel.clientWidth, behavior: 'auto' });
-          requestAnimationFrame(() => {
-            scrollSyncRef.current = false;
-          });
-        }
-
-        const nextIndex = positiveModulo(realIndex, slides.length);
-        const nextSlideIndex = getSlideIndexFromCarouselIndex(project, nextIndex);
-        const nextSlide = projectSlides[project.slug][nextSlideIndex];
-
-        setActiveSlideIndexes((indexes) =>
-          indexes.map((index, currentProjectIndex) =>
-            currentProjectIndex === projectIndex ? nextSlideIndex : index
-          )
-        );
-
-        if (nextSlide.kind === 'description') {
-          resetDescriptionScroll(project);
-        }
-
-        if (projectIndex === activeProjectIndex) {
-          updateUrl(project, nextSlide, 'replace');
-        }
-      };
-
+      const updateActiveSlideFromScroll = () =>
+        updateActiveSlideFromScrollEvent(project, projectIndex, carousel);
+      const handleHorizontalScrollEnd = () =>
+        handleHorizontalScrollEndEvent(project, projectIndex, carousel);
       carousel.addEventListener('scroll', updateActiveSlideFromScroll, {
         passive: true,
       });
@@ -739,67 +892,43 @@ export function PortfolioBrowser({
     });
 
     return () => cleanupFns.forEach((cleanup) => cleanup());
-  }, [
-    activeProjectIndex,
-    getCarouselSlides,
-    getSlideIndexFromCarouselIndex,
-    projectSlides,
-    resetDescriptionScroll,
-    updateUrl,
-  ]);
+  }, []);
 
   useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (isModalOpen) {
-        if (event.key === 'Escape') {
-          event.preventDefault();
-          closeModal();
-        }
+    window.addEventListener('keydown', handleKeyDownEvent);
+    return () => window.removeEventListener('keydown', handleKeyDownEvent);
+  }, []);
 
-        return;
-      }
-
-      if (isEditableTarget(event.target)) {
-        return;
-      }
-
-      if (event.key === 'ArrowDown') {
-        event.preventDefault();
-        setActiveProject(activeProjectIndex + 1, 'push');
-      }
-
-      if (event.key === 'ArrowUp') {
-        event.preventDefault();
-        setActiveProject(activeProjectIndex - 1, 'push');
-      }
-
-      if (event.key === 'ArrowRight') {
-        event.preventDefault();
-        moveHorizontal(1);
-      }
-
-      if (event.key === 'ArrowLeft') {
-        event.preventDefault();
-        moveHorizontal(-1);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [
-    activeProjectIndex,
-    closeModal,
-    isModalOpen,
-    moveHorizontal,
-    setActiveProject,
-  ]);
-
-  useEffect(() => {
-    if (!shouldShowModal) {
-      setModalScale(1);
-      setModalOffset({ x: 0, y: 0 });
-    }
-  }, [shouldShowModal]);
+  const previousProjectTitle =
+    activeProjectIndex >= 0
+      ? projectNavigationTitle(
+          getVerticalTargetProjectIndex(activeProjectIndex, -1)
+        )
+      : '';
+  const nextProjectTitle =
+    activeProjectIndex >= 0
+      ? projectNavigationTitle(getVerticalTargetProjectIndex(activeProjectIndex, 1))
+      : '';
+  const activeCarouselSlides = activeProject ? getCarouselSlides(activeProject) : [];
+  const activeCarouselIndex = activeProject
+    ? getCarouselIndexFromSlideIndex(activeProject, activeSlideIndex)
+    : 0;
+  const previousSlide = activeProject
+    ? activeCarouselSlides[
+        positiveModulo(activeCarouselIndex - 1, activeCarouselSlides.length)
+      ]
+    : undefined;
+  const nextSlide = activeProject
+    ? activeCarouselSlides[
+        positiveModulo(activeCarouselIndex + 1, activeCarouselSlides.length)
+      ]
+    : undefined;
+  const previousSlideTitle =
+    activeProject && previousSlide
+      ? slideNavigationTitle(activeProject, previousSlide)
+      : '';
+  const nextSlideTitle =
+    activeProject && nextSlide ? slideNavigationTitle(activeProject, nextSlide) : '';
 
   return (
     <main
@@ -828,7 +957,10 @@ export function PortfolioBrowser({
                     setActiveProject(index, 'push');
                   }}
                 >
-                  <span className="text-[clamp(2.5rem,10vw,8rem)] font-black uppercase leading-none tracking-normal">
+                  <span
+                    className="text-[clamp(2rem,8vw,6.4rem)] font-black uppercase leading-none tracking-normal"
+                    style={{ color: getProjectColor(index) }}
+                  >
                     {project.title}
                   </span>
                   <span className="text-sm font-light text-current sm:text-base">
@@ -859,11 +991,12 @@ export function PortfolioBrowser({
               <ProjectDescription
                 project={project}
                 projectNumber={projectNumber}
+                projectColor={getProjectColor(projectIndex)}
                 setDescriptionRef={setDescriptionRef(project.slug)}
                 isWideLayout={isWideLayout}
                 className={
                   isWideLayout
-                    ? 'absolute bottom-10 left-0 top-10 z-10 block w-[var(--portfolio-description-rail-width)] overflow-y-auto bg-black/80 py-6 pl-[5.5rem] pr-6 backdrop-blur-md'
+                    ? 'absolute bottom-10 left-0 top-10 z-10 block w-[var(--portfolio-description-rail-width)] overflow-y-auto bg-black/80 py-6 pl-[var(--portfolio-control-gutter-width)] pr-6 backdrop-blur-md'
                     : 'hidden'
                 }
               />
@@ -878,6 +1011,7 @@ export function PortfolioBrowser({
                     key={`${project.id}-${slide.id}-${renderedIndex}`}
                     project={project}
                     projectNumber={projectNumber}
+                    projectColor={getProjectColor(projectIndex)}
                     slide={slide}
                     isWideLayout={isWideLayout}
                     isActive={
@@ -897,38 +1031,114 @@ export function PortfolioBrowser({
 
       {activeProject && activeSlides.length > 0 ? (
         <>
-          <button
-            type="button"
-            className="fixed left-3 top-1/2 z-20 grid h-12 w-12 -translate-y-1/2 place-items-center rounded-full bg-portfolio-red text-white shadow-lg shadow-black/40 outline-none transition-transform hover:scale-105 focus-visible:scale-105 sm:left-6"
-            aria-label="Previous screen"
-            onClick={() => {
-              focusKeyboardSurface();
-              moveHorizontal(-1);
-            }}
-          >
-            <FontAwesomeIcon icon={faCaretLeft} className="h-7 w-7" />
-          </button>
-          <button
-            type="button"
-            className="fixed right-3 top-1/2 z-20 grid h-12 w-12 -translate-y-1/2 place-items-center rounded-full bg-portfolio-red text-white shadow-lg shadow-black/40 outline-none transition-transform hover:scale-105 focus-visible:scale-105 sm:right-6"
-            aria-label="Next screen"
-            onClick={() => {
-              focusKeyboardSurface();
-              moveHorizontal(1);
-            }}
-          >
-            <FontAwesomeIcon icon={faCaretRight} className="h-7 w-7" />
-          </button>
+          <div className="fixed left-3 top-1/2 z-20 flex -translate-y-1/2 flex-col gap-3 sm:left-6">
+            <SideNavButton
+              label="Previous project"
+              tooltipTitle={previousProjectTitle}
+              tooltipId="portfolio-left-previous-project-tooltip"
+              side="left"
+              color={previousProjectColor}
+              dimButton
+              onClick={() => {
+                focusKeyboardSurface();
+                moveVertical(-1);
+              }}
+            >
+              <FontAwesomeIcon icon={faCaretUp} className="size-7" />
+            </SideNavButton>
+            <SideNavButton
+              label="Previous screen"
+              tooltipTitle={previousSlideTitle}
+              tooltipId="portfolio-left-previous-screen-tooltip"
+              side="left"
+              color={activeProjectColor}
+              onClick={() => {
+                focusKeyboardSurface();
+                moveHorizontal(-1);
+              }}
+            >
+              <FontAwesomeIcon icon={faCaretLeft} className="size-7" />
+            </SideNavButton>
+            <SideNavButton
+              label="Next project"
+              tooltipTitle={nextProjectTitle}
+              tooltipId="portfolio-left-next-project-tooltip"
+              side="left"
+              color={nextProjectColor}
+              dimButton
+              onClick={() => {
+                focusKeyboardSurface();
+                moveVertical(1);
+              }}
+            >
+              <FontAwesomeIcon icon={faCaretDown} className="size-7" />
+            </SideNavButton>
+          </div>
+          <div className="fixed right-3 top-1/2 z-20 flex -translate-y-1/2 flex-col gap-3 sm:right-6">
+            <SideNavButton
+              label="Previous project"
+              tooltipTitle={previousProjectTitle}
+              tooltipId="portfolio-right-previous-project-tooltip"
+              side="right"
+              color={previousProjectColor}
+              dimButton
+              onClick={() => {
+                focusKeyboardSurface();
+                moveVertical(-1);
+              }}
+            >
+              <FontAwesomeIcon icon={faCaretUp} className="size-7" />
+            </SideNavButton>
+            <SideNavButton
+              label="Next screen"
+              tooltipTitle={nextSlideTitle}
+              tooltipId="portfolio-right-next-screen-tooltip"
+              side="right"
+              color={activeProjectColor}
+              onClick={() => {
+                focusKeyboardSurface();
+                moveHorizontal(1);
+              }}
+            >
+              <FontAwesomeIcon icon={faCaretRight} className="size-7" />
+            </SideNavButton>
+            <SideNavButton
+              label="Next project"
+              tooltipTitle={nextProjectTitle}
+              tooltipId="portfolio-right-next-project-tooltip"
+              side="right"
+              color={nextProjectColor}
+              dimButton
+              onClick={() => {
+                focusKeyboardSurface();
+                moveVertical(1);
+              }}
+            >
+              <FontAwesomeIcon icon={faCaretDown} className="size-7" />
+            </SideNavButton>
+          </div>
           <nav
             className="fixed inset-x-0 bottom-5 z-20 flex justify-center px-6"
             aria-label={`${activeProject.title} screens`}
+            style={
+              {
+                '--project-color': activeProjectColor ?? getProjectColor(0),
+              } as ProjectColorStyle
+            }
           >
             <div className="flex items-center gap-3 px-4 py-3">
               {getCarouselSlides(activeProject).map((slide, index) => (
                 <button
                   key={slide.id}
                   type="button"
-                  className="grid h-7 w-7 place-items-center text-white outline-none transition-colors hover:text-portfolio-red focus-visible:text-portfolio-red"
+                  className={`grid size-7 place-items-center outline-none transition-colors hover:text-[var(--project-color)] focus-visible:text-[var(--project-color)] ${
+                    getCarouselIndexFromSlideIndex(
+                      activeProject,
+                      activeSlideIndex
+                    ) === index
+                      ? 'text-[var(--project-color)]'
+                      : 'text-white'
+                  }`}
                   aria-label={
                     slide.kind === 'description'
                       ? `Show ${activeProject.title} description`
@@ -950,16 +1160,16 @@ export function PortfolioBrowser({
                     );
                   }}
                 >
-                  <FontAwesomeIcon
-                    icon={
+                  <span
+                    className={`${NAVIGATION_SQUARE_CLASS} ${
                       getCarouselIndexFromSlideIndex(
                         activeProject,
                         activeSlideIndex
                       ) === index
-                        ? faSolidSquare
-                        : faRegularSquare
-                    }
-                    className="h-3.5 w-3.5"
+                        ? 'bg-current'
+                        : 'bg-transparent'
+                    }`}
+                    aria-hidden="true"
                   />
                 </button>
               ))}
@@ -985,15 +1195,74 @@ export function PortfolioBrowser({
   );
 }
 
+function SideNavButton({
+  label,
+  tooltipTitle,
+  tooltipId,
+  side,
+  color,
+  dimButton = false,
+  onClick,
+  children,
+}: {
+  label: string;
+  tooltipTitle: string;
+  tooltipId: string;
+  side: 'left' | 'right';
+  color?: string;
+  dimButton?: boolean;
+  onClick: () => void;
+  children: ReactNode;
+}) {
+  const projectColor = color ?? PROJECT_COLORS[0];
+  const buttonOpacityClass = dimButton
+    ? 'opacity-50 hover:opacity-100 focus:opacity-100 focus-visible:opacity-100'
+    : '';
+  const tooltipPositionClass =
+    side === 'left'
+      ? 'left-full ml-3 -translate-x-1 group-hover/nav-tooltip:translate-x-0 group-focus-within/nav-tooltip:translate-x-0'
+      : 'right-full mr-3 translate-x-1 group-hover/nav-tooltip:translate-x-0 group-focus-within/nav-tooltip:translate-x-0';
+
+  return (
+    <div
+      className="group/nav-tooltip relative size-12"
+      style={
+        {
+          '--project-color': projectColor,
+        } as ProjectColorStyle
+      }
+    >
+      <button
+        type="button"
+        className={`grid size-12 place-items-center bg-[var(--project-color)] text-white shadow-lg shadow-black/40 outline-none transition-[opacity,transform] hover:scale-105 focus-visible:scale-105 ${buttonOpacityClass}`}
+        aria-label={label}
+        aria-describedby={tooltipId}
+        onClick={onClick}
+      >
+        {children}
+      </button>
+      <span
+        id={tooltipId}
+        role="tooltip"
+        className={`pointer-events-none absolute top-1/2 z-30 whitespace-nowrap bg-black px-3 py-2 text-[0.6875rem] font-black uppercase leading-none tracking-[0.24em] text-[var(--project-color)] opacity-0 shadow-[0_10px_30px_rgba(0,0,0,0.45)] transition-[opacity,transform] duration-150 ease-out -translate-y-1/2 group-hover/nav-tooltip:opacity-100 group-focus-within/nav-tooltip:opacity-100 ${tooltipPositionClass}`}
+      >
+        {tooltipTitle}
+      </span>
+    </div>
+  );
+}
+
 function ProjectDescription({
   project,
   projectNumber,
+  projectColor,
   setDescriptionRef,
   isWideLayout,
   className,
 }: {
   project: PortfolioProject;
   projectNumber: string;
+  projectColor: string;
   setDescriptionRef: (node: HTMLDivElement | null) => void;
   isWideLayout: boolean;
   className?: string;
@@ -1012,6 +1281,7 @@ function ProjectDescription({
             ? 'text-[clamp(3.5rem,4vw,4.75rem)]'
             : 'text-[clamp(3rem,14vw,7rem)]'
         }`}
+        style={{ color: projectColor }}
       >
         {project.title}
       </h1>
@@ -1031,6 +1301,7 @@ function ProjectDescription({
 function ProjectPanel({
   project,
   projectNumber,
+  projectColor,
   slide,
   isWideLayout,
   isActive,
@@ -1039,6 +1310,7 @@ function ProjectPanel({
 }: {
   project: PortfolioProject;
   projectNumber: string;
+  projectColor: string;
   slide: ProjectSlide;
   isWideLayout: boolean;
   isActive: boolean;
@@ -1055,6 +1327,7 @@ function ProjectPanel({
       <ProjectDescription
         project={project}
         projectNumber={projectNumber}
+        projectColor={projectColor}
         setDescriptionRef={setDescriptionRef}
         isWideLayout={isWideLayout}
         className={`overflow-y-auto ${
@@ -1067,7 +1340,7 @@ function ProjectPanel({
       <div
         className={`grid min-h-0 place-items-center ${
           isWideLayout
-            ? 'grid-cols-[minmax(var(--portfolio-description-rail-width),1fr)_auto]'
+            ? 'grid-cols-[minmax(var(--portfolio-description-rail-width),1fr)_auto_var(--portfolio-control-gutter-width)]'
             : ''
         } ${
           slide.kind === 'description' ? 'hidden' : ''
@@ -1082,7 +1355,7 @@ function ProjectPanel({
         ) : (
           <button
             type="button"
-            className={`relative aspect-square overflow-hidden border border-white/15 outline-none transition-colors hover:border-portfolio-red focus-visible:border-portfolio-red ${
+            className={`relative aspect-square overflow-hidden border border-transparent outline-none transition-colors hover:border-portfolio-red focus-visible:border-portfolio-red ${
               isWideLayout
                 ? 'col-start-2 h-[var(--portfolio-screenshot-size)] max-h-none w-[var(--portfolio-screenshot-size)] max-w-none self-center justify-self-end'
                 : 'max-h-[calc(100dvh-8rem)] w-full max-w-[calc(100dvh-8rem)]'
@@ -1185,7 +1458,7 @@ function ImageModal({
   }, []);
 
   const handleWheel = useCallback(
-    (event: ReactWheelEvent<HTMLDivElement>) => {
+    (event: ReactWheelEvent<HTMLDialogElement>) => {
       event.preventDefault();
       setScale((current) => clampScale(current + event.deltaY * -0.002));
     },
@@ -1193,7 +1466,7 @@ function ImageModal({
   );
 
   const handleDoubleClick = useCallback(
-    (event: ReactMouseEvent<HTMLDivElement>) => {
+    (event: ReactMouseEvent<HTMLDialogElement>) => {
       if (isEditableTarget(event.target)) {
         return;
       }
@@ -1209,7 +1482,7 @@ function ImageModal({
   );
 
   const handlePointerDown = useCallback(
-    (event: ReactPointerEvent<HTMLDivElement>) => {
+    (event: ReactPointerEvent<HTMLDialogElement>) => {
       if (scale <= 1 || isEditableTarget(event.target)) {
         return;
       }
@@ -1233,7 +1506,7 @@ function ImageModal({
   );
 
   const handlePointerMove = useCallback(
-    (event: ReactPointerEvent<HTMLDivElement>) => {
+    (event: ReactPointerEvent<HTMLDialogElement>) => {
       const drag = dragRef.current;
 
       if (!drag.dragging || drag.pointerId !== event.pointerId) {
@@ -1249,7 +1522,7 @@ function ImageModal({
   );
 
   const stopPointerDrag = useCallback(
-    (event: ReactPointerEvent<HTMLDivElement>) => {
+    (event: ReactPointerEvent<HTMLDialogElement>) => {
       if (dragRef.current.pointerId === event.pointerId) {
         dragRef.current.dragging = false;
         setIsDragging(false);
@@ -1258,13 +1531,13 @@ function ImageModal({
     [dragRef]
   );
 
-  const getTouchDistance = (event: ReactTouchEvent<HTMLDivElement>) => {
+  const getTouchDistance = (event: ReactTouchEvent<HTMLDialogElement>) => {
     const [first, second] = Array.from(event.touches);
     return Math.hypot(first.clientX - second.clientX, first.clientY - second.clientY);
   };
 
   const handleTouchStart = useCallback(
-    (event: ReactTouchEvent<HTMLDivElement>) => {
+    (event: ReactTouchEvent<HTMLDialogElement>) => {
       if (event.touches.length === 2) {
         pinchRef.current = {
           distance: getTouchDistance(event),
@@ -1276,7 +1549,7 @@ function ImageModal({
   );
 
   const handleTouchMove = useCallback(
-    (event: ReactTouchEvent<HTMLDivElement>) => {
+    (event: ReactTouchEvent<HTMLDialogElement>) => {
       if (event.touches.length !== 2 || !pinchRef.current) {
         return;
       }
@@ -1296,10 +1569,9 @@ function ImageModal({
     scale > 1 ? (isDragging ? 'cursor-grabbing' : 'cursor-grab') : '';
 
   return (
-    <div
-      className={`fixed inset-0 z-50 grid touch-none place-items-center overflow-hidden bg-black ${panCursorClass}`}
-      role="dialog"
-      aria-modal="true"
+    <dialog
+      open
+      className={`fixed inset-0 z-50 m-0 grid h-dvh max-h-none w-screen max-w-none touch-none place-items-center overflow-hidden border-0 bg-black p-0 ${panCursorClass}`}
       aria-label={`${project.title}: ${screenshot.alt}`}
       onDoubleClick={handleDoubleClick}
       onWheel={handleWheel}
@@ -1332,6 +1604,6 @@ function ImageModal({
           className="object-contain"
         />
       </div>
-    </div>
+    </dialog>
   );
 }
