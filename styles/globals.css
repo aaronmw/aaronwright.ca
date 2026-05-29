@@ -30,7 +30,7 @@ button {
 }
 
 .portfolio-markdown a {
-  color: var(--color-portfolio-red);
+  color: var(--project-color, var(--color-portfolio-red));
   text-decoration: underline;
   text-decoration-thickness: 0.08em;
   text-underline-offset: 0.18em;

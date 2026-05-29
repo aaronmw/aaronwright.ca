@@ -19,13 +19,13 @@ export const portfolioSlides = [
     slug: 'building-with-ai',
     title: 'Building with AI',
     descriptionMarkdown: `
-Over the last few years, AI and I have become real good pals. To quote the Frank's Red Hot people, "I put that **** on everything." What began as casual experimentation with ChatGPT quickly evolved into serious, daily work with all the big ones: Cursor, Claude, Codex and their various models, harnesses, etc. I had been souring on the tedious parts of software development right when these tools hit the scene and could competantly take over (mostly). Since then, I've been developing my AI-foo and have so far crafted a handy set of rules, skills, and components to codify some of the more ambiguous parts of UI/UX and its implementation.
+Over the last few years, AI and I have become real good pals. To quote the Frank's Red Hot people, “I put that ** on everything.” What began as casual experimentation with ChatGPT quickly evolved into serious daily work with all the big ones: Cursor, Claude, Codex, and their various models and workflows.
 
-I still run into silly issues, but there's a satisfying cycle that begins with realising how my words or even my own mental model are riddled with ambiguity, then adding clarification, and then codifying the learning in such a way that agents can spot it in older work while avoiding it altogether in net-new work. Each mistake is an opportunity to level-up my robot and know that I won't have to articulate that nuance ever again.
+The timing was perfect. I was getting increasingly burned out on the tedious parts of software development. Not the problem solving. Not the debugging. Not the architecture. The repetitive stuff. The tenth form. The hundredth validation rule. The boilerplate. Then AI showed up and suddenly I could outsource huge chunks of that work while staying focused on the parts I actually enjoy.
 
-Instead of dreading having to push through the friction of starting something new, AI's turned it into air hockey. Finally, it's nearly trivial to make sweeping changes. The better we understand the problems, the better our code can reflect the best solutions. I am so grateful that I can now operate exclusively at the design and archicture altitude and not get bogged down by, for example, having to implement form validation for the millionth time.
+Since then I've been developing my AI-foo and building a growing collection of rules, skills, audits, and reusable context. Whenever the AI does something dumb, it's usually because I've been ambiguous. Fix the ambiguity, write it down once, and now neither of us has to make that mistake again. Over time I've accumulated a surprisingly useful toolkit for UI work, implementation details, accessibility checks, design audits, and all the little edge cases that tend to show up over and over.
 
-Building solid design systems and documentation for them has always been important, but the gains are exponential with AI in the game.
+I still run into silly issues, but that's part of the fun. Every mistake is an opportunity to level up my robot. What used to feel like pushing a boulder uphill now feels more like air hockey. The better I understand the problem, the better the AI can help solve it.
 `,
     screenshots: [
       {
@@ -43,7 +43,7 @@ Building solid design systems and documentation for them has always been importa
     descriptionMarkdown: `
 I love Figma, and I love building tools.
 
-Figma Toolbox is a collection of utilities I've built to solve problems I repeatedly encounter in my own design work. Some automate repetitive tasks, others simplify common workflows, and two are actually evolutions of plugins I'd already built and refined over years of use (both with tens of thousands of users in the Figma Community).
+Figma Toolbox is a collection of utilities I've built to solve problems I repeatedly encounter in my own design work. Some automate repetitive tasks, others simplify common workflows, and two are actually evolutions of plugins I'd already built and refined over years of use (both with [tens of thousands of users in the Figma Community](https://www.figma.com/@aaronmw)).
 
 My first Figma plugins were simple replacements for features I'd missed from other apps: "Saved Selections" is straight out of Adobe Illustrator's feature of the same name. "Find and Replace" was built because I needed to do a RegExp replace in a Figma file and couldn't, and I'd rather spend an hour or two building a tool than an even 30 minutes panning and scrolling and updating text by hand. "Property Randomizer" exists because I was assigned a Dashboard project and wanted my charts and data to look real enough that they wouldn't be distracting.
 
@@ -81,13 +81,13 @@ There are few things from which I derive more satisfaction than my Figma plugins
     slug: 'informal-systems',
     title: 'Informal Systems',
     descriptionMarkdown: `
-When I joined Informal Systems, one challenge quickly became apparent: the people closest to the company's work and content weren't the people updating the website. Changes flowed through a small number of technical contributors, creating unnecessary bottlenecks and slowing down communication.
+When I first started working with Informal Systems, one thing quickly became obvious: the people who knew the content best weren't the people updating the website.
 
-I helped redesign the publishing workflow by introducing a content management system that gave teams direct control over their own content while preserving consistency and presentation quality across the site. Contributors could edit and manage information themselves without needing engineering support, dramatically reducing the operational overhead involved in maintaining the website.
+Every change had to flow through a small number of technical contributors. Sometimes that was me. Someone would notice a typo, want to tweak some copy, reorder a project, or update a description, and suddenly we were creating tickets and waiting around for someone else to make a five minute change.
 
-The technical implementation was straightforward. The interesting problem was organizational. Multiple teams needed autonomy, but the overall experience still needed to feel coherent. My role was to create a system that balanced flexibility with structure, allowing experts to focus on their work instead of wrestling with publishing tools or waiting for someone else (me!) to make updates for them.
+I chose Contentful as our CMS and built a lightweight editing workflow around it. The trick was giving teams the freedom to update their own content without giving them enough rope to accidentally redesign the site. Contributors could simply hover over content on the page, jump directly into editing mode, make their changes, and move on with their day.
 
-The result was a publishing workflow that scaled with the organization and conveniently (for everyone) removed me from the critical path.
+The best part is that it mostly made me unnecessary. Requests disappeared, content stayed current, and the people closest to the work could tell their own stories without waiting for me to get around to it.
 `,
     screenshots: [
       {

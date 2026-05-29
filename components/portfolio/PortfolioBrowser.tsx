@@ -1,6 +1,7 @@
 'use client';
 
 import {
+  AnchorHTMLAttributes,
   CSSProperties,
   KeyboardEvent as ReactKeyboardEvent,
   MouseEvent as ReactMouseEvent,
@@ -101,6 +102,43 @@ function positiveModulo(value: number, length: number) {
 
 function getProjectColor(projectIndex: number) {
   return PROJECT_COLORS[positiveModulo(projectIndex, PROJECT_COLORS.length)];
+}
+
+function isExternalSiteHref(href?: string) {
+  if (!href) {
+    return false;
+  }
+
+  try {
+    const url = new URL(href, 'https://aaronwright.ca');
+
+    return (
+      (url.protocol === 'http:' || url.protocol === 'https:') &&
+      url.hostname !== 'aaronwright.ca' &&
+      url.hostname !== 'www.aaronwright.ca'
+    );
+  } catch {
+    return false;
+  }
+}
+
+function MarkdownLink({
+  href,
+  children,
+  ...props
+}: AnchorHTMLAttributes<HTMLAnchorElement>) {
+  const isExternalSite = isExternalSiteHref(href);
+
+  return (
+    <a
+      {...props}
+      href={href}
+      target={isExternalSite ? '_blank' : props.target}
+      rel={isExternalSite ? 'noopener noreferrer' : props.rel}
+    >
+      {children}
+    </a>
+  );
 }
 
 function getVerticalTargetProjectIndex(
@@ -1076,7 +1114,12 @@ export function PortfolioBrowser({
                 <button
                   key={project.id}
                   type="button"
-                  className="flex min-h-24 w-full items-center justify-between gap-6 py-6 text-left text-white outline-none transition-colors hover:text-portfolio-red focus-visible:text-portfolio-red sm:min-h-28"
+                  className="flex min-h-24 w-full items-center justify-between gap-6 py-6 text-left text-white outline-none transition-colors hover:text-[var(--project-color)] focus-visible:text-[var(--project-color)] sm:min-h-28"
+                  style={
+                    {
+                      '--project-color': getProjectColor(index),
+                    } as ProjectColorStyle
+                  }
                   onClick={() => {
                     focusKeyboardSurface();
                     setActiveProject(index, 'push', 'smooth', 0);
@@ -1253,6 +1296,7 @@ export function PortfolioBrowser({
       {shouldShowModal && activeProject && activeScreenshot ? (
         <ImageModal
           project={activeProject}
+          projectColor={activeProjectColor}
           screenshot={activeScreenshot}
           scale={modalScale}
           offset={modalOffset}
@@ -1369,6 +1413,11 @@ function ProjectDescription({
     <div
       ref={setDescriptionRef}
       className={`portfolio-scrollbar-none min-h-0 pr-1 ${className ?? ''}`}
+      style={
+        {
+          '--project-color': projectColor,
+        } as ProjectColorStyle
+      }
     >
       <p className="mb-5 text-xs font-light uppercase tracking-[0.35em] text-white/45">
         PROJECT {projectNumber}
@@ -1388,7 +1437,12 @@ function ProjectDescription({
           isWideLayout ? 'min-w-[32rem] text-xl' : 'text-lg'
         }`}
       >
-        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
+          components={{
+            a: MarkdownLink,
+          }}
+        >
           {project.descriptionMarkdown}
         </ReactMarkdown>
       </div>
@@ -1421,6 +1475,11 @@ function ProjectPanel({
         isWideLayout ? 'px-0 py-0' : 'px-6 pb-24 pt-8 sm:px-10'
       }`}
       aria-hidden={!isActive}
+      style={
+        {
+          '--project-color': projectColor,
+        } as ProjectColorStyle
+      }
     >
       <ProjectDescription
         project={project}
@@ -1453,7 +1512,7 @@ function ProjectPanel({
         ) : (
           <button
             type="button"
-            className={`relative overflow-hidden border border-transparent outline-none transition-colors hover:border-portfolio-red focus-visible:border-portfolio-red ${
+            className={`relative overflow-hidden border border-transparent outline-none transition-colors hover:border-[var(--project-color)] focus-visible:border-[var(--project-color)] ${
               isWideLayout
                 ? 'col-start-2 aspect-square h-[var(--portfolio-screenshot-size)] max-h-none w-[var(--portfolio-screenshot-size)] max-w-none self-center justify-self-end'
                 : 'h-full min-h-0 w-full'
@@ -1520,6 +1579,7 @@ function ScreenshotMedia({
 
 function ImageModal({
   project,
+  projectColor,
   screenshot,
   scale,
   offset,
@@ -1530,6 +1590,7 @@ function ImageModal({
   onClose,
 }: {
   project: PortfolioProject;
+  projectColor?: string;
   screenshot: PortfolioScreenshot;
   scale: number;
   offset: { x: number; y: number };
@@ -1683,7 +1744,12 @@ function ImageModal({
     >
       <button
         type="button"
-        className="fixed right-5 top-5 z-10 h-11 min-w-11 bg-portfolio-red px-4 text-sm font-black uppercase text-white outline-none transition-transform hover:scale-105 focus-visible:scale-105"
+        className="fixed right-5 top-5 z-10 h-11 min-w-11 bg-[var(--project-color)] px-4 text-sm font-black uppercase text-white outline-none transition-transform hover:scale-105 focus-visible:scale-105"
+        style={
+          {
+            '--project-color': projectColor ?? PROJECT_COLORS[0],
+          } as ProjectColorStyle
+        }
         onClick={onClose}
       >
         Close
