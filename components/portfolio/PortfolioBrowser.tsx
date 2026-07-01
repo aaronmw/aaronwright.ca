@@ -209,6 +209,32 @@ function isVideoScreenshot(screenshot: PortfolioScreenshot) {
   return /\.(webm|mp4|m4v|ogv|ogg)(?:$|\?)/i.test(screenshot.src);
 }
 
+function isBuildingWithAiTextScreenshot(
+  project: PortfolioProject,
+  screenshot: PortfolioScreenshot
+) {
+  return (
+    project.id === 'building-with-ai' &&
+    screenshot.id === 'building-with-ai-home-page'
+  );
+}
+
+function isBuildingWithAiTextSlide(
+  project: PortfolioProject,
+  slide: ProjectSlide
+) {
+  return (
+    slide.kind === 'screenshot' &&
+    isBuildingWithAiTextScreenshot(project, slide.screenshot)
+  );
+}
+
+function hasBuildingWithAiTextSlide(project: PortfolioProject) {
+  return project.screenshots.some((screenshot) =>
+    isBuildingWithAiTextScreenshot(project, screenshot)
+  );
+}
+
 export function PortfolioBrowser({
   initialProjectSlug,
   initialScreenshotSlug,
@@ -282,7 +308,15 @@ export function PortfolioBrowser({
   const activeSlide = activeSlides[activeSlideIndex];
   const activeScreenshot =
     activeSlide?.kind === 'screenshot' ? activeSlide.screenshot : undefined;
-  const shouldShowModal = isModalOpen && Boolean(activeScreenshot);
+  const shouldShowModal =
+    isModalOpen &&
+    Boolean(activeProject) &&
+    Boolean(activeScreenshot) &&
+    !(
+      activeProject &&
+      activeScreenshot &&
+      isBuildingWithAiTextScreenshot(activeProject, activeScreenshot)
+    );
   const activeProjectColor =
     activeProjectIndex >= 0 ? getProjectColor(activeProjectIndex) : undefined;
 
@@ -443,9 +477,11 @@ export function PortfolioBrowser({
       return null;
     }
 
+    const slide = slides[slideIndex];
     const modalOpen =
       new URLSearchParams(search).get('modal') === 'image' &&
-      slides[slideIndex].kind === 'screenshot';
+      slide.kind === 'screenshot' &&
+      !isBuildingWithAiTextSlide(project, slide);
 
     return { projectIndex, slideIndex, modalOpen };
   }, [projectSlides]);
@@ -649,7 +685,12 @@ export function PortfolioBrowser({
   );
 
   const openModal = useCallback((slide: ProjectSlide = activeSlide) => {
-    if (!activeProject || !slide || slide.kind !== 'screenshot') {
+    if (
+      !activeProject ||
+      !slide ||
+      slide.kind !== 'screenshot' ||
+      isBuildingWithAiTextSlide(activeProject, slide)
+    ) {
       return;
     }
 
@@ -690,10 +731,21 @@ export function PortfolioBrowser({
   const syncInitialScrollEvent = useEffectEvent(() => {
     syncViewport(normalizedInitialProjectIndex, initialSlideIndexes, 'auto');
 
+    const initialProject =
+      normalizedInitialProjectIndex >= 0
+        ? portfolioSlides[normalizedInitialProjectIndex]
+        : undefined;
+    const initialSlide = initialProject
+      ? projectSlides[initialProject.slug][
+          initialSlideIndexes[normalizedInitialProjectIndex] ?? 0
+        ]
+      : undefined;
+
     if (
       window.location.search.includes('modal=image') &&
-      normalizedInitialProjectIndex >= 0 &&
-      (initialSlideIndexes[normalizedInitialProjectIndex] ?? 0) > 0
+      initialProject &&
+      initialSlide?.kind === 'screenshot' &&
+      !isBuildingWithAiTextSlide(initialProject, initialSlide)
     ) {
       setIsModalOpen(true);
     }
@@ -1086,9 +1138,9 @@ export function PortfolioBrowser({
                   </a>
                   <a
                     className="transition-colors hover:text-white focus-visible:text-white"
-                    href="mailto:aaronmw@gmail.com"
+                    href="mailto:aaron@aaronwright.ca"
                   >
-                    aaronmw@gmail.com
+                    aaron@aaronwright.ca
                   </a>
                 </p>
                 <p>
@@ -1156,18 +1208,16 @@ export function PortfolioBrowser({
               aria-label={project.title}
               style={WIDE_LAYOUT_STYLE}
             >
-              <ProjectDescription
-                project={project}
-                projectNumber={projectNumber}
-                projectColor={getProjectColor(projectIndex)}
-                setDescriptionRef={setDescriptionRef(project.slug)}
-                isWideLayout={isWideLayout}
-                className={
-                  isWideLayout
-                    ? 'absolute bottom-10 left-0 top-10 z-10 block w-[var(--portfolio-description-rail-width)] overflow-y-auto bg-black/80 py-6 pl-[var(--portfolio-control-gutter-width)] pr-6 backdrop-blur-md'
-                    : 'hidden'
-                }
-              />
+              {isWideLayout && !hasBuildingWithAiTextSlide(project) ? (
+                <ProjectDescription
+                  project={project}
+                  projectNumber={projectNumber}
+                  projectColor={getProjectColor(projectIndex)}
+                  setDescriptionRef={setDescriptionRef(project.slug)}
+                  isWideLayout={isWideLayout}
+                  className="absolute bottom-10 left-0 top-10 z-10 block w-[var(--portfolio-description-rail-width)] overflow-y-auto bg-black/80 py-6 pl-[var(--portfolio-control-gutter-width)] pr-6 backdrop-blur-md"
+                />
+              ) : null}
               <div
                 ref={setHorizontalRef(project.slug)}
                 className={`flex h-dvh snap-x snap-mandatory overflow-x-auto overflow-y-hidden overscroll-x-contain portfolio-scrollbar-none ${
@@ -1469,6 +1519,17 @@ function ProjectPanel({
   setDescriptionRef: (node: HTMLDivElement | null) => void;
   onScreenshotClick: (slide: ProjectSlide) => void;
 }) {
+  const isTextSlide = isBuildingWithAiTextSlide(project, slide);
+  const panelContentClass = isTextSlide
+    ? isWideLayout
+      ? 'overflow-y-auto px-0 py-0'
+      : 'overflow-y-auto'
+    : `place-items-center ${
+        isWideLayout
+          ? 'grid-cols-[minmax(var(--portfolio-description-rail-width),1fr)_auto_var(--portfolio-control-gutter-width)]'
+          : ''
+      }`;
+
   return (
     <article
       className={`grid h-dvh w-screen shrink-0 snap-start snap-always grid-rows-[1fr] bg-black ${
@@ -1495,11 +1556,7 @@ function ProjectPanel({
       />
 
       <div
-        className={`grid min-h-0 place-items-center ${
-          isWideLayout
-            ? 'grid-cols-[minmax(var(--portfolio-description-rail-width),1fr)_auto_var(--portfolio-control-gutter-width)]'
-            : ''
-        } ${
+        className={`grid min-h-0 ${panelContentClass} ${
           slide.kind === 'description' ? 'hidden' : ''
         }`}
       >
@@ -1509,6 +1566,13 @@ function ProjectPanel({
               {project.title}
             </span>
           </div>
+        ) : isTextSlide ? (
+          <BuildingWithAiTextPanel
+            project={project}
+            projectNumber={projectNumber}
+            projectColor={projectColor}
+            isWideLayout={isWideLayout}
+          />
         ) : (
           <button
             type="button"
@@ -1532,6 +1596,66 @@ function ProjectPanel({
         )}
       </div>
     </article>
+  );
+}
+
+function BuildingWithAiTextPanel({
+  project,
+  projectNumber,
+  projectColor,
+  isWideLayout,
+}: {
+  project: PortfolioProject;
+  projectNumber: string;
+  projectColor: string;
+  isWideLayout: boolean;
+}) {
+  return (
+    <section
+      className={`portfolio-scrollbar-none min-h-0 w-full ${
+        isWideLayout
+          ? 'flex h-full flex-col overflow-y-auto bg-black/80 py-16 pl-[var(--portfolio-control-gutter-width)] pr-[var(--portfolio-control-gutter-width)] backdrop-blur-md'
+          : 'overflow-y-auto'
+      }`}
+      aria-label={project.title}
+    >
+      <p className="mb-5 text-xs font-light uppercase tracking-[0.35em] text-white/45">
+        PROJECT {projectNumber}
+      </p>
+      <h1
+        className={`mb-8 w-full max-w-[12ch] font-black uppercase leading-none tracking-normal ${
+          isWideLayout
+            ? 'text-[clamp(3.5rem,4vw,4.75rem)]'
+            : 'max-w-[12ch] text-[clamp(3rem,14vw,7rem)]'
+        }`}
+        style={{ color: projectColor }}
+      >
+        {project.title}
+      </h1>
+      {isWideLayout ? (
+        <div className="portfolio-markdown min-h-0 w-full max-w-[calc(108ch+7rem)] flex-1 text-lg font-light leading-relaxed text-white/82 [column-count:3] [column-fill:auto] [column-gap:3.5rem]">
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            components={{
+              a: MarkdownLink,
+            }}
+          >
+            {project.descriptionMarkdown}
+          </ReactMarkdown>
+        </div>
+      ) : (
+        <div className="portfolio-markdown w-full max-w-[48ch] text-lg font-light leading-relaxed text-white/82">
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            components={{
+              a: MarkdownLink,
+            }}
+          >
+            {project.descriptionMarkdown}
+          </ReactMarkdown>
+        </div>
+      )}
+    </section>
   );
 }
 
