@@ -503,6 +503,8 @@ export function PortfolioBrowser({
   > | null>(null);
   const modalHistoryEntryRef = useRef(false);
   const initialScrollSyncedRef = useRef(false);
+  const verticalScrollFrameRef = useRef<number | null>(null);
+  const sectionNavFillRefs = useRef<Array<HTMLSpanElement | null>>([]);
 
   const projectSlides = useMemo(
     () =>
@@ -1185,6 +1187,40 @@ export function PortfolioBrowser({
     applyLocationState('auto');
   });
 
+  const syncSectionNavFillToScrollEvent = useEffectEvent(
+    (vertical: HTMLDivElement) => {
+      if (verticalScrollFrameRef.current !== null) {
+        return;
+      }
+
+      verticalScrollFrameRef.current = requestAnimationFrame(() => {
+        verticalScrollFrameRef.current = null;
+
+        if (vertical.clientHeight <= 0) {
+          return;
+        }
+
+        const sectionPosition = Math.max(
+          0,
+          Math.min(
+            portfolioSlides.length,
+            vertical.scrollTop / vertical.clientHeight
+          )
+        );
+
+        const transform = `translate3d(-50%, ${
+          sectionPosition * SECTION_NAV_ITEM_STEP_REM
+        }rem, 0)`;
+
+        sectionNavFillRefs.current.forEach((fill) => {
+          if (fill) {
+            fill.style.transform = transform;
+          }
+        });
+      });
+    }
+  );
+
   const syncCurrentViewportEvent = useEffectEvent(() => {
     syncViewport(activeProjectIndex, activeSlideIndexes, 'auto');
   });
@@ -1409,9 +1445,21 @@ export function PortfolioBrowser({
       return;
     }
 
+    const handleVerticalScroll = () => syncSectionNavFillToScrollEvent(vertical);
     const handleVerticalScrollEnd = () => handleVerticalScrollEndEvent(vertical);
+    vertical.addEventListener('scroll', handleVerticalScroll, { passive: true });
     vertical.addEventListener('scrollend', handleVerticalScrollEnd);
-    return () => vertical.removeEventListener('scrollend', handleVerticalScrollEnd);
+    syncSectionNavFillToScrollEvent(vertical);
+
+    return () => {
+      vertical.removeEventListener('scroll', handleVerticalScroll);
+      vertical.removeEventListener('scrollend', handleVerticalScrollEnd);
+
+      if (verticalScrollFrameRef.current !== null) {
+        cancelAnimationFrame(verticalScrollFrameRef.current);
+        verticalScrollFrameRef.current = null;
+      }
+    };
   }, []);
 
   useEffect(() => {
@@ -1788,6 +1836,13 @@ export function PortfolioBrowser({
                 axis="y"
                 color={sideNavActiveFillColor}
                 stepRem={SECTION_NAV_ITEM_STEP_REM}
+                scrollLinkedPosition={`${Math.max(
+                  0,
+                  normalizedInitialProjectIndex + 1
+                ) * SECTION_NAV_ITEM_STEP_REM}rem`}
+                elementRef={(node) => {
+                  sectionNavFillRefs.current[0] = node;
+                }}
                 className="block size-12 border-4 border-current"
                 dataAttributes={{ 'data-portfolio-section-nav-fill': 'left' }}
               />
@@ -1808,6 +1863,13 @@ export function PortfolioBrowser({
                 axis="y"
                 color={sideNavActiveFillColor}
                 stepRem={SECTION_NAV_ITEM_STEP_REM}
+                scrollLinkedPosition={`${Math.max(
+                  0,
+                  normalizedInitialProjectIndex + 1
+                ) * SECTION_NAV_ITEM_STEP_REM}rem`}
+                elementRef={(node) => {
+                  sectionNavFillRefs.current[1] = node;
+                }}
                 className="block size-12 border-4 border-current"
                 dataAttributes={{ 'data-portfolio-section-nav-fill': 'right' }}
               />
@@ -2179,6 +2241,8 @@ function AnimatedActiveFill({
   stepRem,
   offsetRem = 0,
   centeredCount,
+  scrollLinkedPosition,
+  elementRef,
   visible = true,
   className,
   dataAttributes,
@@ -2189,11 +2253,15 @@ function AnimatedActiveFill({
   stepRem: number;
   offsetRem?: number;
   centeredCount?: number;
+  scrollLinkedPosition?: string;
+  elementRef?: (node: HTMLSpanElement | null) => void;
   visible?: boolean;
   className: string;
   dataAttributes?: Record<`data-${string}`, string>;
 }) {
-  const position = `calc(${activeIndex} * ${stepRem}rem + ${offsetRem}rem)`;
+  const position =
+    scrollLinkedPosition ??
+    `calc(${activeIndex} * ${stepRem}rem + ${offsetRem}rem)`;
   const isCenteredHorizontal = axis === 'x' && centeredCount !== undefined;
   const transform = isCenteredHorizontal
     ? getCenteredIndicatorTransform(activeIndex, centeredCount)
@@ -2206,11 +2274,15 @@ function AnimatedActiveFill({
         ? 'left-1/2 top-1/2 z-10'
         : 'left-0 top-1/2 z-10'
       : 'left-1/2 top-0 z-0';
+  const transitionClass = scrollLinkedPosition
+    ? 'transition-[background-color,border-color,color,opacity]'
+    : 'transition-[background-color,border-color,color,opacity,transform]';
 
   return (
     <span
+      ref={elementRef}
       {...dataAttributes}
-      className={`${className} pointer-events-none absolute ${positionClass} transition-[background-color,border-color,color,opacity,transform] duration-500 ease-out motion-reduce:transition-none`}
+      className={`${className} pointer-events-none absolute ${positionClass} ${transitionClass} duration-500 ease-out motion-reduce:transition-none`}
       style={{
         backgroundColor: color,
         borderColor: color,
