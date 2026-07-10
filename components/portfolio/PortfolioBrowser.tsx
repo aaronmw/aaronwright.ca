@@ -3,11 +3,13 @@
 import {
   AnchorHTMLAttributes,
   CSSProperties,
+  HTMLAttributes,
   KeyboardEvent as ReactKeyboardEvent,
   MouseEvent as ReactMouseEvent,
   PointerEvent as ReactPointerEvent,
   ReactNode,
   TouchEvent as ReactTouchEvent,
+  TransitionEvent as ReactTransitionEvent,
   WheelEvent as ReactWheelEvent,
   useCallback,
   useEffect,
@@ -27,14 +29,17 @@ import {
   faArrowRight,
   faArrowUp,
   faFilePdf,
+  faXmark,
 } from '@fortawesome/free-solid-svg-icons';
 import ReactMarkdown from 'react-markdown';
+import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
 import {
   PortfolioProject,
   PortfolioScreenshot,
   portfolioSlides,
 } from '@/lib/portfolio';
+import type { Components } from 'react-markdown';
 
 type PortfolioBrowserProps = {
   initialProjectSlug?: string;
@@ -65,6 +70,19 @@ type WideLayoutStyle = CSSProperties & {
 type ProjectColorStyle = CSSProperties & {
   '--project-color': string;
 };
+type MarkdownLinkProps = AnchorHTMLAttributes<HTMLAnchorElement> & {
+  node?: unknown;
+};
+type MarkdownHeadingProps = HTMLAttributes<HTMLHeadingElement> & {
+  node?: unknown;
+};
+type MarkdownHeadingTag = 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
+type ModalTransitionRect = {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+};
 const WIDE_LAYOUT_STYLE: WideLayoutStyle = {
   '--portfolio-description-rail-width':
     'min(calc(100vw - 4rem), calc(7rem + max(32rem, 48ch)))',
@@ -73,13 +91,46 @@ const WIDE_LAYOUT_STYLE: WideLayoutStyle = {
     'min(100dvh, calc(100vw - var(--portfolio-description-rail-width) - var(--portfolio-control-gutter-width)))',
 };
 const NAVIGATION_SQUARE_CLASS =
-  'block size-[1.3125rem] border border-current transition-colors';
+  'block size-5 border border-current';
+const NAVIGATION_INDICATOR_STEP_REM = 2.5;
+const NAVIGATION_INDICATOR_PAIR_STAGGER_MS = 90;
+const NAVIGATION_INDICATOR_SIDE_LEAD_MS = 30;
+const NAVIGATION_INDICATOR_TRANSITION_MS = 500;
+const SECTION_NAV_ITEM_STEP_REM = 3.75;
+const CAROUSEL_MEDIA_CLASS =
+  'object-contain transition-[filter] duration-1000 ease-in-out';
 const TOP_SCREEN_COLOR = 'hsl(0 0% 100%)';
-const PROJECT_COLORS = [
-  'hsl(342 78% 52%)',
-  'hsl(88 74% 44%)',
-  'hsl(192 82% 48%)',
-];
+const PROJECT_COLOR_START_HUE = 342;
+const PROJECT_COLOR_SATURATION = 78;
+const PROJECT_COLOR_LIGHTNESS = 54;
+const PROJECT_COLORS = buildProjectColors(portfolioSlides.length);
+const INLINE_MARKDOWN_COMPONENTS = {
+  p({ children }) {
+    return <>{children}</>;
+  },
+} satisfies Components;
+const PORTFOLIO_MARKDOWN_COMPONENTS = {
+  a: MarkdownLink,
+  h1: createMarkdownHeading('h2'),
+  h2: createMarkdownHeading('h3'),
+  h3: createMarkdownHeading('h4'),
+  h4: createMarkdownHeading('h5'),
+  h5: createMarkdownHeading('h6'),
+  h6: createMarkdownHeading('h6'),
+} satisfies Components;
+
+function buildProjectColors(projectCount: number) {
+  const safeProjectCount = Math.max(1, projectCount);
+  const hueStep = 360 / safeProjectCount;
+
+  return Array.from({ length: safeProjectCount }, (_, index) => {
+    const hue = Math.round(
+      (PROJECT_COLOR_START_HUE + hueStep * index) % 360
+    );
+
+    return `hsl(${hue} ${PROJECT_COLOR_SATURATION}% ${PROJECT_COLOR_LIGHTNESS}%)`;
+  });
+}
 
 function getWideLayoutSnapshot() {
   return window.matchMedia(WIDE_LAYOUT_MEDIA_QUERY).matches;
@@ -98,6 +149,121 @@ function subscribeToWideLayout(callback: () => void) {
 
 function positiveModulo(value: number, length: number) {
   return ((value % length) + length) % length;
+}
+
+type LoopingCarouselEntry<T> = {
+  item: T;
+  key: string;
+  realIndex: number;
+};
+
+function getLoopingCarouselEntries<T extends { id: string }>(
+  items: T[],
+  cloneSingleton = false
+): LoopingCarouselEntry<T>[] {
+  if (items.length === 0) {
+    return [];
+  }
+
+  const entries = items.map((item, realIndex) => ({
+    item,
+    key: `real:${item.id}`,
+    realIndex,
+  }));
+
+  if (items.length === 1 && !cloneSingleton) {
+    return entries;
+  }
+
+  const lastIndex = items.length - 1;
+
+  return [
+    {
+      item: items[lastIndex],
+      key: `clone-before:${items[lastIndex].id}`,
+      realIndex: lastIndex,
+    },
+    ...entries,
+    {
+      item: items[0],
+      key: `clone-after:${items[0].id}`,
+      realIndex: 0,
+    },
+  ];
+}
+
+function getRealCarouselIndex(renderedIndex: number, itemCount: number) {
+  return positiveModulo(renderedIndex - 1, itemCount);
+}
+
+function getRenderedCarouselIndex(
+  previousIndex: number,
+  nextIndex: number,
+  itemCount: number
+) {
+  if (itemCount <= 1) {
+    return nextIndex;
+  }
+
+  if (previousIndex === itemCount - 1 && nextIndex === 0) {
+    return itemCount + 1;
+  }
+
+  if (previousIndex === 0 && nextIndex === itemCount - 1) {
+    return 0;
+  }
+
+  return nextIndex + 1;
+}
+
+function getCanonicalCarouselIndex(renderedIndex: number, itemCount: number) {
+  if (renderedIndex === 0) {
+    return itemCount;
+  }
+
+  if (renderedIndex === itemCount + 1) {
+    return 1;
+  }
+
+  return undefined;
+}
+
+function getCarouselTrackTransform(renderedIndex: number) {
+  return `translate3d(${-renderedIndex * 100}%, 0, 0)`;
+}
+
+function getCarouselMediaClass(isActive: boolean) {
+  return `${CAROUSEL_MEDIA_CLASS} ${
+    isActive ? 'blur-0' : 'blur-[20px]'
+  }`;
+}
+
+function getIndicatorSlotIds(count: number) {
+  return Array.from({ length: count }, (_, index) => {
+    if (index === 0) {
+      return 0;
+    }
+
+    return index % 2 === 1 ? Math.ceil(index / 2) : -(index / 2);
+  }).sort((a, b) => a - b);
+}
+
+function getOutsideInDelay(index: number, count: number) {
+  const distanceFromLeft = index;
+  const distanceFromRight = count - index - 1;
+  const pairIndex = Math.min(distanceFromLeft, distanceFromRight);
+  const leftSideDelay =
+    distanceFromLeft < distanceFromRight
+      ? NAVIGATION_INDICATOR_SIDE_LEAD_MS
+      : 0;
+
+  return pairIndex * NAVIGATION_INDICATOR_PAIR_STAGGER_MS + leftSideDelay;
+}
+
+function getCenteredIndicatorTransform(index: number, count: number) {
+  const offsetRem = (index - (count - 1) / 2) * NAVIGATION_INDICATOR_STEP_REM;
+
+  return `translate3d(-50%, -50%, 0) translateX(${offsetRem}rem)`;
 }
 
 function getProjectColor(projectIndex: number) {
@@ -125,8 +291,9 @@ function isExternalSiteHref(href?: string) {
 function MarkdownLink({
   href,
   children,
+  node: _node,
   ...props
-}: AnchorHTMLAttributes<HTMLAnchorElement>) {
+}: MarkdownLinkProps) {
   const isExternalSite = isExternalSiteHref(href);
 
   return (
@@ -139,6 +306,14 @@ function MarkdownLink({
       {children}
     </a>
   );
+}
+
+function createMarkdownHeading(Tag: MarkdownHeadingTag) {
+  function MarkdownHeading({ node: _node, ...props }: MarkdownHeadingProps) {
+    return <Tag {...props} />;
+  }
+
+  return MarkdownHeading;
 }
 
 function getVerticalTargetProjectIndex(
@@ -175,12 +350,34 @@ function pageTitle(project?: PortfolioProject, slide?: ProjectSlide) {
   return `${project.title}: ${slide.slug} | Aaron M. Wright`;
 }
 
+function titleCaseLabel(value: string) {
+  return value.replace(/\S+/g, (word) =>
+    word
+      .split('-')
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join('-')
+  );
+}
+
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 function slideNavigationTitle(project: PortfolioProject, slide: ProjectSlide) {
   if (slide.kind === 'description') {
-    return project.title;
+    return `${project.title} • Index`;
   }
 
-  return slide.screenshot.alt;
+  const altMatch = slide.screenshot.alt.match(/^(\d+\s+of\s+\d+):\s*(.+)$/i);
+  const positionLabel =
+    altMatch?.[1] ??
+    `${project.screenshots.findIndex((screenshot) => screenshot.id === slide.screenshot.id) + 1} of ${project.screenshots.length}`;
+  const rawSlideLabel = altMatch?.[2] ?? slide.screenshot.slug;
+  const projectPrefixPattern = new RegExp(`^${escapeRegExp(project.title)}\\s*`, 'i');
+  const slideLabel =
+    rawSlideLabel.replace(projectPrefixPattern, '').trim() || slide.screenshot.slug;
+
+  return `${positionLabel} • ${project.title} • ${titleCaseLabel(slideLabel)}`;
 }
 
 function isEditableTarget(target: EventTarget | null) {
@@ -191,6 +388,64 @@ function isEditableTarget(target: EventTarget | null) {
   return Boolean(
     target.closest('input, textarea, select, button, a, [contenteditable="true"]')
   );
+}
+
+function snapshotClientRect(rect: DOMRectReadOnly): ModalTransitionRect {
+  return {
+    left: rect.left,
+    top: rect.top,
+    width: rect.width,
+    height: rect.height,
+  };
+}
+
+function getVisibleScreenshotButtonRect(
+  screenshotId: string
+): ModalTransitionRect | null {
+  const nodes = Array.from(
+    document.querySelectorAll<HTMLElement>('[data-portfolio-screenshot-id]')
+  ).filter((node) => node.dataset.portfolioScreenshotId === screenshotId);
+  let bestRect: DOMRect | undefined;
+  let bestVisibleArea = 0;
+
+  nodes.forEach((node) => {
+    const rect = node.getBoundingClientRect();
+    const visibleWidth =
+      Math.min(rect.right, window.innerWidth) - Math.max(rect.left, 0);
+    const visibleHeight =
+      Math.min(rect.bottom, window.innerHeight) - Math.max(rect.top, 0);
+    const visibleArea = Math.max(0, visibleWidth) * Math.max(0, visibleHeight);
+
+    if (visibleArea > bestVisibleArea) {
+      bestVisibleArea = visibleArea;
+      bestRect = rect;
+    }
+  });
+
+  return bestRect ? snapshotClientRect(bestRect) : null;
+}
+
+function getModalFrameRect(): ModalTransitionRect {
+  return {
+    left: window.innerWidth * 0.04,
+    top: window.innerHeight * 0.04,
+    width: window.innerWidth * 0.92,
+    height: window.innerHeight * 0.92,
+  };
+}
+
+function applyFrameRect(node: HTMLElement, rect: ModalTransitionRect) {
+  node.style.left = `${rect.left}px`;
+  node.style.top = `${rect.top}px`;
+  node.style.width = `${rect.width}px`;
+  node.style.height = `${rect.height}px`;
+}
+
+function clearFrameRect(node: HTMLElement) {
+  node.style.left = '';
+  node.style.top = '';
+  node.style.width = '';
+  node.style.height = '';
 }
 
 function getProjectSlides(project: PortfolioProject): ProjectSlide[] {
@@ -207,6 +462,10 @@ function getProjectSlides(project: PortfolioProject): ProjectSlide[] {
 
 function isVideoScreenshot(screenshot: PortfolioScreenshot) {
   return /\.(webm|mp4|m4v|ogv|ogg)(?:$|\?)/i.test(screenshot.src);
+}
+
+function hasProjectScreenshots(project: PortfolioProject) {
+  return project.screenshots.length > 0;
 }
 
 function isBuildingWithAiTextScreenshot(
@@ -229,6 +488,13 @@ function isBuildingWithAiTextSlide(
   );
 }
 
+function isModalScreenshotSlide(
+  project: PortfolioProject,
+  slide: ProjectSlide
+): slide is Extract<ProjectSlide, { kind: 'screenshot' }> {
+  return slide.kind === 'screenshot' && !isBuildingWithAiTextSlide(project, slide);
+}
+
 function hasBuildingWithAiTextSlide(project: PortfolioProject) {
   return project.screenshots.some((screenshot) =>
     isBuildingWithAiTextScreenshot(project, screenshot)
@@ -245,6 +511,10 @@ export function PortfolioBrowser({
   const descriptionRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const userMovedRef = useRef(false);
   const scrollSyncRef = useRef(false);
+  const horizontalScrollSyncProjectRef = useRef<string | null>(null);
+  const horizontalScrollSyncTimeoutRef = useRef<ReturnType<
+    typeof setTimeout
+  > | null>(null);
   const modalHistoryEntryRef = useRef(false);
   const initialScrollSyncedRef = useRef(false);
 
@@ -288,6 +558,9 @@ export function PortfolioBrowser({
     getWideLayoutServerSnapshot
   );
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isModalClosing, setIsModalClosing] = useState(false);
+  const [modalTransitionRect, setModalTransitionRect] =
+    useState<ModalTransitionRect | null>(null);
   const [modalScale, setModalScale] = useState(1);
   const [modalOffset, setModalOffset] = useState({ x: 0, y: 0 });
   const modalDragRef = useRef({
@@ -317,6 +590,7 @@ export function PortfolioBrowser({
       activeScreenshot &&
       isBuildingWithAiTextScreenshot(activeProject, activeScreenshot)
     );
+  const isModalPresentationActive = shouldShowModal && !isModalClosing;
   const activeProjectColor =
     activeProjectIndex >= 0 ? getProjectColor(activeProjectIndex) : undefined;
 
@@ -355,7 +629,9 @@ export function PortfolioBrowser({
         return slides;
       }
 
-      return slides.filter((slide) => slide.kind === 'screenshot');
+      const screenshotSlides = slides.filter((slide) => slide.kind === 'screenshot');
+
+      return screenshotSlides.length > 0 ? screenshotSlides : slides;
     },
     [isWideLayout, projectSlides]
   );
@@ -557,6 +833,47 @@ export function PortfolioBrowser({
     [resetModalView]
   );
 
+  const replaceModalUrl = useCallback((project: PortfolioProject, slide: ProjectSlide) => {
+    if (!isModalScreenshotSlide(project, slide)) {
+      return;
+    }
+
+    window.history.replaceState({}, '', `${projectUrl(project, slide)}?modal=image`);
+    document.title = pageTitle(project, slide);
+  }, []);
+
+  const clearHorizontalScrollSync = useCallback((project?: PortfolioProject) => {
+    if (
+      project &&
+      horizontalScrollSyncProjectRef.current &&
+      horizontalScrollSyncProjectRef.current !== project.slug
+    ) {
+      return;
+    }
+
+    horizontalScrollSyncProjectRef.current = null;
+
+    if (horizontalScrollSyncTimeoutRef.current) {
+      clearTimeout(horizontalScrollSyncTimeoutRef.current);
+      horizontalScrollSyncTimeoutRef.current = null;
+    }
+  }, []);
+
+  const beginHorizontalScrollSync = useCallback(
+    (project: PortfolioProject) => {
+      clearHorizontalScrollSync();
+      horizontalScrollSyncProjectRef.current = project.slug;
+      horizontalScrollSyncTimeoutRef.current = setTimeout(() => {
+        if (horizontalScrollSyncProjectRef.current === project.slug) {
+          horizontalScrollSyncProjectRef.current = null;
+        }
+
+        horizontalScrollSyncTimeoutRef.current = null;
+      }, 1000);
+    },
+    [clearHorizontalScrollSync]
+  );
+
   const setActiveSlide = useCallback(
     (
       projectIndex: number,
@@ -579,10 +896,20 @@ export function PortfolioBrowser({
         resetDescriptionScroll(project);
       }
 
+      if (scrollBehavior === 'smooth') {
+        beginHorizontalScrollSync(project);
+      }
+
       scrollHorizontalToRealIndex(project, nextIndex, scrollBehavior);
       updateUrl(project, nextSlide, mode);
     },
-    [projectSlides, resetDescriptionScroll, scrollHorizontalToRealIndex, updateUrl]
+    [
+      beginHorizontalScrollSync,
+      projectSlides,
+      resetDescriptionScroll,
+      scrollHorizontalToRealIndex,
+      updateUrl,
+    ]
   );
 
   const setActiveProject = useCallback(
@@ -674,6 +1001,82 @@ export function PortfolioBrowser({
     ]
   );
 
+  const setActiveModalSlide = useCallback(
+    (slide: ProjectSlide, scrollBehavior: ScrollBehavior = 'smooth') => {
+      if (!activeProject || activeProjectIndex === START_SCREEN_INDEX) {
+        return;
+      }
+
+      const slides = projectSlides[activeProject.slug];
+
+      if (!isModalScreenshotSlide(activeProject, slide)) {
+        return;
+      }
+
+      const nextSlideIndex = Math.max(
+        0,
+        slides.findIndex((projectSlide) => projectSlide.id === slide.id)
+      );
+
+      setActiveSlideIndexes((indexes) =>
+        indexes.map((index, currentProjectIndex) =>
+          currentProjectIndex === activeProjectIndex ? nextSlideIndex : index
+        )
+      );
+
+      if (scrollBehavior === 'smooth') {
+        beginHorizontalScrollSync(activeProject);
+      }
+
+      scrollHorizontalToRealIndex(activeProject, nextSlideIndex, scrollBehavior);
+      resetModalView();
+      replaceModalUrl(activeProject, slide);
+      // After modal-only navigation, Close should land on the current slide.
+      modalHistoryEntryRef.current = false;
+    },
+    [
+      activeProject,
+      activeProjectIndex,
+      beginHorizontalScrollSync,
+      projectSlides,
+      replaceModalUrl,
+      resetModalView,
+      scrollHorizontalToRealIndex,
+    ]
+  );
+
+  const moveModalHorizontal = useCallback(
+    (direction: -1 | 1) => {
+      if (!activeProject || activeProjectIndex === START_SCREEN_INDEX) {
+        return;
+      }
+
+      const modalSlides = projectSlides[activeProject.slug].filter((slide) =>
+        isModalScreenshotSlide(activeProject, slide)
+      );
+
+      if (modalSlides.length < 2) {
+        return;
+      }
+
+      const currentModalIndex = Math.max(
+        0,
+        modalSlides.findIndex((slide) => slide.id === activeSlide?.id)
+      );
+      const nextSlide =
+        modalSlides[positiveModulo(currentModalIndex + direction, modalSlides.length)];
+
+      setActiveModalSlide(nextSlide);
+    },
+    [
+      activeProject,
+      activeProjectIndex,
+      activeSlide,
+      projectSlides,
+      setActiveModalSlide,
+    ]
+  );
+
   const moveVertical = useCallback(
     (direction: -1 | 1) => {
       setActiveProject(
@@ -684,37 +1087,44 @@ export function PortfolioBrowser({
     [activeProjectIndex, setActiveProject]
   );
 
-  const openModal = useCallback((slide: ProjectSlide = activeSlide) => {
-    if (
-      !activeProject ||
-      !slide ||
-      slide.kind !== 'screenshot' ||
-      isBuildingWithAiTextSlide(activeProject, slide)
-    ) {
-      return;
-    }
+  const openModal = useCallback(
+    (slide: ProjectSlide = activeSlide, transitionRect?: ModalTransitionRect) => {
+      if (
+        !activeProject ||
+        !slide ||
+        slide.kind !== 'screenshot' ||
+        isBuildingWithAiTextSlide(activeProject, slide)
+      ) {
+        return;
+      }
 
-    const slideIndex = Math.max(
-      0,
-      projectSlides[activeProject.slug].findIndex(
-        (projectSlide) => projectSlide.id === slide.id
-      )
-    );
+      const slideIndex = Math.max(
+        0,
+        projectSlides[activeProject.slug].findIndex(
+          (projectSlide) => projectSlide.id === slide.id
+        )
+      );
 
-    setActiveSlideIndexes((indexes) =>
-      indexes.map((index, currentProjectIndex) =>
-        currentProjectIndex === activeProjectIndex ? slideIndex : index
-      )
-    );
+      setActiveSlideIndexes((indexes) =>
+        indexes.map((index, currentProjectIndex) =>
+          currentProjectIndex === activeProjectIndex ? slideIndex : index
+        )
+      );
+      setIsModalClosing(false);
+      setModalTransitionRect(transitionRect ?? null);
+      resetModalView();
+      window.history.pushState({}, '', `${projectUrl(activeProject, slide)}?modal=image`);
+      document.title = pageTitle(activeProject, slide);
+      modalHistoryEntryRef.current = true;
+      setIsModalOpen(true);
+    },
+    [activeProject, activeProjectIndex, activeSlide, projectSlides, resetModalView]
+  );
+
+  const finishCloseModal = useCallback(() => {
     resetModalView();
-    window.history.pushState({}, '', `${projectUrl(activeProject, slide)}?modal=image`);
-    document.title = pageTitle(activeProject, slide);
-    modalHistoryEntryRef.current = true;
-    setIsModalOpen(true);
-  }, [activeProject, activeProjectIndex, activeSlide, projectSlides, resetModalView]);
-
-  const closeModal = useCallback(() => {
-    resetModalView();
+    setIsModalClosing(false);
+    setModalTransitionRect(null);
     setIsModalOpen(false);
 
     if (modalHistoryEntryRef.current) {
@@ -727,6 +1137,30 @@ export function PortfolioBrowser({
       window.history.replaceState({}, '', projectUrl(activeProject, activeSlide));
     }
   }, [activeProject, activeSlide, resetModalView]);
+
+  const closeModal = useCallback(() => {
+    if (!shouldShowModal || isModalClosing) {
+      return;
+    }
+
+    const nextTransitionRect = activeScreenshot
+      ? getVisibleScreenshotButtonRect(activeScreenshot.id)
+      : modalTransitionRect;
+
+    if (!nextTransitionRect) {
+      finishCloseModal();
+      return;
+    }
+
+    setModalTransitionRect(nextTransitionRect);
+    setIsModalClosing(true);
+  }, [
+    activeScreenshot,
+    finishCloseModal,
+    isModalClosing,
+    modalTransitionRect,
+    shouldShowModal,
+  ]);
 
   const syncInitialScrollEvent = useEffectEvent(() => {
     syncViewport(normalizedInitialProjectIndex, initialSlideIndexes, 'auto');
@@ -797,8 +1231,12 @@ export function PortfolioBrowser({
     ) => {
       const slides = getCarouselSlides(project);
       const clonedIndex = Math.round(carousel.scrollLeft / carousel.clientWidth);
-      const realIndex = positiveModulo(clonedIndex - 1, slides.length);
+      const realIndex = getRealCarouselIndex(clonedIndex, slides.length);
       const nextSlideIndex = getSlideIndexFromCarouselIndex(project, realIndex);
+
+      if (horizontalScrollSyncProjectRef.current === project.slug) {
+        return;
+      }
 
       setActiveSlideIndexes((indexes) => {
         if (indexes[projectIndex] === nextSlideIndex) {
@@ -820,7 +1258,7 @@ export function PortfolioBrowser({
     ) => {
       const slides = getCarouselSlides(project);
       const clonedIndex = Math.round(carousel.scrollLeft / carousel.clientWidth);
-      let realIndex = clonedIndex - 1;
+      let realIndex = getRealCarouselIndex(clonedIndex, slides.length);
 
       if (clonedIndex === 0) {
         realIndex = slides.length - 1;
@@ -843,7 +1281,7 @@ export function PortfolioBrowser({
         });
       }
 
-      const nextIndex = positiveModulo(realIndex, slides.length);
+      const nextIndex = realIndex;
       const nextSlideIndex = getSlideIndexFromCarouselIndex(project, nextIndex);
       const nextSlide = projectSlides[project.slug][nextSlideIndex];
 
@@ -858,16 +1296,39 @@ export function PortfolioBrowser({
       }
 
       if (projectIndex === activeProjectIndex) {
-        updateUrl(project, nextSlide, 'replace');
+        if (isModalOpen && isModalScreenshotSlide(project, nextSlide)) {
+          replaceModalUrl(project, nextSlide);
+        } else {
+          updateUrl(project, nextSlide, 'replace');
+        }
       }
+
+      clearHorizontalScrollSync(project);
     }
   );
 
   const handleKeyDownEvent = useEffectEvent((event: KeyboardEvent) => {
-    if (isModalOpen) {
+    if (shouldShowModal) {
       if (event.key === 'Escape') {
         event.preventDefault();
         closeModal();
+        return;
+      }
+
+      if (isModalClosing) {
+        return;
+      }
+
+      if (event.key === 'ArrowRight') {
+        event.preventDefault();
+        moveModalHorizontal(1);
+        return;
+      }
+
+      if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+        moveModalHorizontal(-1);
+        return;
       }
 
       return;
@@ -875,6 +1336,24 @@ export function PortfolioBrowser({
 
     if (isEditableTarget(event.target)) {
       return;
+    }
+
+    if (!event.metaKey && !event.ctrlKey && !event.altKey) {
+      if (event.key === '0') {
+        event.preventDefault();
+        setActiveProject(START_SCREEN_INDEX, 'push');
+        return;
+      }
+
+      if (/^[1-9]$/.test(event.key)) {
+        const projectIndex = Number(event.key) - 1;
+
+        if (projectIndex < portfolioSlides.length) {
+          event.preventDefault();
+          setActiveProject(projectIndex, 'push', 'smooth', 0);
+          return;
+        }
+      }
     }
 
     if (event.key === 'ArrowDown') {
@@ -970,19 +1449,42 @@ export function PortfolioBrowser({
     return () => window.removeEventListener('keydown', handleKeyDownEvent);
   }, []);
 
+  useEffect(
+    () => () => {
+      clearHorizontalScrollSync();
+    },
+    [clearHorizontalScrollSync]
+  );
+
   const activeCarouselSlides = activeProject ? getCarouselSlides(activeProject) : [];
-  const canMoveHorizontally = (activeProject?.screenshots.length ?? 0) > 1;
+  const activeModalSlides = activeProject
+    ? projectSlides[activeProject.slug].filter((slide) =>
+        isModalScreenshotSlide(activeProject, slide)
+      )
+    : [];
+  const activeModalScreenshots = activeModalSlides.map((slide) => slide.screenshot);
   const activeCarouselIndex = activeProject
     ? getCarouselIndexFromSlideIndex(activeProject, activeSlideIndex)
     : 0;
+  const activeModalScreenshotIndex = Math.max(
+    0,
+    activeModalSlides.findIndex((slide) => slide.id === activeSlide?.id)
+  );
+  const activeNavigationSlides = isModalPresentationActive
+    ? activeModalSlides
+    : activeCarouselSlides;
+  const activeNavigationIndex = isModalPresentationActive
+    ? activeModalScreenshotIndex
+    : activeCarouselIndex;
+  const canMoveHorizontally = activeNavigationSlides.length > 1;
   const previousSlide = activeProject
-    ? activeCarouselSlides[
-        positiveModulo(activeCarouselIndex - 1, activeCarouselSlides.length)
+    ? activeNavigationSlides[
+        positiveModulo(activeNavigationIndex - 1, activeNavigationSlides.length)
       ]
     : undefined;
   const nextSlide = activeProject
-    ? activeCarouselSlides[
-        positiveModulo(activeCarouselIndex + 1, activeCarouselSlides.length)
+    ? activeNavigationSlides[
+        positiveModulo(activeNavigationIndex + 1, activeNavigationSlides.length)
       ]
     : undefined;
   const previousSlideTitle =
@@ -1005,6 +1507,20 @@ export function PortfolioBrowser({
       color: getProjectColor(projectIndex),
     })),
   ];
+  const sideNavActiveItemIndex = Math.max(
+    0,
+    sectionNavItems.findIndex((item) => item.projectIndex === activeProjectIndex)
+  );
+  const sideNavActiveFillColor =
+    sectionNavItems[sideNavActiveItemIndex]?.color ?? TOP_SCREEN_COLOR;
+  const sideNavStackStyle: CSSProperties = {
+    transform: isModalPresentationActive
+      ? `translateY(${
+          ((sectionNavItems.length - 1) / 2 - sideNavActiveItemIndex) *
+          SECTION_NAV_ITEM_STEP_REM
+        }rem)`
+      : 'translateY(0)',
+  };
   const renderSectionNavButton = (
     item: (typeof sectionNavItems)[number],
     side: 'left' | 'right'
@@ -1045,12 +1561,16 @@ export function PortfolioBrowser({
         side={side}
         color={item.color}
         activeButton={isActiveSection}
-        compactActiveButton={isActiveSection && !hasHorizontalAction}
+        concealed={isModalPresentationActive && !isActiveSection}
         onClick={() => {
           focusKeyboardSurface();
 
           if (hasHorizontalAction) {
-            moveHorizontal(isLeftSide ? -1 : 1);
+            if (isModalPresentationActive) {
+              moveModalHorizontal(isLeftSide ? -1 : 1);
+            } else {
+              moveHorizontal(isLeftSide ? -1 : 1);
+            }
             return;
           }
 
@@ -1059,16 +1579,12 @@ export function PortfolioBrowser({
           }
         }}
       >
-        {isActiveSection && !hasHorizontalAction ? (
-          <span className="block size-7" aria-hidden="true" />
-        ) : (
-          <span className="grid size-7 place-items-center" aria-hidden="true">
-            <FontAwesomeIcon
-              icon={Icon}
-              className="size-7 drop-shadow-[1px_1px_0_black]"
-            />
-          </span>
-        )}
+        <span className="grid size-7 place-items-center" aria-hidden="true">
+          <FontAwesomeIcon
+            icon={Icon}
+            className="size-7 drop-shadow-[1px_1px_0_black]"
+          />
+        </span>
       </SideNavButton>
     );
   };
@@ -1158,15 +1674,19 @@ export function PortfolioBrowser({
             </div>
           </div>
           <div className="mx-auto w-full max-w-6xl">
-            <p className="mb-8 text-xs font-light uppercase tracking-[0.35em] text-white/45">
-              Work
+            <p className="mb-[clamp(0.65rem,1.6vh,2rem)] text-xs font-light uppercase tracking-[0.35em] text-white/45">
+              Sections
             </p>
             <div className="divide-y divide-white/15 border-y border-white/15">
               {portfolioSlides.map((project, index) => (
                 <button
                   key={project.id}
                   type="button"
-                  className="flex min-h-24 w-full items-center justify-between gap-6 py-6 text-left text-white outline-none transition-colors hover:text-[var(--project-color)] focus-visible:text-[var(--project-color)] sm:min-h-28"
+                  className={`w-full items-center gap-[clamp(0.75rem,1.8vh,1.5rem)] py-[clamp(0.2rem,0.65vh,0.75rem)] text-left text-white outline-none transition-colors hover:text-[var(--project-color)] focus-visible:text-[var(--project-color)] sm:py-[clamp(0.3rem,0.85vh,1.25rem)] ${
+                    isWideLayout
+                      ? 'grid grid-cols-[auto_minmax(0,1fr)_36ch]'
+                      : 'flex justify-between'
+                  }`}
                   style={
                     {
                       '--project-color': getProjectColor(index),
@@ -1177,15 +1697,31 @@ export function PortfolioBrowser({
                     setActiveProject(index, 'push', 'smooth', 0);
                   }}
                 >
-                  <span
-                    className="text-[clamp(2rem,8vw,6.4rem)] font-black uppercase leading-none tracking-normal"
-                    style={{ color: getProjectColor(index) }}
-                  >
-                    {project.title}
-                  </span>
-                  <span className="text-sm font-light text-current sm:text-base">
-                    {String(index + 1).padStart(2, '0')}
-                  </span>
+                  {isWideLayout ? (
+                    <>
+                      <span className="text-sm font-light text-current sm:text-base">
+                        {String(index + 1).padStart(2, '0')}
+                      </span>
+                      <SectionTitle color={getProjectColor(index)}>
+                        {project.title}
+                      </SectionTitle>
+                      <SectionBlurb className="justify-self-start">
+                        {project.blurb}
+                      </SectionBlurb>
+                    </>
+                  ) : (
+                    <span className="flex min-w-0 flex-col gap-[clamp(0.15rem,0.55vh,0.75rem)]">
+                      <SectionTitle color={getProjectColor(index)}>
+                        {project.title}
+                      </SectionTitle>
+                      <SectionBlurb>{project.blurb}</SectionBlurb>
+                    </span>
+                  )}
+                  {!isWideLayout ? (
+                    <span className="text-sm font-light text-current sm:text-base">
+                      {String(index + 1).padStart(2, '0')}
+                    </span>
+                  ) : null}
                 </button>
               ))}
             </div>
@@ -1194,7 +1730,7 @@ export function PortfolioBrowser({
 
         {portfolioSlides.map((project, projectIndex) => {
           const slides = getCarouselSlides(project);
-          const renderedSlides = [slides[slides.length - 1], ...slides, slides[0]];
+          const renderedSlides = getLoopingCarouselEntries(slides, true);
           const projectNumber = String(projectIndex + 1).padStart(2, '0');
           const activeCarouselIndex = getCarouselIndexFromSlideIndex(
             project,
@@ -1215,18 +1751,19 @@ export function PortfolioBrowser({
                   projectColor={getProjectColor(projectIndex)}
                   setDescriptionRef={setDescriptionRef(project.slug)}
                   isWideLayout={isWideLayout}
-                  className="absolute bottom-10 left-0 top-10 z-10 block w-[var(--portfolio-description-rail-width)] overflow-y-auto bg-black/80 py-6 pl-[var(--portfolio-control-gutter-width)] pr-6 backdrop-blur-md"
+                  className="absolute bottom-10 left-0 top-10 z-10 w-[var(--portfolio-description-rail-width)] bg-black/80 py-6 pl-[var(--portfolio-control-gutter-width)] pr-6 backdrop-blur-md"
                 />
               ) : null}
               <div
                 ref={setHorizontalRef(project.slug)}
+                data-portfolio-carousel={project.slug}
                 className={`flex h-dvh snap-x snap-mandatory overflow-x-auto overflow-y-hidden overscroll-x-contain portfolio-scrollbar-none ${
                   isWideLayout ? 'w-screen' : ''
                 }`}
               >
-                {renderedSlides.map((slide, renderedIndex) => (
+                {renderedSlides.map(({ item: slide, key, realIndex }) => (
                   <ProjectPanel
-                    key={`${project.id}-${slide.id}-${renderedIndex}`}
+                    key={`${project.id}-${key}`}
                     project={project}
                     projectNumber={projectNumber}
                     projectColor={getProjectColor(projectIndex)}
@@ -1234,8 +1771,7 @@ export function PortfolioBrowser({
                     isWideLayout={isWideLayout}
                     isActive={
                       activeProjectIndex === projectIndex &&
-                      activeCarouselIndex ===
-                        positiveModulo(renderedIndex - 1, slides.length)
+                      activeCarouselIndex === realIndex
                     }
                     setDescriptionRef={setDescriptionRef(project.slug)}
                     onScreenshotClick={openModal}
@@ -1249,11 +1785,45 @@ export function PortfolioBrowser({
 
       {isWideLayout ? (
         <>
-          <div className="fixed left-3 top-1/2 z-20 flex -translate-y-1/2 flex-col gap-3 sm:left-6">
-            {sectionNavItems.map((item) => renderSectionNavButton(item, 'left'))}
+          <div
+            className={`fixed left-3 top-1/2 -translate-y-1/2 sm:left-6 ${
+              isModalPresentationActive ? 'z-[60]' : 'z-20'
+            }`}
+          >
+            <div
+              className="relative flex flex-col gap-3 transition-transform duration-500 ease-out motion-reduce:transition-none"
+              style={sideNavStackStyle}
+            >
+              <AnimatedActiveFill
+                activeIndex={sideNavActiveItemIndex}
+                axis="y"
+                color={sideNavActiveFillColor}
+                stepRem={SECTION_NAV_ITEM_STEP_REM}
+                className="block size-12 border-4 border-current"
+                dataAttributes={{ 'data-portfolio-section-nav-fill': 'left' }}
+              />
+              {sectionNavItems.map((item) => renderSectionNavButton(item, 'left'))}
+            </div>
           </div>
-          <div className="fixed right-3 top-1/2 z-20 flex -translate-y-1/2 flex-col gap-3 sm:right-6">
-            {sectionNavItems.map((item) => renderSectionNavButton(item, 'right'))}
+          <div
+            className={`fixed right-3 top-1/2 -translate-y-1/2 sm:right-6 ${
+              isModalPresentationActive ? 'z-[60]' : 'z-20'
+            }`}
+          >
+            <div
+              className="relative flex flex-col gap-3 transition-transform duration-500 ease-out motion-reduce:transition-none"
+              style={sideNavStackStyle}
+            >
+              <AnimatedActiveFill
+                activeIndex={sideNavActiveItemIndex}
+                axis="y"
+                color={sideNavActiveFillColor}
+                stepRem={SECTION_NAV_ITEM_STEP_REM}
+                className="block size-12 border-4 border-current"
+                dataAttributes={{ 'data-portfolio-section-nav-fill': 'right' }}
+              />
+              {sectionNavItems.map((item) => renderSectionNavButton(item, 'right'))}
+            </div>
           </div>
         </>
       ) : null}
@@ -1280,74 +1850,74 @@ export function PortfolioBrowser({
         </div>
       ) : null}
 
-      {activeProject && activeCarouselSlides.length > 1 ? (
-        <>
-          <nav
-            className="pointer-events-none fixed inset-x-0 bottom-5 z-20 flex justify-center px-6"
-            aria-label={`${activeProject.title} screens`}
-            style={
-              {
-                '--project-color': activeProjectColor ?? getProjectColor(0),
-              } as ProjectColorStyle
+      <nav
+        className={`pointer-events-none fixed inset-x-0 bottom-5 ${
+          isWideLayout
+            ? 'grid grid-cols-[minmax(var(--portfolio-description-rail-width),1fr)_var(--portfolio-screenshot-size)_var(--portfolio-control-gutter-width)]'
+            : 'flex justify-center px-6'
+        } ${isModalPresentationActive ? 'z-[60]' : 'z-20'}`}
+        aria-label={
+          activeProject ? `${activeProject.title} screens` : 'Portfolio screens'
+        }
+        style={
+          {
+            ...WIDE_LAYOUT_STYLE,
+            '--project-color': activeProjectColor ?? getProjectColor(0),
+            '--portfolio-modal-indicator-translate-x':
+              'calc(var(--portfolio-control-gutter-width) + (var(--portfolio-screenshot-size) / 2) - 50vw)',
+          } as ProjectColorStyle &
+            WideLayoutStyle & {
+              '--portfolio-modal-indicator-translate-x': string;
             }
-          >
-            <div className="flex items-center gap-3 px-4 py-3">
-              {activeCarouselSlides.map((slide, index) => (
-                <button
-                  key={slide.id}
-                  type="button"
-                  className={`pointer-events-auto grid size-7 place-items-center outline-none transition-colors hover:text-[var(--project-color)] focus-visible:text-[var(--project-color)] ${
-                    getCarouselIndexFromSlideIndex(
-                      activeProject,
-                      activeSlideIndex
-                    ) === index
-                      ? 'text-[var(--project-color)]'
-                      : 'text-white'
-                  }`}
-                  aria-label={
-                    slide.kind === 'description'
-                      ? `Show ${activeProject.title} description`
-                      : `Show ${slide.screenshot.alt}`
-                  }
-                  aria-current={
-                    getCarouselIndexFromSlideIndex(activeProject, activeSlideIndex) ===
-                    index
-                      ? 'true'
-                      : undefined
-                  }
-                  onClick={() => {
-                    focusKeyboardSurface();
-                    setActiveSlide(
-                      activeProjectIndex,
-                      getSlideIndexFromCarouselIndex(activeProject, index),
-                      'push',
-                      'smooth'
-                    );
-                  }}
-                >
-                  <span
-                    className={`${NAVIGATION_SQUARE_CLASS} ${
-                      getCarouselIndexFromSlideIndex(
-                        activeProject,
-                        activeSlideIndex
-                      ) === index
-                        ? 'bg-current'
-                        : 'bg-transparent'
-                    }`}
-                    aria-hidden="true"
-                  />
-                </button>
-              ))}
-            </div>
-          </nav>
-        </>
-      ) : null}
+        }
+      >
+        <div
+          className={`relative transition-transform duration-500 ease-out motion-reduce:transition-none ${
+            isWideLayout ? 'col-start-2 justify-self-center' : ''
+          } ${
+            isWideLayout && isModalPresentationActive
+              ? 'translate-x-[var(--portfolio-modal-indicator-translate-x)] will-change-transform'
+              : 'translate-x-0'
+          }`}
+        >
+          <AnimatedSlideIndicators
+            projectTitle={activeProject?.title ?? 'Portfolio'}
+            slides={activeNavigationSlides}
+            activeIndex={activeNavigationIndex}
+            color={activeProjectColor ?? getProjectColor(0)}
+            onSelect={(slide) => {
+              if (!activeProject) {
+                return;
+              }
+
+              focusKeyboardSurface();
+              const slideIndex = Math.max(
+                0,
+                projectSlides[activeProject.slug].findIndex(
+                  (projectSlide) => projectSlide.id === slide.id
+                )
+              );
+
+              if (isModalPresentationActive) {
+                setActiveModalSlide(slide);
+                return;
+              }
+
+              setActiveSlide(activeProjectIndex, slideIndex, 'push', 'smooth');
+            }}
+          />
+        </div>
+      </nav>
 
       {shouldShowModal && activeProject && activeScreenshot ? (
         <ImageModal
           project={activeProject}
           projectColor={activeProjectColor}
           screenshot={activeScreenshot}
+          screenshots={activeModalScreenshots}
+          activeScreenshotIndex={activeModalScreenshotIndex}
+          transitionRect={modalTransitionRect}
+          isClosing={isModalClosing}
           scale={modalScale}
           offset={modalOffset}
           dragRef={modalDragRef}
@@ -1355,9 +1925,312 @@ export function PortfolioBrowser({
           setScale={setModalScale}
           setOffset={setModalOffset}
           onClose={closeModal}
+          onExited={finishCloseModal}
         />
       ) : null}
     </main>
+  );
+}
+
+function SectionTitle({
+  children,
+  color,
+}: {
+  children: string;
+  color: string;
+}) {
+  return (
+    <span
+      className="min-w-0 text-[clamp(1.1rem,3.4vh,2rem)] font-black uppercase leading-none tracking-normal sm:text-[clamp(1.25rem,4.2vh,4.2rem)] lg:text-[clamp(1.5rem,4.8vh,4.8rem)]"
+      style={{ color }}
+    >
+      {children}
+    </span>
+  );
+}
+
+function SectionBlurb({
+  children,
+  className,
+}: {
+  children: string;
+  className?: string;
+}) {
+  return (
+    <span
+      className={`max-w-[54ch] text-[clamp(0.58rem,1.25vh,0.82rem)] font-light normal-case leading-snug tracking-normal text-current opacity-70 sm:text-[clamp(0.68rem,1.45vh,1rem)] ${
+        className ?? ''
+      }`}
+    >
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        rehypePlugins={[rehypeRaw]}
+        allowedElements={['p', 'strong', 'em', 'code', 'br', 'del', 'abbr']}
+        unwrapDisallowed
+        components={INLINE_MARKDOWN_COMPONENTS}
+      >
+        {children}
+      </ReactMarkdown>
+    </span>
+  );
+}
+
+type IndicatorTransitionState = {
+  previousCount: number;
+  targetCount: number;
+  phase: 'idle' | 'preparing' | 'animating';
+};
+
+function AnimatedSlideIndicators({
+  projectTitle,
+  slides,
+  activeIndex,
+  color,
+  onSelect,
+}: {
+  projectTitle: string;
+  slides: ProjectSlide[];
+  activeIndex: number;
+  color: string;
+  onSelect: (slide: ProjectSlide) => void;
+}) {
+  const visibleSlides = slides.length > 1 ? slides : [];
+  const targetCount = visibleSlides.length;
+  const previousCountRef = useRef(targetCount);
+  const transitionFrameRef = useRef<number | null>(null);
+  const transitionStartFrameRef = useRef<number | null>(null);
+  const transitionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  );
+  const [transitionState, setTransitionState] =
+    useState<IndicatorTransitionState>({
+      previousCount: targetCount,
+      targetCount,
+      phase: 'idle',
+    });
+
+  useLayoutEffect(() => {
+    const previousCount = previousCountRef.current;
+
+    if (previousCount === targetCount) {
+      return;
+    }
+
+    if (transitionFrameRef.current !== null) {
+      cancelAnimationFrame(transitionFrameRef.current);
+    }
+
+    if (transitionStartFrameRef.current !== null) {
+      cancelAnimationFrame(transitionStartFrameRef.current);
+    }
+
+    if (transitionTimeoutRef.current) {
+      clearTimeout(transitionTimeoutRef.current);
+    }
+
+    previousCountRef.current = targetCount;
+    setTransitionState({
+      previousCount,
+      targetCount,
+      phase: 'preparing',
+    });
+
+    transitionFrameRef.current = requestAnimationFrame(() => {
+      transitionStartFrameRef.current = requestAnimationFrame(() => {
+        transitionFrameRef.current = null;
+        transitionStartFrameRef.current = null;
+        setTransitionState({
+          previousCount,
+          targetCount,
+          phase: 'animating',
+        });
+
+        const longestStagger =
+          Math.max(previousCount, targetCount, 1) *
+          NAVIGATION_INDICATOR_PAIR_STAGGER_MS;
+
+        transitionTimeoutRef.current = setTimeout(() => {
+          transitionTimeoutRef.current = null;
+          setTransitionState({
+            previousCount: targetCount,
+            targetCount,
+            phase: 'idle',
+          });
+        }, NAVIGATION_INDICATOR_TRANSITION_MS + longestStagger);
+      });
+    });
+
+    return () => {
+      if (transitionFrameRef.current !== null) {
+        cancelAnimationFrame(transitionFrameRef.current);
+      }
+
+      if (transitionStartFrameRef.current !== null) {
+        cancelAnimationFrame(transitionStartFrameRef.current);
+      }
+
+      if (transitionTimeoutRef.current) {
+        clearTimeout(transitionTimeoutRef.current);
+      }
+    };
+  }, [targetCount]);
+
+  const previousSlotIds = getIndicatorSlotIds(
+    transitionState.phase === 'idle'
+      ? transitionState.targetCount
+      : transitionState.previousCount
+  );
+  const targetSlotIds = getIndicatorSlotIds(transitionState.targetCount);
+  const renderedSlotIds =
+    transitionState.phase === 'idle'
+      ? targetSlotIds
+      : Array.from(new Set([...previousSlotIds, ...targetSlotIds])).sort(
+          (a, b) => a - b
+        );
+  const boundedActiveIndex = Math.max(
+    0,
+    Math.min(activeIndex, Math.max(targetCount - 1, 0))
+  );
+
+  return (
+    <div
+      data-portfolio-slide-indicators
+      className="relative h-[3.25rem] transition-[width] duration-500 ease-out motion-reduce:transition-none"
+      style={{
+        width: `${Math.max(targetCount, 1) * NAVIGATION_INDICATOR_STEP_REM}rem`,
+      }}
+    >
+      <AnimatedActiveFill
+        activeIndex={boundedActiveIndex}
+        axis="x"
+        centeredCount={Math.max(targetCount, 1)}
+        color={color}
+        stepRem={NAVIGATION_INDICATOR_STEP_REM}
+        visible={targetCount > 0}
+        className={NAVIGATION_SQUARE_CLASS}
+        dataAttributes={{ 'data-portfolio-slide-indicator-marker': 'true' }}
+      />
+      {renderedSlotIds.map((slotId) => {
+        const previousIndex = previousSlotIds.indexOf(slotId);
+        const targetIndex = targetSlotIds.indexOf(slotId);
+        const isEntering = previousIndex < 0 && targetIndex >= 0;
+        const isExiting = previousIndex >= 0 && targetIndex < 0;
+        const usePreviousPosition =
+          isExiting ||
+          (transitionState.phase === 'preparing' && previousIndex >= 0);
+        const positionIndex = usePreviousPosition ? previousIndex : targetIndex;
+        const positionCount = usePreviousPosition
+          ? transitionState.previousCount
+          : transitionState.targetCount;
+        const isVisible =
+          transitionState.phase === 'idle'
+            ? targetIndex >= 0
+            : transitionState.phase === 'preparing'
+              ? previousIndex >= 0
+              : targetIndex >= 0;
+        const staggerDelay =
+          transitionState.phase === 'animating' && (isEntering || isExiting)
+            ? getOutsideInDelay(
+                usePreviousPosition ? previousIndex : targetIndex,
+                usePreviousPosition
+                  ? transitionState.previousCount
+                  : transitionState.targetCount
+              )
+            : 0;
+        const slide = targetIndex >= 0 ? visibleSlides[targetIndex] : undefined;
+
+        return (
+          <div
+            key={slotId}
+            data-portfolio-slide-indicator-slot={slotId}
+            data-indicator-presence={
+              isEntering ? 'entering' : isExiting ? 'exiting' : 'retained'
+            }
+            className="absolute left-1/2 top-1/2 grid size-7 place-items-center transition-[opacity,transform] duration-500 [transition-timing-function:cubic-bezier(0.19,1,0.22,1)] motion-reduce:transition-none"
+            style={{
+              opacity: isVisible ? 1 : 0,
+              pointerEvents: slide && isVisible ? 'auto' : 'none',
+              transform: getCenteredIndicatorTransform(
+                positionIndex,
+                Math.max(positionCount, 1)
+              ),
+              transitionDelay: `${staggerDelay}ms`,
+            }}
+          >
+            {slide ? (
+              <button
+                type="button"
+                className="pointer-events-auto grid size-7 place-items-center text-white outline-none transition-colors hover:text-[var(--project-color)] focus-visible:text-[var(--project-color)]"
+                aria-label={
+                  slide.kind === 'description'
+                    ? `Show ${projectTitle} description`
+                    : `Show ${slide.screenshot.alt}`
+                }
+                aria-current={
+                  boundedActiveIndex === targetIndex ? 'true' : undefined
+                }
+                onClick={() => onSelect(slide)}
+              >
+                <span className={NAVIGATION_SQUARE_CLASS} aria-hidden="true" />
+              </button>
+            ) : (
+              <span className={NAVIGATION_SQUARE_CLASS} aria-hidden="true" />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function AnimatedActiveFill({
+  activeIndex,
+  axis,
+  color,
+  stepRem,
+  offsetRem = 0,
+  centeredCount,
+  visible = true,
+  className,
+  dataAttributes,
+}: {
+  activeIndex: number;
+  axis: 'x' | 'y';
+  color: string;
+  stepRem: number;
+  offsetRem?: number;
+  centeredCount?: number;
+  visible?: boolean;
+  className: string;
+  dataAttributes?: Record<`data-${string}`, string>;
+}) {
+  const position = `calc(${activeIndex} * ${stepRem}rem + ${offsetRem}rem)`;
+  const isCenteredHorizontal = axis === 'x' && centeredCount !== undefined;
+  const transform = isCenteredHorizontal
+    ? getCenteredIndicatorTransform(activeIndex, centeredCount)
+    : axis === 'x'
+      ? `translate3d(${position}, -50%, 0)`
+      : `translate3d(-50%, ${position}, 0)`;
+  const positionClass =
+    axis === 'x'
+      ? isCenteredHorizontal
+        ? 'left-1/2 top-1/2 z-10'
+        : 'left-0 top-1/2 z-10'
+      : 'left-1/2 top-0 z-0';
+
+  return (
+    <span
+      {...dataAttributes}
+      className={`${className} pointer-events-none absolute ${positionClass} transition-[background-color,border-color,color,opacity,transform] duration-500 ease-out motion-reduce:transition-none`}
+      style={{
+        backgroundColor: color,
+        borderColor: color,
+        color,
+        opacity: visible ? 1 : 0,
+        transform,
+      }}
+      aria-hidden="true"
+    />
   );
 }
 
@@ -1368,7 +2241,7 @@ function SideNavButton({
   side,
   color,
   activeButton = false,
-  compactActiveButton = false,
+  concealed = false,
   onClick,
   children,
 }: {
@@ -1378,18 +2251,16 @@ function SideNavButton({
   side: 'left' | 'right';
   color?: string;
   activeButton?: boolean;
-  compactActiveButton?: boolean;
+  concealed?: boolean;
   onClick: () => void;
   children: ReactNode;
 }) {
   const projectColor = color ?? PROJECT_COLORS[0];
-  const buttonPaddingClass = compactActiveButton
-    ? 'rounded-full border-4 p-0'
-    : activeButton
+  const buttonPaddingClass = activeButton
       ? 'border-4 p-1.5'
       : 'border-0 p-1 hover:border-4 hover:p-1.5 focus:border-4 focus:p-1.5 focus-visible:border-4 focus-visible:p-1.5';
   const buttonSurfaceClass = activeButton
-    ? 'border-[var(--project-color)] bg-[var(--project-color)] text-white'
+    ? 'border-transparent bg-transparent text-white'
     : 'border-transparent bg-transparent text-[var(--project-color)] hover:border-[var(--project-color)] hover:bg-[var(--project-color)] hover:text-white focus:border-[var(--project-color)] focus:bg-[var(--project-color)] focus:text-white focus-visible:border-[var(--project-color)] focus-visible:bg-[var(--project-color)] focus-visible:text-white';
   const tooltipPositionClass =
     side === 'left'
@@ -1398,7 +2269,12 @@ function SideNavButton({
 
   return (
     <div
-      className="group/nav-tooltip relative grid size-12 place-items-center"
+      className={`group/nav-tooltip relative z-10 grid size-12 place-items-center transition-[opacity,transform] duration-300 ease-out motion-reduce:transition-none ${
+        concealed
+          ? 'pointer-events-none scale-90 opacity-0'
+          : 'scale-100 opacity-100'
+      }`}
+      aria-hidden={concealed ? true : undefined}
       style={
         {
           '--project-color': projectColor,
@@ -1410,6 +2286,7 @@ function SideNavButton({
         className={`grid place-items-center transition-[background-color,border-color,border-radius,border-width,color,padding] duration-500 ease-out ${buttonPaddingClass} ${buttonSurfaceClass}`}
         aria-label={label}
         aria-describedby={tooltipId}
+        tabIndex={concealed ? -1 : undefined}
         onClick={onClick}
       >
         {children}
@@ -1461,40 +2338,49 @@ function ProjectDescription({
 }) {
   return (
     <div
-      ref={setDescriptionRef}
-      className={`portfolio-scrollbar-none min-h-0 pr-1 ${className ?? ''}`}
+      className={`grid min-h-0 min-w-0 grid-rows-[auto_minmax(0,1fr)] pr-1 ${
+        className ?? ''
+      }`}
       style={
         {
           '--project-color': projectColor,
         } as ProjectColorStyle
       }
     >
-      <p className="mb-5 text-xs font-light uppercase tracking-[0.35em] text-white/45">
-        PROJECT {projectNumber}
-      </p>
-      <h1
-        className={`mb-8 w-full max-w-[12ch] font-black uppercase leading-none tracking-normal ${
-          isWideLayout
-            ? 'text-[clamp(3.5rem,4vw,4.75rem)]'
-            : 'text-[clamp(3rem,14vw,7rem)]'
-        }`}
-        style={{ color: projectColor }}
-      >
-        {project.title}
-      </h1>
-      <div
-        className={`portfolio-markdown w-full max-w-[48ch] font-light leading-relaxed text-white/82 ${
-          isWideLayout ? 'min-w-[32rem] text-xl' : 'text-lg'
-        }`}
-      >
-        <ReactMarkdown
-          remarkPlugins={[remarkGfm]}
-          components={{
-            a: MarkdownLink,
-          }}
+      <div>
+        <p className="mb-5 text-xs font-light uppercase tracking-[0.35em] text-white/45">
+          SECTION {projectNumber}
+        </p>
+        <h1
+          className={`mb-8 w-full max-w-[12ch] font-black uppercase leading-none tracking-normal ${
+            isWideLayout
+              ? 'text-[clamp(3.5rem,4vw,4.75rem)]'
+              : 'text-[clamp(3rem,14vw,7rem)]'
+          }`}
+          style={{ color: projectColor }}
         >
-          {project.descriptionMarkdown}
-        </ReactMarkdown>
+          {project.title}
+        </h1>
+      </div>
+      <div
+        ref={setDescriptionRef}
+        className={`portfolio-themed-scrollbar min-h-0 min-w-0 overflow-x-hidden overflow-y-scroll overscroll-contain pr-10 ${
+          isWideLayout ? 'w-[calc(48ch+2rem)] max-w-full' : 'w-full max-w-[calc(48ch+2rem)]'
+        }`}
+      >
+        <div
+          className={`portfolio-markdown portfolio-markdown-scroll-body prose min-w-0 w-full max-w-[48ch] font-light leading-relaxed text-white/82 ${
+            isWideLayout ? 'text-xl' : 'text-lg'
+          }`}
+        >
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            rehypePlugins={[rehypeRaw]}
+            components={PORTFOLIO_MARKDOWN_COMPONENTS}
+          >
+            {project.descriptionMarkdown}
+          </ReactMarkdown>
+        </div>
       </div>
     </div>
   );
@@ -1517,13 +2403,18 @@ function ProjectPanel({
   isWideLayout: boolean;
   isActive: boolean;
   setDescriptionRef: (node: HTMLDivElement | null) => void;
-  onScreenshotClick: (slide: ProjectSlide) => void;
+  onScreenshotClick: (
+    slide: ProjectSlide,
+    transitionRect?: ModalTransitionRect
+  ) => void;
 }) {
   const isTextSlide = isBuildingWithAiTextSlide(project, slide);
+  const shouldShowDescriptionPlaceholder =
+    isWideLayout && slide.kind === 'description' && !hasProjectScreenshots(project);
   const panelContentClass = isTextSlide
     ? isWideLayout
-      ? 'overflow-y-auto px-0 py-0'
-      : 'overflow-y-auto'
+      ? 'px-0 py-0'
+      : ''
     : `place-items-center ${
         isWideLayout
           ? 'grid-cols-[minmax(var(--portfolio-description-rail-width),1fr)_auto_var(--portfolio-control-gutter-width)]'
@@ -1548,22 +2439,30 @@ function ProjectPanel({
         projectColor={projectColor}
         setDescriptionRef={setDescriptionRef}
         isWideLayout={isWideLayout}
-        className={`overflow-y-auto ${
+        className={
           !isWideLayout && slide.kind === 'description'
-            ? 'block'
+            ? ''
             : 'hidden'
-        }`}
+        }
       />
 
       <div
         className={`grid min-h-0 ${panelContentClass} ${
-          slide.kind === 'description' ? 'hidden' : ''
+          slide.kind === 'description' && !shouldShowDescriptionPlaceholder
+            ? 'hidden'
+            : ''
         }`}
       >
         {slide.kind === 'description' ? (
-          <div className="grid aspect-square max-h-[calc(100dvh-5rem)] w-full max-w-[calc(100dvh-5rem)] place-items-center border border-white/15 text-center">
+          <div
+            className={`grid aspect-square place-items-center border border-white/15 text-center ${
+              isWideLayout
+                ? 'col-start-2 h-[var(--portfolio-screenshot-size)] max-h-none w-[var(--portfolio-screenshot-size)] max-w-none self-center justify-self-end'
+                : 'max-h-[calc(100dvh-5rem)] w-full max-w-[calc(100dvh-5rem)]'
+            }`}
+          >
             <span className="px-8 text-5xl font-black uppercase leading-none text-white/12">
-              {project.title}
+              Coming soon
             </span>
           </div>
         ) : isTextSlide ? (
@@ -1572,6 +2471,7 @@ function ProjectPanel({
             projectNumber={projectNumber}
             projectColor={projectColor}
             isWideLayout={isWideLayout}
+            setDescriptionRef={setDescriptionRef}
           />
         ) : (
           <button
@@ -1581,16 +2481,20 @@ function ProjectPanel({
                 ? 'col-start-2 aspect-square h-[var(--portfolio-screenshot-size)] max-h-none w-[var(--portfolio-screenshot-size)] max-w-none self-center justify-self-end'
                 : 'h-full min-h-0 w-full'
             }`}
-            onClick={() => onScreenshotClick(slide)}
+            data-portfolio-screenshot-id={slide.screenshot.id}
+            onClick={(event) =>
+              onScreenshotClick(
+                slide,
+                snapshotClientRect(event.currentTarget.getBoundingClientRect())
+              )
+            }
             aria-label={`Open ${slide.screenshot.alt} fullscreen`}
           >
             <ScreenshotMedia
               screenshot={slide.screenshot}
               priority={isActive}
               sizes="(min-aspect-ratio: 5/4) calc(100dvh - 8rem), 100vw"
-              className={`object-contain transition-[filter] duration-1000 ease-in-out ${
-                isActive ? 'blur-0' : 'blur-[20px]'
-              }`}
+              className={getCarouselMediaClass(isActive)}
             />
           </button>
         )}
@@ -1604,55 +2508,72 @@ function BuildingWithAiTextPanel({
   projectNumber,
   projectColor,
   isWideLayout,
+  setDescriptionRef,
 }: {
   project: PortfolioProject;
   projectNumber: string;
   projectColor: string;
   isWideLayout: boolean;
+  setDescriptionRef: (node: HTMLDivElement | null) => void;
 }) {
   return (
     <section
-      className={`portfolio-scrollbar-none min-h-0 w-full ${
+      className={`grid min-h-0 min-w-0 w-full grid-rows-[auto_minmax(0,1fr)] ${
         isWideLayout
-          ? 'flex h-full flex-col overflow-y-auto bg-black/80 py-16 pl-[var(--portfolio-control-gutter-width)] pr-[var(--portfolio-control-gutter-width)] backdrop-blur-md'
-          : 'overflow-y-auto'
+          ? 'h-full bg-black/80 py-16 pl-[var(--portfolio-control-gutter-width)] pr-[var(--portfolio-control-gutter-width)] backdrop-blur-md'
+          : 'h-full'
       }`}
       aria-label={project.title}
+      style={
+        {
+          '--project-color': projectColor,
+        } as ProjectColorStyle
+      }
     >
-      <p className="mb-5 text-xs font-light uppercase tracking-[0.35em] text-white/45">
-        PROJECT {projectNumber}
-      </p>
-      <h1
-        className={`mb-8 w-full max-w-[12ch] font-black uppercase leading-none tracking-normal ${
-          isWideLayout
-            ? 'text-[clamp(3.5rem,4vw,4.75rem)]'
-            : 'max-w-[12ch] text-[clamp(3rem,14vw,7rem)]'
-        }`}
-        style={{ color: projectColor }}
-      >
-        {project.title}
-      </h1>
+      <div>
+        <p className="mb-5 text-xs font-light uppercase tracking-[0.35em] text-white/45">
+          SECTION {projectNumber}
+        </p>
+        <h1
+          className={`mb-8 w-full max-w-[12ch] font-black uppercase leading-none tracking-normal ${
+            isWideLayout
+              ? 'text-[clamp(3.5rem,4vw,4.75rem)]'
+              : 'max-w-[12ch] text-[clamp(3rem,14vw,7rem)]'
+          }`}
+          style={{ color: projectColor }}
+        >
+          {project.title}
+        </h1>
+      </div>
       {isWideLayout ? (
-        <div className="portfolio-markdown min-h-0 w-full max-w-[calc(108ch+7rem)] flex-1 text-lg font-light leading-relaxed text-white/82 [column-count:3] [column-fill:auto] [column-gap:3.5rem]">
-          <ReactMarkdown
-            remarkPlugins={[remarkGfm]}
-            components={{
-              a: MarkdownLink,
-            }}
-          >
-            {project.descriptionMarkdown}
-          </ReactMarkdown>
+        <div
+          ref={setDescriptionRef}
+          className="portfolio-themed-scrollbar min-h-0 min-w-0 w-full max-w-[calc(108ch+9rem)] overflow-x-hidden overflow-y-scroll overscroll-contain pr-10"
+        >
+          <div className="portfolio-markdown portfolio-markdown-scroll-body prose min-w-0 w-full max-w-[calc(108ch+7rem)] text-lg font-light leading-relaxed text-white/82 [column-count:3] [column-fill:balance] [column-gap:3.5rem]">
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              rehypePlugins={[rehypeRaw]}
+              components={PORTFOLIO_MARKDOWN_COMPONENTS}
+            >
+              {project.descriptionMarkdown}
+            </ReactMarkdown>
+          </div>
         </div>
       ) : (
-        <div className="portfolio-markdown w-full max-w-[48ch] text-lg font-light leading-relaxed text-white/82">
-          <ReactMarkdown
-            remarkPlugins={[remarkGfm]}
-            components={{
-              a: MarkdownLink,
-            }}
-          >
-            {project.descriptionMarkdown}
-          </ReactMarkdown>
+        <div
+          ref={setDescriptionRef}
+          className="portfolio-themed-scrollbar min-h-0 min-w-0 w-full max-w-[calc(48ch+2rem)] overflow-x-hidden overflow-y-scroll overscroll-contain pr-10"
+        >
+          <div className="portfolio-markdown portfolio-markdown-scroll-body prose min-w-0 w-full max-w-[48ch] text-lg font-light leading-relaxed text-white/82">
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              rehypePlugins={[rehypeRaw]}
+              components={PORTFOLIO_MARKDOWN_COMPONENTS}
+            >
+              {project.descriptionMarkdown}
+            </ReactMarkdown>
+          </div>
         </div>
       )}
     </section>
@@ -1705,6 +2626,10 @@ function ImageModal({
   project,
   projectColor,
   screenshot,
+  screenshots,
+  activeScreenshotIndex,
+  transitionRect,
+  isClosing,
   scale,
   offset,
   dragRef,
@@ -1712,10 +2637,15 @@ function ImageModal({
   setScale,
   setOffset,
   onClose,
+  onExited,
 }: {
   project: PortfolioProject;
   projectColor?: string;
   screenshot: PortfolioScreenshot;
+  screenshots: PortfolioScreenshot[];
+  activeScreenshotIndex: number;
+  transitionRect: ModalTransitionRect | null;
+  isClosing: boolean;
   scale: number;
   offset: { x: number; y: number };
   dragRef: React.MutableRefObject<{
@@ -1734,18 +2664,268 @@ function ImageModal({
       | ((current: { x: number; y: number }) => { x: number; y: number })
   ) => void;
   onClose: () => void;
+  onExited: () => void;
 }) {
+  const carouselScreenshots = screenshots.length > 0 ? screenshots : [screenshot];
+  const carouselCount = carouselScreenshots.length;
+  const boundedActiveScreenshotIndex = Math.max(
+    0,
+    Math.min(carouselCount - 1, activeScreenshotIndex)
+  );
+  const renderedCarouselScreenshots =
+    getLoopingCarouselEntries(carouselScreenshots);
   const [isDragging, setIsDragging] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(Boolean(transitionRect));
+  const [isBackdropVisible, setIsBackdropVisible] = useState(false);
+  const [renderedCarouselIndex, setRenderedCarouselIndex] = useState(() =>
+    carouselCount > 1
+      ? boundedActiveScreenshotIndex + 1
+      : boundedActiveScreenshotIndex
+  );
+  const imageFrameRef = useRef<HTMLDivElement>(null);
+  const liveOffsetRef = useRef(offset);
+  const liveScaleRef = useRef(scale);
+  const previousActiveScreenshotIndexRef = useRef(boundedActiveScreenshotIndex);
+  const animationFrameRef = useRef<number | null>(null);
+  const transitionFrameRef = useRef<number | null>(null);
+  const transitionFallbackTimeoutRef = useRef<ReturnType<
+    typeof setTimeout
+  > | null>(null);
+  const hasPlayedEnterTransitionRef = useRef(false);
+  const transitionPhaseRef = useRef<'idle' | 'entering' | 'exiting'>('idle');
   const clampScale = useCallback((nextScale: number) => {
     return Math.min(6, Math.max(1, nextScale));
   }, []);
+  const prefersReducedMotion = useCallback(
+    () => window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+    []
+  );
+  const transformFor = useCallback(
+    (nextOffset: { x: number; y: number }, nextScale: number) =>
+      `translate3d(${nextOffset.x}px, ${nextOffset.y}px, 0) scale(${nextScale})`,
+    []
+  );
+  const applyLiveTransform = useCallback(() => {
+    const imageFrame = imageFrameRef.current;
+
+    if (!imageFrame) {
+      return;
+    }
+
+    imageFrame.style.transform = transformFor(
+      liveOffsetRef.current,
+      liveScaleRef.current
+    );
+  }, [transformFor]);
+  const scheduleLiveTransform = useCallback(() => {
+    if (animationFrameRef.current !== null) {
+      return;
+    }
+
+    animationFrameRef.current = requestAnimationFrame(() => {
+      animationFrameRef.current = null;
+      applyLiveTransform();
+    });
+  }, [applyLiveTransform]);
+  const setLiveScale = useCallback(
+    (nextScale: number) => {
+      liveScaleRef.current = clampScale(nextScale);
+      scheduleLiveTransform();
+      setScale(liveScaleRef.current);
+    },
+    [clampScale, scheduleLiveTransform, setScale]
+  );
+  const finishImageTransition = useCallback(
+    (imageFrame: HTMLDivElement) => {
+      if (transitionFallbackTimeoutRef.current) {
+        clearTimeout(transitionFallbackTimeoutRef.current);
+        transitionFallbackTimeoutRef.current = null;
+      }
+
+      if (transitionPhaseRef.current === 'exiting') {
+        onExited();
+        return;
+      }
+
+      transitionPhaseRef.current = 'idle';
+      clearFrameRect(imageFrame);
+      imageFrame.style.transition = 'transform 160ms ease-out';
+      imageFrame.style.opacity = '1';
+      setIsTransitioning(false);
+      applyLiveTransform();
+    },
+    [applyLiveTransform, onExited]
+  );
+
+  useEffect(() => {
+    const rafId = requestAnimationFrame(() => setIsBackdropVisible(true));
+
+    return () => cancelAnimationFrame(rafId);
+  }, []);
+
+  useEffect(() => {
+    if (carouselCount <= 1) {
+      previousActiveScreenshotIndexRef.current = boundedActiveScreenshotIndex;
+      setRenderedCarouselIndex(boundedActiveScreenshotIndex);
+      return;
+    }
+
+    const previousIndex = previousActiveScreenshotIndexRef.current;
+    const nextRenderedIndex = getRenderedCarouselIndex(
+      previousIndex,
+      boundedActiveScreenshotIndex,
+      carouselCount
+    );
+
+    previousActiveScreenshotIndexRef.current = boundedActiveScreenshotIndex;
+    setRenderedCarouselIndex(nextRenderedIndex);
+  }, [boundedActiveScreenshotIndex, carouselCount]);
+
+  useLayoutEffect(() => {
+    liveOffsetRef.current = offset;
+    liveScaleRef.current = scale;
+
+    if (transitionPhaseRef.current !== 'idle') {
+      return;
+    }
+
+    if (
+      transitionRect &&
+      !isClosing &&
+      !hasPlayedEnterTransitionRef.current &&
+      imageFrameRef.current
+    ) {
+      const imageFrame = imageFrameRef.current;
+      const targetRect = getModalFrameRect();
+
+      hasPlayedEnterTransitionRef.current = true;
+
+      if (
+        prefersReducedMotion() ||
+        targetRect.width <= 0 ||
+        targetRect.height <= 0
+      ) {
+        setIsTransitioning(false);
+        applyLiveTransform();
+        return;
+      }
+
+      transitionPhaseRef.current = 'entering';
+      setIsTransitioning(true);
+      imageFrame.style.transition = 'none';
+      imageFrame.style.transform = transformFor({ x: 0, y: 0 }, 1);
+      imageFrame.style.opacity = '0.98';
+      applyFrameRect(imageFrame, transitionRect);
+
+      transitionFrameRef.current = requestAnimationFrame(() => {
+        transitionFrameRef.current = requestAnimationFrame(() => {
+          transitionFrameRef.current = null;
+          imageFrame.style.transition =
+            'left 420ms cubic-bezier(0.19, 1, 0.22, 1), top 420ms cubic-bezier(0.19, 1, 0.22, 1), width 420ms cubic-bezier(0.19, 1, 0.22, 1), height 420ms cubic-bezier(0.19, 1, 0.22, 1), opacity 220ms ease-out';
+          applyFrameRect(imageFrame, targetRect);
+          imageFrame.style.transform = transformFor({ x: 0, y: 0 }, 1);
+          imageFrame.style.opacity = '1';
+        });
+      });
+      transitionFallbackTimeoutRef.current = setTimeout(() => {
+        if (transitionPhaseRef.current === 'entering') {
+          finishImageTransition(imageFrame);
+        }
+      }, 520);
+
+      return;
+    }
+
+    applyLiveTransform();
+  }, [
+    applyLiveTransform,
+    finishImageTransition,
+    isClosing,
+    offset,
+    prefersReducedMotion,
+    scale,
+    transformFor,
+    transitionRect,
+  ]);
+
+  useEffect(() => {
+    if (!isClosing) {
+      return;
+    }
+
+    const imageFrame = imageFrameRef.current;
+
+    if (!imageFrame || !transitionRect || prefersReducedMotion()) {
+      onExited();
+      return;
+    }
+
+    const targetRect = getModalFrameRect();
+
+    if (targetRect.width <= 0 || targetRect.height <= 0) {
+      onExited();
+      return;
+    }
+
+    dragRef.current.dragging = false;
+    pinchRef.current = null;
+    setIsDragging(false);
+    setIsTransitioning(true);
+    setIsBackdropVisible(false);
+    transitionPhaseRef.current = 'exiting';
+    imageFrame.style.transition = 'none';
+    applyFrameRect(imageFrame, targetRect);
+    imageFrame.style.transform = transformFor(liveOffsetRef.current, liveScaleRef.current);
+    imageFrame.style.opacity = '1';
+    transitionFrameRef.current = requestAnimationFrame(() => {
+      transitionFrameRef.current = requestAnimationFrame(() => {
+        transitionFrameRef.current = null;
+        imageFrame.style.transition =
+          'left 340ms cubic-bezier(0.4, 0, 1, 1), top 340ms cubic-bezier(0.4, 0, 1, 1), width 340ms cubic-bezier(0.4, 0, 1, 1), height 340ms cubic-bezier(0.4, 0, 1, 1), transform 240ms ease-in, opacity 220ms ease-in';
+        applyFrameRect(imageFrame, transitionRect);
+        imageFrame.style.transform = transformFor({ x: 0, y: 0 }, 1);
+        imageFrame.style.opacity = '0.96';
+      });
+    });
+    transitionFallbackTimeoutRef.current = setTimeout(onExited, 420);
+  }, [
+    dragRef,
+    isClosing,
+    onExited,
+    pinchRef,
+    prefersReducedMotion,
+    transitionRect,
+    transformFor,
+  ]);
+
+  useEffect(
+    () => () => {
+      if (animationFrameRef.current !== null) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+
+      if (transitionFrameRef.current !== null) {
+        cancelAnimationFrame(transitionFrameRef.current);
+      }
+
+      if (transitionFallbackTimeoutRef.current) {
+        clearTimeout(transitionFallbackTimeoutRef.current);
+      }
+    },
+    []
+  );
 
   const handleWheel = useCallback(
     (event: ReactWheelEvent<HTMLDialogElement>) => {
       event.preventDefault();
-      setScale((current) => clampScale(current + event.deltaY * -0.002));
+
+      if (isTransitioning || isClosing) {
+        return;
+      }
+
+      setLiveScale(liveScaleRef.current + event.deltaY * -0.002);
     },
-    [clampScale, setScale]
+    [isClosing, isTransitioning, setLiveScale]
   );
 
   const handleDoubleClick = useCallback(
@@ -1755,21 +2935,45 @@ function ImageModal({
       }
 
       event.preventDefault();
+
+      if (isTransitioning || isClosing) {
+        return;
+      }
+
       dragRef.current.dragging = false;
       pinchRef.current = null;
+      liveOffsetRef.current = { x: 0, y: 0 };
+      liveScaleRef.current = 1;
+      applyLiveTransform();
       setIsDragging(false);
       setScale(1);
       setOffset({ x: 0, y: 0 });
     },
-    [dragRef, pinchRef, setOffset, setScale]
+    [
+      applyLiveTransform,
+      dragRef,
+      isClosing,
+      isTransitioning,
+      pinchRef,
+      setOffset,
+      setScale,
+    ]
   );
 
   const handlePointerDown = useCallback(
     (event: ReactPointerEvent<HTMLDialogElement>) => {
-      if (scale <= 1 || isEditableTarget(event.target)) {
+      if (
+        isTransitioning ||
+        isClosing ||
+        liveScaleRef.current <= 1 ||
+        isEditableTarget(event.target)
+      ) {
         return;
       }
 
+      if (imageFrameRef.current) {
+        imageFrameRef.current.style.transition = 'none';
+      }
       setIsDragging(true);
       try {
         event.currentTarget.setPointerCapture(event.pointerId);
@@ -1780,12 +2984,12 @@ function ImageModal({
         pointerId: event.pointerId,
         startX: event.clientX,
         startY: event.clientY,
-        originX: offset.x,
-        originY: offset.y,
+        originX: liveOffsetRef.current.x,
+        originY: liveOffsetRef.current.y,
         dragging: true,
       };
     },
-    [dragRef, offset, scale]
+    [dragRef, isClosing, isTransitioning]
   );
 
   const handlePointerMove = useCallback(
@@ -1796,22 +3000,27 @@ function ImageModal({
         return;
       }
 
-      setOffset({
+      liveOffsetRef.current = {
         x: drag.originX + event.clientX - drag.startX,
         y: drag.originY + event.clientY - drag.startY,
-      });
+      };
+      scheduleLiveTransform();
     },
-    [dragRef, setOffset]
+    [dragRef, scheduleLiveTransform]
   );
 
   const stopPointerDrag = useCallback(
     (event: ReactPointerEvent<HTMLDialogElement>) => {
       if (dragRef.current.pointerId === event.pointerId) {
         dragRef.current.dragging = false;
+        if (imageFrameRef.current) {
+          imageFrameRef.current.style.transition = 'transform 160ms ease-out';
+        }
+        setOffset(liveOffsetRef.current);
         setIsDragging(false);
       }
     },
-    [dragRef]
+    [dragRef, setOffset]
   );
 
   const getTouchDistance = (event: ReactTouchEvent<HTMLDialogElement>) => {
@@ -1821,27 +3030,36 @@ function ImageModal({
 
   const handleTouchStart = useCallback(
     (event: ReactTouchEvent<HTMLDialogElement>) => {
+      if (isTransitioning || isClosing) {
+        return;
+      }
+
       if (event.touches.length === 2) {
         pinchRef.current = {
           distance: getTouchDistance(event),
-          scale,
+          scale: liveScaleRef.current,
         };
       }
     },
-    [pinchRef, scale]
+    [isClosing, isTransitioning, pinchRef]
   );
 
   const handleTouchMove = useCallback(
     (event: ReactTouchEvent<HTMLDialogElement>) => {
-      if (event.touches.length !== 2 || !pinchRef.current) {
+      if (
+        isTransitioning ||
+        isClosing ||
+        event.touches.length !== 2 ||
+        !pinchRef.current
+      ) {
         return;
       }
 
       event.preventDefault();
       const nextDistance = getTouchDistance(event);
-      setScale(clampScale((nextDistance / pinchRef.current.distance) * pinchRef.current.scale));
+      setLiveScale((nextDistance / pinchRef.current.distance) * pinchRef.current.scale);
     },
-    [clampScale, pinchRef, setScale]
+    [isClosing, isTransitioning, pinchRef, setLiveScale]
   );
 
   const handleTouchEnd = useCallback(() => {
@@ -1849,12 +3067,58 @@ function ImageModal({
   }, [pinchRef]);
 
   const panCursorClass =
-    scale > 1 ? (isDragging ? 'cursor-grabbing' : 'cursor-grab') : '';
+    scale > 1 && !isTransitioning && !isClosing
+      ? isDragging
+        ? 'cursor-grabbing'
+        : 'cursor-grab'
+      : '';
+  const handleImageFrameTransitionEnd = useCallback(
+    (event: ReactTransitionEvent<HTMLDivElement>) => {
+      if (
+        event.target !== event.currentTarget ||
+        event.propertyName !== 'width'
+      ) {
+        return;
+      }
+
+      finishImageTransition(event.currentTarget);
+    },
+    [finishImageTransition]
+  );
+  const handleCarouselTrackTransitionEnd = useCallback(
+    (event: ReactTransitionEvent<HTMLDivElement>) => {
+      if (
+        carouselCount <= 1 ||
+        event.target !== event.currentTarget ||
+        event.propertyName !== 'transform'
+      ) {
+        return;
+      }
+
+      const nextRenderedIndex = getCanonicalCarouselIndex(
+        renderedCarouselIndex,
+        carouselCount
+      );
+
+      if (nextRenderedIndex === undefined) {
+        return;
+      }
+
+      const track = event.currentTarget;
+
+      track.style.transition = 'none';
+      track.style.transform = getCarouselTrackTransform(nextRenderedIndex);
+      void track.offsetWidth;
+      track.style.transition = '';
+      setRenderedCarouselIndex(nextRenderedIndex);
+    },
+    [carouselCount, renderedCarouselIndex]
+  );
 
   return (
     <dialog
       open
-      className={`fixed inset-0 z-50 m-0 grid h-dvh max-h-none w-screen max-w-none touch-none place-items-center overflow-hidden border-0 bg-black p-0 ${panCursorClass}`}
+      className={`fixed inset-0 z-50 m-0 h-dvh max-h-none w-screen max-w-none touch-none overflow-hidden border-0 bg-transparent p-0 ${panCursorClass}`}
       aria-label={`${project.title}: ${screenshot.alt}`}
       onDoubleClick={handleDoubleClick}
       onWheel={handleWheel}
@@ -1866,31 +3130,89 @@ function ImageModal({
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
+      <div
+        className={`fixed inset-0 bg-black transition-opacity duration-[420ms] ease-out motion-reduce:transition-none ${
+          isBackdropVisible && !isClosing ? 'opacity-100' : 'opacity-0'
+        }`}
+        aria-hidden="true"
+      />
       <button
         type="button"
-        className="fixed right-5 top-5 z-10 h-11 min-w-11 bg-[var(--project-color)] px-4 text-sm font-black uppercase text-white outline-none transition-transform hover:scale-105 focus-visible:scale-105"
+        data-portfolio-modal-close
+        className={`fixed right-5 top-5 z-20 grid size-11 translate-y-0 place-items-center bg-[var(--project-color)] text-white outline-none transition-[opacity,scale,translate] duration-300 [transition-timing-function:cubic-bezier(0.19,1,0.22,1)] hover:scale-105 focus-visible:scale-105 motion-reduce:translate-x-0 motion-reduce:transition-opacity motion-reduce:duration-150 ${
+          isClosing
+            ? 'pointer-events-none translate-x-16 opacity-0'
+            : isBackdropVisible
+              ? 'translate-x-0 opacity-100'
+              : '-translate-x-16 opacity-0'
+        }`}
         style={
           {
             '--project-color': projectColor ?? PROJECT_COLORS[0],
           } as ProjectColorStyle
         }
+        aria-label="Close enlarged image"
+        title="Close"
         onClick={onClose}
       >
-        Close
+        <FontAwesomeIcon
+          icon={faXmark}
+          className={`size-5 transition-[rotate] duration-300 [transition-timing-function:cubic-bezier(0.19,1,0.22,1)] motion-reduce:rotate-0 motion-reduce:transition-none ${
+            isClosing
+              ? 'rotate-90'
+              : isBackdropVisible
+                ? 'rotate-0'
+                : '-rotate-90'
+          }`}
+          aria-hidden="true"
+        />
       </button>
       <div
-        className={`relative h-[92dvh] w-[92vw] ${panCursorClass}`}
+        ref={imageFrameRef}
+        data-portfolio-modal-image-frame
+        className={`fixed left-[4vw] top-[4dvh] z-10 h-[92dvh] w-[92vw] origin-center ${panCursorClass}`}
         style={{
           transform: `translate3d(${offset.x}px, ${offset.y}px, 0) scale(${scale})`,
-          transition: dragRef.current.dragging ? 'none' : 'transform 160ms ease-out',
+          transition: isTransitioning
+            ? undefined
+            : dragRef.current.dragging
+              ? 'none'
+              : 'transform 160ms ease-out',
+          willChange: isTransitioning
+            ? 'left, top, width, height, transform'
+            : 'transform',
         }}
+        onTransitionEnd={handleImageFrameTransitionEnd}
       >
-        <ScreenshotMedia
-          screenshot={screenshot}
-          priority
-          sizes="92vw"
-          className="object-contain"
-        />
+        <div className="absolute inset-0 overflow-hidden">
+          <div
+            data-portfolio-modal-carousel-track
+            className="flex h-full transition-transform duration-500 ease-out motion-reduce:transition-none"
+            style={{
+              transform: getCarouselTrackTransform(renderedCarouselIndex),
+              willChange: carouselCount > 1 ? 'transform' : undefined,
+            }}
+            onTransitionEnd={handleCarouselTrackTransitionEnd}
+          >
+            {renderedCarouselScreenshots.map(
+              ({ item: carouselScreenshot, key, realIndex }) => (
+                <div
+                  key={key}
+                  className="relative h-full w-full shrink-0"
+                >
+                  <ScreenshotMedia
+                    screenshot={carouselScreenshot}
+                    priority={carouselScreenshot.id === screenshot.id}
+                    sizes="92vw"
+                    className={getCarouselMediaClass(
+                      realIndex === boundedActiveScreenshotIndex
+                    )}
+                  />
+                </div>
+              )
+            )}
+          </div>
+        </div>
       </div>
     </dialog>
   );

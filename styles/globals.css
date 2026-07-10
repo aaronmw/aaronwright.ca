@@ -25,8 +25,74 @@ button {
   }
 }
 
+.portfolio-themed-scrollbar {
+  scrollbar-color: var(--project-color, var(--color-portfolio-red)) transparent;
+  scrollbar-width: thin;
+}
+
+.portfolio-themed-scrollbar::-webkit-scrollbar {
+  width: 0.875rem;
+}
+
+.portfolio-themed-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.portfolio-themed-scrollbar::-webkit-scrollbar-thumb {
+  background-clip: content-box;
+  background-color: var(--project-color, var(--color-portfolio-red));
+  border: 0.25rem solid transparent;
+  border-radius: 9999px;
+}
+
+.portfolio-markdown {
+  --tw-prose-body: rgb(255 255 255 / 0.82);
+  --tw-prose-headings: var(--project-color, var(--color-portfolio-red));
+  --tw-prose-links: var(--project-color, var(--color-portfolio-red));
+  --tw-prose-bold: rgb(255 255 255 / 0.9);
+  --tw-prose-counters: var(--project-color, var(--color-portfolio-red));
+  --tw-prose-bullets: var(--project-color, var(--color-portfolio-red));
+  --tw-prose-code: rgb(255 255 255 / 0.9);
+  --tw-prose-hr: rgb(255 255 255 / 0.2);
+  --tw-prose-quotes: rgb(255 255 255 / 0.9);
+  --tw-prose-quote-borders: var(--project-color, var(--color-portfolio-red));
+}
+
 .portfolio-markdown p {
   margin-bottom: 1.2em;
+}
+
+.portfolio-markdown.prose :where(h1, h2, h3, h4, h5, h6) {
+  font-weight: 900;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.portfolio-markdown :where(ul, ol) {
+  margin-bottom: 1.2em;
+  margin-top: 0;
+}
+
+.portfolio-markdown :where(li) {
+  padding-inline-start: 0.2em;
+}
+
+.portfolio-markdown :where(li p) {
+  margin-bottom: 0;
+  margin-top: 0;
+}
+
+.portfolio-markdown :where(code)::before,
+.portfolio-markdown :where(code)::after {
+  content: none;
+}
+
+.portfolio-markdown-scroll-body {
+  padding-bottom: 2.4em;
+}
+
+.portfolio-markdown-scroll-body > :last-child {
+  margin-bottom: 0;
 }
 
 .portfolio-markdown a {
@@ -38,4 +104,10 @@ button {
 
 .portfolio-markdown strong {
   font-weight: 900;
+}
+
+abbr[title] {
+  cursor: help;
+  text-decoration: underline dotted currentColor 0.08em;
+  text-underline-offset: 0.16em;
 }

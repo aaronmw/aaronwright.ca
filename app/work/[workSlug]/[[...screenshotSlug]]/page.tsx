@@ -14,6 +14,13 @@ type SlidePageProps = {
   }>;
 };
 
+function plainTextFromMarkdown(markdown: string) {
+  return markdown
+    .replace(/<[^>]+>/g, '')
+    .trim()
+    .split('\n')[0];
+}
+
 export function generateStaticParams() {
   return portfolioSlides.flatMap((project) => [
     { workSlug: project.slug, screenshotSlug: [] },
@@ -41,7 +48,7 @@ export async function generateMetadata({ params }: SlidePageProps) {
     title: screenshot
       ? `${project.title}: ${screenshot.slug} | Aaron M. Wright`
       : `${project.title} | Aaron M. Wright`,
-    description: project.descriptionMarkdown.trim().split('\n')[0],
+    description: plainTextFromMarkdown(project.descriptionMarkdown),
   };
 }
 
