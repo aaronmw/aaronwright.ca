@@ -3127,7 +3127,7 @@ function ImageModal({
             ? 'pointer-events-none translate-x-16 rotate-90 opacity-0'
             : isBackdropVisible
               ? 'translate-x-0 rotate-0 opacity-100'
-              : '-translate-x-16 -rotate-90 opacity-0'
+              : 'translate-x-16 rotate-90 opacity-0'
         }`}
         style={
           {
