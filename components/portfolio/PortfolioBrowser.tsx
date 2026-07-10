@@ -2,6 +2,7 @@
 
 import {
   AnchorHTMLAttributes,
+  ButtonHTMLAttributes,
   CSSProperties,
   HTMLAttributes,
   KeyboardEvent as ReactKeyboardEvent,
@@ -23,6 +24,7 @@ import {
 import Image from 'next/image';
 import Link from 'next/link';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import type { IconProp } from '@fortawesome/fontawesome-svg-core';
 import {
   faArrowDown,
   faArrowLeft,
@@ -1547,6 +1549,7 @@ export function PortfolioBrowser({
     return (
       <SideNavButton
         key={`${side}-${item.id}`}
+        icon={Icon}
         label={label}
         tooltipTitle={tooltipTitle}
         tooltipId={tooltipId}
@@ -1570,14 +1573,7 @@ export function PortfolioBrowser({
             setActiveProject(item.projectIndex, 'push');
           }
         }}
-      >
-        <span className="grid size-7 place-items-center" aria-hidden="true">
-          <FontAwesomeIcon
-            icon={Icon}
-            className="size-7 drop-shadow-[1px_1px_0_black]"
-          />
-        </span>
-      </SideNavButton>
+      />
     );
   };
 
@@ -2227,6 +2223,7 @@ function AnimatedActiveFill({
 }
 
 function SideNavButton({
+  icon,
   label,
   tooltipTitle,
   tooltipId,
@@ -2235,8 +2232,8 @@ function SideNavButton({
   activeButton = false,
   concealed = false,
   onClick,
-  children,
 }: {
+  icon: IconProp;
   label: string;
   tooltipTitle: string;
   tooltipId: string;
@@ -2245,7 +2242,6 @@ function SideNavButton({
   activeButton?: boolean;
   concealed?: boolean;
   onClick: () => void;
-  children: ReactNode;
 }) {
   const projectColor = color ?? PROJECT_COLORS[0];
   const buttonPaddingClass = activeButton
@@ -2273,16 +2269,15 @@ function SideNavButton({
         } as ProjectColorStyle
       }
     >
-      <button
-        type="button"
+      <SquareIconButton
+        icon={icon}
+        iconClassName="size-7"
         className={`grid place-items-center transition-[background-color,border-color,border-radius,border-width,color,padding] duration-500 ease-out ${buttonPaddingClass} ${buttonSurfaceClass}`}
         aria-label={label}
         aria-describedby={tooltipId}
         tabIndex={concealed ? -1 : undefined}
         onClick={onClick}
-      >
-        {children}
-      </button>
+      />
       <span
         id={tooltipId}
         role="tooltip"
@@ -2291,6 +2286,30 @@ function SideNavButton({
         {tooltipTitle}
       </span>
     </div>
+  );
+}
+
+function SquareIconButton({
+  icon,
+  iconClassName,
+  className,
+  ...buttonProps
+}: Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children'> & {
+  icon: IconProp;
+  iconClassName: string;
+}) {
+  return (
+    <button
+      type="button"
+      className={`grid place-items-center outline-none ${className ?? ''}`}
+      {...buttonProps}
+    >
+      <FontAwesomeIcon
+        icon={icon}
+        className={`${iconClassName} drop-shadow-[1px_1px_0_black]`}
+        aria-hidden="true"
+      />
+    </button>
   );
 }
 
@@ -3099,15 +3118,16 @@ function ImageModal({
         }`}
         aria-hidden="true"
       />
-      <button
-        type="button"
+      <SquareIconButton
+        icon={faXmark}
+        iconClassName="size-5"
         data-portfolio-modal-close
-        className={`fixed right-5 top-5 z-20 grid size-11 translate-y-0 place-items-center bg-[var(--project-color)] text-white outline-none transition-[opacity,scale,translate] duration-300 [transition-timing-function:cubic-bezier(0.19,1,0.22,1)] hover:scale-105 focus-visible:scale-105 motion-reduce:translate-x-0 motion-reduce:transition-opacity motion-reduce:duration-150 ${
+        className={`fixed right-5 top-5 z-20 size-11 translate-y-0 bg-[var(--project-color)] text-white transition-[opacity,rotate,scale,translate] duration-300 [transition-timing-function:cubic-bezier(0.19,1,0.22,1)] hover:scale-105 focus-visible:scale-105 motion-reduce:translate-x-0 motion-reduce:rotate-0 motion-reduce:transition-opacity motion-reduce:duration-150 ${
           isClosing
-            ? 'pointer-events-none translate-x-16 opacity-0'
+            ? 'pointer-events-none translate-x-16 rotate-90 opacity-0'
             : isBackdropVisible
-              ? 'translate-x-0 opacity-100'
-              : '-translate-x-16 opacity-0'
+              ? 'translate-x-0 rotate-0 opacity-100'
+              : '-translate-x-16 -rotate-90 opacity-0'
         }`}
         style={
           {
@@ -3117,19 +3137,7 @@ function ImageModal({
         aria-label="Close enlarged image"
         title="Close"
         onClick={onClose}
-      >
-        <FontAwesomeIcon
-          icon={faXmark}
-          className={`size-5 transition-[rotate] duration-300 [transition-timing-function:cubic-bezier(0.19,1,0.22,1)] motion-reduce:rotate-0 motion-reduce:transition-none ${
-            isClosing
-              ? 'rotate-90'
-              : isBackdropVisible
-                ? 'rotate-0'
-                : '-rotate-90'
-          }`}
-          aria-hidden="true"
-        />
-      </button>
+      />
       <div
         ref={imageFrameRef}
         data-portfolio-modal-image-frame
