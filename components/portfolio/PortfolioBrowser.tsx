@@ -196,36 +196,20 @@ function getRealCarouselIndex(renderedIndex: number, itemCount: number) {
   return positiveModulo(renderedIndex - 1, itemCount);
 }
 
-function getRenderedCarouselIndex(
+function getCanonicalRenderedCarouselIndex(realIndex: number, itemCount: number) {
+  return itemCount > 1 ? realIndex + 1 : realIndex;
+}
+
+function isCarouselBoundaryJump(
   previousIndex: number,
   nextIndex: number,
   itemCount: number
 ) {
-  if (itemCount <= 1) {
-    return nextIndex;
-  }
-
-  if (previousIndex === itemCount - 1 && nextIndex === 0) {
-    return itemCount + 1;
-  }
-
-  if (previousIndex === 0 && nextIndex === itemCount - 1) {
-    return 0;
-  }
-
-  return nextIndex + 1;
-}
-
-function getCanonicalCarouselIndex(renderedIndex: number, itemCount: number) {
-  if (renderedIndex === 0) {
-    return itemCount;
-  }
-
-  if (renderedIndex === itemCount + 1) {
-    return 1;
-  }
-
-  return undefined;
+  return (
+    itemCount > 1 &&
+    ((previousIndex === itemCount - 1 && nextIndex === 0) ||
+      (previousIndex === 0 && nextIndex === itemCount - 1))
+  );
 }
 
 function getCarouselTrackTransform(renderedIndex: number) {
@@ -680,14 +664,22 @@ export function PortfolioBrowser({
         return;
       }
 
+      const slides = getCarouselSlides(project);
+      const nextCarouselIndex = getCarouselIndexFromSlideIndex(
+        project,
+        slideIndex
+      );
+      const nextRenderedIndex = getCanonicalRenderedCarouselIndex(
+        nextCarouselIndex,
+        slides.length
+      );
+
       carousel.scrollTo({
-        left:
-          carousel.clientWidth *
-          (getCarouselIndexFromSlideIndex(project, slideIndex) + 1),
+        left: carousel.clientWidth * nextRenderedIndex,
         behavior,
       });
     },
-    [getCarouselIndexFromSlideIndex]
+    [getCarouselIndexFromSlideIndex, getCarouselSlides]
   );
 
   const syncViewport = useCallback(
@@ -2677,15 +2669,34 @@ function ImageModal({
   const [isDragging, setIsDragging] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(Boolean(transitionRect));
   const [isBackdropVisible, setIsBackdropVisible] = useState(false);
-  const [renderedCarouselIndex, setRenderedCarouselIndex] = useState(() =>
-    carouselCount > 1
-      ? boundedActiveScreenshotIndex + 1
-      : boundedActiveScreenshotIndex
+  const [carouselTransition, setCarouselTransition] = useState(() => ({
+    activeIndex: boundedActiveScreenshotIndex,
+    itemCount: carouselCount,
+    isBoundary: false,
+  }));
+  const renderedCarouselIndex = getCanonicalRenderedCarouselIndex(
+    boundedActiveScreenshotIndex,
+    carouselCount
   );
+
+  if (
+    carouselTransition.activeIndex !== boundedActiveScreenshotIndex ||
+    carouselTransition.itemCount !== carouselCount
+  ) {
+    setCarouselTransition({
+      activeIndex: boundedActiveScreenshotIndex,
+      itemCount: carouselCount,
+      isBoundary: isCarouselBoundaryJump(
+        carouselTransition.activeIndex,
+        boundedActiveScreenshotIndex,
+        carouselCount
+      ),
+    });
+  }
+
   const imageFrameRef = useRef<HTMLDivElement>(null);
   const liveOffsetRef = useRef(offset);
   const liveScaleRef = useRef(scale);
-  const previousActiveScreenshotIndexRef = useRef(boundedActiveScreenshotIndex);
   const animationFrameRef = useRef<number | null>(null);
   const transitionFrameRef = useRef<number | null>(null);
   const transitionFallbackTimeoutRef = useRef<ReturnType<
@@ -2762,24 +2773,6 @@ function ImageModal({
 
     return () => cancelAnimationFrame(rafId);
   }, []);
-
-  useEffect(() => {
-    if (carouselCount <= 1) {
-      previousActiveScreenshotIndexRef.current = boundedActiveScreenshotIndex;
-      setRenderedCarouselIndex(boundedActiveScreenshotIndex);
-      return;
-    }
-
-    const previousIndex = previousActiveScreenshotIndexRef.current;
-    const nextRenderedIndex = getRenderedCarouselIndex(
-      previousIndex,
-      boundedActiveScreenshotIndex,
-      carouselCount
-    );
-
-    previousActiveScreenshotIndexRef.current = boundedActiveScreenshotIndex;
-    setRenderedCarouselIndex(nextRenderedIndex);
-  }, [boundedActiveScreenshotIndex, carouselCount]);
 
   useLayoutEffect(() => {
     liveOffsetRef.current = offset;
@@ -3085,36 +3078,6 @@ function ImageModal({
     },
     [finishImageTransition]
   );
-  const handleCarouselTrackTransitionEnd = useCallback(
-    (event: ReactTransitionEvent<HTMLDivElement>) => {
-      if (
-        carouselCount <= 1 ||
-        event.target !== event.currentTarget ||
-        event.propertyName !== 'transform'
-      ) {
-        return;
-      }
-
-      const nextRenderedIndex = getCanonicalCarouselIndex(
-        renderedCarouselIndex,
-        carouselCount
-      );
-
-      if (nextRenderedIndex === undefined) {
-        return;
-      }
-
-      const track = event.currentTarget;
-
-      track.style.transition = 'none';
-      track.style.transform = getCarouselTrackTransform(nextRenderedIndex);
-      void track.offsetWidth;
-      track.style.transition = '';
-      setRenderedCarouselIndex(nextRenderedIndex);
-    },
-    [carouselCount, renderedCarouselIndex]
-  );
-
   return (
     <dialog
       open
@@ -3187,12 +3150,13 @@ function ImageModal({
         <div className="absolute inset-0 overflow-hidden">
           <div
             data-portfolio-modal-carousel-track
-            className="flex h-full transition-transform duration-500 ease-out motion-reduce:transition-none"
+            className={`flex h-full transition-transform ease-out motion-reduce:transition-none ${
+              carouselTransition.isBoundary ? 'duration-1000' : 'duration-500'
+            }`}
             style={{
               transform: getCarouselTrackTransform(renderedCarouselIndex),
               willChange: carouselCount > 1 ? 'transform' : undefined,
             }}
-            onTransitionEnd={handleCarouselTrackTransitionEnd}
           >
             {renderedCarouselScreenshots.map(
               ({ item: carouselScreenshot, key, realIndex }) => (
