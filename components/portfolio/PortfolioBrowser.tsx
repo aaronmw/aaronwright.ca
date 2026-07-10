@@ -23,13 +23,12 @@ import {
 } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import type { IconProp } from '@fortawesome/fontawesome-svg-core';
 import {
   faArrowDown,
-  faArrowLeft,
-  faArrowRight,
-  faArrowUp,
   faFilePdf,
   faXmark,
 } from '@fortawesome/free-solid-svg-icons';
@@ -106,6 +105,7 @@ const PROJECT_COLOR_START_HUE = 342;
 const PROJECT_COLOR_SATURATION = 78;
 const PROJECT_COLOR_LIGHTNESS = 54;
 const PROJECT_COLORS = buildProjectColors(portfolioSlides.length);
+const SECTION_NAV_COLORS = [TOP_SCREEN_COLOR, ...PROJECT_COLORS];
 const INLINE_MARKDOWN_COMPONENTS = {
   p({ children }) {
     return <>{children}</>;
@@ -222,6 +222,25 @@ function getCarouselMediaClass(isActive: boolean) {
   return `${CAROUSEL_MEDIA_CLASS} ${
     isActive ? 'blur-0' : 'blur-[20px]'
   }`;
+}
+
+function getSectionNavArrowRotation(
+  itemIndex: number,
+  activeSectionIndex: number,
+  side: 'left' | 'right'
+) {
+  const direction = side === 'left' ? 1 : -1;
+
+  if (itemIndex < activeSectionIndex) {
+    return 180 * direction;
+  }
+
+  if (itemIndex > activeSectionIndex) {
+    return 0;
+  }
+
+  const activeProject = portfolioSlides[activeSectionIndex - 1];
+  return activeProject?.screenshots.length > 1 ? 90 * direction : 0;
 }
 
 function getIndicatorSlotIds(count: number) {
@@ -503,8 +522,10 @@ export function PortfolioBrowser({
   > | null>(null);
   const modalHistoryEntryRef = useRef(false);
   const initialScrollSyncedRef = useRef(false);
-  const verticalScrollFrameRef = useRef<number | null>(null);
   const sectionNavFillRefs = useRef<Array<HTMLSpanElement | null>>([]);
+  const sectionNavIconRefs = useRef<
+    Record<'left' | 'right', Array<SVGSVGElement | null>>
+  >({ left: [], right: [] });
 
   const projectSlides = useMemo(
     () =>
@@ -519,6 +540,9 @@ export function PortfolioBrowser({
     : START_SCREEN_INDEX;
   const normalizedInitialProjectIndex =
     initialProjectIndex >= 0 ? initialProjectIndex : START_SCREEN_INDEX;
+  const initialSectionNavIndex = normalizedInitialProjectIndex + 1;
+  const initialSectionNavColor =
+    SECTION_NAV_COLORS[initialSectionNavIndex] ?? TOP_SCREEN_COLOR;
 
   const initialSlideIndexes = useMemo(
     () =>
@@ -1187,40 +1211,6 @@ export function PortfolioBrowser({
     applyLocationState('auto');
   });
 
-  const syncSectionNavFillToScrollEvent = useEffectEvent(
-    (vertical: HTMLDivElement) => {
-      if (verticalScrollFrameRef.current !== null) {
-        return;
-      }
-
-      verticalScrollFrameRef.current = requestAnimationFrame(() => {
-        verticalScrollFrameRef.current = null;
-
-        if (vertical.clientHeight <= 0) {
-          return;
-        }
-
-        const sectionPosition = Math.max(
-          0,
-          Math.min(
-            portfolioSlides.length,
-            vertical.scrollTop / vertical.clientHeight
-          )
-        );
-
-        const transform = `translate3d(-50%, ${
-          sectionPosition * SECTION_NAV_ITEM_STEP_REM
-        }rem, 0)`;
-
-        sectionNavFillRefs.current.forEach((fill) => {
-          if (fill) {
-            fill.style.transform = transform;
-          }
-        });
-      });
-    }
-  );
-
   const syncCurrentViewportEvent = useEffectEvent(() => {
     syncViewport(activeProjectIndex, activeSlideIndexes, 'auto');
   });
@@ -1422,6 +1412,109 @@ export function PortfolioBrowser({
     return () => cancelAnimationFrame(rafId);
   }, []);
 
+  useLayoutEffect(() => {
+    const vertical = verticalRef.current;
+    const fills = sectionNavFillRefs.current.filter(
+      (fill): fill is HTMLSpanElement => Boolean(fill)
+    );
+    const leftIcons = sectionNavIconRefs.current.left.filter(
+      (icon): icon is SVGSVGElement => Boolean(icon)
+    );
+    const rightIcons = sectionNavIconRefs.current.right.filter(
+      (icon): icon is SVGSVGElement => Boolean(icon)
+    );
+
+    if (
+      !vertical ||
+      fills.length === 0 ||
+      leftIcons.length !== SECTION_NAV_COLORS.length ||
+      rightIcons.length !== SECTION_NAV_COLORS.length
+    ) {
+      return;
+    }
+
+    gsap.registerPlugin(ScrollTrigger);
+
+    const context = gsap.context(() => {
+      const timelineColors = SECTION_NAV_COLORS.map((color) => {
+        const [red, green, blue] = gsap.utils.splitColor(color);
+
+        return `rgb(${red}, ${green}, ${blue})`;
+      });
+      const timeline = gsap.timeline({
+        defaults: { ease: 'none' },
+        scrollTrigger: {
+          scroller: vertical,
+          start: 0,
+          end: 'max',
+          scrub: true,
+        },
+      });
+
+      timeline.set(fills, {
+        xPercent: -50,
+        y: 0,
+        backgroundColor: timelineColors[0],
+        borderColor: timelineColors[0],
+        color: timelineColors[0],
+      });
+      timeline.set(leftIcons, {
+        rotation: (itemIndex) =>
+          getSectionNavArrowRotation(itemIndex, 0, 'left'),
+        transformOrigin: '50% 50%',
+      });
+      timeline.set(rightIcons, {
+        rotation: (itemIndex) =>
+          getSectionNavArrowRotation(itemIndex, 0, 'right'),
+        transformOrigin: '50% 50%',
+      });
+
+      timelineColors.slice(1).forEach((color, index) => {
+        const activeSectionIndex = index + 1;
+
+        timeline.to(
+          fills,
+          {
+            y: `${(index + 1) * SECTION_NAV_ITEM_STEP_REM}rem`,
+            backgroundColor: color,
+            borderColor: color,
+            color,
+            duration: 1,
+          },
+          index
+        );
+        timeline.to(
+          leftIcons,
+          {
+            rotation: (itemIndex) =>
+              getSectionNavArrowRotation(
+                itemIndex,
+                activeSectionIndex,
+                'left'
+              ),
+            duration: 1,
+          },
+          index
+        );
+        timeline.to(
+          rightIcons,
+          {
+            rotation: (itemIndex) =>
+              getSectionNavArrowRotation(
+                itemIndex,
+                activeSectionIndex,
+                'right'
+              ),
+            duration: 1,
+          },
+          index
+        );
+      });
+    }, keyboardSurfaceRef);
+
+    return () => context.revert();
+  }, [isWideLayout]);
+
   useEffect(() => {
     window.history.scrollRestoration = 'manual';
 
@@ -1445,21 +1538,9 @@ export function PortfolioBrowser({
       return;
     }
 
-    const handleVerticalScroll = () => syncSectionNavFillToScrollEvent(vertical);
     const handleVerticalScrollEnd = () => handleVerticalScrollEndEvent(vertical);
-    vertical.addEventListener('scroll', handleVerticalScroll, { passive: true });
     vertical.addEventListener('scrollend', handleVerticalScrollEnd);
-    syncSectionNavFillToScrollEvent(vertical);
-
-    return () => {
-      vertical.removeEventListener('scroll', handleVerticalScroll);
-      vertical.removeEventListener('scrollend', handleVerticalScrollEnd);
-
-      if (verticalScrollFrameRef.current !== null) {
-        cancelAnimationFrame(verticalScrollFrameRef.current);
-        verticalScrollFrameRef.current = null;
-      }
-    };
+    return () => vertical.removeEventListener('scrollend', handleVerticalScrollEnd);
   }, []);
 
   useEffect(() => {
@@ -1554,8 +1635,6 @@ export function PortfolioBrowser({
     0,
     sectionNavItems.findIndex((item) => item.projectIndex === activeProjectIndex)
   );
-  const sideNavActiveFillColor =
-    sectionNavItems[sideNavActiveItemIndex]?.color ?? TOP_SCREEN_COLOR;
   const sideNavStackStyle: CSSProperties = {
     transform: isModalPresentationActive
       ? `translateY(${
@@ -1566,7 +1645,8 @@ export function PortfolioBrowser({
   };
   const renderSectionNavButton = (
     item: (typeof sectionNavItems)[number],
-    side: 'left' | 'right'
+    side: 'left' | 'right',
+    itemIndex: number
   ) => {
     const isActiveSection = item.projectIndex === activeProjectIndex;
     const isActiveProjectSection =
@@ -1575,13 +1655,6 @@ export function PortfolioBrowser({
     const tooltipId = `portfolio-${side}-section-${item.id}-tooltip`;
     const hasHorizontalAction = isActiveProjectSection && canMoveHorizontally;
 
-    const Icon = hasHorizontalAction
-      ? isLeftSide
-        ? faArrowLeft
-        : faArrowRight
-      : item.projectIndex < activeProjectIndex
-        ? faArrowUp
-        : faArrowDown;
     const label = hasHorizontalAction
       ? isLeftSide
         ? 'Previous screen'
@@ -1598,7 +1671,10 @@ export function PortfolioBrowser({
     return (
       <SideNavButton
         key={`${side}-${item.id}`}
-        icon={Icon}
+        icon={faArrowDown}
+        iconRef={(node) => {
+          sectionNavIconRefs.current[side][itemIndex] = node;
+        }}
         label={label}
         tooltipTitle={tooltipTitle}
         tooltipId={tooltipId}
@@ -1834,19 +1910,20 @@ export function PortfolioBrowser({
               <AnimatedActiveFill
                 activeIndex={sideNavActiveItemIndex}
                 axis="y"
-                color={sideNavActiveFillColor}
+                color={initialSectionNavColor}
                 stepRem={SECTION_NAV_ITEM_STEP_REM}
-                scrollLinkedPosition={`${Math.max(
-                  0,
-                  normalizedInitialProjectIndex + 1
-                ) * SECTION_NAV_ITEM_STEP_REM}rem`}
+                scrollLinkedPosition={`${
+                  initialSectionNavIndex * SECTION_NAV_ITEM_STEP_REM
+                }rem`}
                 elementRef={(node) => {
                   sectionNavFillRefs.current[0] = node;
                 }}
                 className="block size-12 border-4 border-current"
                 dataAttributes={{ 'data-portfolio-section-nav-fill': 'left' }}
               />
-              {sectionNavItems.map((item) => renderSectionNavButton(item, 'left'))}
+              {sectionNavItems.map((item, itemIndex) =>
+                renderSectionNavButton(item, 'left', itemIndex)
+              )}
             </div>
           </div>
           <div
@@ -1861,19 +1938,20 @@ export function PortfolioBrowser({
               <AnimatedActiveFill
                 activeIndex={sideNavActiveItemIndex}
                 axis="y"
-                color={sideNavActiveFillColor}
+                color={initialSectionNavColor}
                 stepRem={SECTION_NAV_ITEM_STEP_REM}
-                scrollLinkedPosition={`${Math.max(
-                  0,
-                  normalizedInitialProjectIndex + 1
-                ) * SECTION_NAV_ITEM_STEP_REM}rem`}
+                scrollLinkedPosition={`${
+                  initialSectionNavIndex * SECTION_NAV_ITEM_STEP_REM
+                }rem`}
                 elementRef={(node) => {
                   sectionNavFillRefs.current[1] = node;
                 }}
                 className="block size-12 border-4 border-current"
                 dataAttributes={{ 'data-portfolio-section-nav-fill': 'right' }}
               />
-              {sectionNavItems.map((item) => renderSectionNavButton(item, 'right'))}
+              {sectionNavItems.map((item, itemIndex) =>
+                renderSectionNavButton(item, 'right', itemIndex)
+              )}
             </div>
           </div>
         </>
@@ -2275,7 +2353,7 @@ function AnimatedActiveFill({
         : 'left-0 top-1/2 z-10'
       : 'left-1/2 top-0 z-0';
   const transitionClass = scrollLinkedPosition
-    ? 'transition-[background-color,border-color,color,opacity]'
+    ? 'transition-opacity'
     : 'transition-[background-color,border-color,color,opacity,transform]';
 
   return (
@@ -2297,6 +2375,7 @@ function AnimatedActiveFill({
 
 function SideNavButton({
   icon,
+  iconRef,
   label,
   tooltipTitle,
   tooltipId,
@@ -2307,6 +2386,7 @@ function SideNavButton({
   onClick,
 }: {
   icon: IconProp;
+  iconRef?: (node: SVGSVGElement | null) => void;
   label: string;
   tooltipTitle: string;
   tooltipId: string;
@@ -2344,6 +2424,7 @@ function SideNavButton({
     >
       <SquareIconButton
         icon={icon}
+        iconRef={iconRef}
         iconClassName="size-7"
         className={`grid place-items-center transition-[background-color,border-color,border-radius,border-width,color,padding] duration-500 ease-out ${buttonPaddingClass} ${buttonSurfaceClass}`}
         aria-label={label}
@@ -2364,11 +2445,13 @@ function SideNavButton({
 
 function SquareIconButton({
   icon,
+  iconRef,
   iconClassName,
   className,
   ...buttonProps
 }: Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children'> & {
   icon: IconProp;
+  iconRef?: (node: SVGSVGElement | null) => void;
   iconClassName: string;
 }) {
   return (
@@ -2378,6 +2461,7 @@ function SquareIconButton({
       {...buttonProps}
     >
       <FontAwesomeIcon
+        ref={iconRef}
         icon={icon}
         className={`${iconClassName} drop-shadow-[1px_1px_0_black]`}
         aria-hidden="true"
