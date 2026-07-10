@@ -577,6 +577,7 @@ export function PortfolioBrowser({
       isBuildingWithAiTextScreenshot(activeProject, activeScreenshot)
     );
   const isModalPresentationActive = shouldShowModal && !isModalClosing;
+  const isModalLayerActive = shouldShowModal;
   const activeProjectColor =
     activeProjectIndex >= 0 ? getProjectColor(activeProjectIndex) : undefined;
 
@@ -1775,7 +1776,7 @@ export function PortfolioBrowser({
         <>
           <div
             className={`fixed left-3 top-1/2 -translate-y-1/2 sm:left-6 ${
-              isModalPresentationActive ? 'z-[60]' : 'z-20'
+              isModalLayerActive ? 'z-[60]' : 'z-20'
             }`}
           >
             <div
@@ -1795,7 +1796,7 @@ export function PortfolioBrowser({
           </div>
           <div
             className={`fixed right-3 top-1/2 -translate-y-1/2 sm:right-6 ${
-              isModalPresentationActive ? 'z-[60]' : 'z-20'
+              isModalLayerActive ? 'z-[60]' : 'z-20'
             }`}
           >
             <div
@@ -1843,7 +1844,7 @@ export function PortfolioBrowser({
           isWideLayout
             ? 'grid grid-cols-[minmax(var(--portfolio-description-rail-width),1fr)_var(--portfolio-screenshot-size)_var(--portfolio-control-gutter-width)]'
             : 'flex justify-center px-6'
-        } ${isModalPresentationActive ? 'z-[60]' : 'z-20'}`}
+        } ${isModalLayerActive ? 'z-[60]' : 'z-20'}`}
         aria-label={
           activeProject ? `${activeProject.title} screens` : 'Portfolio screens'
         }
