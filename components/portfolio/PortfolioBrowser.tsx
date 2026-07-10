@@ -1454,8 +1454,9 @@ export function PortfolioBrowser({
       timeline.set(fills, {
         xPercent: -50,
         y: 0,
-        backgroundColor: timelineColors[0],
+        backgroundColor: 'transparent',
         borderColor: timelineColors[0],
+        borderWidth: 4,
         color: timelineColors[0],
       });
       timeline.set(leftIcons, {
@@ -1476,13 +1477,14 @@ export function PortfolioBrowser({
           fills,
           {
             y: `${(index + 1) * SECTION_NAV_ITEM_STEP_REM}rem`,
-            backgroundColor: color,
             borderColor: color,
             color,
             duration: 1,
           },
           index
         );
+        timeline.to(fills, { borderWidth: 0, duration: 0.5 }, index);
+        timeline.to(fills, { borderWidth: 4, duration: 0.5 }, index + 0.5);
         timeline.to(
           leftIcons,
           {
@@ -1918,7 +1920,8 @@ export function PortfolioBrowser({
                 elementRef={(node) => {
                   sectionNavFillRefs.current[0] = node;
                 }}
-                className="block size-12 border-4 border-current"
+                filled={false}
+                className="block size-12 rounded-full border-4 border-current"
                 dataAttributes={{ 'data-portfolio-section-nav-fill': 'left' }}
               />
               {sectionNavItems.map((item, itemIndex) =>
@@ -1946,7 +1949,8 @@ export function PortfolioBrowser({
                 elementRef={(node) => {
                   sectionNavFillRefs.current[1] = node;
                 }}
-                className="block size-12 border-4 border-current"
+                filled={false}
+                className="block size-12 rounded-full border-4 border-current"
                 dataAttributes={{ 'data-portfolio-section-nav-fill': 'right' }}
               />
               {sectionNavItems.map((item, itemIndex) =>
@@ -2321,6 +2325,7 @@ function AnimatedActiveFill({
   centeredCount,
   scrollLinkedPosition,
   elementRef,
+  filled = true,
   visible = true,
   className,
   dataAttributes,
@@ -2333,6 +2338,7 @@ function AnimatedActiveFill({
   centeredCount?: number;
   scrollLinkedPosition?: string;
   elementRef?: (node: HTMLSpanElement | null) => void;
+  filled?: boolean;
   visible?: boolean;
   className: string;
   dataAttributes?: Record<`data-${string}`, string>;
@@ -2362,7 +2368,7 @@ function AnimatedActiveFill({
       {...dataAttributes}
       className={`${className} pointer-events-none absolute ${positionClass} ${transitionClass} duration-500 ease-out motion-reduce:transition-none`}
       style={{
-        backgroundColor: color,
+        backgroundColor: filled ? color : 'transparent',
         borderColor: color,
         color,
         opacity: visible ? 1 : 0,
@@ -2397,12 +2403,6 @@ function SideNavButton({
   onClick: () => void;
 }) {
   const projectColor = color ?? PROJECT_COLORS[0];
-  const buttonPaddingClass = activeButton
-      ? 'border-4 p-1.5'
-      : 'border-0 p-1 hover:border-4 hover:p-1.5 focus:border-4 focus:p-1.5 focus-visible:border-4 focus-visible:p-1.5';
-  const buttonSurfaceClass = activeButton
-    ? 'border-transparent bg-transparent text-white'
-    : 'border-transparent bg-transparent text-[var(--project-color)] hover:border-[var(--project-color)] hover:bg-[var(--project-color)] hover:text-white focus:border-[var(--project-color)] focus:bg-[var(--project-color)] focus:text-white focus-visible:border-[var(--project-color)] focus-visible:bg-[var(--project-color)] focus-visible:text-white';
   const tooltipPositionClass =
     side === 'left'
       ? 'left-full ml-3 -translate-x-1 group-hover/nav-tooltip:translate-x-0 group-focus-within/nav-tooltip:translate-x-0'
@@ -2426,9 +2426,10 @@ function SideNavButton({
         icon={icon}
         iconRef={iconRef}
         iconClassName="size-7"
-        className={`grid place-items-center transition-[background-color,border-color,border-radius,border-width,color,padding] duration-500 ease-out ${buttonPaddingClass} ${buttonSurfaceClass}`}
+        className="size-12 border-0 border-transparent bg-transparent p-0 text-[var(--project-color)] transition-[border-color,border-width] duration-300 ease-out hover:border-2 hover:border-[var(--project-color)] focus:border-2 focus:border-[var(--project-color)] focus-visible:border-2 focus-visible:border-[var(--project-color)]"
         aria-label={label}
         aria-describedby={tooltipId}
+        aria-current={activeButton ? 'page' : undefined}
         tabIndex={concealed ? -1 : undefined}
         onClick={onClick}
       />
@@ -2457,7 +2458,7 @@ function SquareIconButton({
   return (
     <button
       type="button"
-      className={`grid place-items-center outline-none ${className ?? ''}`}
+      className={`grid place-items-center rounded-full outline-none ${className ?? ''}`}
       {...buttonProps}
     >
       <FontAwesomeIcon
