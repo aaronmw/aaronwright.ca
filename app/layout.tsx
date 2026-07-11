@@ -1,6 +1,7 @@
 import '@/styles/globals.css';
 import '@fortawesome/fontawesome-svg-core/styles.css';
 import { FaviconSync } from '@/components/FaviconSync';
+import { InteractivePopEffects } from '@/components/InteractivePopEffects';
 import { config } from '@fortawesome/fontawesome-svg-core';
 
 config.autoAddCss = false;
@@ -21,6 +22,7 @@ export default function RootLayout({
       <body>
         {children}
         <FaviconSync />
+        <InteractivePopEffects />
       </body>
     </html>
   );
