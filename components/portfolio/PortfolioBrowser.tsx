@@ -2705,6 +2705,7 @@ function NavigationActiveRing({
           fill="none"
           stroke="currentColor"
           strokeWidth="4"
+          style={{ transformBox: 'fill-box', transformOrigin: '50% 50%' }}
         />
       </g>
     </svg>
@@ -2785,7 +2786,7 @@ function SideNavButton({
         aria-label={label}
         aria-describedby={tooltipId}
         aria-current={activeButton ? 'page' : undefined}
-        data-interactive-pop-companion={`[data-portfolio-section-nav-fill="${side}"]`}
+        data-interactive-pop-companion={`[data-portfolio-section-nav-preview="${side}"] circle`}
         tabIndex={concealed ? -1 : undefined}
         onClick={onClick}
       />
