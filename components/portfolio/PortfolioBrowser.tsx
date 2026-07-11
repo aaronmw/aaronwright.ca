@@ -1463,7 +1463,6 @@ export function PortfolioBrowser({
         ((SECTION_NAV_COLORS.length - 1) / 2) * SECTION_NAV_ITEM_STEP_REM;
 
       timeline.set(indicators, {
-        xPercent: -50,
         y: 0,
         color: timelineColors[0],
       });
@@ -2408,11 +2407,11 @@ function SectionNavActiveRing({
     <svg
       ref={elementRef}
       data-portfolio-section-nav-fill={side}
-      className="pointer-events-none absolute left-1/2 top-0 z-0 size-12 overflow-visible"
+      className="pointer-events-none absolute left-0 top-0 z-0 size-12 overflow-visible"
       viewBox="0 0 48 48"
       style={{
         color,
-        transform: `translate3d(-50%, ${initialPositionRem}rem, 0)`,
+        transform: `translate3d(0, ${initialPositionRem}rem, 0)`,
       }}
       aria-hidden="true"
     >
