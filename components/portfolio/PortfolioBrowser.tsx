@@ -100,6 +100,7 @@ const NAVIGATION_INDICATOR_TRANSITION_MS = 500;
 const SECTION_NAV_ITEM_STEP_REM = 3.75;
 const SECTION_NAV_PREVIEW_RETURN_DELAY_MS = 140;
 const SECTION_NAV_SNAP_DISTANCE_PX = 10;
+const SECTION_NAV_BREAKAWAY_DISTANCE_PX = 100;
 const CAROUSEL_MEDIA_CLASS =
   'object-contain transition-[filter] duration-1000 ease-in-out';
 const TOP_SCREEN_COLOR = 'hsl(0 0% 100%)';
@@ -363,6 +364,32 @@ function getSectionNavPointerColor(
   }
 
   return lastStop.color;
+}
+
+function isSectionNavBeyondBreakawayDistance(
+  buttons: Array<HTMLDivElement | null>,
+  pointerY: number,
+  indicatorY: number,
+  breakawayDistance = SECTION_NAV_BREAKAWAY_DISTANCE_PX
+) {
+  const itemRects = buttons
+    .filter((button): button is HTMLDivElement => Boolean(button))
+    .map((button) => button.getBoundingClientRect());
+
+  if (itemRects.length === 0) {
+    return true;
+  }
+
+  const top = Math.min(...itemRects.map((rect) => rect.top));
+  const bottom = Math.max(...itemRects.map((rect) => rect.bottom));
+  const isAbove =
+    pointerY < top - breakawayDistance &&
+    indicatorY < top - breakawayDistance;
+  const isBelow =
+    pointerY > bottom + breakawayDistance &&
+    indicatorY > bottom + breakawayDistance;
+
+  return isAbove || isBelow;
 }
 
 function getIndicatorSlotIds(count: number) {
@@ -658,13 +685,73 @@ export function PortfolioBrowser({
     left: null,
     right: null,
   });
+  const sectionNavPointerArmedRefs = useRef<Record<'left' | 'right', boolean>>({
+    left: false,
+    right: false,
+  });
   const sectionNavIsMovingRef = useRef(false);
   const sectionNavStackRefs = useRef<Array<HTMLDivElement | null>>([]);
   const sectionNavIconRefs = useRef<
     Record<'left' | 'right', Array<SVGSVGElement | null>>
   >({ left: [], right: [] });
+  const returnSectionNavPointerToIdle = useCallback(
+    (side: 'left' | 'right', delayed: boolean) => {
+      const sideIndex = side === 'left' ? 0 : 1;
+      const indicator = sectionNavIndicatorRefs.current[sideIndex];
+      const preview = sectionNavPreviewRefs.current[sideIndex];
+      const returnTimeout = sectionNavPreviewReturnTimeoutRefs.current[side];
+
+      if (returnTimeout) {
+        clearTimeout(returnTimeout);
+        sectionNavPreviewReturnTimeoutRefs.current[side] = null;
+      }
+
+      sectionNavPointerYRefs.current[side] = null;
+      sectionNavPointerArmedRefs.current[side] = false;
+      sectionNavPreviewIndexesRef.current[sideIndex] = null;
+
+      if (!indicator || !preview) {
+        return;
+      }
+
+      const animateToIdle = () => {
+        sectionNavPreviewReturnTimeoutRefs.current[side] = null;
+        const reducedMotion = window.matchMedia(
+          '(prefers-reduced-motion: reduce)'
+        ).matches;
+
+        gsap.to(preview, {
+          y: 0,
+          color: getComputedStyle(indicator).color,
+          duration: reducedMotion ? 0 : 0.3,
+          ease: 'power3.out',
+          overwrite: 'auto',
+          onComplete: () => {
+            if (!sectionNavPointerArmedRefs.current[side]) {
+              gsap.set(preview, { clearProps: 'color' });
+            }
+          },
+        });
+      };
+
+      if (!delayed) {
+        animateToIdle();
+        return;
+      }
+
+      sectionNavPreviewReturnTimeoutRefs.current[side] = setTimeout(
+        animateToIdle,
+        SECTION_NAV_PREVIEW_RETURN_DELAY_MS
+      );
+    },
+    []
+  );
   const updateSectionNavPointer = useCallback(
     (side: 'left' | 'right', pointerY: number) => {
+      if (!sectionNavPointerArmedRefs.current[side]) {
+        return;
+      }
+
       const sideIndex = side === 'left' ? 0 : 1;
       const indicator = sectionNavIndicatorRefs.current[sideIndex];
       const preview = sectionNavPreviewRefs.current[sideIndex];
@@ -690,6 +777,18 @@ export function PortfolioBrowser({
       const snapIndex = snapTarget?.index ?? null;
       const targetY = snapTarget?.centerY ?? pointerY;
 
+      if (
+        !sectionNavIsMovingRef.current &&
+        isSectionNavBeyondBreakawayDistance(
+          sectionNavButtonRefs.current[side],
+          pointerY,
+          targetY
+        )
+      ) {
+        returnSectionNavPointerToIdle(side, false);
+        return;
+      }
+
       sectionNavPreviewIndexesRef.current[sideIndex] = snapIndex;
       gsap.killTweensOf(preview, 'y');
       gsap.set(preview, {
@@ -711,7 +810,14 @@ export function PortfolioBrowser({
         overwrite: 'auto',
       });
     },
-    []
+    [returnSectionNavPointerToIdle]
+  );
+  const engageSectionNavPointer = useCallback(
+    (side: 'left' | 'right', pointerY: number) => {
+      sectionNavPointerArmedRefs.current[side] = true;
+      updateSectionNavPointer(side, pointerY);
+    },
+    [updateSectionNavPointer]
   );
 
   const projectSlides = useMemo(
@@ -1962,10 +2068,6 @@ export function PortfolioBrowser({
       color: getProjectColor(projectIndex),
     })),
   ];
-  const sideNavActiveItemIndex = Math.max(
-    0,
-    sectionNavItems.findIndex((item) => item.projectIndex === activeProjectIndex)
-  );
   const previewSectionNavItem = useCallback(
     (
       side: 'left' | 'right',
@@ -2036,19 +2138,6 @@ export function PortfolioBrowser({
     },
     []
   );
-  const releaseSectionNavPointer = (side: 'left' | 'right') => {
-    const sideIndex = side === 'left' ? 0 : 1;
-    const previewIndex = sectionNavPreviewIndexesRef.current[sideIndex];
-
-    sectionNavPointerYRefs.current[side] = null;
-
-    const returnIndex = previewIndex ?? sideNavActiveItemIndex;
-    const item = sectionNavItems[returnIndex];
-
-    if (item) {
-      previewSectionNavItem(side, returnIndex, item.color, false);
-    }
-  };
   const sideNavStackStyle: CSSProperties = {
     transform: `translateY(${
       ((sectionNavItems.length - 1) / 2 - initialSectionNavIndex) *
@@ -2106,6 +2195,9 @@ export function PortfolioBrowser({
         onPreviewChange={(previewed) =>
           previewSectionNavItem(side, itemIndex, item.color, previewed)
         }
+        onPointerEngage={(pointerY) =>
+          engageSectionNavPointer(side, pointerY)
+        }
         onClick={() => {
           focusKeyboardSurface();
 
@@ -2137,13 +2229,12 @@ export function PortfolioBrowser({
           isModalLayerActive ? 'z-[60]' : 'z-20'
         }`}
         style={sideNavInteractiveZoneStyle}
-        onPointerEnter={(event) =>
-          updateSectionNavPointer(side, event.clientY)
-        }
-        onPointerMove={(event) =>
-          updateSectionNavPointer(side, event.clientY)
-        }
-        onPointerLeave={() => releaseSectionNavPointer(side)}
+        onPointerMove={(event) => {
+          if (sectionNavPointerArmedRefs.current[side]) {
+            updateSectionNavPointer(side, event.clientY);
+          }
+        }}
+        onPointerLeave={() => returnSectionNavPointerToIdle(side, true)}
         onWheel={(event) => {
           const vertical = verticalRef.current;
 
@@ -2937,6 +3028,7 @@ function SideNavButton({
   activeButton = false,
   concealed = false,
   onPreviewChange,
+  onPointerEngage,
   onClick,
 }: {
   icon: IconProp;
@@ -2950,6 +3042,7 @@ function SideNavButton({
   activeButton?: boolean;
   concealed?: boolean;
   onPreviewChange: (previewed: boolean) => void;
+  onPointerEngage: (pointerY: number) => void;
   onClick: () => void;
 }) {
   const hoveredRef = useRef(false);
@@ -2969,6 +3062,7 @@ function SideNavButton({
           : 'scale-100 opacity-100'
       }`}
       aria-hidden={concealed ? true : undefined}
+      onPointerEnter={(event) => onPointerEngage(event.clientY)}
       onMouseEnter={() => {
         hoveredRef.current = true;
         onPreviewChange(true);
