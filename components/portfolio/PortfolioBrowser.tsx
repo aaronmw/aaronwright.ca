@@ -2785,6 +2785,7 @@ function SideNavButton({
         aria-label={label}
         aria-describedby={tooltipId}
         aria-current={activeButton ? 'page' : undefined}
+        data-interactive-pop-companion={`[data-portfolio-section-nav-fill="${side}"]`}
         tabIndex={concealed ? -1 : undefined}
         onClick={onClick}
       />

@@ -25,21 +25,31 @@ function getInteractiveTarget(target: EventTarget | null) {
   return interactive;
 }
 
-function getRenderedScale(element: HTMLElement) {
+function getRenderedScale(element: Element) {
   const scale = getComputedStyle(element).scale;
   return scale === 'none' ? '1' : scale;
+}
+
+function getAnimationTargets(element: HTMLElement) {
+  const companionSelector = element.dataset.interactivePopCompanion;
+
+  if (!companionSelector) {
+    return [element];
+  }
+
+  return [element, ...Array.from(document.querySelectorAll(companionSelector))];
 }
 
 export function InteractivePopEffects() {
   useEffect(() => {
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const animations = new WeakMap<HTMLElement, Animation>();
+    const animations = new WeakMap<Element, Animation>();
     const activeAnimations = new Set<Animation>();
     const pointerTargets = new Map<number, HTMLElement>();
     const releasedAt = new WeakMap<HTMLElement, number>();
     let keyboardTarget: HTMLElement | null = null;
 
-    const cancelAnimation = (element: HTMLElement) => {
+    const cancelAnimation = (element: Element) => {
       const animation = animations.get(element);
 
       if (!animation) {
@@ -52,7 +62,7 @@ export function InteractivePopEffects() {
     };
 
     const runAnimation = (
-      element: HTMLElement,
+      element: Element,
       keyframes: Keyframe[],
       options: KeyframeAnimationOptions,
       persist = false
@@ -88,46 +98,52 @@ export function InteractivePopEffects() {
     };
 
     const depress = (element: HTMLElement) => {
-      runAnimation(
-        element,
-        [{ scale: '0.95' }],
-        {
-          duration: 90,
-          easing: 'cubic-bezier(0.4, 0, 1, 1)',
-          fill: 'forwards',
-        },
-        true
-      );
+      getAnimationTargets(element).forEach((target) => {
+        runAnimation(
+          target,
+          [{ scale: '0.95' }],
+          {
+            duration: 90,
+            easing: 'cubic-bezier(0.4, 0, 1, 1)',
+            fill: 'forwards',
+          },
+          true
+        );
+      });
     };
 
     const release = (element: HTMLElement) => {
-      runAnimation(
-        element,
-        [
+      getAnimationTargets(element).forEach((target) => {
+        runAnimation(
+          target,
+          [
+            {
+              scale: '1.1',
+              offset: 0.42,
+              easing: 'cubic-bezier(0.2, 0.9, 0.3, 1)',
+            },
+            {
+              scale: '0.98',
+              offset: 0.72,
+              easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
+            },
+            { scale: '1', offset: 1 },
+          ],
           {
-            scale: '1.1',
-            offset: 0.42,
-            easing: 'cubic-bezier(0.2, 0.9, 0.3, 1)',
-          },
-          {
-            scale: '0.98',
-            offset: 0.72,
-            easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
-          },
-          { scale: '1', offset: 1 },
-        ],
-        {
-          duration: 360,
-          fill: 'forwards',
-        }
-      );
+            duration: 360,
+            fill: 'forwards',
+          }
+        );
+      });
     };
 
     const settle = (element: HTMLElement) => {
-      runAnimation(element, [{ scale: '1' }], {
-        duration: 120,
-        easing: 'ease-out',
-        fill: 'forwards',
+      getAnimationTargets(element).forEach((target) => {
+        runAnimation(target, [{ scale: '1' }], {
+          duration: 120,
+          easing: 'ease-out',
+          fill: 'forwards',
+        });
       });
     };
 
