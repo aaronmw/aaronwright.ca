@@ -395,6 +395,18 @@ function isEditableTarget(target: EventTarget | null) {
   );
 }
 
+function isTextEntryTarget(target: EventTarget | null) {
+  if (!(target instanceof HTMLElement)) {
+    return false;
+  }
+
+  return Boolean(
+    target.closest(
+      'input, textarea, select, [contenteditable="true"], [role="textbox"]'
+    )
+  );
+}
+
 function snapshotClientRect(rect: DOMRectReadOnly): ModalTransitionRect {
   return {
     left: rect.left,
@@ -1356,13 +1368,14 @@ export function PortfolioBrowser({
       return;
     }
 
-    if (isEditableTarget(event.target)) {
+    if (isTextEntryTarget(event.target)) {
       return;
     }
 
     if (!event.metaKey && !event.ctrlKey && !event.altKey) {
       if (event.key === '0') {
         event.preventDefault();
+        focusKeyboardSurface();
         setActiveProject(START_SCREEN_INDEX, 'push');
         return;
       }
@@ -1372,6 +1385,7 @@ export function PortfolioBrowser({
 
         if (projectIndex < portfolioSlides.length) {
           event.preventDefault();
+          focusKeyboardSurface();
           setActiveProject(projectIndex, 'push', 'smooth', 0);
           return;
         }
@@ -1380,21 +1394,25 @@ export function PortfolioBrowser({
 
     if (event.key === 'ArrowDown') {
       event.preventDefault();
+      focusKeyboardSurface();
       moveVertical(1);
     }
 
     if (event.key === 'ArrowUp') {
       event.preventDefault();
+      focusKeyboardSurface();
       moveVertical(-1);
     }
 
     if (event.key === 'ArrowRight') {
       event.preventDefault();
+      focusKeyboardSurface();
       moveHorizontal(1);
     }
 
     if (event.key === 'ArrowLeft') {
       event.preventDefault();
+      focusKeyboardSurface();
       moveHorizontal(-1);
     }
   });
