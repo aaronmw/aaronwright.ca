@@ -247,6 +247,25 @@ function getSectionNavArrowRotation(
   return activeProject?.screenshots.length > 1 ? 90 * direction : 0;
 }
 
+function getSectionNavPreviewOffset(
+  preview: SVGGElement,
+  target: HTMLElement
+) {
+  const ring = preview.querySelector('circle');
+
+  if (!ring) {
+    return 0;
+  }
+
+  const currentPreviewY = Number(gsap.getProperty(preview, 'y')) || 0;
+  const ringRect = ring.getBoundingClientRect();
+  const targetRect = target.getBoundingClientRect();
+  const unshiftedRingCenterY =
+    ringRect.top + ringRect.height / 2 - currentPreviewY;
+
+  return targetRect.top + targetRect.height / 2 - unshiftedRingCenterY;
+}
+
 function getIndicatorSlotIds(count: number) {
   return Array.from({ length: count }, (_, index) => {
     if (index === 0) {
@@ -525,6 +544,14 @@ export function PortfolioBrowser({
   const modalHistoryEntryRef = useRef(false);
   const initialScrollSyncedRef = useRef(false);
   const sectionNavIndicatorRefs = useRef<Array<SVGSVGElement | null>>([]);
+  const sectionNavPreviewRefs = useRef<Array<SVGGElement | null>>([]);
+  const sectionNavPreviewIndexesRef = useRef<Array<number | null>>([
+    null,
+    null,
+  ]);
+  const sectionNavButtonRefs = useRef<
+    Record<'left' | 'right', Array<HTMLDivElement | null>>
+  >({ left: [], right: [] });
   const sectionNavStackRefs = useRef<Array<HTMLDivElement | null>>([]);
   const sectionNavIconRefs = useRef<
     Record<'left' | 'right', Array<SVGSVGElement | null>>
@@ -1466,6 +1493,9 @@ export function PortfolioBrowser({
     const rings = indicators
       .map((indicator) => indicator.querySelector('circle'))
       .filter((ring): ring is SVGCircleElement => Boolean(ring));
+    const previews = sectionNavPreviewRefs.current.filter(
+      (preview): preview is SVGGElement => Boolean(preview)
+    );
     const leftIcons = sectionNavIconRefs.current.left.filter(
       (icon): icon is SVGSVGElement => Boolean(icon)
     );
@@ -1480,6 +1510,7 @@ export function PortfolioBrowser({
       !vertical ||
       indicators.length === 0 ||
       rings.length !== indicators.length ||
+      previews.length !== indicators.length ||
       stacks.length !== indicators.length ||
       leftIcons.length !== SECTION_NAV_COLORS.length ||
       rightIcons.length !== SECTION_NAV_COLORS.length
@@ -1502,6 +1533,25 @@ export function PortfolioBrowser({
           start: 0,
           end: 'max',
           scrub: true,
+          onUpdate: () => {
+            previews.forEach((preview, sideIndex) => {
+              const previewIndex =
+                sectionNavPreviewIndexesRef.current[sideIndex];
+              const side = sideIndex === 0 ? 'left' : 'right';
+              const target =
+                previewIndex === null || previewIndex === undefined
+                  ? null
+                  : sectionNavButtonRefs.current[side][previewIndex];
+
+              if (!target) {
+                return;
+              }
+
+              gsap.set(preview, {
+                y: getSectionNavPreviewOffset(preview, target),
+              });
+            });
+          },
         },
       });
       const centeredStackOffsetRem =
@@ -1512,8 +1562,9 @@ export function PortfolioBrowser({
         color: timelineColors[0],
       });
       timeline.set(stacks, { y: `${centeredStackOffsetRem}rem` });
+      timeline.set(previews, { y: 0 });
       timeline.set(rings, {
-        stroke: timelineColors[0],
+        stroke: 'currentColor',
         strokeWidth: 4,
       });
       timeline.set(leftIcons, {
@@ -1550,7 +1601,6 @@ export function PortfolioBrowser({
           },
           index
         );
-        timeline.to(rings, { stroke: color, duration: 1 }, index);
         timeline.to(
           rings,
           { strokeWidth: 0, autoRound: false, duration: 0.5 },
@@ -1713,6 +1763,48 @@ export function PortfolioBrowser({
     0,
     sectionNavItems.findIndex((item) => item.projectIndex === activeProjectIndex)
   );
+  const previewSectionNavItem = useCallback(
+    (
+      side: 'left' | 'right',
+      itemIndex: number,
+      color: string,
+      previewed: boolean
+    ) => {
+      const sideIndex = side === 'left' ? 0 : 1;
+      const indicator = sectionNavIndicatorRefs.current[sideIndex];
+      const preview = sectionNavPreviewRefs.current[sideIndex];
+      const target = sectionNavButtonRefs.current[side][itemIndex];
+
+      if (!indicator || !preview || !target) {
+        return;
+      }
+
+      sectionNavPreviewIndexesRef.current[sideIndex] = previewed
+        ? itemIndex
+        : null;
+      const inheritedColor = getComputedStyle(indicator).color;
+      const reducedMotion = window.matchMedia(
+        '(prefers-reduced-motion: reduce)'
+      ).matches;
+
+      gsap.to(preview, {
+        y: previewed ? getSectionNavPreviewOffset(preview, target) : 0,
+        color: previewed ? color : inheritedColor,
+        duration: reducedMotion ? 0 : 0.3,
+        ease: 'power3.out',
+        overwrite: 'auto',
+        onComplete: () => {
+          if (
+            !previewed &&
+            sectionNavPreviewIndexesRef.current[sideIndex] === null
+          ) {
+            gsap.set(preview, { clearProps: 'color' });
+          }
+        },
+      });
+    },
+    []
+  );
   const sideNavStackStyle: CSSProperties = {
     transform: `translateY(${
       ((sectionNavItems.length - 1) / 2 - initialSectionNavIndex) *
@@ -1751,6 +1843,9 @@ export function PortfolioBrowser({
         iconRef={(node) => {
           sectionNavIconRefs.current[side][itemIndex] = node;
         }}
+        elementRef={(node) => {
+          sectionNavButtonRefs.current[side][itemIndex] = node;
+        }}
         label={label}
         tooltipTitle={tooltipTitle}
         tooltipId={tooltipId}
@@ -1758,6 +1853,9 @@ export function PortfolioBrowser({
         color={item.color}
         activeButton={isActiveSection}
         concealed={isModalPresentationActive && !isActiveSection}
+        onPreviewChange={(previewed) =>
+          previewSectionNavItem(side, itemIndex, item.color, previewed)
+        }
         onClick={() => {
           focusKeyboardSurface();
 
@@ -1994,6 +2092,9 @@ export function PortfolioBrowser({
                 elementRef={(node) => {
                   sectionNavIndicatorRefs.current[0] = node;
                 }}
+                previewElementRef={(node) => {
+                  sectionNavPreviewRefs.current[0] = node;
+                }}
                 side="left"
               />
               {sectionNavItems.map((item, itemIndex) =>
@@ -2020,6 +2121,9 @@ export function PortfolioBrowser({
                 }
                 elementRef={(node) => {
                   sectionNavIndicatorRefs.current[1] = node;
+                }}
+                previewElementRef={(node) => {
+                  sectionNavPreviewRefs.current[1] = node;
                 }}
                 side="right"
               />
@@ -2441,11 +2545,13 @@ function SectionNavActiveRing({
   color,
   initialPositionRem,
   elementRef,
+  previewElementRef,
   side,
 }: {
   color: string;
   initialPositionRem: number;
   elementRef: (node: SVGSVGElement | null) => void;
+  previewElementRef: (node: SVGGElement | null) => void;
   side: 'left' | 'right';
 }) {
   return (
@@ -2460,20 +2566,23 @@ function SectionNavActiveRing({
       }}
       aria-hidden="true"
     >
-      <circle
-        cx="24"
-        cy="24"
-        r="22"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="4"
-      />
+      <g ref={previewElementRef} data-portfolio-section-nav-preview={side}>
+        <circle
+          cx="24"
+          cy="24"
+          r="22"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="4"
+        />
+      </g>
     </svg>
   );
 }
 
 function SideNavButton({
   icon,
+  elementRef,
   iconRef,
   label,
   tooltipTitle,
@@ -2482,9 +2591,11 @@ function SideNavButton({
   color,
   activeButton = false,
   concealed = false,
+  onPreviewChange,
   onClick,
 }: {
   icon: IconProp;
+  elementRef: (node: HTMLDivElement | null) => void;
   iconRef?: (node: SVGSVGElement | null) => void;
   label: string;
   tooltipTitle: string;
@@ -2493,8 +2604,11 @@ function SideNavButton({
   color?: string;
   activeButton?: boolean;
   concealed?: boolean;
+  onPreviewChange: (previewed: boolean) => void;
   onClick: () => void;
 }) {
+  const hoveredRef = useRef(false);
+  const focusedRef = useRef(false);
   const projectColor = color ?? PROJECT_COLORS[0];
   const tooltipPositionClass =
     side === 'left'
@@ -2503,12 +2617,29 @@ function SideNavButton({
 
   return (
     <div
+      ref={elementRef}
       className={`group/nav-tooltip relative z-10 grid size-12 place-items-center transition-[opacity,transform] duration-300 ease-out motion-reduce:transition-none ${
         concealed
           ? 'pointer-events-none scale-90 opacity-0'
           : 'scale-100 opacity-100'
       }`}
       aria-hidden={concealed ? true : undefined}
+      onMouseEnter={() => {
+        hoveredRef.current = true;
+        onPreviewChange(true);
+      }}
+      onMouseLeave={() => {
+        hoveredRef.current = false;
+        onPreviewChange(focusedRef.current);
+      }}
+      onFocusCapture={() => {
+        focusedRef.current = true;
+        onPreviewChange(true);
+      }}
+      onBlurCapture={() => {
+        focusedRef.current = false;
+        onPreviewChange(hoveredRef.current);
+      }}
       style={
         {
           '--project-color': projectColor,
@@ -2519,7 +2650,6 @@ function SideNavButton({
         icon={icon}
         iconRef={iconRef}
         iconClassName="size-7"
-        showHoverRing
         className="relative size-12 border-0 bg-transparent p-0 text-[var(--project-color)]"
         aria-label={label}
         aria-describedby={tooltipId}
@@ -2543,7 +2673,6 @@ function SquareIconButton({
   buttonRef,
   iconRef,
   iconClassName,
-  showHoverRing = false,
   className,
   ...buttonProps
 }: Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children'> & {
@@ -2551,7 +2680,6 @@ function SquareIconButton({
   buttonRef?: (node: HTMLButtonElement | null) => void;
   iconRef?: (node: SVGSVGElement | null) => void;
   iconClassName: string;
-  showHoverRing?: boolean;
 }) {
   return (
     <button
@@ -2560,22 +2688,6 @@ function SquareIconButton({
       className={`group/icon-button grid place-items-center rounded-full outline-none ${className ?? ''}`}
       {...buttonProps}
     >
-      {showHoverRing ? (
-        <svg
-          data-portfolio-icon-button-ring
-          className="pointer-events-none absolute inset-0 size-full overflow-visible"
-          viewBox="0 0 48 48"
-          aria-hidden="true"
-        >
-          <circle
-            className="stroke-current [stroke-width:0] transition-[stroke-width] duration-300 ease-out group-hover/icon-button:[stroke-width:2px] group-focus-visible/icon-button:[stroke-width:2px]"
-            cx="24"
-            cy="24"
-            r="23"
-            fill="none"
-          />
-        </svg>
-      ) : null}
       <FontAwesomeIcon
         ref={iconRef}
         icon={icon}
