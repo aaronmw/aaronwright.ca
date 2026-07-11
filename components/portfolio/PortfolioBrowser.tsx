@@ -522,7 +522,7 @@ export function PortfolioBrowser({
   > | null>(null);
   const modalHistoryEntryRef = useRef(false);
   const initialScrollSyncedRef = useRef(false);
-  const sectionNavFillRefs = useRef<Array<HTMLSpanElement | null>>([]);
+  const sectionNavIndicatorRefs = useRef<Array<SVGSVGElement | null>>([]);
   const sectionNavIconRefs = useRef<
     Record<'left' | 'right', Array<SVGSVGElement | null>>
   >({ left: [], right: [] });
@@ -1414,9 +1414,12 @@ export function PortfolioBrowser({
 
   useLayoutEffect(() => {
     const vertical = verticalRef.current;
-    const fills = sectionNavFillRefs.current.filter(
-      (fill): fill is HTMLSpanElement => Boolean(fill)
+    const indicators = sectionNavIndicatorRefs.current.filter(
+      (indicator): indicator is SVGSVGElement => Boolean(indicator)
     );
+    const rings = indicators
+      .map((indicator) => indicator.querySelector('circle'))
+      .filter((ring): ring is SVGCircleElement => Boolean(ring));
     const leftIcons = sectionNavIconRefs.current.left.filter(
       (icon): icon is SVGSVGElement => Boolean(icon)
     );
@@ -1426,7 +1429,8 @@ export function PortfolioBrowser({
 
     if (
       !vertical ||
-      fills.length === 0 ||
+      indicators.length === 0 ||
+      rings.length !== indicators.length ||
       leftIcons.length !== SECTION_NAV_COLORS.length ||
       rightIcons.length !== SECTION_NAV_COLORS.length
     ) {
@@ -1451,13 +1455,14 @@ export function PortfolioBrowser({
         },
       });
 
-      timeline.set(fills, {
+      timeline.set(indicators, {
         xPercent: -50,
         y: 0,
-        backgroundColor: 'transparent',
-        borderColor: timelineColors[0],
-        borderWidth: 4,
         color: timelineColors[0],
+      });
+      timeline.set(rings, {
+        stroke: timelineColors[0],
+        strokeWidth: 4,
       });
       timeline.set(leftIcons, {
         rotation: (itemIndex) =>
@@ -1474,17 +1479,25 @@ export function PortfolioBrowser({
         const activeSectionIndex = index + 1;
 
         timeline.to(
-          fills,
+          indicators,
           {
             y: `${(index + 1) * SECTION_NAV_ITEM_STEP_REM}rem`,
-            borderColor: color,
             color,
             duration: 1,
           },
           index
         );
-        timeline.to(fills, { borderWidth: 0, duration: 0.5 }, index);
-        timeline.to(fills, { borderWidth: 4, duration: 0.5 }, index + 0.5);
+        timeline.to(rings, { stroke: color, duration: 1 }, index);
+        timeline.to(
+          rings,
+          { strokeWidth: 0, autoRound: false, duration: 0.5 },
+          index
+        );
+        timeline.to(
+          rings,
+          { strokeWidth: 4, autoRound: false, duration: 0.5 },
+          index + 0.5
+        );
         timeline.to(
           leftIcons,
           {
@@ -1909,20 +1922,15 @@ export function PortfolioBrowser({
               className="relative flex flex-col gap-3 transition-transform duration-500 ease-out motion-reduce:transition-none"
               style={sideNavStackStyle}
             >
-              <AnimatedActiveFill
-                activeIndex={sideNavActiveItemIndex}
-                axis="y"
+              <SectionNavActiveRing
                 color={initialSectionNavColor}
-                stepRem={SECTION_NAV_ITEM_STEP_REM}
-                scrollLinkedPosition={`${
+                initialPositionRem={
                   initialSectionNavIndex * SECTION_NAV_ITEM_STEP_REM
-                }rem`}
+                }
                 elementRef={(node) => {
-                  sectionNavFillRefs.current[0] = node;
+                  sectionNavIndicatorRefs.current[0] = node;
                 }}
-                filled={false}
-                className="block size-12 rounded-full border-4 border-current"
-                dataAttributes={{ 'data-portfolio-section-nav-fill': 'left' }}
+                side="left"
               />
               {sectionNavItems.map((item, itemIndex) =>
                 renderSectionNavButton(item, 'left', itemIndex)
@@ -1938,20 +1946,15 @@ export function PortfolioBrowser({
               className="relative flex flex-col gap-3 transition-transform duration-500 ease-out motion-reduce:transition-none"
               style={sideNavStackStyle}
             >
-              <AnimatedActiveFill
-                activeIndex={sideNavActiveItemIndex}
-                axis="y"
+              <SectionNavActiveRing
                 color={initialSectionNavColor}
-                stepRem={SECTION_NAV_ITEM_STEP_REM}
-                scrollLinkedPosition={`${
+                initialPositionRem={
                   initialSectionNavIndex * SECTION_NAV_ITEM_STEP_REM
-                }rem`}
+                }
                 elementRef={(node) => {
-                  sectionNavFillRefs.current[1] = node;
+                  sectionNavIndicatorRefs.current[1] = node;
                 }}
-                filled={false}
-                className="block size-12 rounded-full border-4 border-current"
-                dataAttributes={{ 'data-portfolio-section-nav-fill': 'right' }}
+                side="right"
               />
               {sectionNavItems.map((item, itemIndex) =>
                 renderSectionNavButton(item, 'right', itemIndex)
@@ -2323,9 +2326,6 @@ function AnimatedActiveFill({
   stepRem,
   offsetRem = 0,
   centeredCount,
-  scrollLinkedPosition,
-  elementRef,
-  filled = true,
   visible = true,
   className,
   dataAttributes,
@@ -2336,16 +2336,11 @@ function AnimatedActiveFill({
   stepRem: number;
   offsetRem?: number;
   centeredCount?: number;
-  scrollLinkedPosition?: string;
-  elementRef?: (node: HTMLSpanElement | null) => void;
-  filled?: boolean;
   visible?: boolean;
   className: string;
   dataAttributes?: Record<`data-${string}`, string>;
 }) {
-  const position =
-    scrollLinkedPosition ??
-    `calc(${activeIndex} * ${stepRem}rem + ${offsetRem}rem)`;
+  const position = `calc(${activeIndex} * ${stepRem}rem + ${offsetRem}rem)`;
   const isCenteredHorizontal = axis === 'x' && centeredCount !== undefined;
   const transform = isCenteredHorizontal
     ? getCenteredIndicatorTransform(activeIndex, centeredCount)
@@ -2358,17 +2353,13 @@ function AnimatedActiveFill({
         ? 'left-1/2 top-1/2 z-10'
         : 'left-0 top-1/2 z-10'
       : 'left-1/2 top-0 z-0';
-  const transitionClass = scrollLinkedPosition
-    ? 'transition-opacity'
-    : 'transition-[background-color,border-color,color,opacity,transform]';
 
   return (
     <span
-      ref={elementRef}
       {...dataAttributes}
-      className={`${className} pointer-events-none absolute ${positionClass} ${transitionClass} duration-500 ease-out motion-reduce:transition-none`}
+      className={`${className} pointer-events-none absolute ${positionClass} transition-[background-color,border-color,color,opacity,transform] duration-500 ease-out motion-reduce:transition-none`}
       style={{
-        backgroundColor: filled ? color : 'transparent',
+        backgroundColor: color,
         borderColor: color,
         color,
         opacity: visible ? 1 : 0,
@@ -2376,6 +2367,41 @@ function AnimatedActiveFill({
       }}
       aria-hidden="true"
     />
+  );
+}
+
+function SectionNavActiveRing({
+  color,
+  initialPositionRem,
+  elementRef,
+  side,
+}: {
+  color: string;
+  initialPositionRem: number;
+  elementRef: (node: SVGSVGElement | null) => void;
+  side: 'left' | 'right';
+}) {
+  return (
+    <svg
+      ref={elementRef}
+      data-portfolio-section-nav-fill={side}
+      className="pointer-events-none absolute left-1/2 top-0 z-0 size-12 overflow-visible"
+      viewBox="0 0 48 48"
+      style={{
+        color,
+        transform: `translate3d(-50%, ${initialPositionRem}rem, 0)`,
+      }}
+      aria-hidden="true"
+    >
+      <circle
+        cx="24"
+        cy="24"
+        r="22"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+      />
+    </svg>
   );
 }
 
@@ -2426,7 +2452,8 @@ function SideNavButton({
         icon={icon}
         iconRef={iconRef}
         iconClassName="size-7"
-        className="size-12 border-0 border-transparent bg-transparent p-0 text-[var(--project-color)] transition-[border-color,border-width] duration-300 ease-out hover:border-2 hover:border-[var(--project-color)] focus:border-2 focus:border-[var(--project-color)] focus-visible:border-2 focus-visible:border-[var(--project-color)]"
+        showHoverRing
+        className="relative size-12 border-0 bg-transparent p-0 text-[var(--project-color)]"
         aria-label={label}
         aria-describedby={tooltipId}
         aria-current={activeButton ? 'page' : undefined}
@@ -2448,23 +2475,41 @@ function SquareIconButton({
   icon,
   iconRef,
   iconClassName,
+  showHoverRing = false,
   className,
   ...buttonProps
 }: Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children'> & {
   icon: IconProp;
   iconRef?: (node: SVGSVGElement | null) => void;
   iconClassName: string;
+  showHoverRing?: boolean;
 }) {
   return (
     <button
       type="button"
-      className={`grid place-items-center rounded-full outline-none ${className ?? ''}`}
+      className={`group/icon-button grid place-items-center rounded-full outline-none ${className ?? ''}`}
       {...buttonProps}
     >
+      {showHoverRing ? (
+        <svg
+          data-portfolio-icon-button-ring
+          className="pointer-events-none absolute inset-0 size-full overflow-visible"
+          viewBox="0 0 48 48"
+          aria-hidden="true"
+        >
+          <circle
+            className="stroke-current [stroke-width:0] transition-[stroke-width] duration-300 ease-out group-hover/icon-button:[stroke-width:2px] group-focus-visible/icon-button:[stroke-width:2px]"
+            cx="24"
+            cy="24"
+            r="23"
+            fill="none"
+          />
+        </svg>
+      ) : null}
       <FontAwesomeIcon
         ref={iconRef}
         icon={icon}
-        className={`${iconClassName} drop-shadow-[1px_1px_0_black]`}
+        className={`relative z-10 ${iconClassName} drop-shadow-[1px_1px_0_black]`}
         aria-hidden="true"
       />
     </button>
