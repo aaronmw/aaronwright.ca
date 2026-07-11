@@ -97,6 +97,7 @@ const NAVIGATION_INDICATOR_PAIR_STAGGER_MS = 90;
 const NAVIGATION_INDICATOR_SIDE_LEAD_MS = 30;
 const NAVIGATION_INDICATOR_TRANSITION_MS = 500;
 const SECTION_NAV_ITEM_STEP_REM = 3.75;
+const SECTION_NAV_PREVIEW_RETURN_DELAY_MS = 140;
 const CAROUSEL_MEDIA_CLASS =
   'object-contain transition-[filter] duration-1000 ease-in-out';
 const TOP_SCREEN_COLOR = 'hsl(0 0% 100%)';
@@ -552,6 +553,9 @@ export function PortfolioBrowser({
   const sectionNavButtonRefs = useRef<
     Record<'left' | 'right', Array<HTMLDivElement | null>>
   >({ left: [], right: [] });
+  const sectionNavPreviewReturnTimeoutRefs = useRef<
+    Record<'left' | 'right', ReturnType<typeof setTimeout> | null>
+  >({ left: null, right: null });
   const sectionNavStackRefs = useRef<Array<HTMLDivElement | null>>([]);
   const sectionNavIconRefs = useRef<
     Record<'left' | 'right', Array<SVGSVGElement | null>>
@@ -1708,6 +1712,19 @@ export function PortfolioBrowser({
     [clearHorizontalScrollSync]
   );
 
+  useEffect(
+    () => () => {
+      Object.values(sectionNavPreviewReturnTimeoutRefs.current).forEach(
+        (timeout) => {
+          if (timeout) {
+            clearTimeout(timeout);
+          }
+        }
+      );
+    },
+    []
+  );
+
   const activeCarouselSlides = activeProject ? getCarouselSlides(activeProject) : [];
   const activeModalSlides = activeProject
     ? projectSlides[activeProject.slug].filter((slide) =>
@@ -1771,37 +1788,56 @@ export function PortfolioBrowser({
       previewed: boolean
     ) => {
       const sideIndex = side === 'left' ? 0 : 1;
-      const indicator = sectionNavIndicatorRefs.current[sideIndex];
-      const preview = sectionNavPreviewRefs.current[sideIndex];
-      const target = sectionNavButtonRefs.current[side][itemIndex];
+      const returnTimeout = sectionNavPreviewReturnTimeoutRefs.current[side];
 
-      if (!indicator || !preview || !target) {
+      if (returnTimeout) {
+        clearTimeout(returnTimeout);
+        sectionNavPreviewReturnTimeoutRefs.current[side] = null;
+      }
+
+      const animatePreview = (active: boolean) => {
+        const indicator = sectionNavIndicatorRefs.current[sideIndex];
+        const preview = sectionNavPreviewRefs.current[sideIndex];
+        const target = sectionNavButtonRefs.current[side][itemIndex];
+
+        if (!indicator || !preview || !target) {
+          return;
+        }
+
+        sectionNavPreviewIndexesRef.current[sideIndex] = active
+          ? itemIndex
+          : null;
+        const inheritedColor = getComputedStyle(indicator).color;
+        const reducedMotion = window.matchMedia(
+          '(prefers-reduced-motion: reduce)'
+        ).matches;
+
+        gsap.to(preview, {
+          y: active ? getSectionNavPreviewOffset(preview, target) : 0,
+          color: active ? color : inheritedColor,
+          duration: reducedMotion ? 0 : 0.3,
+          ease: 'power3.out',
+          overwrite: 'auto',
+          onComplete: () => {
+            if (
+              !active &&
+              sectionNavPreviewIndexesRef.current[sideIndex] === null
+            ) {
+              gsap.set(preview, { clearProps: 'color' });
+            }
+          },
+        });
+      };
+
+      if (previewed) {
+        animatePreview(true);
         return;
       }
 
-      sectionNavPreviewIndexesRef.current[sideIndex] = previewed
-        ? itemIndex
-        : null;
-      const inheritedColor = getComputedStyle(indicator).color;
-      const reducedMotion = window.matchMedia(
-        '(prefers-reduced-motion: reduce)'
-      ).matches;
-
-      gsap.to(preview, {
-        y: previewed ? getSectionNavPreviewOffset(preview, target) : 0,
-        color: previewed ? color : inheritedColor,
-        duration: reducedMotion ? 0 : 0.3,
-        ease: 'power3.out',
-        overwrite: 'auto',
-        onComplete: () => {
-          if (
-            !previewed &&
-            sectionNavPreviewIndexesRef.current[sideIndex] === null
-          ) {
-            gsap.set(preview, { clearProps: 'color' });
-          }
-        },
-      });
+      sectionNavPreviewReturnTimeoutRefs.current[side] = setTimeout(() => {
+        sectionNavPreviewReturnTimeoutRefs.current[side] = null;
+        animatePreview(false);
+      }, SECTION_NAV_PREVIEW_RETURN_DELAY_MS);
     },
     []
   );
