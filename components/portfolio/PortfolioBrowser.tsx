@@ -950,10 +950,14 @@ export function PortfolioBrowser({
     [animateSectionNavRingStroke]
   );
   const lockSectionNavIndicatorToItem = useCallback(
-    (side: 'left' | 'right', itemIndex: number) => {
+    (
+      side: 'left' | 'right',
+      itemIndex: number,
+      onAttached?: () => void
+    ) => {
       sectionNavPointerAcquiringRefs.current[side] = false;
       sectionNavClickTargetIndexesRef.current[side] = itemIndex;
-      positionSectionNavClickTarget(side, itemIndex, 0.3);
+      positionSectionNavClickTarget(side, itemIndex, 0.3, onAttached);
     },
     [positionSectionNavClickTarget]
   );
@@ -1805,8 +1809,14 @@ export function PortfolioBrowser({
   );
   const clickVerticalSectionNavButton = useCallback(
     (direction: -1 | 1) => {
+      const pendingItemIndex =
+        sectionNavClickTargetIndexesRef.current.left;
+      const navigationBaseProjectIndex =
+        pendingItemIndex === null
+          ? activeProjectIndex
+          : pendingItemIndex - 1;
       const targetProjectIndex = getVerticalTargetProjectIndex(
-        activeProjectIndex,
+        navigationBaseProjectIndex,
         direction
       );
       const targetItemIndex = targetProjectIndex + 1;
@@ -2442,7 +2452,7 @@ export function PortfolioBrowser({
         onPointerEngage={(pointerY) =>
           engageSectionNavPointer(side, pointerY)
         }
-        onClick={() => {
+        onClick={(event) => {
           focusKeyboardSurface();
 
           if (hasHorizontalAction) {
@@ -2457,8 +2467,15 @@ export function PortfolioBrowser({
           }
 
           if (!isActiveSection) {
-            lockSectionNavIndicatorToItem(side, itemIndex);
-            setActiveProject(item.projectIndex, 'push');
+            const showProject = () =>
+              setActiveProject(item.projectIndex, 'push');
+
+            if (event.detail === 0) {
+              lockSectionNavIndicatorToItem(side, itemIndex, showProject);
+            } else {
+              lockSectionNavIndicatorToItem(side, itemIndex);
+              showProject();
+            }
           }
         }}
       />
@@ -3292,7 +3309,7 @@ function SideNavButton({
   concealed?: boolean;
   onPreviewChange: (previewed: boolean) => void;
   onPointerEngage: (pointerY: number) => void;
-  onClick: () => void;
+  onClick: (event: ReactMouseEvent<HTMLButtonElement>) => void;
 }) {
   const hoveredRef = useRef(false);
   const focusedRef = useRef(false);
