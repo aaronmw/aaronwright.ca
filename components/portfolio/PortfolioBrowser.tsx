@@ -695,6 +695,15 @@ export function PortfolioBrowser({
   const sectionNavClickTargetIndexesRef = useRef<
     Record<'left' | 'right', number | null>
   >({ left: null, right: null });
+  const sectionNavClickPhaseRefs = useRef<
+    Record<'left' | 'right', 'attaching' | 'recentering' | null>
+  >({ left: null, right: null });
+  const sectionNavClickAxisRefs = useRef<
+    Record<'left' | 'right', 'horizontal' | 'vertical' | null>
+  >({ left: null, right: null });
+  const sectionNavAttachmentCallbacksRef = useRef<
+    Record<'left' | 'right', (() => void) | null>
+  >({ left: null, right: null });
   const sectionNavStrokeWidthRefs = useRef<Record<'left' | 'right', 2 | 4>>({
     left: 4,
     right: 4,
@@ -953,19 +962,50 @@ export function PortfolioBrowser({
     (
       side: 'left' | 'right',
       itemIndex: number,
+      axis: 'horizontal' | 'vertical',
       onAttached?: () => void
     ) => {
       sectionNavPointerAcquiringRefs.current[side] = false;
       sectionNavClickTargetIndexesRef.current[side] = itemIndex;
-      positionSectionNavClickTarget(side, itemIndex, 0.3, onAttached);
+      sectionNavClickAxisRefs.current[side] = axis;
+      sectionNavClickPhaseRefs.current[side] = onAttached
+        ? 'attaching'
+        : 'recentering';
+      const finishAttachment = onAttached
+        ? () => {
+            if (
+              sectionNavClickTargetIndexesRef.current[side] !== itemIndex ||
+              sectionNavClickPhaseRefs.current[side] !== 'attaching'
+            ) {
+              return;
+            }
+
+            sectionNavAttachmentCallbacksRef.current[side] = null;
+            sectionNavClickPhaseRefs.current[side] = 'recentering';
+            onAttached();
+          }
+        : undefined;
+
+      sectionNavAttachmentCallbacksRef.current[side] =
+        finishAttachment ?? null;
+      positionSectionNavClickTarget(
+        side,
+        itemIndex,
+        0.3,
+        finishAttachment
+      );
     },
     [positionSectionNavClickTarget]
   );
   const settleSectionNavClickTarget = useCallback(
-    (side: 'left' | 'right') => {
+    (side: 'left' | 'right', axis: 'horizontal' | 'vertical') => {
       const itemIndex = sectionNavClickTargetIndexesRef.current[side];
 
-      if (itemIndex === null) {
+      if (
+        itemIndex === null ||
+        sectionNavClickAxisRefs.current[side] !== axis ||
+        sectionNavClickPhaseRefs.current[side] !== 'recentering'
+      ) {
         return;
       }
 
@@ -975,6 +1015,9 @@ export function PortfolioBrowser({
         }
 
         sectionNavClickTargetIndexesRef.current[side] = null;
+        sectionNavClickPhaseRefs.current[side] = null;
+        sectionNavClickAxisRefs.current[side] = null;
+        sectionNavAttachmentCallbacksRef.current[side] = null;
         const pointerY = sectionNavPointerYRefs.current[side];
 
         if (pointerY !== null && sectionNavPointerArmedRefs.current[side]) {
@@ -992,10 +1035,31 @@ export function PortfolioBrowser({
       trackSectionNavPointer,
     ]
   );
-  const settleSectionNavClickTargets = useCallback(() => {
-    settleSectionNavClickTarget('left');
-    settleSectionNavClickTarget('right');
-  }, [settleSectionNavClickTarget]);
+  const settleSectionNavClickTargets = useCallback(
+    (axis: 'horizontal' | 'vertical') => {
+      settleSectionNavClickTarget('left', axis);
+      settleSectionNavClickTarget('right', axis);
+    },
+    [settleSectionNavClickTarget]
+  );
+  const settleVerticalSectionNavClickTargets = useCallback(
+    (vertical: HTMLDivElement) => {
+      (['left', 'right'] as const).forEach((side) => {
+        const itemIndex = sectionNavClickTargetIndexesRef.current[side];
+
+        if (
+          itemIndex === null ||
+          sectionNavClickAxisRefs.current[side] !== 'vertical' ||
+          Math.abs(vertical.scrollTop - vertical.clientHeight * itemIndex) > 1
+        ) {
+          return;
+        }
+
+        settleSectionNavClickTarget(side, 'vertical');
+      });
+    },
+    [settleSectionNavClickTarget]
+  );
 
   const projectSlides = useMemo(
     () =>
@@ -1801,7 +1865,7 @@ export function PortfolioBrowser({
           updateUrl(project, nextSlide, 'replace');
         }
 
-        settleSectionNavClickTargets();
+        settleSectionNavClickTargets('horizontal');
       }
 
       clearHorizontalScrollSync(project);
@@ -2056,7 +2120,14 @@ export function PortfolioBrowser({
               const pointerY = sectionNavPointerYRefs.current[side];
 
               if (clickTargetIndex !== null) {
-                positionSectionNavClickTarget(side, clickTargetIndex, 0.12);
+                positionSectionNavClickTarget(
+                  side,
+                  clickTargetIndex,
+                  0.12,
+                  sectionNavClickPhaseRefs.current[side] === 'attaching'
+                    ? sectionNavAttachmentCallbacksRef.current[side] ?? undefined
+                    : undefined
+                );
                 return;
               }
 
@@ -2185,9 +2256,11 @@ export function PortfolioBrowser({
       }
     });
   });
-  const settleSectionNavClickTargetsEvent = useEffectEvent(() => {
-    settleSectionNavClickTargets();
-  });
+  const settleVerticalSectionNavClickTargetsEvent = useEffectEvent(
+    (vertical: HTMLDivElement) => {
+      settleVerticalSectionNavClickTargets(vertical);
+    }
+  );
 
   useEffect(() => {
     const vertical = verticalRef.current;
@@ -2208,7 +2281,7 @@ export function PortfolioBrowser({
       sectionNavIsMovingRef.current = false;
       handleVerticalScrollEndEvent(vertical);
       requestAnimationFrame(() => {
-        settleSectionNavClickTargetsEvent();
+        settleVerticalSectionNavClickTargetsEvent(vertical);
         reevaluateSectionNavPointersEvent();
       });
     };
@@ -2456,7 +2529,7 @@ export function PortfolioBrowser({
           focusKeyboardSurface();
 
           if (hasHorizontalAction) {
-            lockSectionNavIndicatorToItem(side, itemIndex);
+            lockSectionNavIndicatorToItem(side, itemIndex, 'horizontal');
 
             if (isModalPresentationActive) {
               moveModalHorizontal(isLeftSide ? -1 : 1);
@@ -2471,9 +2544,14 @@ export function PortfolioBrowser({
               setActiveProject(item.projectIndex, 'push');
 
             if (event.detail === 0) {
-              lockSectionNavIndicatorToItem(side, itemIndex, showProject);
+              lockSectionNavIndicatorToItem(
+                side,
+                itemIndex,
+                'vertical',
+                showProject
+              );
             } else {
-              lockSectionNavIndicatorToItem(side, itemIndex);
+              lockSectionNavIndicatorToItem(side, itemIndex, 'vertical');
               showProject();
             }
           }
