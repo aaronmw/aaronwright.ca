@@ -768,6 +768,12 @@ export function PortfolioBrowser({
         return;
       }
 
+      const ring = preview.querySelector('circle');
+
+      if (ring) {
+        gsap.set(ring, { strokeWidth: 4 });
+      }
+
       const snapTarget = sectionNavIsMovingRef.current
         ? null
         : getSectionNavSnapTarget(
