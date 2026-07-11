@@ -253,6 +253,18 @@ function getSectionNavPreviewOffset(
   preview: SVGGElement,
   target: HTMLElement
 ) {
+  const targetRect = target.getBoundingClientRect();
+
+  return getSectionNavPreviewOffsetFromClientY(
+    preview,
+    targetRect.top + targetRect.height / 2
+  );
+}
+
+function getSectionNavPreviewOffsetFromClientY(
+  preview: SVGGElement,
+  targetCenterY: number
+) {
   const ring = preview.querySelector('circle');
 
   if (!ring) {
@@ -261,11 +273,10 @@ function getSectionNavPreviewOffset(
 
   const currentPreviewY = Number(gsap.getProperty(preview, 'y')) || 0;
   const ringRect = ring.getBoundingClientRect();
-  const targetRect = target.getBoundingClientRect();
   const unshiftedRingCenterY =
     ringRect.top + ringRect.height / 2 - currentPreviewY;
 
-  return targetRect.top + targetRect.height / 2 - unshiftedRingCenterY;
+  return targetCenterY - unshiftedRingCenterY;
 }
 
 function getIndicatorSlotIds(count: number) {
@@ -557,6 +568,10 @@ export function PortfolioBrowser({
   const sectionNavPreviewReturnTimeoutRefs = useRef<
     Record<'left' | 'right', ReturnType<typeof setTimeout> | null>
   >({ left: null, right: null });
+  const sectionNavPointerYRefs = useRef<Record<'left' | 'right', number | null>>({
+    left: null,
+    right: null,
+  });
   const sectionNavStackRefs = useRef<Array<HTMLDivElement | null>>([]);
   const sectionNavIconRefs = useRef<
     Record<'left' | 'right', Array<SVGSVGElement | null>>
@@ -1552,8 +1567,12 @@ export function PortfolioBrowser({
                 return;
               }
 
+              const pointerY = sectionNavPointerYRefs.current[side];
               gsap.set(preview, {
-                y: getSectionNavPreviewOffset(preview, target),
+                y:
+                  pointerY === null
+                    ? getSectionNavPreviewOffset(preview, target)
+                    : getSectionNavPreviewOffsetFromClientY(preview, pointerY),
               });
             });
           },
@@ -1796,6 +1815,10 @@ export function PortfolioBrowser({
         sectionNavPreviewReturnTimeoutRefs.current[side] = null;
       }
 
+      if (!previewed && sectionNavPointerYRefs.current[side] !== null) {
+        return;
+      }
+
       const animatePreview = (active: boolean) => {
         const indicator = sectionNavIndicatorRefs.current[sideIndex];
         const preview = sectionNavPreviewRefs.current[sideIndex];
@@ -1812,9 +1835,14 @@ export function PortfolioBrowser({
         const reducedMotion = window.matchMedia(
           '(prefers-reduced-motion: reduce)'
         ).matches;
+        const pointerY = sectionNavPointerYRefs.current[side];
 
         gsap.to(preview, {
-          y: active ? getSectionNavPreviewOffset(preview, target) : 0,
+          y: active
+            ? pointerY === null
+              ? getSectionNavPreviewOffset(preview, target)
+              : getSectionNavPreviewOffsetFromClientY(preview, pointerY)
+            : 0,
           color: active ? color : inheritedColor,
           duration: reducedMotion ? 0 : 0.3,
           ease: 'power3.out',
@@ -1842,11 +1870,56 @@ export function PortfolioBrowser({
     },
     []
   );
+  const pinSectionNavPreviewToPointer = (
+    side: 'left' | 'right',
+    pointerY: number
+  ) => {
+    const sideIndex = side === 'left' ? 0 : 1;
+    const preview = sectionNavPreviewRefs.current[sideIndex];
+    const returnTimeout = sectionNavPreviewReturnTimeoutRefs.current[side];
+
+    sectionNavPointerYRefs.current[side] = pointerY;
+
+    if (returnTimeout) {
+      clearTimeout(returnTimeout);
+      sectionNavPreviewReturnTimeoutRefs.current[side] = null;
+    }
+
+    if (!preview || sectionNavPreviewIndexesRef.current[sideIndex] === null) {
+      return;
+    }
+
+    gsap.set(preview, {
+      y: getSectionNavPreviewOffsetFromClientY(preview, pointerY),
+    });
+  };
+  const releaseSectionNavPointer = (side: 'left' | 'right') => {
+    const sideIndex = side === 'left' ? 0 : 1;
+    const previewIndex = sectionNavPreviewIndexesRef.current[sideIndex];
+
+    sectionNavPointerYRefs.current[side] = null;
+
+    if (previewIndex === null) {
+      return;
+    }
+
+    const item = sectionNavItems[previewIndex];
+
+    if (item) {
+      previewSectionNavItem(side, previewIndex, item.color, false);
+    }
+  };
   const sideNavStackStyle: CSSProperties = {
     transform: `translateY(${
       ((sectionNavItems.length - 1) / 2 - initialSectionNavIndex) *
       SECTION_NAV_ITEM_STEP_REM
     }rem)`,
+  };
+  const sideNavInteractiveZoneStyle: CSSProperties = {
+    height: `${
+      NAVIGATION_RING_SIZE_REM +
+      Math.max(sectionNavItems.length - 1, 0) * SECTION_NAV_ITEM_STEP_REM * 2
+    }rem`,
   };
   const renderSectionNavButton = (
     item: (typeof sectionNavItems)[number],
@@ -1893,6 +1966,9 @@ export function PortfolioBrowser({
         onPreviewChange={(previewed) =>
           previewSectionNavItem(side, itemIndex, item.color, previewed)
         }
+        onPointerAnchor={(pointerY) =>
+          pinSectionNavPreviewToPointer(side, pointerY)
+        }
         onClick={() => {
           focusKeyboardSurface();
 
@@ -1910,6 +1986,62 @@ export function PortfolioBrowser({
           }
         }}
       />
+    );
+  };
+  const renderSectionNavRail = (side: 'left' | 'right') => {
+    const sideIndex = side === 'left' ? 0 : 1;
+    const positionClass =
+      side === 'left' ? 'left-3 sm:left-6' : 'right-3 sm:right-6';
+
+    return (
+      <div
+        data-portfolio-section-nav-zone={side}
+        className={`fixed top-1/2 w-12 -translate-y-1/2 ${positionClass} ${
+          isModalLayerActive ? 'z-[60]' : 'z-20'
+        }`}
+        style={sideNavInteractiveZoneStyle}
+        onPointerMove={(event) => {
+          if (sectionNavPointerYRefs.current[side] !== null) {
+            pinSectionNavPreviewToPointer(side, event.clientY);
+          }
+        }}
+        onPointerLeave={() => releaseSectionNavPointer(side)}
+      >
+        <div className="absolute left-0 top-1/2 -translate-y-1/2">
+          <div
+            ref={(node) => {
+              sectionNavStackRefs.current[sideIndex] = node;
+            }}
+            className="relative flex flex-col gap-3"
+            style={sideNavStackStyle}
+          >
+            <NavigationActiveRing
+              color={initialSectionNavColor}
+              elementRef={(node) => {
+                sectionNavIndicatorRefs.current[sideIndex] = node;
+              }}
+              previewElementRef={(node) => {
+                sectionNavPreviewRefs.current[sideIndex] = node;
+              }}
+              className="absolute left-0 top-0 z-0"
+              style={{
+                transform: `translate3d(0, ${
+                  initialSectionNavIndex * SECTION_NAV_ITEM_STEP_REM
+                }rem, 0)`,
+              }}
+              dataAttributes={{
+                'data-portfolio-section-nav-fill': side,
+              }}
+              previewDataAttributes={{
+                'data-portfolio-section-nav-preview': side,
+              }}
+            />
+            {sectionNavItems.map((item, itemIndex) =>
+              renderSectionNavButton(item, side, itemIndex)
+            )}
+          </div>
+        </div>
+      </div>
     );
   };
 
@@ -2111,82 +2243,8 @@ export function PortfolioBrowser({
 
       {isWideLayout ? (
         <>
-          <div
-            className={`fixed left-3 top-1/2 -translate-y-1/2 sm:left-6 ${
-              isModalLayerActive ? 'z-[60]' : 'z-20'
-            }`}
-          >
-            <div
-              ref={(node) => {
-                sectionNavStackRefs.current[0] = node;
-              }}
-              className="relative flex flex-col gap-3"
-              style={sideNavStackStyle}
-            >
-              <NavigationActiveRing
-                color={initialSectionNavColor}
-                elementRef={(node) => {
-                  sectionNavIndicatorRefs.current[0] = node;
-                }}
-                previewElementRef={(node) => {
-                  sectionNavPreviewRefs.current[0] = node;
-                }}
-                className="absolute left-0 top-0 z-0"
-                style={{
-                  transform: `translate3d(0, ${
-                    initialSectionNavIndex * SECTION_NAV_ITEM_STEP_REM
-                  }rem, 0)`,
-                }}
-                dataAttributes={{
-                  'data-portfolio-section-nav-fill': 'left',
-                }}
-                previewDataAttributes={{
-                  'data-portfolio-section-nav-preview': 'left',
-                }}
-              />
-              {sectionNavItems.map((item, itemIndex) =>
-                renderSectionNavButton(item, 'left', itemIndex)
-              )}
-            </div>
-          </div>
-          <div
-            className={`fixed right-3 top-1/2 -translate-y-1/2 sm:right-6 ${
-              isModalLayerActive ? 'z-[60]' : 'z-20'
-            }`}
-          >
-            <div
-              ref={(node) => {
-                sectionNavStackRefs.current[1] = node;
-              }}
-              className="relative flex flex-col gap-3"
-              style={sideNavStackStyle}
-            >
-              <NavigationActiveRing
-                color={initialSectionNavColor}
-                elementRef={(node) => {
-                  sectionNavIndicatorRefs.current[1] = node;
-                }}
-                previewElementRef={(node) => {
-                  sectionNavPreviewRefs.current[1] = node;
-                }}
-                className="absolute left-0 top-0 z-0"
-                style={{
-                  transform: `translate3d(0, ${
-                    initialSectionNavIndex * SECTION_NAV_ITEM_STEP_REM
-                  }rem, 0)`,
-                }}
-                dataAttributes={{
-                  'data-portfolio-section-nav-fill': 'right',
-                }}
-                previewDataAttributes={{
-                  'data-portfolio-section-nav-preview': 'right',
-                }}
-              />
-              {sectionNavItems.map((item, itemIndex) =>
-                renderSectionNavButton(item, 'right', itemIndex)
-              )}
-            </div>
-          </div>
+          {renderSectionNavRail('left')}
+          {renderSectionNavRail('right')}
         </>
       ) : null}
 
@@ -2724,6 +2782,7 @@ function SideNavButton({
   activeButton = false,
   concealed = false,
   onPreviewChange,
+  onPointerAnchor,
   onClick,
 }: {
   icon: IconProp;
@@ -2737,6 +2796,7 @@ function SideNavButton({
   activeButton?: boolean;
   concealed?: boolean;
   onPreviewChange: (previewed: boolean) => void;
+  onPointerAnchor: (pointerY: number) => void;
   onClick: () => void;
 }) {
   const hoveredRef = useRef(false);
@@ -2771,6 +2831,11 @@ function SideNavButton({
       onBlurCapture={() => {
         focusedRef.current = false;
         onPreviewChange(hoveredRef.current);
+      }}
+      onPointerDown={(event) => {
+        if (event.isPrimary && event.button === 0) {
+          onPointerAnchor(event.clientY);
+        }
       }}
       style={
         {
