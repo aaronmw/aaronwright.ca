@@ -10,7 +10,6 @@ import {
   PointerEvent as ReactPointerEvent,
   ReactNode,
   TouchEvent as ReactTouchEvent,
-  TransitionEvent as ReactTransitionEvent,
   WheelEvent as ReactWheelEvent,
   useCallback,
   useEffect,
@@ -214,14 +213,19 @@ function isCarouselBoundaryJump(
   );
 }
 
-function getCarouselTrackTransform(renderedIndex: number) {
-  return `translate3d(${-renderedIndex * 100}%, 0, 0)`;
-}
-
 function getCarouselMediaClass(isActive: boolean) {
   return `${CAROUSEL_MEDIA_CLASS} ${
     isActive ? 'blur-0' : 'blur-[20px]'
   }`;
+}
+
+function getTouchDistance(event: ReactTouchEvent<HTMLDialogElement>) {
+  const [first, second] = Array.from(event.touches);
+
+  return Math.hypot(
+    first.clientX - second.clientX,
+    first.clientY - second.clientY
+  );
 }
 
 function getSectionNavArrowRotation(
@@ -449,20 +453,6 @@ function getModalFrameRect(): ModalTransitionRect {
     width: window.innerWidth * 0.92,
     height: window.innerHeight * 0.92,
   };
-}
-
-function applyFrameRect(node: HTMLElement, rect: ModalTransitionRect) {
-  node.style.left = `${rect.left}px`;
-  node.style.top = `${rect.top}px`;
-  node.style.width = `${rect.width}px`;
-  node.style.height = `${rect.height}px`;
-}
-
-function clearFrameRect(node: HTMLElement) {
-  node.style.left = '';
-  node.style.top = '';
-  node.style.width = '';
-  node.style.height = '';
 }
 
 function getProjectSlides(project: PortfolioProject): ProjectSlide[] {
@@ -1196,6 +1186,14 @@ export function PortfolioBrowser({
     shouldShowModal,
   ]);
 
+  const reopenModal = useCallback(() => {
+    if (!shouldShowModal || !isModalClosing) {
+      return;
+    }
+
+    setIsModalClosing(false);
+  }, [isModalClosing, shouldShowModal]);
+
   const syncInitialScrollEvent = useEffectEvent(() => {
     syncViewport(normalizedInitialProjectIndex, initialSlideIndexes, 'auto');
 
@@ -1349,13 +1347,13 @@ export function PortfolioBrowser({
         return;
       }
 
-      if (isModalClosing) {
-        return;
-      }
-
       if (event.key === 'Enter' || event.code === 'Space') {
         event.preventDefault();
-        closeModal();
+        if (isModalClosing) {
+          reopenModal();
+        } else {
+          closeModal();
+        }
         return;
       }
 
@@ -2542,6 +2540,7 @@ function SideNavButton({
 
 function SquareIconButton({
   icon,
+  buttonRef,
   iconRef,
   iconClassName,
   showHoverRing = false,
@@ -2549,12 +2548,14 @@ function SquareIconButton({
   ...buttonProps
 }: Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children'> & {
   icon: IconProp;
+  buttonRef?: (node: HTMLButtonElement | null) => void;
   iconRef?: (node: SVGSVGElement | null) => void;
   iconClassName: string;
   showHoverRing?: boolean;
 }) {
   return (
     <button
+      ref={buttonRef}
       type="button"
       className={`group/icon-button grid place-items-center rounded-full outline-none ${className ?? ''}`}
       {...buttonProps}
@@ -2959,42 +2960,24 @@ function ImageModal({
     getLoopingCarouselEntries(carouselScreenshots);
   const [isDragging, setIsDragging] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(Boolean(transitionRect));
-  const [isBackdropVisible, setIsBackdropVisible] = useState(false);
-  const [carouselTransition, setCarouselTransition] = useState(() => ({
-    activeIndex: boundedActiveScreenshotIndex,
-    itemCount: carouselCount,
-    isBoundary: false,
-  }));
   const renderedCarouselIndex = getCanonicalRenderedCarouselIndex(
     boundedActiveScreenshotIndex,
     carouselCount
   );
-
-  if (
-    carouselTransition.activeIndex !== boundedActiveScreenshotIndex ||
-    carouselTransition.itemCount !== carouselCount
-  ) {
-    setCarouselTransition({
-      activeIndex: boundedActiveScreenshotIndex,
-      itemCount: carouselCount,
-      isBoundary: isCarouselBoundaryJump(
-        carouselTransition.activeIndex,
-        boundedActiveScreenshotIndex,
-        carouselCount
-      ),
-    });
-  }
-
+  const backdropRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
   const imageFrameRef = useRef<HTMLDivElement>(null);
+  const carouselTrackRef = useRef<HTMLDivElement>(null);
   const liveOffsetRef = useRef(offset);
   const liveScaleRef = useRef(scale);
   const animationFrameRef = useRef<number | null>(null);
-  const transitionFrameRef = useRef<number | null>(null);
-  const transitionFallbackTimeoutRef = useRef<ReturnType<
-    typeof setTimeout
-  > | null>(null);
-  const hasPlayedEnterTransitionRef = useRef(false);
-  const transitionPhaseRef = useRef<'idle' | 'entering' | 'exiting'>('idle');
+  const presentationTimelineRef = useRef<gsap.core.Timeline | null>(null);
+  const carouselTweenRef = useRef<gsap.core.Tween | null>(null);
+  const hasInitializedPresentationRef = useRef(false);
+  const previousCarouselStateRef = useRef<{
+    activeIndex: number;
+    itemCount: number;
+  } | null>(null);
   const clampScale = useCallback((nextScale: number) => {
     return Math.min(6, Math.max(1, nextScale));
   }, []);
@@ -3037,149 +3020,201 @@ function ImageModal({
     },
     [clampScale, scheduleLiveTransform, setScale]
   );
-  const finishImageTransition = useCallback(
-    (imageFrame: HTMLDivElement) => {
-      if (transitionFallbackTimeoutRef.current) {
-        clearTimeout(transitionFallbackTimeoutRef.current);
-        transitionFallbackTimeoutRef.current = null;
-      }
-
-      if (transitionPhaseRef.current === 'exiting') {
-        onExited();
-        return;
-      }
-
-      transitionPhaseRef.current = 'idle';
-      clearFrameRect(imageFrame);
-      imageFrame.style.transition = 'transform 160ms ease-out';
-      imageFrame.style.opacity = '1';
-      setIsTransitioning(false);
-      applyLiveTransform();
-    },
-    [applyLiveTransform, onExited]
-  );
-
-  useEffect(() => {
-    const rafId = requestAnimationFrame(() => setIsBackdropVisible(true));
-
-    return () => cancelAnimationFrame(rafId);
-  }, []);
 
   useLayoutEffect(() => {
     liveOffsetRef.current = offset;
     liveScaleRef.current = scale;
 
-    if (transitionPhaseRef.current !== 'idle') {
-      return;
+    if (!isTransitioning) {
+      applyLiveTransform();
     }
+  }, [applyLiveTransform, isTransitioning, offset, scale]);
 
-    if (
-      transitionRect &&
-      !isClosing &&
-      !hasPlayedEnterTransitionRef.current &&
-      imageFrameRef.current
-    ) {
-      const imageFrame = imageFrameRef.current;
-      const targetRect = getModalFrameRect();
-
-      hasPlayedEnterTransitionRef.current = true;
-
-      if (
-        prefersReducedMotion() ||
-        targetRect.width <= 0 ||
-        targetRect.height <= 0
-      ) {
-        setIsTransitioning(false);
-        applyLiveTransform();
-        return;
-      }
-
-      transitionPhaseRef.current = 'entering';
-      setIsTransitioning(true);
-      imageFrame.style.transition = 'none';
-      imageFrame.style.transform = transformFor({ x: 0, y: 0 }, 1);
-      imageFrame.style.opacity = '0.98';
-      applyFrameRect(imageFrame, transitionRect);
-
-      transitionFrameRef.current = requestAnimationFrame(() => {
-        transitionFrameRef.current = requestAnimationFrame(() => {
-          transitionFrameRef.current = null;
-          imageFrame.style.transition =
-            'left 420ms cubic-bezier(0.19, 1, 0.22, 1), top 420ms cubic-bezier(0.19, 1, 0.22, 1), width 420ms cubic-bezier(0.19, 1, 0.22, 1), height 420ms cubic-bezier(0.19, 1, 0.22, 1), opacity 220ms ease-out';
-          applyFrameRect(imageFrame, targetRect);
-          imageFrame.style.transform = transformFor({ x: 0, y: 0 }, 1);
-          imageFrame.style.opacity = '1';
-        });
-      });
-      transitionFallbackTimeoutRef.current = setTimeout(() => {
-        if (transitionPhaseRef.current === 'entering') {
-          finishImageTransition(imageFrame);
-        }
-      }, 520);
-
-      return;
-    }
-
-    applyLiveTransform();
-  }, [
-    applyLiveTransform,
-    finishImageTransition,
-    isClosing,
-    offset,
-    prefersReducedMotion,
-    scale,
-    transformFor,
-    transitionRect,
-  ]);
-
-  useEffect(() => {
-    if (!isClosing) {
-      return;
-    }
-
+  useLayoutEffect(() => {
+    const backdrop = backdropRef.current;
+    const closeButton = closeButtonRef.current;
     const imageFrame = imageFrameRef.current;
 
-    if (!imageFrame || !transitionRect || prefersReducedMotion()) {
-      onExited();
+    if (!backdrop || !closeButton || !imageFrame) {
       return;
     }
 
-    const targetRect = getModalFrameRect();
+    const expandedRect = getModalFrameRect();
+    const collapseRect = transitionRect ?? expandedRect;
+    const isReducedMotion = prefersReducedMotion();
+    const isFirstPresentation = !hasInitializedPresentationRef.current;
 
-    if (targetRect.width <= 0 || targetRect.height <= 0) {
-      onExited();
-      return;
-    }
-
-    dragRef.current.dragging = false;
-    pinchRef.current = null;
-    setIsDragging(false);
-    setIsTransitioning(true);
-    setIsBackdropVisible(false);
-    transitionPhaseRef.current = 'exiting';
+    hasInitializedPresentationRef.current = true;
+    presentationTimelineRef.current?.kill();
+    gsap.killTweensOf([backdrop, closeButton, imageFrame]);
     imageFrame.style.transition = 'none';
-    applyFrameRect(imageFrame, targetRect);
-    imageFrame.style.transform = transformFor(liveOffsetRef.current, liveScaleRef.current);
-    imageFrame.style.opacity = '1';
-    transitionFrameRef.current = requestAnimationFrame(() => {
-      transitionFrameRef.current = requestAnimationFrame(() => {
-        transitionFrameRef.current = null;
-        imageFrame.style.transition =
-          'left 340ms cubic-bezier(0.4, 0, 1, 1), top 340ms cubic-bezier(0.4, 0, 1, 1), width 340ms cubic-bezier(0.4, 0, 1, 1), height 340ms cubic-bezier(0.4, 0, 1, 1), transform 240ms ease-in, opacity 220ms ease-in';
-        applyFrameRect(imageFrame, transitionRect);
-        imageFrame.style.transform = transformFor({ x: 0, y: 0 }, 1);
-        imageFrame.style.opacity = '0.96';
+
+    if (isFirstPresentation) {
+      const initialRect = transitionRect ?? expandedRect;
+
+      gsap.set(imageFrame, {
+        left: initialRect.left,
+        top: initialRect.top,
+        width: initialRect.width,
+        height: initialRect.height,
+        x: 0,
+        y: 0,
+        scale: 1,
+        opacity: transitionRect ? 0.96 : 1,
+        transformOrigin: 'center center',
       });
+      gsap.set(backdrop, { opacity: 0 });
+      gsap.set(closeButton, { x: 64, rotation: 90, opacity: 0 });
+    }
+
+    if (isClosing) {
+      dragRef.current.dragging = false;
+      pinchRef.current = null;
+      setIsDragging(false);
+    }
+
+    setIsTransitioning(true);
+    const frameTarget = isClosing ? collapseRect : expandedRect;
+    const frameDuration = isReducedMotion ? 0.001 : isClosing ? 0.34 : 0.42;
+    const accessoryDuration = isReducedMotion ? 0.001 : 0.3;
+    const timeline = gsap.timeline({
+      defaults: { overwrite: 'auto' },
+      onComplete: () => {
+        if (presentationTimelineRef.current !== timeline) {
+          return;
+        }
+
+        presentationTimelineRef.current = null;
+
+        if (isClosing) {
+          onExited();
+          return;
+        }
+
+        liveOffsetRef.current = { x: 0, y: 0 };
+        liveScaleRef.current = 1;
+        gsap.set(imageFrame, {
+          clearProps: 'left,top,width,height,opacity,willChange',
+        });
+        imageFrame.style.transition = 'transform 160ms ease-out';
+        applyLiveTransform();
+        setScale(1);
+        setOffset({ x: 0, y: 0 });
+        setIsTransitioning(false);
+      },
     });
-    transitionFallbackTimeoutRef.current = setTimeout(onExited, 420);
+
+    presentationTimelineRef.current = timeline;
+    timeline
+      .to(
+        imageFrame,
+        {
+          left: frameTarget.left,
+          top: frameTarget.top,
+          width: frameTarget.width,
+          height: frameTarget.height,
+          x: 0,
+          y: 0,
+          scale: 1,
+          opacity: isClosing ? 0.96 : 1,
+          duration: frameDuration,
+          ease: isClosing ? 'power2.in' : 'expo.out',
+          willChange: 'left, top, width, height, transform',
+        },
+        0
+      )
+      .to(
+        backdrop,
+        {
+          opacity: isClosing ? 0 : 1,
+          duration: frameDuration,
+          ease: isClosing ? 'power2.in' : 'power2.out',
+        },
+        0
+      )
+      .to(
+        closeButton,
+        {
+          x: isClosing ? 64 : 0,
+          rotation: isClosing ? 90 : 0,
+          opacity: isClosing ? 0 : 1,
+          duration: accessoryDuration,
+          ease: isClosing ? 'power2.in' : 'expo.out',
+        },
+        0
+      );
+
+    return () => {
+      if (presentationTimelineRef.current === timeline) {
+        presentationTimelineRef.current = null;
+      }
+      timeline.kill();
+    };
   }, [
+    applyLiveTransform,
     dragRef,
     isClosing,
     onExited,
     pinchRef,
     prefersReducedMotion,
+    setOffset,
+    setScale,
     transitionRect,
-    transformFor,
+  ]);
+
+  useLayoutEffect(() => {
+    const carouselTrack = carouselTrackRef.current;
+
+    if (!carouselTrack) {
+      return;
+    }
+
+    const previousState = previousCarouselStateRef.current;
+    const isFirstPosition = previousState === null;
+    const didCarouselChange = previousState?.itemCount !== carouselCount;
+    const isBoundary = previousState
+      ? isCarouselBoundaryJump(
+          previousState.activeIndex,
+          boundedActiveScreenshotIndex,
+          carouselCount
+        )
+      : false;
+
+    previousCarouselStateRef.current = {
+      activeIndex: boundedActiveScreenshotIndex,
+      itemCount: carouselCount,
+    };
+    carouselTweenRef.current?.kill();
+
+    if (isFirstPosition || didCarouselChange) {
+      gsap.set(carouselTrack, { xPercent: -renderedCarouselIndex * 100 });
+      return;
+    }
+
+    gsap.set(carouselTrack, { willChange: 'transform' });
+    const tween = gsap.to(carouselTrack, {
+      xPercent: -renderedCarouselIndex * 100,
+      duration: prefersReducedMotion() ? 0 : isBoundary ? 1 : 0.5,
+      ease: isBoundary ? 'power2.inOut' : 'power3.out',
+      overwrite: 'auto',
+      onComplete: () => {
+        gsap.set(carouselTrack, { clearProps: 'willChange' });
+      },
+    });
+    carouselTweenRef.current = tween;
+
+    return () => {
+      if (carouselTweenRef.current === tween) {
+        carouselTweenRef.current = null;
+      }
+      tween.kill();
+      gsap.set(carouselTrack, { clearProps: 'willChange' });
+    };
+  }, [
+    boundedActiveScreenshotIndex,
+    carouselCount,
+    prefersReducedMotion,
+    renderedCarouselIndex,
   ]);
 
   useEffect(
@@ -3187,14 +3222,8 @@ function ImageModal({
       if (animationFrameRef.current !== null) {
         cancelAnimationFrame(animationFrameRef.current);
       }
-
-      if (transitionFrameRef.current !== null) {
-        cancelAnimationFrame(transitionFrameRef.current);
-      }
-
-      if (transitionFallbackTimeoutRef.current) {
-        clearTimeout(transitionFallbackTimeoutRef.current);
-      }
+      presentationTimelineRef.current?.kill();
+      carouselTweenRef.current?.kill();
     },
     []
   );
@@ -3307,11 +3336,6 @@ function ImageModal({
     [dragRef, setOffset]
   );
 
-  const getTouchDistance = (event: ReactTouchEvent<HTMLDialogElement>) => {
-    const [first, second] = Array.from(event.touches);
-    return Math.hypot(first.clientX - second.clientX, first.clientY - second.clientY);
-  };
-
   const handleTouchStart = useCallback(
     (event: ReactTouchEvent<HTMLDialogElement>) => {
       if (isTransitioning || isClosing) {
@@ -3356,22 +3380,10 @@ function ImageModal({
         ? 'cursor-grabbing'
         : 'cursor-grab'
       : '';
-  const handleImageFrameTransitionEnd = useCallback(
-    (event: ReactTransitionEvent<HTMLDivElement>) => {
-      if (
-        event.target !== event.currentTarget ||
-        event.propertyName !== 'width'
-      ) {
-        return;
-      }
-
-      finishImageTransition(event.currentTarget);
-    },
-    [finishImageTransition]
-  );
   return (
     <dialog
       open
+      data-portfolio-modal-root
       className={`fixed inset-0 z-50 m-0 h-dvh max-h-none w-screen max-w-none touch-none overflow-hidden border-0 bg-transparent p-0 ${panCursorClass}`}
       aria-label={`${project.title}: ${screenshot.alt}`}
       onDoubleClick={handleDoubleClick}
@@ -3385,21 +3397,19 @@ function ImageModal({
       onTouchEnd={handleTouchEnd}
     >
       <div
-        className={`fixed inset-0 bg-black transition-opacity duration-[420ms] ease-out motion-reduce:transition-none ${
-          isBackdropVisible && !isClosing ? 'opacity-100' : 'opacity-0'
-        }`}
+        ref={backdropRef}
+        className="fixed inset-0 bg-black"
         aria-hidden="true"
       />
       <SquareIconButton
         icon={faXmark}
+        buttonRef={(node) => {
+          closeButtonRef.current = node;
+        }}
         iconClassName="size-5"
         data-portfolio-modal-close
-        className={`fixed right-5 top-5 z-20 size-11 translate-y-0 bg-[var(--project-color)] text-white transition-[opacity,rotate,scale,translate] duration-300 [transition-timing-function:cubic-bezier(0.19,1,0.22,1)] hover:scale-105 focus-visible:scale-105 motion-reduce:translate-x-0 motion-reduce:rotate-0 motion-reduce:transition-opacity motion-reduce:duration-150 ${
-          isClosing
-            ? 'pointer-events-none translate-x-16 rotate-90 opacity-0'
-            : isBackdropVisible
-              ? 'translate-x-0 rotate-0 opacity-100'
-              : 'translate-x-16 rotate-90 opacity-0'
+        className={`fixed right-5 top-5 z-20 size-11 bg-[var(--project-color)] text-white hover:scale-105 focus-visible:scale-105 ${
+          isClosing ? 'pointer-events-none' : ''
         }`}
         style={
           {
@@ -3414,29 +3424,12 @@ function ImageModal({
         ref={imageFrameRef}
         data-portfolio-modal-image-frame
         className={`fixed left-[4vw] top-[4dvh] z-10 h-[92dvh] w-[92vw] origin-center ${panCursorClass}`}
-        style={{
-          transform: `translate3d(${offset.x}px, ${offset.y}px, 0) scale(${scale})`,
-          transition: isTransitioning
-            ? undefined
-            : dragRef.current.dragging
-              ? 'none'
-              : 'transform 160ms ease-out',
-          willChange: isTransitioning
-            ? 'left, top, width, height, transform'
-            : 'transform',
-        }}
-        onTransitionEnd={handleImageFrameTransitionEnd}
       >
         <div className="absolute inset-0 overflow-hidden">
           <div
+            ref={carouselTrackRef}
             data-portfolio-modal-carousel-track
-            className={`flex h-full transition-transform ease-out motion-reduce:transition-none ${
-              carouselTransition.isBoundary ? 'duration-1000' : 'duration-500'
-            }`}
-            style={{
-              transform: getCarouselTrackTransform(renderedCarouselIndex),
-              willChange: carouselCount > 1 ? 'transform' : undefined,
-            }}
+            className="flex h-full"
           >
             {renderedCarouselScreenshots.map(
               ({ item: carouselScreenshot, key, realIndex }) => (
