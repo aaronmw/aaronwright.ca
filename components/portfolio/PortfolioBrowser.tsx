@@ -3639,7 +3639,7 @@ function ImageModal({
         iconClassName="size-7"
         ring
         data-portfolio-modal-close
-        className={`fixed right-5 top-5 z-20 size-12 bg-transparent text-[var(--project-color)] ${
+        className={`fixed right-5 top-5 z-20 isolate size-12 bg-black text-[var(--project-color)] ${
           isClosing ? 'pointer-events-none' : ''
         }`}
         style={
