@@ -28,6 +28,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import type { IconProp } from '@fortawesome/fontawesome-svg-core';
 import {
   faArrowDown,
+  faArrowUp,
   faFilePdf,
   faXmark,
 } from '@fortawesome/free-solid-svg-icons';
@@ -2195,17 +2196,22 @@ export function PortfolioBrowser({
               : 'opacity-100'
           }`}
         >
-          <button
-            type="button"
-            className="grid place-items-center border-4 border-white bg-white p-1.5 text-black outline-none transition-[background-color,border-color,border-width,color,padding] duration-500 ease-out"
+          <CircularIconButton
+            icon={faArrowUp}
+            iconClassName="size-7"
+            ring
+            className="relative size-12 bg-transparent text-[var(--project-color)]"
+            style={
+              {
+                '--project-color': activeProjectColor ?? getProjectColor(0),
+              } as ProjectColorStyle
+            }
             aria-label="Back to work"
             onClick={() => {
               focusKeyboardSurface();
               setActiveProject(START_SCREEN_INDEX, 'push');
             }}
-          >
-            <ArrowUpToLineIcon className="size-7 drop-shadow-[1px_1px_0_black]" />
-          </button>
+          />
         </div>
       ) : null}
 
@@ -2670,7 +2676,7 @@ function NavigationActiveRing({
   previewDataAttributes,
 }: {
   color: string;
-  elementRef: (node: SVGSVGElement | null) => void;
+  elementRef?: (node: SVGSVGElement | null) => void;
   previewElementRef?: (node: SVGGElement | null) => void;
   className: string;
   style?: CSSProperties;
@@ -2769,7 +2775,7 @@ function SideNavButton({
         } as ProjectColorStyle
       }
     >
-      <SquareIconButton
+      <CircularIconButton
         icon={icon}
         iconRef={iconRef}
         iconClassName="size-7"
@@ -2791,11 +2797,12 @@ function SideNavButton({
   );
 }
 
-function SquareIconButton({
+function CircularIconButton({
   icon,
   buttonRef,
   iconRef,
   iconClassName,
+  ring = false,
   className,
   ...buttonProps
 }: Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children'> & {
@@ -2803,6 +2810,7 @@ function SquareIconButton({
   buttonRef?: (node: HTMLButtonElement | null) => void;
   iconRef?: (node: SVGSVGElement | null) => void;
   iconClassName: string;
+  ring?: boolean;
 }) {
   return (
     <button
@@ -2811,6 +2819,12 @@ function SquareIconButton({
       className={`group/icon-button grid place-items-center rounded-full outline-none ${className ?? ''}`}
       {...buttonProps}
     >
+      {ring ? (
+        <NavigationActiveRing
+          color="inherit"
+          className="absolute inset-0 z-0"
+        />
+      ) : null}
       <FontAwesomeIcon
         ref={iconRef}
         icon={icon}
@@ -2818,25 +2832,6 @@ function SquareIconButton({
         aria-hidden="true"
       />
     </button>
-  );
-}
-
-function ArrowUpToLineIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.25"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M5 4h14" />
-      <path d="M12 20V8" />
-      <path d="m6 14 6-6 6 6" />
-    </svg>
   );
 }
 
@@ -3636,14 +3631,15 @@ function ImageModal({
         className="fixed inset-0 bg-black"
         aria-hidden="true"
       />
-      <SquareIconButton
+      <CircularIconButton
         icon={faXmark}
         buttonRef={(node) => {
           closeButtonRef.current = node;
         }}
-        iconClassName="size-5"
+        iconClassName="size-7"
+        ring
         data-portfolio-modal-close
-        className={`fixed right-5 top-5 z-20 size-11 bg-[var(--project-color)] text-white hover:scale-105 focus-visible:scale-105 ${
+        className={`fixed right-5 top-5 z-20 size-12 bg-transparent text-[var(--project-color)] ${
           isClosing ? 'pointer-events-none' : ''
         }`}
         style={
