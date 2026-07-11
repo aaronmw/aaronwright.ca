@@ -1353,6 +1353,12 @@ export function PortfolioBrowser({
         return;
       }
 
+      if (event.key === 'Enter' || event.code === 'Space') {
+        event.preventDefault();
+        closeModal();
+        return;
+      }
+
       if (event.key === 'ArrowRight') {
         event.preventDefault();
         moveModalHorizontal(1);
@@ -1370,6 +1376,29 @@ export function PortfolioBrowser({
 
     if (isTextEntryTarget(event.target)) {
       return;
+    }
+
+    if (
+      (event.key === 'Enter' || event.code === 'Space') &&
+      !isEditableTarget(event.target) &&
+      activeProject
+    ) {
+      const carouselSlides = getCarouselSlides(activeProject);
+      const carouselIndex = getCarouselIndexFromSlideIndex(
+        activeProject,
+        activeSlideIndex
+      );
+      const slide = carouselSlides[carouselIndex];
+
+      if (slide && isModalScreenshotSlide(activeProject, slide)) {
+        event.preventDefault();
+        focusKeyboardSurface();
+        openModal(
+          slide,
+          getVisibleScreenshotButtonRect(slide.screenshot.id) ?? undefined
+        );
+        return;
+      }
     }
 
     if (!event.metaKey && !event.ctrlKey && !event.altKey) {
