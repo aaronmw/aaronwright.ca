@@ -523,6 +523,7 @@ export function PortfolioBrowser({
   const modalHistoryEntryRef = useRef(false);
   const initialScrollSyncedRef = useRef(false);
   const sectionNavIndicatorRefs = useRef<Array<SVGSVGElement | null>>([]);
+  const sectionNavStackRefs = useRef<Array<HTMLDivElement | null>>([]);
   const sectionNavIconRefs = useRef<
     Record<'left' | 'right', Array<SVGSVGElement | null>>
   >({ left: [], right: [] });
@@ -1426,11 +1427,15 @@ export function PortfolioBrowser({
     const rightIcons = sectionNavIconRefs.current.right.filter(
       (icon): icon is SVGSVGElement => Boolean(icon)
     );
+    const stacks = sectionNavStackRefs.current.filter(
+      (stack): stack is HTMLDivElement => Boolean(stack)
+    );
 
     if (
       !vertical ||
       indicators.length === 0 ||
       rings.length !== indicators.length ||
+      stacks.length !== indicators.length ||
       leftIcons.length !== SECTION_NAV_COLORS.length ||
       rightIcons.length !== SECTION_NAV_COLORS.length
     ) {
@@ -1454,12 +1459,15 @@ export function PortfolioBrowser({
           scrub: true,
         },
       });
+      const centeredStackOffsetRem =
+        ((SECTION_NAV_COLORS.length - 1) / 2) * SECTION_NAV_ITEM_STEP_REM;
 
       timeline.set(indicators, {
         xPercent: -50,
         y: 0,
         color: timelineColors[0],
       });
+      timeline.set(stacks, { y: `${centeredStackOffsetRem}rem` });
       timeline.set(rings, {
         stroke: timelineColors[0],
         strokeWidth: 4,
@@ -1483,6 +1491,17 @@ export function PortfolioBrowser({
           {
             y: `${(index + 1) * SECTION_NAV_ITEM_STEP_REM}rem`,
             color,
+            duration: 1,
+          },
+          index
+        );
+        timeline.to(
+          stacks,
+          {
+            y: `${
+              centeredStackOffsetRem -
+              activeSectionIndex * SECTION_NAV_ITEM_STEP_REM
+            }rem`,
             duration: 1,
           },
           index
@@ -1651,12 +1670,10 @@ export function PortfolioBrowser({
     sectionNavItems.findIndex((item) => item.projectIndex === activeProjectIndex)
   );
   const sideNavStackStyle: CSSProperties = {
-    transform: isModalPresentationActive
-      ? `translateY(${
-          ((sectionNavItems.length - 1) / 2 - sideNavActiveItemIndex) *
-          SECTION_NAV_ITEM_STEP_REM
-        }rem)`
-      : 'translateY(0)',
+    transform: `translateY(${
+      ((sectionNavItems.length - 1) / 2 - initialSectionNavIndex) *
+      SECTION_NAV_ITEM_STEP_REM
+    }rem)`,
   };
   const renderSectionNavButton = (
     item: (typeof sectionNavItems)[number],
@@ -1919,7 +1936,10 @@ export function PortfolioBrowser({
             }`}
           >
             <div
-              className="relative flex flex-col gap-3 transition-transform duration-500 ease-out motion-reduce:transition-none"
+              ref={(node) => {
+                sectionNavStackRefs.current[0] = node;
+              }}
+              className="relative flex flex-col gap-3"
               style={sideNavStackStyle}
             >
               <SectionNavActiveRing
@@ -1943,7 +1963,10 @@ export function PortfolioBrowser({
             }`}
           >
             <div
-              className="relative flex flex-col gap-3 transition-transform duration-500 ease-out motion-reduce:transition-none"
+              ref={(node) => {
+                sectionNavStackRefs.current[1] = node;
+              }}
+              className="relative flex flex-col gap-3"
               style={sideNavStackStyle}
             >
               <SectionNavActiveRing
