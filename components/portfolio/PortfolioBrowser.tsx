@@ -90,9 +90,9 @@ const WIDE_LAYOUT_STYLE: WideLayoutStyle = {
   '--portfolio-screenshot-size':
     'min(100dvh, calc(100vw - var(--portfolio-description-rail-width) - var(--portfolio-control-gutter-width)))',
 };
-const NAVIGATION_SQUARE_CLASS =
-  'block size-5 border border-current';
+const NAVIGATION_DOT_CLASS = 'block size-2.5 rounded-full bg-white';
 const NAVIGATION_INDICATOR_STEP_REM = 2.5;
+const NAVIGATION_RING_SIZE_REM = 3;
 const NAVIGATION_INDICATOR_PAIR_STAGGER_MS = 90;
 const NAVIGATION_INDICATOR_SIDE_LEAD_MS = 30;
 const NAVIGATION_INDICATOR_TRANSITION_MS = 500;
@@ -2120,18 +2120,26 @@ export function PortfolioBrowser({
               className="relative flex flex-col gap-3"
               style={sideNavStackStyle}
             >
-              <SectionNavActiveRing
+              <NavigationActiveRing
                 color={initialSectionNavColor}
-                initialPositionRem={
-                  initialSectionNavIndex * SECTION_NAV_ITEM_STEP_REM
-                }
                 elementRef={(node) => {
                   sectionNavIndicatorRefs.current[0] = node;
                 }}
                 previewElementRef={(node) => {
                   sectionNavPreviewRefs.current[0] = node;
                 }}
-                side="left"
+                className="absolute left-0 top-0 z-0"
+                style={{
+                  transform: `translate3d(0, ${
+                    initialSectionNavIndex * SECTION_NAV_ITEM_STEP_REM
+                  }rem, 0)`,
+                }}
+                dataAttributes={{
+                  'data-portfolio-section-nav-fill': 'left',
+                }}
+                previewDataAttributes={{
+                  'data-portfolio-section-nav-preview': 'left',
+                }}
               />
               {sectionNavItems.map((item, itemIndex) =>
                 renderSectionNavButton(item, 'left', itemIndex)
@@ -2150,18 +2158,26 @@ export function PortfolioBrowser({
               className="relative flex flex-col gap-3"
               style={sideNavStackStyle}
             >
-              <SectionNavActiveRing
+              <NavigationActiveRing
                 color={initialSectionNavColor}
-                initialPositionRem={
-                  initialSectionNavIndex * SECTION_NAV_ITEM_STEP_REM
-                }
                 elementRef={(node) => {
                   sectionNavIndicatorRefs.current[1] = node;
                 }}
                 previewElementRef={(node) => {
                   sectionNavPreviewRefs.current[1] = node;
                 }}
-                side="right"
+                className="absolute left-0 top-0 z-0"
+                style={{
+                  transform: `translate3d(0, ${
+                    initialSectionNavIndex * SECTION_NAV_ITEM_STEP_REM
+                  }rem, 0)`,
+                }}
+                dataAttributes={{
+                  'data-portfolio-section-nav-fill': 'right',
+                }}
+                previewDataAttributes={{
+                  'data-portfolio-section-nav-preview': 'right',
+                }}
               />
               {sectionNavItems.map((item, itemIndex) =>
                 renderSectionNavButton(item, 'right', itemIndex)
@@ -2339,18 +2355,80 @@ function AnimatedSlideIndicators({
 }) {
   const visibleSlides = slides.length > 1 ? slides : [];
   const targetCount = visibleSlides.length;
+  const slidesIdentity = visibleSlides.map((slide) => slide.id).join('|');
   const previousCountRef = useRef(targetCount);
   const transitionFrameRef = useRef<number | null>(null);
   const transitionStartFrameRef = useRef<number | null>(null);
   const transitionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
     null
   );
+  const ringRef = useRef<SVGSVGElement | null>(null);
+  const ringTweenRef = useRef<gsap.core.Tween | null>(null);
+  const previewReturnTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  );
+  const previewSourceIndexesRef = useRef<
+    Record<'hover' | 'focus', number | null>
+  >({ hover: null, focus: null });
+  const [previewState, setPreviewState] = useState<{
+    slidesIdentity: string;
+    index: number | null;
+  }>({ slidesIdentity, index: null });
   const [transitionState, setTransitionState] =
     useState<IndicatorTransitionState>({
       previousCount: targetCount,
       targetCount,
       phase: 'idle',
     });
+
+  if (previewState.slidesIdentity !== slidesIdentity) {
+    previewSourceIndexesRef.current = { hover: null, focus: null };
+    setPreviewState({ slidesIdentity, index: null });
+  }
+
+  const previewIndex = previewState.index;
+
+  const clearPreviewReturnTimeout = () => {
+    if (!previewReturnTimeoutRef.current) {
+      return;
+    }
+
+    clearTimeout(previewReturnTimeoutRef.current);
+    previewReturnTimeoutRef.current = null;
+  };
+
+  const startPreview = (index: number, source: 'hover' | 'focus') => {
+    clearPreviewReturnTimeout();
+    previewSourceIndexesRef.current[source] = index;
+    setPreviewState({ slidesIdentity, index });
+  };
+
+  const endPreview = (index: number, source: 'hover' | 'focus') => {
+    if (previewSourceIndexesRef.current[source] !== index) {
+      return;
+    }
+
+    previewSourceIndexesRef.current[source] = null;
+    const remainingPreviewIndex =
+      previewSourceIndexesRef.current.focus ??
+      previewSourceIndexesRef.current.hover;
+
+    if (remainingPreviewIndex !== null) {
+      clearPreviewReturnTimeout();
+      setPreviewState({ slidesIdentity, index: remainingPreviewIndex });
+      return;
+    }
+
+    clearPreviewReturnTimeout();
+    previewReturnTimeoutRef.current = setTimeout(() => {
+      previewReturnTimeoutRef.current = null;
+      setPreviewState((current) =>
+        current.slidesIdentity === slidesIdentity
+          ? { ...current, index: null }
+          : current
+      );
+    }, SECTION_NAV_PREVIEW_RETURN_DELAY_MS);
+  };
 
   useLayoutEffect(() => {
     const previousCount = previousCountRef.current;
@@ -2418,6 +2496,8 @@ function AnimatedSlideIndicators({
     };
   }, [targetCount]);
 
+  useEffect(() => clearPreviewReturnTimeout, []);
+
   const previousSlotIds = getIndicatorSlotIds(
     transitionState.phase === 'idle'
       ? transitionState.targetCount
@@ -2434,6 +2514,58 @@ function AnimatedSlideIndicators({
     0,
     Math.min(activeIndex, Math.max(targetCount - 1, 0))
   );
+  const boundedPreviewIndex =
+    previewIndex === null
+      ? null
+      : Math.max(0, Math.min(previewIndex, Math.max(targetCount - 1, 0)));
+  const ringTargetIndex = boundedPreviewIndex ?? boundedActiveIndex;
+
+  useLayoutEffect(() => {
+    const ring = ringRef.current;
+
+    if (!ring) {
+      return;
+    }
+
+    const reducedMotion = window.matchMedia(
+      '(prefers-reduced-motion: reduce)'
+    ).matches;
+    const targetXRem =
+      ringTargetIndex * NAVIGATION_INDICATOR_STEP_REM +
+      (NAVIGATION_INDICATOR_STEP_REM - NAVIGATION_RING_SIZE_REM) / 2;
+    const hasPosition = ring.dataset.positioned === 'true';
+
+    ringTweenRef.current?.kill();
+
+    if (!hasPosition) {
+      gsap.set(ring, {
+        x: `${targetXRem}rem`,
+        yPercent: -50,
+        color,
+        opacity: targetCount > 0 ? 1 : 0,
+      });
+      ring.dataset.positioned = 'true';
+      return;
+    }
+
+    const tween = gsap.to(ring, {
+      x: `${targetXRem}rem`,
+      yPercent: -50,
+      color,
+      opacity: targetCount > 0 ? 1 : 0,
+      duration: reducedMotion ? 0 : 0.5,
+      ease: 'power3.out',
+      overwrite: 'auto',
+    });
+    ringTweenRef.current = tween;
+
+    return () => {
+      if (ringTweenRef.current === tween) {
+        ringTweenRef.current = null;
+      }
+      tween.kill();
+    };
+  }, [color, ringTargetIndex, targetCount]);
 
   return (
     <div
@@ -2443,14 +2575,12 @@ function AnimatedSlideIndicators({
         width: `${Math.max(targetCount, 1) * NAVIGATION_INDICATOR_STEP_REM}rem`,
       }}
     >
-      <AnimatedActiveFill
-        activeIndex={boundedActiveIndex}
-        axis="x"
-        centeredCount={Math.max(targetCount, 1)}
+      <NavigationActiveRing
         color={color}
-        stepRem={NAVIGATION_INDICATOR_STEP_REM}
-        visible={targetCount > 0}
-        className={NAVIGATION_SQUARE_CLASS}
+        elementRef={(node) => {
+          ringRef.current = node;
+        }}
+        className="absolute left-0 top-1/2 z-10"
         dataAttributes={{ 'data-portfolio-slide-indicator-marker': 'true' }}
       />
       {renderedSlotIds.map((slotId) => {
@@ -2503,7 +2633,7 @@ function AnimatedSlideIndicators({
             {slide ? (
               <button
                 type="button"
-                className="pointer-events-auto grid size-7 place-items-center text-white outline-none transition-colors hover:text-[var(--project-color)] focus-visible:text-[var(--project-color)]"
+                className="pointer-events-auto grid size-7 place-items-center outline-none"
                 aria-label={
                   slide.kind === 'description'
                     ? `Show ${projectTitle} description`
@@ -2512,12 +2642,16 @@ function AnimatedSlideIndicators({
                 aria-current={
                   boundedActiveIndex === targetIndex ? 'true' : undefined
                 }
+                onMouseEnter={() => startPreview(targetIndex, 'hover')}
+                onMouseLeave={() => endPreview(targetIndex, 'hover')}
+                onFocus={() => startPreview(targetIndex, 'focus')}
+                onBlur={() => endPreview(targetIndex, 'focus')}
                 onClick={() => onSelect(slide)}
               >
-                <span className={NAVIGATION_SQUARE_CLASS} aria-hidden="true" />
+                <span className={NAVIGATION_DOT_CLASS} aria-hidden="true" />
               </button>
             ) : (
-              <span className={NAVIGATION_SQUARE_CLASS} aria-hidden="true" />
+              <span className={NAVIGATION_DOT_CLASS} aria-hidden="true" />
             )}
           </div>
         );
@@ -2526,83 +2660,36 @@ function AnimatedSlideIndicators({
   );
 }
 
-function AnimatedActiveFill({
-  activeIndex,
-  axis,
+function NavigationActiveRing({
   color,
-  stepRem,
-  offsetRem = 0,
-  centeredCount,
-  visible = true,
-  className,
-  dataAttributes,
-}: {
-  activeIndex: number;
-  axis: 'x' | 'y';
-  color: string;
-  stepRem: number;
-  offsetRem?: number;
-  centeredCount?: number;
-  visible?: boolean;
-  className: string;
-  dataAttributes?: Record<`data-${string}`, string>;
-}) {
-  const position = `calc(${activeIndex} * ${stepRem}rem + ${offsetRem}rem)`;
-  const isCenteredHorizontal = axis === 'x' && centeredCount !== undefined;
-  const transform = isCenteredHorizontal
-    ? getCenteredIndicatorTransform(activeIndex, centeredCount)
-    : axis === 'x'
-      ? `translate3d(${position}, -50%, 0)`
-      : `translate3d(-50%, ${position}, 0)`;
-  const positionClass =
-    axis === 'x'
-      ? isCenteredHorizontal
-        ? 'left-1/2 top-1/2 z-10'
-        : 'left-0 top-1/2 z-10'
-      : 'left-1/2 top-0 z-0';
-
-  return (
-    <span
-      {...dataAttributes}
-      className={`${className} pointer-events-none absolute ${positionClass} transition-[background-color,border-color,color,opacity,transform] duration-500 ease-out motion-reduce:transition-none`}
-      style={{
-        backgroundColor: color,
-        borderColor: color,
-        color,
-        opacity: visible ? 1 : 0,
-        transform,
-      }}
-      aria-hidden="true"
-    />
-  );
-}
-
-function SectionNavActiveRing({
-  color,
-  initialPositionRem,
   elementRef,
   previewElementRef,
-  side,
+  className,
+  style,
+  dataAttributes,
+  previewDataAttributes,
 }: {
   color: string;
-  initialPositionRem: number;
   elementRef: (node: SVGSVGElement | null) => void;
-  previewElementRef: (node: SVGGElement | null) => void;
-  side: 'left' | 'right';
+  previewElementRef?: (node: SVGGElement | null) => void;
+  className: string;
+  style?: CSSProperties;
+  dataAttributes?: Record<`data-${string}`, string>;
+  previewDataAttributes?: Record<`data-${string}`, string>;
 }) {
   return (
     <svg
       ref={elementRef}
-      data-portfolio-section-nav-fill={side}
-      className="pointer-events-none absolute left-0 top-0 z-0 size-12 overflow-visible"
+      {...dataAttributes}
+      className={`pointer-events-none size-12 overflow-visible ${className}`}
       viewBox="0 0 48 48"
       style={{
         color,
-        transform: `translate3d(0, ${initialPositionRem}rem, 0)`,
+        ...style,
       }}
       aria-hidden="true"
     >
-      <g ref={previewElementRef} data-portfolio-section-nav-preview={side}>
+      <g ref={previewElementRef} {...previewDataAttributes}>
         <circle
           cx="24"
           cy="24"
