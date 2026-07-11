@@ -27,6 +27,10 @@ const MARKDOWN_ACRONYM_PATTERN = new RegExp(
 );
 const MARKDOWN_SKIP_PATTERN =
   /(```[\s\S]*?```|`[^`\n]+`|!?\[[^\]]*]\([^)]*\)|<[^>]+>)/g;
+const MARKDOWN_FENCE_PATTERN = /(```[\s\S]*?```|~~~[\s\S]*?~~~)/g;
+const MARKDOWN_BLOCK_SEPARATOR_PATTERN = /(\n\s*\n)/g;
+const MARKDOWN_STANDALONE_LINE_PATTERN =
+  /^\s*(?:(?:[-+*]|\d+[.)])\s+|>\s*)/;
 
 function escapeHtmlAttribute(value: string) {
   return value.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
@@ -51,13 +55,50 @@ function transformMarkdownAcronyms(markdown: string) {
     .join('');
 }
 
+function bindLastTwoTokens(value: string) {
+  return value.replace(/(\S)[\t\r\n ]+(\S+)(\s*)$/, '$1&nbsp;$2$3');
+}
+
+function preventMarkdownOrphans(markdown: string) {
+  return markdown
+    .split(MARKDOWN_FENCE_PATTERN)
+    .map((segment, fenceIndex) => {
+      if (fenceIndex % 2 === 1) {
+        return segment;
+      }
+
+      return segment
+        .split(MARKDOWN_BLOCK_SEPARATOR_PATTERN)
+        .map((block) => {
+          if (!block.trim()) {
+            return block;
+          }
+
+          const lines = block.split('\n');
+          const isStandaloneLineBlock = lines
+            .filter((line) => line.trim())
+            .every((line) => MARKDOWN_STANDALONE_LINE_PATTERN.test(line));
+
+          return isStandaloneLineBlock
+            ? lines.map(bindLastTwoTokens).join('\n')
+            : bindLastTwoTokens(block);
+        })
+        .join('');
+    })
+    .join('');
+}
+
+function transformPortfolioMarkdown(markdown: string) {
+  return transformMarkdownAcronyms(preventMarkdownOrphans(markdown));
+}
+
 function transformPortfolioProjectMarkdown(
   project: PortfolioProject
 ): PortfolioProject {
   return {
     ...project,
-    blurb: transformMarkdownAcronyms(project.blurb),
-    descriptionMarkdown: transformMarkdownAcronyms(project.descriptionMarkdown),
+    blurb: transformPortfolioMarkdown(project.blurb),
+    descriptionMarkdown: transformPortfolioMarkdown(project.descriptionMarkdown),
   };
 }
 
