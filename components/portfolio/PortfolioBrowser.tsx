@@ -2954,6 +2954,7 @@ function AnimatedSlideIndicators({
                 aria-current={
                   boundedActiveIndex === targetIndex ? 'true' : undefined
                 }
+                data-interactive-pop-companion='[data-portfolio-slide-indicator-marker="true"] circle'
                 onMouseEnter={() => startPreview(targetIndex, 'hover')}
                 onMouseLeave={() => endPreview(targetIndex, 'hover')}
                 onFocus={() => startPreview(targetIndex, 'focus')}
