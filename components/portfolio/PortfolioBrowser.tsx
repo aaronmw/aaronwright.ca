@@ -689,6 +689,12 @@ export function PortfolioBrowser({
     left: false,
     right: false,
   });
+  const sectionNavPointerAcquiringRefs = useRef<
+    Record<'left' | 'right', boolean>
+  >({ left: false, right: false });
+  const sectionNavClickTargetIndexesRef = useRef<
+    Record<'left' | 'right', number | null>
+  >({ left: null, right: null });
   const sectionNavIsMovingRef = useRef(false);
   const sectionNavStackRefs = useRef<Array<HTMLDivElement | null>>([]);
   const sectionNavIconRefs = useRef<
@@ -708,6 +714,12 @@ export function PortfolioBrowser({
 
       sectionNavPointerYRefs.current[side] = null;
       sectionNavPointerArmedRefs.current[side] = false;
+      sectionNavPointerAcquiringRefs.current[side] = false;
+
+      if (sectionNavClickTargetIndexesRef.current[side] !== null) {
+        return;
+      }
+
       sectionNavPreviewIndexesRef.current[sideIndex] = null;
 
       if (!indicator || !preview) {
@@ -747,7 +759,12 @@ export function PortfolioBrowser({
     []
   );
   const updateSectionNavPointer = useCallback(
-    (side: 'left' | 'right', pointerY: number) => {
+    (
+      side: 'left' | 'right',
+      pointerY: number,
+      animatePosition = false,
+      onPositionSettled?: () => void
+    ) => {
       if (!sectionNavPointerArmedRefs.current[side]) {
         return;
       }
@@ -774,6 +791,10 @@ export function PortfolioBrowser({
         gsap.set(ring, { strokeWidth: 4 });
       }
 
+      if (sectionNavClickTargetIndexesRef.current[side] !== null) {
+        return;
+      }
+
       const snapTarget = sectionNavIsMovingRef.current
         ? null
         : getSectionNavSnapTarget(
@@ -796,13 +817,29 @@ export function PortfolioBrowser({
       }
 
       sectionNavPreviewIndexesRef.current[sideIndex] = snapIndex;
-      gsap.killTweensOf(preview, 'y');
-      gsap.set(preview, {
-        y: getSectionNavPreviewOffsetFromClientY(preview, targetY),
-      });
       const reducedMotion = window.matchMedia(
         '(prefers-reduced-motion: reduce)'
       ).matches;
+      const targetOffset = getSectionNavPreviewOffsetFromClientY(
+        preview,
+        targetY
+      );
+
+      gsap.killTweensOf(preview, 'y');
+
+      if (animatePosition && !reducedMotion) {
+        gsap.to(preview, {
+          y: targetOffset,
+          duration: 0.3,
+          ease: 'power3.out',
+          overwrite: 'auto',
+          onComplete: onPositionSettled,
+        });
+      } else {
+        gsap.set(preview, { y: targetOffset });
+        onPositionSettled?.();
+      }
+
       const targetColor =
         getSectionNavPointerColor(
           sectionNavButtonRefs.current[side],
@@ -818,13 +855,115 @@ export function PortfolioBrowser({
     },
     [returnSectionNavPointerToIdle]
   );
-  const engageSectionNavPointer = useCallback(
+  const trackSectionNavPointer = useCallback(
     (side: 'left' | 'right', pointerY: number) => {
-      sectionNavPointerArmedRefs.current[side] = true;
-      updateSectionNavPointer(side, pointerY);
+      const acquiring = sectionNavPointerAcquiringRefs.current[side];
+
+      updateSectionNavPointer(
+        side,
+        pointerY,
+        acquiring,
+        acquiring
+          ? () => {
+              sectionNavPointerAcquiringRefs.current[side] = false;
+            }
+          : undefined
+      );
     },
     [updateSectionNavPointer]
   );
+  const engageSectionNavPointer = useCallback(
+    (side: 'left' | 'right', pointerY: number) => {
+      if (!sectionNavPointerArmedRefs.current[side]) {
+        sectionNavPointerAcquiringRefs.current[side] = true;
+      }
+
+      sectionNavPointerArmedRefs.current[side] = true;
+      trackSectionNavPointer(side, pointerY);
+    },
+    [trackSectionNavPointer]
+  );
+  const positionSectionNavClickTarget = useCallback(
+    (
+      side: 'left' | 'right',
+      itemIndex: number,
+      duration: number,
+      onComplete?: () => void
+    ) => {
+      const sideIndex = side === 'left' ? 0 : 1;
+      const preview = sectionNavPreviewRefs.current[sideIndex];
+      const target = sectionNavButtonRefs.current[side][itemIndex];
+
+      if (!preview || !target) {
+        onComplete?.();
+        return;
+      }
+
+      sectionNavPreviewIndexesRef.current[sideIndex] = itemIndex;
+      const ring = preview.querySelector('circle');
+
+      if (ring) {
+        gsap.set(ring, { strokeWidth: 4 });
+      }
+
+      const reducedMotion = window.matchMedia(
+        '(prefers-reduced-motion: reduce)'
+      ).matches;
+
+      gsap.to(preview, {
+        y: getSectionNavPreviewOffset(preview, target),
+        color: SECTION_NAV_COLORS[itemIndex],
+        duration: reducedMotion ? 0 : duration,
+        ease: 'power3.out',
+        overwrite: 'auto',
+        onComplete,
+      });
+    },
+    []
+  );
+  const lockSectionNavIndicatorToItem = useCallback(
+    (side: 'left' | 'right', itemIndex: number) => {
+      sectionNavPointerAcquiringRefs.current[side] = false;
+      sectionNavClickTargetIndexesRef.current[side] = itemIndex;
+      positionSectionNavClickTarget(side, itemIndex, 0.3);
+    },
+    [positionSectionNavClickTarget]
+  );
+  const settleSectionNavClickTarget = useCallback(
+    (side: 'left' | 'right') => {
+      const itemIndex = sectionNavClickTargetIndexesRef.current[side];
+
+      if (itemIndex === null) {
+        return;
+      }
+
+      positionSectionNavClickTarget(side, itemIndex, 0.2, () => {
+        if (sectionNavClickTargetIndexesRef.current[side] !== itemIndex) {
+          return;
+        }
+
+        sectionNavClickTargetIndexesRef.current[side] = null;
+        const pointerY = sectionNavPointerYRefs.current[side];
+
+        if (pointerY !== null && sectionNavPointerArmedRefs.current[side]) {
+          sectionNavPointerAcquiringRefs.current[side] = true;
+          trackSectionNavPointer(side, pointerY);
+          return;
+        }
+
+        returnSectionNavPointerToIdle(side, false);
+      });
+    },
+    [
+      positionSectionNavClickTarget,
+      returnSectionNavPointerToIdle,
+      trackSectionNavPointer,
+    ]
+  );
+  const settleSectionNavClickTargets = useCallback(() => {
+    settleSectionNavClickTarget('left');
+    settleSectionNavClickTarget('right');
+  }, [settleSectionNavClickTarget]);
 
   const projectSlides = useMemo(
     () =>
@@ -1629,6 +1768,8 @@ export function PortfolioBrowser({
         } else {
           updateUrl(project, nextSlide, 'replace');
         }
+
+        settleSectionNavClickTargets();
       }
 
       clearHorizontalScrollSync(project);
@@ -1807,10 +1948,17 @@ export function PortfolioBrowser({
               const previewIndex =
                 sectionNavPreviewIndexesRef.current[sideIndex];
               const side = sideIndex === 0 ? 'left' : 'right';
+              const clickTargetIndex =
+                sectionNavClickTargetIndexesRef.current[side];
               const pointerY = sectionNavPointerYRefs.current[side];
 
+              if (clickTargetIndex !== null) {
+                positionSectionNavClickTarget(side, clickTargetIndex, 0.12);
+                return;
+              }
+
               if (pointerY !== null) {
-                updateSectionNavPointer(side, pointerY);
+                trackSectionNavPointer(side, pointerY);
                 return;
               }
 
@@ -1917,7 +2065,7 @@ export function PortfolioBrowser({
     }, keyboardSurfaceRef);
 
     return () => context.revert();
-  }, [isWideLayout]);
+  }, [isWideLayout, positionSectionNavClickTarget, trackSectionNavPointer]);
 
   useEffect(() => {
     window.history.scrollRestoration = 'manual';
@@ -1935,6 +2083,19 @@ export function PortfolioBrowser({
     syncCurrentViewportEvent();
   }, [isWideLayout]);
 
+  const reevaluateSectionNavPointersEvent = useEffectEvent(() => {
+    (['left', 'right'] as const).forEach((side) => {
+      const pointerY = sectionNavPointerYRefs.current[side];
+
+      if (pointerY !== null) {
+        trackSectionNavPointer(side, pointerY);
+      }
+    });
+  });
+  const settleSectionNavClickTargetsEvent = useEffectEvent(() => {
+    settleSectionNavClickTargets();
+  });
+
   useEffect(() => {
     const vertical = verticalRef.current;
 
@@ -1942,27 +2103,21 @@ export function PortfolioBrowser({
       return;
     }
 
-    const reevaluatePointers = () => {
-      (['left', 'right'] as const).forEach((side) => {
-        const pointerY = sectionNavPointerYRefs.current[side];
-
-        if (pointerY !== null) {
-          updateSectionNavPointer(side, pointerY);
-        }
-      });
-    };
     const handleVerticalScroll = () => {
       if (sectionNavIsMovingRef.current) {
         return;
       }
 
       sectionNavIsMovingRef.current = true;
-      reevaluatePointers();
+      reevaluateSectionNavPointersEvent();
     };
     const handleVerticalScrollEnd = () => {
       sectionNavIsMovingRef.current = false;
       handleVerticalScrollEndEvent(vertical);
-      requestAnimationFrame(reevaluatePointers);
+      requestAnimationFrame(() => {
+        settleSectionNavClickTargetsEvent();
+        reevaluateSectionNavPointersEvent();
+      });
     };
 
     vertical.addEventListener('scroll', handleVerticalScroll, { passive: true });
@@ -1971,7 +2126,7 @@ export function PortfolioBrowser({
       vertical.removeEventListener('scroll', handleVerticalScroll);
       vertical.removeEventListener('scrollend', handleVerticalScrollEnd);
     };
-  }, [updateSectionNavPointer]);
+  }, []);
 
   useEffect(() => {
     const cleanupFns = portfolioSlides.map((project, projectIndex) => {
@@ -2208,6 +2363,8 @@ export function PortfolioBrowser({
           focusKeyboardSurface();
 
           if (hasHorizontalAction) {
+            lockSectionNavIndicatorToItem(side, itemIndex);
+
             if (isModalPresentationActive) {
               moveModalHorizontal(isLeftSide ? -1 : 1);
             } else {
@@ -2217,6 +2374,7 @@ export function PortfolioBrowser({
           }
 
           if (!isActiveSection) {
+            lockSectionNavIndicatorToItem(side, itemIndex);
             setActiveProject(item.projectIndex, 'push');
           }
         }}
@@ -2237,7 +2395,7 @@ export function PortfolioBrowser({
         style={sideNavInteractiveZoneStyle}
         onPointerMove={(event) => {
           if (sectionNavPointerArmedRefs.current[side]) {
-            updateSectionNavPointer(side, event.clientY);
+            trackSectionNavPointer(side, event.clientY);
           }
         }}
         onPointerLeave={() => returnSectionNavPointerToIdle(side, true)}
