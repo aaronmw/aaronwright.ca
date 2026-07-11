@@ -306,6 +306,65 @@ function getSectionNavSnapTarget(
   return closest;
 }
 
+function getSectionNavPointerColor(
+  buttons: Array<HTMLDivElement | null>,
+  pointerY: number
+) {
+  const stops = buttons
+    .map((button, index) => {
+      if (!button || button.getAttribute('aria-hidden') === 'true') {
+        return null;
+      }
+
+      const rect = button.getBoundingClientRect();
+
+      return {
+        centerY: rect.top + rect.height / 2,
+        color: SECTION_NAV_COLORS[index],
+      };
+    })
+    .filter(
+      (stop): stop is { centerY: number; color: string } => stop !== null
+    )
+    .sort((first, second) => first.centerY - second.centerY);
+
+  if (stops.length === 0) {
+    return null;
+  }
+
+  if (pointerY <= stops[0].centerY) {
+    return stops[0].color;
+  }
+
+  const lastStop = stops[stops.length - 1];
+
+  if (pointerY >= lastStop.centerY) {
+    return lastStop.color;
+  }
+
+  for (let index = 1; index < stops.length; index += 1) {
+    const nextStop = stops[index];
+
+    if (pointerY > nextStop.centerY) {
+      continue;
+    }
+
+    const previousStop = stops[index - 1];
+    const progress =
+      (pointerY - previousStop.centerY) /
+      (nextStop.centerY - previousStop.centerY);
+    const previousColor = gsap.utils.splitColor(previousStop.color);
+    const nextColor = gsap.utils.splitColor(nextStop.color);
+    const channels = previousColor.slice(0, 3).map((channel, channelIndex) =>
+      Math.round(channel + (nextColor[channelIndex] - channel) * progress)
+    );
+
+    return `rgb(${channels.join(', ')})`;
+  }
+
+  return lastStop.color;
+}
+
 function getIndicatorSlotIds(count: number) {
   return Array.from({ length: count }, (_, index) => {
     if (index === 0) {
@@ -622,7 +681,6 @@ export function PortfolioBrowser({
         return;
       }
 
-      const previousSnapIndex = sectionNavPreviewIndexesRef.current[sideIndex];
       const snapTarget = sectionNavIsMovingRef.current
         ? null
         : getSectionNavSnapTarget(
@@ -637,39 +695,20 @@ export function PortfolioBrowser({
       gsap.set(preview, {
         y: getSectionNavPreviewOffsetFromClientY(preview, targetY),
       });
-
-      if (snapIndex === previousSnapIndex) {
-        return;
-      }
-
       const reducedMotion = window.matchMedia(
         '(prefers-reduced-motion: reduce)'
       ).matches;
+      const targetColor =
+        getSectionNavPointerColor(
+          sectionNavButtonRefs.current[side],
+          targetY
+        ) ?? getComputedStyle(indicator).color;
 
-      if (snapIndex !== null) {
-        gsap.to(preview, {
-          color: SECTION_NAV_COLORS[snapIndex],
-          duration: reducedMotion ? 0 : 0.15,
-          ease: 'power2.out',
-          overwrite: 'auto',
-        });
-        return;
-      }
-
-      const inheritedColor = getComputedStyle(indicator).color;
       gsap.to(preview, {
-        color: inheritedColor,
+        color: targetColor,
         duration: reducedMotion ? 0 : 0.15,
         ease: 'power2.out',
         overwrite: 'auto',
-        onComplete: () => {
-          if (
-            sectionNavPointerYRefs.current[side] !== null &&
-            sectionNavPreviewIndexesRef.current[sideIndex] === null
-          ) {
-            gsap.set(preview, { clearProps: 'color' });
-          }
-        },
       });
     },
     []
