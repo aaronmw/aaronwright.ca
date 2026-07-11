@@ -2008,7 +2008,7 @@ export function PortfolioBrowser({
                   type="button"
                   className={`w-full items-center gap-[clamp(0.75rem,1.8vh,1.5rem)] py-[clamp(0.2rem,0.65vh,0.75rem)] text-left text-white outline-none transition-colors hover:text-[var(--project-color)] focus-visible:text-[var(--project-color)] sm:py-[clamp(0.3rem,0.85vh,1.25rem)] ${
                     isWideLayout
-                      ? 'grid grid-cols-[auto_minmax(0,1fr)_36ch]'
+                      ? 'grid grid-cols-[minmax(0,1fr)_36ch]'
                       : 'flex justify-between'
                   }`}
                   style={
@@ -2023,12 +2023,14 @@ export function PortfolioBrowser({
                 >
                   {isWideLayout ? (
                     <>
-                      <span className="text-sm font-light text-current sm:text-base">
-                        {String(index + 1).padStart(2, '0')}
+                      <span className="flex min-w-0 items-center">
+                        <span className="-ml-12 w-12 shrink-0 text-sm font-light text-current sm:text-base">
+                          {String(index + 1).padStart(2, '0')}
+                        </span>
+                        <SectionTitle color={getProjectColor(index)}>
+                          {project.title}
+                        </SectionTitle>
                       </span>
-                      <SectionTitle color={getProjectColor(index)}>
-                        {project.title}
-                      </SectionTitle>
                       <SectionBlurb className="justify-self-start">
                         {project.blurb}
                       </SectionBlurb>
