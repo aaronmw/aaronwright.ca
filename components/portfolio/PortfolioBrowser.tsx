@@ -695,11 +695,46 @@ export function PortfolioBrowser({
   const sectionNavClickTargetIndexesRef = useRef<
     Record<'left' | 'right', number | null>
   >({ left: null, right: null });
+  const sectionNavStrokeWidthRefs = useRef<Record<'left' | 'right', 2 | 4>>({
+    left: 4,
+    right: 4,
+  });
   const sectionNavIsMovingRef = useRef(false);
   const sectionNavStackRefs = useRef<Array<HTMLDivElement | null>>([]);
   const sectionNavIconRefs = useRef<
     Record<'left' | 'right', Array<SVGSVGElement | null>>
   >({ left: [], right: [] });
+  const animateSectionNavRingStroke = useCallback(
+    (side: 'left' | 'right', strokeWidth: 2 | 4) => {
+      if (sectionNavStrokeWidthRefs.current[side] === strokeWidth) {
+        return;
+      }
+
+      const sideIndex = side === 'left' ? 0 : 1;
+      const ring = sectionNavPreviewRefs.current[sideIndex]?.querySelector(
+        'circle'
+      );
+
+      sectionNavStrokeWidthRefs.current[side] = strokeWidth;
+
+      if (!ring) {
+        return;
+      }
+
+      const reducedMotion = window.matchMedia(
+        '(prefers-reduced-motion: reduce)'
+      ).matches;
+
+      gsap.to(ring, {
+        strokeWidth,
+        duration: reducedMotion ? 0 : 0.2,
+        ease: 'power2.out',
+        autoRound: false,
+        overwrite: 'auto',
+      });
+    },
+    []
+  );
   const returnSectionNavPointerToIdle = useCallback(
     (side: 'left' | 'right', delayed: boolean) => {
       const sideIndex = side === 'left' ? 0 : 1;
@@ -715,6 +750,7 @@ export function PortfolioBrowser({
       sectionNavPointerYRefs.current[side] = null;
       sectionNavPointerArmedRefs.current[side] = false;
       sectionNavPointerAcquiringRefs.current[side] = false;
+      animateSectionNavRingStroke(side, 4);
 
       if (sectionNavClickTargetIndexesRef.current[side] !== null) {
         return;
@@ -756,7 +792,7 @@ export function PortfolioBrowser({
         SECTION_NAV_PREVIEW_RETURN_DELAY_MS
       );
     },
-    []
+    [animateSectionNavRingStroke]
   );
   const updateSectionNavPointer = useCallback(
     (
@@ -785,15 +821,11 @@ export function PortfolioBrowser({
         return;
       }
 
-      const ring = preview.querySelector('circle');
-
-      if (ring) {
-        gsap.set(ring, { strokeWidth: 4 });
-      }
-
       if (sectionNavClickTargetIndexesRef.current[side] !== null) {
         return;
       }
+
+      animateSectionNavRingStroke(side, 2);
 
       const snapTarget = sectionNavIsMovingRef.current
         ? null
@@ -853,7 +885,7 @@ export function PortfolioBrowser({
         overwrite: 'auto',
       });
     },
-    [returnSectionNavPointerToIdle]
+    [animateSectionNavRingStroke, returnSectionNavPointerToIdle]
   );
   const trackSectionNavPointer = useCallback(
     (side: 'left' | 'right', pointerY: number) => {
@@ -900,11 +932,7 @@ export function PortfolioBrowser({
       }
 
       sectionNavPreviewIndexesRef.current[sideIndex] = itemIndex;
-      const ring = preview.querySelector('circle');
-
-      if (ring) {
-        gsap.set(ring, { strokeWidth: 4 });
-      }
+      animateSectionNavRingStroke(side, 4);
 
       const reducedMotion = window.matchMedia(
         '(prefers-reduced-motion: reduce)'
@@ -919,7 +947,7 @@ export function PortfolioBrowser({
         onComplete,
       });
     },
-    []
+    [animateSectionNavRingStroke]
   );
   const lockSectionNavIndicatorToItem = useCallback(
     (side: 'left' | 'right', itemIndex: number) => {
@@ -2024,16 +2052,6 @@ export function PortfolioBrowser({
             duration: 1,
           },
           index
-        );
-        timeline.to(
-          rings,
-          { strokeWidth: 0, autoRound: false, duration: 0.5 },
-          index
-        );
-        timeline.to(
-          rings,
-          { strokeWidth: 4, autoRound: false, duration: 0.5 },
-          index + 0.5
         );
         timeline.to(
           leftIcons,
