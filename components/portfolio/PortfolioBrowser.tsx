@@ -1803,6 +1803,59 @@ export function PortfolioBrowser({
       clearHorizontalScrollSync(project);
     }
   );
+  const clickVerticalSectionNavButton = useCallback(
+    (direction: -1 | 1) => {
+      const targetProjectIndex = getVerticalTargetProjectIndex(
+        activeProjectIndex,
+        direction
+      );
+      const targetItemIndex = targetProjectIndex + 1;
+      const button = sectionNavButtonRefs.current.left[
+        targetItemIndex
+      ]?.querySelector<HTMLButtonElement>('button');
+
+      if (!button) {
+        return false;
+      }
+
+      button.click();
+      return true;
+    },
+    [activeProjectIndex]
+  );
+  const clickHorizontalSlideIndicator = useCallback((direction: -1 | 1) => {
+    const navigation = document.querySelector(
+      '[data-portfolio-slide-indicators]'
+    );
+    const activeButton = navigation?.querySelector<HTMLButtonElement>(
+      'button[data-portfolio-slide-indicator-index][aria-current="true"]'
+    );
+
+    if (!navigation || !activeButton) {
+      return false;
+    }
+
+    const buttons = Array.from(
+      navigation.querySelectorAll<HTMLButtonElement>(
+        'button[data-portfolio-slide-indicator-index]'
+      )
+    ).filter((button) => button.parentElement?.style.pointerEvents !== 'none');
+    const activeIndex = Number(
+      activeButton.dataset.portfolioSlideIndicatorIndex
+    );
+    const targetIndex = positiveModulo(activeIndex + direction, buttons.length);
+    const targetButton = buttons.find(
+      (button) =>
+        Number(button.dataset.portfolioSlideIndicatorIndex) === targetIndex
+    );
+
+    if (!targetButton) {
+      return false;
+    }
+
+    targetButton.click();
+    return true;
+  }, []);
 
   const handleKeyDownEvent = useEffectEvent((event: KeyboardEvent) => {
     if (shouldShowModal) {
@@ -1824,13 +1877,17 @@ export function PortfolioBrowser({
 
       if (event.key === 'ArrowRight') {
         event.preventDefault();
-        moveModalHorizontal(1);
+        if (!clickHorizontalSlideIndicator(1)) {
+          moveModalHorizontal(1);
+        }
         return;
       }
 
       if (event.key === 'ArrowLeft') {
         event.preventDefault();
-        moveModalHorizontal(-1);
+        if (!clickHorizontalSlideIndicator(-1)) {
+          moveModalHorizontal(-1);
+        }
         return;
       }
 
@@ -1886,26 +1943,34 @@ export function PortfolioBrowser({
 
     if (event.key === 'ArrowDown') {
       event.preventDefault();
-      focusKeyboardSurface();
-      moveVertical(1);
+      if (!clickVerticalSectionNavButton(1)) {
+        focusKeyboardSurface();
+        moveVertical(1);
+      }
     }
 
     if (event.key === 'ArrowUp') {
       event.preventDefault();
-      focusKeyboardSurface();
-      moveVertical(-1);
+      if (!clickVerticalSectionNavButton(-1)) {
+        focusKeyboardSurface();
+        moveVertical(-1);
+      }
     }
 
     if (event.key === 'ArrowRight') {
       event.preventDefault();
-      focusKeyboardSurface();
-      moveHorizontal(1);
+      if (!clickHorizontalSlideIndicator(1)) {
+        focusKeyboardSurface();
+        moveHorizontal(1);
+      }
     }
 
     if (event.key === 'ArrowLeft') {
       event.preventDefault();
-      focusKeyboardSurface();
-      moveHorizontal(-1);
+      if (!clickHorizontalSlideIndicator(-1)) {
+        focusKeyboardSurface();
+        moveHorizontal(-1);
+      }
     }
   });
 
@@ -3136,6 +3201,7 @@ function AnimatedSlideIndicators({
                 aria-current={
                   boundedActiveIndex === targetIndex ? 'true' : undefined
                 }
+                data-portfolio-slide-indicator-index={targetIndex}
                 data-interactive-pop-companion='[data-portfolio-slide-indicator-marker="true"] circle'
                 onMouseEnter={() => startPreview(targetIndex, 'hover')}
                 onMouseLeave={() => endPreview(targetIndex, 'hover')}
