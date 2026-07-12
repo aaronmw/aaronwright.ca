@@ -5450,6 +5450,7 @@ function ImageModal({
     activeIndex: number;
     itemCount: number;
   } | null>(null);
+  const onExitedEvent = useEffectEvent(onExited);
   const clampScale = useCallback((nextScale: number) => {
     return Math.min(6, Math.max(1, nextScale));
   }, []);
@@ -5573,7 +5574,7 @@ function ImageModal({
         presentationTimelineRef.current = null;
 
         if (isClosing) {
-          onExited();
+          onExitedEvent();
           return;
         }
 
@@ -5636,7 +5637,6 @@ function ImageModal({
     applyLiveTransform,
     dragRef,
     isClosing,
-    onExited,
     pinchRef,
     prefersReducedMotion,
     resetLiveView,
