@@ -4749,7 +4749,7 @@ function AnimatedSlideIndicators({
                 }
                 aria-busy={pendingIndex === targetIndex ? true : undefined}
                 data-portfolio-slide-indicator-index={targetIndex}
-                data-interactive-pop-companion='[data-portfolio-slide-indicator-marker="true"] circle'
+                data-interactive-pop-companion='[data-portfolio-slide-indicator-marker="true"] svg'
                 onPointerEnter={(event) => {
                   if (pointerArmedRef.current) {
                     schedulePointerTracking(event.clientX);
@@ -4778,6 +4778,7 @@ function AnimatedSlideIndicators({
                     <FontAwesomeIcon
                       icon={faCircle}
                       className={NAVIGATION_DOT_CLASS}
+                      style={{ width: '0.625rem', height: '0.625rem' }}
                     />
                   )}
                 </span>
@@ -4786,6 +4787,7 @@ function AnimatedSlideIndicators({
               <FontAwesomeIcon
                 icon={faCircle}
                 className={NAVIGATION_DOT_CLASS}
+                style={{ width: '0.625rem', height: '0.625rem' }}
                 aria-hidden="true"
               />
             )}
@@ -4956,6 +4958,7 @@ function SideNavButton({
             ref={dotRef}
             icon={faCircle}
             className="absolute size-2.5 text-current opacity-0 drop-shadow-[1px_1px_0_black]"
+            style={{ width: '0.625rem', height: '0.625rem' }}
             aria-hidden="true"
           />
         }
@@ -4964,7 +4967,7 @@ function SideNavButton({
         aria-describedby={tooltipId}
         aria-current={activeButton ? 'page' : undefined}
         aria-busy={pending ? true : undefined}
-        data-interactive-pop-companion={`[data-portfolio-section-nav-preview="${side}"] circle`}
+        data-interactive-pop-companion={`[data-portfolio-section-nav-preview="${side}"] svg`}
         tabIndex={concealed ? -1 : undefined}
         onClick={onClick}
       />
