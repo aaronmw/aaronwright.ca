@@ -3405,7 +3405,7 @@ export function PortfolioBrowser({
             ref={(node) => {
               sectionNavStackRefs.current[sideIndex] = node;
             }}
-            className="relative flex flex-col gap-3"
+            className="relative flex flex-col"
             style={sideNavStackStyle}
           >
             <NavigationActiveRing
@@ -3416,7 +3416,7 @@ export function PortfolioBrowser({
               previewElementRef={(node) => {
                 sectionNavPreviewRefs.current[sideIndex] = node;
               }}
-              className="absolute left-0 top-0 z-0"
+              className="absolute left-0 top-1.5 z-0"
               style={{
                 transform: `translate3d(0, ${
                   initialSectionNavIndex * SECTION_NAV_ITEM_STEP_REM
@@ -4382,7 +4382,7 @@ function AnimatedSlideIndicators({
             data-indicator-presence={
               isEntering ? 'entering' : isExiting ? 'exiting' : 'retained'
             }
-            className="absolute left-1/2 top-1/2 grid size-7 place-items-center transition-[opacity,transform] duration-500 [transition-timing-function:cubic-bezier(0.19,1,0.22,1)] motion-reduce:transition-none"
+            className="absolute left-1/2 top-1/2 grid size-10 place-items-center transition-[opacity,transform] duration-500 [transition-timing-function:cubic-bezier(0.19,1,0.22,1)] motion-reduce:transition-none"
             style={{
               opacity: isVisible ? 1 : 0,
               pointerEvents: slide && isVisible ? 'auto' : 'none',
@@ -4396,7 +4396,7 @@ function AnimatedSlideIndicators({
             {slide ? (
               <button
                 type="button"
-                className="pointer-events-auto grid size-7 place-items-center outline-none"
+                className="pointer-events-auto grid size-10 cursor-pointer place-items-center outline-none"
                 aria-label={
                   slide.kind === 'description'
                     ? `Show ${projectTitle} description`
@@ -4555,7 +4555,7 @@ function SideNavButton({
     <div
       ref={elementRef}
       data-portfolio-section-nav-tooltip-title={tooltipTitle}
-      className={`relative z-10 grid size-12 place-items-center transition-[opacity,transform] duration-300 ease-out motion-reduce:transition-none ${
+      className={`relative z-10 grid h-[3.75rem] w-12 place-items-center transition-[opacity,transform] duration-300 ease-out motion-reduce:transition-none ${
         concealed
           ? 'pointer-events-none scale-90 opacity-0'
           : 'scale-100 opacity-100'
@@ -4588,7 +4588,7 @@ function SideNavButton({
         icon={icon}
         iconRef={iconRef}
         iconClassName={`size-7 ${pending ? 'animate-spin' : ''}`}
-        className="relative size-12 border-0 bg-transparent p-0 text-[var(--project-color)]"
+        className="relative h-full w-12 cursor-pointer border-0 bg-transparent p-0 text-[var(--project-color)]"
         aria-label={label}
         aria-describedby={tooltipId}
         aria-current={activeButton ? 'page' : undefined}
