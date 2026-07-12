@@ -252,7 +252,7 @@ function getSectionNavArrowRotation(
 }
 
 function getSectionNavPreviewOffset(
-  preview: SVGGElement,
+  preview: HTMLDivElement,
   target: HTMLElement
 ) {
   const targetRect = target.getBoundingClientRect();
@@ -264,7 +264,7 @@ function getSectionNavPreviewOffset(
 }
 
 function getSectionNavPreviewOffsetFromClientY(
-  preview: SVGGElement,
+  preview: HTMLDivElement,
   targetCenterY: number
 ) {
   const ring = preview.querySelector('circle');
@@ -669,8 +669,8 @@ export function PortfolioBrowser({
   > | null>(null);
   const modalHistoryEntryRef = useRef(false);
   const initialScrollSyncedRef = useRef(false);
-  const sectionNavIndicatorRefs = useRef<Array<SVGSVGElement | null>>([]);
-  const sectionNavPreviewRefs = useRef<Array<SVGGElement | null>>([]);
+  const sectionNavIndicatorRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const sectionNavPreviewRefs = useRef<Array<HTMLDivElement | null>>([]);
   const sectionNavPreviewIndexesRef = useRef<Array<number | null>>([
     null,
     null,
@@ -713,6 +713,9 @@ export function PortfolioBrowser({
   const sectionNavIconRefs = useRef<
     Record<'left' | 'right', Array<SVGSVGElement | null>>
   >({ left: [], right: [] });
+  const [sectionNavTooltipIndexes, setSectionNavTooltipIndexes] = useState<
+    Record<'left' | 'right', number | null>
+  >({ left: null, right: null });
   const animateSectionNavRingStroke = useCallback(
     (side: 'left' | 'right', strokeWidth: 2 | 4) => {
       if (sectionNavStrokeWidthRefs.current[side] === strokeWidth) {
@@ -2065,13 +2068,13 @@ export function PortfolioBrowser({
   useLayoutEffect(() => {
     const vertical = verticalRef.current;
     const indicators = sectionNavIndicatorRefs.current.filter(
-      (indicator): indicator is SVGSVGElement => Boolean(indicator)
+      (indicator): indicator is HTMLDivElement => Boolean(indicator)
     );
     const rings = indicators
       .map((indicator) => indicator.querySelector('circle'))
       .filter((ring): ring is SVGCircleElement => Boolean(ring));
     const previews = sectionNavPreviewRefs.current.filter(
-      (preview): preview is SVGGElement => Boolean(preview)
+      (preview): preview is HTMLDivElement => Boolean(preview)
     );
     const leftIcons = sectionNavIconRefs.current.left.filter(
       (icon): icon is SVGSVGElement => Boolean(icon)
@@ -2477,18 +2480,16 @@ export function PortfolioBrowser({
       Math.max(sectionNavItems.length - 1, 0) * SECTION_NAV_ITEM_STEP_REM * 2
     }rem`,
   };
-  const renderSectionNavButton = (
+  const getSectionNavItemPresentation = (
     item: (typeof sectionNavItems)[number],
-    side: 'left' | 'right',
-    itemIndex: number
+    side: 'left' | 'right'
   ) => {
     const isActiveSection = item.projectIndex === activeProjectIndex;
     const isActiveProjectSection =
       isActiveSection && item.projectIndex !== START_SCREEN_INDEX;
     const isLeftSide = side === 'left';
-    const tooltipId = `portfolio-${side}-section-${item.id}-tooltip`;
-    const hasHorizontalAction = isActiveProjectSection && canMoveHorizontally;
-
+    const hasHorizontalAction =
+      isActiveProjectSection && canMoveHorizontally;
     const label = hasHorizontalAction
       ? isLeftSide
         ? 'Previous screen'
@@ -2502,6 +2503,27 @@ export function PortfolioBrowser({
         : nextSlideTitle
       : item.title;
 
+    return {
+      hasHorizontalAction,
+      isActiveSection,
+      isLeftSide,
+      label,
+      tooltipTitle,
+    };
+  };
+  const renderSectionNavButton = (
+    item: (typeof sectionNavItems)[number],
+    side: 'left' | 'right',
+    itemIndex: number
+  ) => {
+    const {
+      hasHorizontalAction,
+      isActiveSection,
+      isLeftSide,
+      label,
+    } = getSectionNavItemPresentation(item, side);
+    const tooltipId = `portfolio-${side}-section-nav-tooltip`;
+
     return (
       <SideNavButton
         key={`${side}-${item.id}`}
@@ -2513,15 +2535,22 @@ export function PortfolioBrowser({
           sectionNavButtonRefs.current[side][itemIndex] = node;
         }}
         label={label}
-        tooltipTitle={tooltipTitle}
         tooltipId={tooltipId}
         side={side}
         color={item.color}
         activeButton={isActiveSection}
         concealed={isModalPresentationActive && !isActiveSection}
-        onPreviewChange={(previewed) =>
-          previewSectionNavItem(side, itemIndex, item.color, previewed)
-        }
+        onPreviewChange={(previewed) => {
+          previewSectionNavItem(side, itemIndex, item.color, previewed);
+          setSectionNavTooltipIndexes((current) => ({
+            ...current,
+            [side]: previewed
+              ? itemIndex
+              : current[side] === itemIndex
+                ? null
+                : current[side],
+          }));
+        }}
         onPointerEngage={(pointerY) =>
           engageSectionNavPointer(side, pointerY)
         }
@@ -2561,6 +2590,14 @@ export function PortfolioBrowser({
   };
   const renderSectionNavRail = (side: 'left' | 'right') => {
     const sideIndex = side === 'left' ? 0 : 1;
+    const tooltipItemIndex = sectionNavTooltipIndexes[side];
+    const tooltipItem =
+      tooltipItemIndex === null
+        ? null
+        : sectionNavItems[tooltipItemIndex] ?? null;
+    const tooltipTitle = tooltipItem
+      ? getSectionNavItemPresentation(tooltipItem, side).tooltipTitle
+      : '';
     const positionClass =
       side === 'left' ? 'left-3 sm:left-6' : 'right-3 sm:right-6';
 
@@ -2622,6 +2659,12 @@ export function PortfolioBrowser({
               }}
               previewDataAttributes={{
                 'data-portfolio-section-nav-preview': side,
+              }}
+              tooltip={{
+                id: `portfolio-${side}-section-nav-tooltip`,
+                side,
+                title: tooltipTitle,
+                visible: tooltipItem !== null,
               }}
             />
             {sectionNavItems.map((item, itemIndex) =>
@@ -3016,7 +3059,7 @@ function AnimatedSlideIndicators({
   const transitionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
     null
   );
-  const ringRef = useRef<SVGSVGElement | null>(null);
+  const ringRef = useRef<HTMLDivElement | null>(null);
   const ringTweenRef = useRef<gsap.core.Tween | null>(null);
   const previewReturnTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
     null
@@ -3324,39 +3367,75 @@ function NavigationActiveRing({
   style,
   dataAttributes,
   previewDataAttributes,
+  tooltip,
 }: {
   color: string;
-  elementRef?: (node: SVGSVGElement | null) => void;
-  previewElementRef?: (node: SVGGElement | null) => void;
+  elementRef?: (node: HTMLDivElement | null) => void;
+  previewElementRef?: (node: HTMLDivElement | null) => void;
   className: string;
   style?: CSSProperties;
   dataAttributes?: Record<`data-${string}`, string>;
   previewDataAttributes?: Record<`data-${string}`, string>;
+  tooltip?: {
+    id: string;
+    side: 'left' | 'right';
+    title: string;
+    visible: boolean;
+  };
 }) {
   return (
-    <svg
+    <div
       ref={elementRef}
       {...dataAttributes}
       className={`pointer-events-none size-12 overflow-visible ${className}`}
-      viewBox="0 0 48 48"
       style={{
         color,
         ...style,
       }}
-      aria-hidden="true"
+      aria-hidden={tooltip ? undefined : true}
     >
-      <g ref={previewElementRef} {...previewDataAttributes}>
-        <circle
-          cx="24"
-          cy="24"
-          r="22"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="4"
-          style={{ transformBox: 'fill-box', transformOrigin: '50% 50%' }}
-        />
-      </g>
-    </svg>
+      <div
+        ref={previewElementRef}
+        {...previewDataAttributes}
+        className="relative size-12"
+      >
+        <svg
+          className="absolute inset-0 size-12 overflow-visible"
+          viewBox="0 0 48 48"
+          aria-hidden="true"
+        >
+          <circle
+            cx="24"
+            cy="24"
+            r="22"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="4"
+            style={{ transformBox: 'fill-box', transformOrigin: '50% 50%' }}
+          />
+        </svg>
+        {tooltip ? (
+          <div
+            id={tooltip.id}
+            role="tooltip"
+            className={`absolute top-1/2 z-30 whitespace-nowrap px-3 py-2 text-[0.6875rem] font-black uppercase leading-none tracking-[0.24em] transition-[opacity,transform] duration-150 ease-out -translate-y-1/2 ${
+              tooltip.side === 'left'
+                ? 'left-full ml-3'
+                : 'right-full mr-3'
+            } ${
+              tooltip.visible
+                ? 'translate-x-0 opacity-100'
+                : tooltip.side === 'left'
+                  ? '-translate-x-1 opacity-0'
+                  : 'translate-x-1 opacity-0'
+            }`}
+            style={{ backgroundColor: 'currentColor' }}
+          >
+            <span className="text-black">{tooltip.title}</span>
+          </div>
+        ) : null}
+      </div>
+    </div>
   );
 }
 
@@ -3365,7 +3444,6 @@ function SideNavButton({
   elementRef,
   iconRef,
   label,
-  tooltipTitle,
   tooltipId,
   side,
   color,
@@ -3379,7 +3457,6 @@ function SideNavButton({
   elementRef: (node: HTMLDivElement | null) => void;
   iconRef?: (node: SVGSVGElement | null) => void;
   label: string;
-  tooltipTitle: string;
   tooltipId: string;
   side: 'left' | 'right';
   color?: string;
@@ -3392,15 +3469,10 @@ function SideNavButton({
   const hoveredRef = useRef(false);
   const focusedRef = useRef(false);
   const projectColor = color ?? PROJECT_COLORS[0];
-  const tooltipPositionClass =
-    side === 'left'
-      ? 'left-full ml-3 -translate-x-1 group-hover/nav-tooltip:translate-x-0 group-focus-within/nav-tooltip:translate-x-0'
-      : 'right-full mr-3 translate-x-1 group-hover/nav-tooltip:translate-x-0 group-focus-within/nav-tooltip:translate-x-0';
-
   return (
     <div
       ref={elementRef}
-      className={`group/nav-tooltip relative z-10 grid size-12 place-items-center transition-[opacity,transform] duration-300 ease-out motion-reduce:transition-none ${
+      className={`relative z-10 grid size-12 place-items-center transition-[opacity,transform] duration-300 ease-out motion-reduce:transition-none ${
         concealed
           ? 'pointer-events-none scale-90 opacity-0'
           : 'scale-100 opacity-100'
@@ -3441,13 +3513,6 @@ function SideNavButton({
         tabIndex={concealed ? -1 : undefined}
         onClick={onClick}
       />
-      <span
-        id={tooltipId}
-        role="tooltip"
-        className={`pointer-events-none absolute top-1/2 z-30 whitespace-nowrap bg-[var(--project-color)] px-3 py-2 text-[0.6875rem] font-black uppercase leading-none tracking-[0.24em] text-black opacity-0 transition-[opacity,transform] duration-150 ease-out -translate-y-1/2 group-hover/nav-tooltip:opacity-100 group-focus-within/nav-tooltip:opacity-100 ${tooltipPositionClass}`}
-      >
-        {tooltipTitle}
-      </span>
     </div>
   );
 }
