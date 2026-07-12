@@ -691,10 +691,10 @@ function getVisibleScreenshotButtonRect(
 
 function getModalFrameRect(): ModalTransitionRect {
   return {
-    left: window.innerWidth * 0.04,
-    top: window.innerHeight * 0.04,
-    width: window.innerWidth * 0.92,
-    height: window.innerHeight * 0.92,
+    left: 0,
+    top: 0,
+    width: window.innerWidth,
+    height: window.innerHeight,
   };
 }
 
@@ -5870,26 +5870,26 @@ function ImageModal({
       <div
         ref={imageFrameRef}
         data-portfolio-modal-image-frame
-        className={`fixed left-[4vw] top-[4dvh] z-10 h-[92dvh] w-[92vw] origin-center ${panCursorClass}`}
+        className={`fixed left-0 top-0 z-10 h-dvh w-screen origin-center ${panCursorClass}`}
       >
         <div className="absolute inset-0 overflow-hidden">
           <div
             ref={carouselTrackRef}
             data-portfolio-modal-carousel-track
-            className="flex h-full"
+            className="flex h-full w-screen"
           >
             {renderedCarouselScreenshots.map(
               ({ item: carouselScreenshot, key, realIndex }) => (
                 <div
                   key={key}
-                  className="relative h-full w-full shrink-0"
+                  className="relative h-full w-screen shrink-0"
                 >
                   <ScreenshotMedia
                     screenshot={carouselScreenshot}
                     mediaKey={modalMediaKey(carouselScreenshot)}
                     registerMediaElement={registerMediaElement}
                     priority={carouselScreenshot.id === screenshot.id}
-                    sizes="92vw"
+                    sizes="100vw"
                     className={getCarouselMediaClass(
                       realIndex === boundedActiveScreenshotIndex
                     )}
