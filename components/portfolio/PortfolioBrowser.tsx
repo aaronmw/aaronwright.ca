@@ -782,6 +782,12 @@ export function PortfolioBrowser({
   const sectionNavPointerAcquiringRefs = useRef<
     Record<'left' | 'right', boolean>
   >({ left: false, right: false });
+  const sectionNavSnapIndexesRef = useRef<
+    Record<'left' | 'right', number | null>
+  >({ left: null, right: null });
+  const sectionNavSnapTransitioningRefs = useRef<
+    Record<'left' | 'right', boolean>
+  >({ left: false, right: false });
   const sectionNavClickTargetIndexesRef = useRef<
     Record<'left' | 'right', number | null>
   >({ left: null, right: null });
@@ -917,6 +923,8 @@ export function PortfolioBrowser({
       sectionNavPointerYRefs.current[side] = null;
       sectionNavPointerArmedRefs.current[side] = false;
       sectionNavPointerAcquiringRefs.current[side] = false;
+      sectionNavSnapIndexesRef.current[side] = null;
+      sectionNavSnapTransitioningRefs.current[side] = false;
       animateSectionNavRingStroke(side, 4);
 
       if (sectionNavClickTargetIndexesRef.current[side] !== null) {
@@ -999,7 +1007,14 @@ export function PortfolioBrowser({
         ? null
         : getSectionNavSnapTarget(layout, pointerY);
       const snapIndex = snapTarget?.index ?? null;
+      const previousSnapIndex = sectionNavSnapIndexesRef.current[side];
+      const snapChanged = previousSnapIndex !== snapIndex;
       const targetY = snapTarget?.centerY ?? pointerY;
+
+      if (snapChanged) {
+        sectionNavSnapIndexesRef.current[side] = snapIndex;
+        sectionNavSnapTransitioningRefs.current[side] = true;
+      }
 
       if (
         !sectionNavIsMovingRef.current &&
@@ -1019,17 +1034,27 @@ export function PortfolioBrowser({
         preview,
         targetY
       );
+      const shouldAnimatePosition =
+        animatePosition ||
+        snapChanged ||
+        (sectionNavSnapTransitioningRefs.current[side] && snapIndex === null);
 
-      if (animatePosition && !reducedMotion) {
+      if (shouldAnimatePosition && !reducedMotion) {
         gsap.to(preview, {
           y: targetOffset,
-          duration: 0.3,
+          duration: animatePosition ? 0.3 : 0.2,
           ease: 'power3.out',
           overwrite: 'auto',
-          onComplete: onPositionSettled,
+          onComplete: () => {
+            if (sectionNavSnapIndexesRef.current[side] === snapIndex) {
+              sectionNavSnapTransitioningRefs.current[side] = false;
+            }
+            onPositionSettled?.();
+          },
         });
-      } else {
+      } else if (snapIndex === null || snapChanged || reducedMotion) {
         gsap.set(preview, { y: targetOffset });
+        sectionNavSnapTransitioningRefs.current[side] = false;
         onPositionSettled?.();
       }
 
@@ -3863,6 +3888,8 @@ function AnimatedSlideIndicators({
   const rootFontSizeRef = useRef(16);
   const pointerArmedRef = useRef(false);
   const pointerAcquiringRef = useRef(false);
+  const snappedIndexRef = useRef<number | null>(null);
+  const snapTransitioningRef = useRef(false);
   const clickTargetIndexRef = useRef<number | null>(null);
   const focusedIndexRef = useRef<number | null>(null);
   const ringStrokeWidthRef = useRef<2 | 4>(4);
@@ -3953,21 +3980,33 @@ function AnimatedSlideIndicators({
       Math.min(targetCount - 1, Math.round(localPointerX / step - 0.5))
     );
     const closestCenter = step / 2 + closestIndex * step;
-    const targetCenter =
+    const snapIndex =
       Math.abs(localPointerX - closestCenter) <= SECTION_NAV_SNAP_DISTANCE_PX
-        ? closestCenter
-        : localPointerX;
+        ? closestIndex
+        : null;
+    const snapChanged = snappedIndexRef.current !== snapIndex;
+    const targetCenter = snapIndex === null ? localPointerX : closestCenter;
     const targetX = targetCenter - ringSize / 2;
 
-    ringTweenRef.current?.kill();
+    if (snapChanged) {
+      snappedIndexRef.current = snapIndex;
+      snapTransitioningRef.current = true;
+    }
 
-    if (animatePosition) {
+    const shouldAnimatePosition =
+      animatePosition ||
+      snapChanged ||
+      (snapTransitioningRef.current && snapIndex === null);
+    const reducedMotion = window.matchMedia(
+      '(prefers-reduced-motion: reduce)'
+    ).matches;
+
+    if (shouldAnimatePosition && !reducedMotion) {
+      ringTweenRef.current?.kill();
       const tween = gsap.to(ring, {
         x: targetX,
         yPercent: -50,
-        duration: window.matchMedia('(prefers-reduced-motion: reduce)').matches
-          ? 0
-          : 0.3,
+        duration: animatePosition ? 0.3 : 0.2,
         ease: 'power3.out',
         overwrite: 'auto',
         onComplete: () => {
@@ -3975,13 +4014,21 @@ function AnimatedSlideIndicators({
             ringTweenRef.current = null;
           }
           pointerAcquiringRef.current = false;
+          if (snappedIndexRef.current === snapIndex) {
+            snapTransitioningRef.current = false;
+          }
         },
       });
       ringTweenRef.current = tween;
       return;
     }
 
-    gsap.set(ring, { x: targetX, yPercent: -50 });
+    if (snapIndex === null || snapChanged || reducedMotion) {
+      ringTweenRef.current?.kill();
+      gsap.set(ring, { x: targetX, yPercent: -50 });
+      pointerAcquiringRef.current = false;
+      snapTransitioningRef.current = false;
+    }
   };
 
   const schedulePointerTracking = (clientX: number) => {
@@ -4015,6 +4062,8 @@ function AnimatedSlideIndicators({
     clearPreviewReturnTimeout();
     pointerArmedRef.current = false;
     pointerAcquiringRef.current = false;
+    snappedIndexRef.current = null;
+    snapTransitioningRef.current = false;
     pointerXRef.current = null;
     pendingPointerXRef.current = null;
 
@@ -4041,6 +4090,8 @@ function AnimatedSlideIndicators({
 
   const lockRingToIndex = (index: number) => {
     clearPreviewReturnTimeout();
+    snappedIndexRef.current = null;
+    snapTransitioningRef.current = false;
     clickTargetIndexRef.current = index;
     animateRingStroke(4);
     moveRingToIndex(index, 0.3, () => {
@@ -4090,6 +4141,8 @@ function AnimatedSlideIndicators({
   useEffect(() => {
     pointerArmedRef.current = false;
     pointerXRef.current = null;
+    snappedIndexRef.current = null;
+    snapTransitioningRef.current = false;
     focusedIndexRef.current = null;
 
     if (previewReturnTimeoutRef.current) {
