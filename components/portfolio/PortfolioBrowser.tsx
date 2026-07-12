@@ -716,6 +716,8 @@ export function PortfolioBrowser({
   const [sectionNavTooltipIndexes, setSectionNavTooltipIndexes] = useState<
     Record<'left' | 'right', number | null>
   >({ left: null, right: null });
+  const [sectionNavTooltipsSuppressed, setSectionNavTooltipsSuppressed] =
+    useState(false);
   const animateSectionNavRingStroke = useCallback(
     (side: 'left' | 'right', strokeWidth: 2 | 4) => {
       if (sectionNavStrokeWidthRefs.current[side] === strokeWidth) {
@@ -971,6 +973,7 @@ export function PortfolioBrowser({
       sectionNavPointerAcquiringRefs.current[side] = false;
       sectionNavClickTargetIndexesRef.current[side] = itemIndex;
       sectionNavClickAxisRefs.current[side] = axis;
+      setSectionNavTooltipsSuppressed(true);
       sectionNavClickPhaseRefs.current[side] = onAttached
         ? 'attaching'
         : 'recentering';
@@ -1021,6 +1024,11 @@ export function PortfolioBrowser({
         sectionNavClickPhaseRefs.current[side] = null;
         sectionNavClickAxisRefs.current[side] = null;
         sectionNavAttachmentCallbacksRef.current[side] = null;
+        setSectionNavTooltipsSuppressed(
+          Object.values(sectionNavClickTargetIndexesRef.current).some(
+            (targetIndex) => targetIndex !== null
+          )
+        );
         const pointerY = sectionNavPointerYRefs.current[side];
 
         if (pointerY !== null && sectionNavPointerArmedRefs.current[side]) {
@@ -2664,7 +2672,8 @@ export function PortfolioBrowser({
                 id: `portfolio-${side}-section-nav-tooltip`,
                 side,
                 title: tooltipTitle,
-                visible: tooltipItem !== null,
+                visible:
+                  tooltipItem !== null && !sectionNavTooltipsSuppressed,
               }}
             />
             {sectionNavItems.map((item, itemIndex) =>
