@@ -115,6 +115,9 @@ const SECTION_NAV_ITEM_STEP_REM = 3.75;
 const SECTION_NAV_PREVIEW_RETURN_DELAY_MS = 140;
 const SECTION_NAV_SNAP_DISTANCE_PX = 10;
 const SECTION_NAV_BREAKAWAY_DISTANCE_PX = 50;
+const NAVIGATION_ACTIVE_SCALE = 1.1;
+// 0 is sequential; 1 keeps both affordances in a full crossfade.
+const SECTION_NAV_AFFORDANCE_OVERLAP = 1;
 const CAROUSEL_MEDIA_CLASS =
   'object-contain transition-[filter] duration-1000 ease-in-out';
 const TOP_SCREEN_COLOR = 'hsl(0 0% 100%)';
@@ -123,6 +126,10 @@ const PROJECT_COLOR_SATURATION = 78;
 const PROJECT_COLOR_LIGHTNESS = 54;
 const PROJECT_COLORS = buildProjectColors(portfolioSlides.length);
 const SECTION_NAV_COLORS = [TOP_SCREEN_COLOR, ...PROJECT_COLORS];
+const SECTION_NAV_HAS_SLIDES = [
+  false,
+  ...portfolioSlides.map((project) => project.screenshots.length > 1),
+];
 const SECTION_NAV_RGB_COLORS = SECTION_NAV_COLORS.map(
   (color) => gsap.utils.splitColor(color).slice(0, 3) as [number, number, number]
 );
@@ -333,6 +340,63 @@ function getSectionNavLayout(
   });
 
   return items.length > 0 ? { items, top, bottom } : null;
+}
+
+function getSectionNavPosition(
+  layout: SectionNavLayout | null,
+  targetY: number
+) {
+  const items = layout?.items ?? [];
+
+  if (items.length === 0) {
+    return 0;
+  }
+
+  if (targetY <= items[0].centerY) {
+    return items[0].index;
+  }
+
+  const lastItem = items[items.length - 1];
+
+  if (targetY >= lastItem.centerY) {
+    return lastItem.index;
+  }
+
+  for (let index = 1; index < items.length; index += 1) {
+    const nextItem = items[index];
+
+    if (targetY > nextItem.centerY) {
+      continue;
+    }
+
+    const previousItem = items[index - 1];
+    const progress =
+      (targetY - previousItem.centerY) /
+      (nextItem.centerY - previousItem.centerY);
+
+    return previousItem.index + progress;
+  }
+
+  return lastItem.index;
+}
+
+function getNavigationActiveScale(position: number, activeIndex: number) {
+  const proximity = Math.max(0, 1 - Math.abs(position - activeIndex));
+
+  return 1 + (NAVIGATION_ACTIVE_SCALE - 1) * proximity;
+}
+
+function getSectionNavAffordanceOpacity(activation: number) {
+  const clampedActivation = Math.max(0, Math.min(1, activation));
+  const arrowEnd = 0.5 * (1 + SECTION_NAV_AFFORDANCE_OVERLAP);
+  const arrowOpacity = Math.max(0, 1 - clampedActivation / arrowEnd);
+  const dotStart = 0.5 * (1 - SECTION_NAV_AFFORDANCE_OVERLAP);
+  const dotOpacity = Math.max(
+    0,
+    Math.min(1, (clampedActivation - dotStart) / (1 - dotStart))
+  );
+
+  return { arrowOpacity, dotOpacity };
 }
 
 function getSectionNavSnapTarget(
@@ -819,6 +883,14 @@ export function PortfolioBrowser({
   const sectionNavIconRefs = useRef<
     Record<'left' | 'right', Array<SVGSVGElement | null>>
   >({ left: [], right: [] });
+  const sectionNavDotRefs = useRef<
+    Record<'left' | 'right', Array<HTMLSpanElement | null>>
+  >({ left: [], right: [] });
+  const sectionNavVisualRefs = useRef<
+    Record<'left' | 'right', Array<HTMLSpanElement | null>>
+  >({ left: [], right: [] });
+  const sectionNavScrollPositionRef = useRef(0);
+  const sectionNavActiveIndexRef = useRef(0);
   const sectionNavTooltipRefs = useRef<
     Record<'left' | 'right', HTMLDivElement | null>
   >({ left: null, right: null });
@@ -908,6 +980,79 @@ export function PortfolioBrowser({
     },
     []
   );
+  const applySectionNavActiveScale = useCallback((position: number, activeIndex: number, duration = 0) => {
+    const scale = getNavigationActiveScale(position, activeIndex);
+    const visualTargets = (['left', 'right'] as const).flatMap((side) =>
+      sectionNavVisualRefs.current[side].filter(
+        (visual): visual is HTMLSpanElement => Boolean(visual)
+      )
+    );
+    const activeVisualTargets = (['left', 'right'] as const)
+      .map((side) => sectionNavVisualRefs.current[side][activeIndex])
+      .filter((visual): visual is HTMLSpanElement => Boolean(visual));
+    const ringTargets = sectionNavPreviewRefs.current
+      .map((preview) => preview?.querySelector('svg'))
+      .filter((ring): ring is SVGSVGElement => Boolean(ring));
+
+    const setScale = (targets: Element[], value: number) => {
+      if (duration > 0 && !sectionNavReducedMotionRef.current) {
+        gsap.to(targets, {
+          scale: value,
+          transformOrigin: '50% 50%',
+          duration,
+          ease: 'power3.out',
+          overwrite: 'auto',
+        });
+        return;
+      }
+
+      gsap.set(targets, { scale: value, transformOrigin: '50% 50%' });
+    };
+
+    setScale(visualTargets, 1);
+    setScale(activeVisualTargets, scale);
+    setScale(ringTargets, scale);
+  }, []);
+  const applySectionNavScrollScale = useCallback((position: number, duration = 0) => {
+    const reducedMotion = sectionNavReducedMotionRef.current;
+    const setScale = (target: Element, scale: number) => {
+      if (duration > 0 && !reducedMotion) {
+        gsap.to(target, {
+          scale,
+          transformOrigin: '50% 50%',
+          duration,
+          ease: 'power3.out',
+          overwrite: 'auto',
+        });
+        return;
+      }
+
+      gsap.set(target, {
+        scale,
+        transformOrigin: '50% 50%',
+      });
+    };
+
+    (['left', 'right'] as const).forEach((side) => {
+      sectionNavVisualRefs.current[side].forEach((visual, itemIndex) => {
+        if (visual) {
+          setScale(visual, getNavigationActiveScale(position, itemIndex));
+        }
+      });
+    });
+
+    const nearestItemDistance = Math.abs(position - Math.round(position));
+    const ringProximity = Math.max(0, 1 - nearestItemDistance * 2);
+    const ringScale = 1 + (NAVIGATION_ACTIVE_SCALE - 1) * ringProximity;
+
+    sectionNavPreviewRefs.current.forEach((preview) => {
+      const ring = preview?.querySelector('svg');
+
+      if (ring) {
+        setScale(ring, ringScale);
+      }
+    });
+  }, []);
   const returnSectionNavPointerToIdle = useCallback(
     (side: 'left' | 'right', delayed: boolean) => {
       const sideIndex = side === 'left' ? 0 : 1;
@@ -943,6 +1088,14 @@ export function PortfolioBrowser({
           '(prefers-reduced-motion: reduce)'
         ).matches;
 
+        if (side === 'left') {
+          const scrollPosition = sectionNavScrollPositionRef.current;
+          applySectionNavScrollScale(
+            scrollPosition,
+            reducedMotion ? 0 : 0.3
+          );
+        }
+
         gsap.to(preview, {
           y: 0,
           color: getComputedStyle(indicator).color,
@@ -967,7 +1120,7 @@ export function PortfolioBrowser({
         SECTION_NAV_PREVIEW_RETURN_DELAY_MS
       );
     },
-    [animateSectionNavRingStroke]
+    [animateSectionNavRingStroke, applySectionNavScrollScale]
   );
   const updateSectionNavPointer = useCallback(
     (
@@ -1039,6 +1192,18 @@ export function PortfolioBrowser({
         snapChanged ||
         (sectionNavSnapTransitioningRefs.current[side] && snapIndex === null);
 
+      if (side === 'left') {
+        applySectionNavActiveScale(
+          getSectionNavPosition(layout, targetY),
+          sectionNavActiveIndexRef.current,
+          shouldAnimatePosition && !reducedMotion
+            ? animatePosition
+              ? 0.3
+              : 0.2
+            : 0
+        );
+      }
+
       if (shouldAnimatePosition && !reducedMotion) {
         gsap.to(preview, {
           y: targetOffset,
@@ -1081,7 +1246,11 @@ export function PortfolioBrowser({
 
       colorSetter.setColor(targetColor);
     },
-    [animateSectionNavRingStroke, returnSectionNavPointerToIdle]
+    [
+      animateSectionNavRingStroke,
+      applySectionNavActiveScale,
+      returnSectionNavPointerToIdle,
+    ]
   );
   const trackSectionNavPointer = useCallback(
     (
@@ -1213,8 +1382,12 @@ export function PortfolioBrowser({
         overwrite: 'auto',
         onComplete,
       });
+
+      if (side === 'left') {
+        applySectionNavActiveScale(itemIndex, itemIndex, duration);
+      }
     },
-    [animateSectionNavRingStroke]
+    [animateSectionNavRingStroke, applySectionNavActiveScale]
   );
   const lockSectionNavIndicatorToItem = useCallback(
     (
@@ -1471,6 +1644,14 @@ export function PortfolioBrowser({
     normalizedInitialProjectIndex
   );
   const [activeSlideIndexes, setActiveSlideIndexes] = useState(initialSlideIndexes);
+  useLayoutEffect(() => {
+    sectionNavActiveIndexRef.current = activeProjectIndex + 1;
+
+    if (!initialRevealCompleteRef.current) {
+      sectionNavScrollPositionRef.current = activeProjectIndex + 1;
+    }
+  }, [activeProjectIndex]);
+
   const isWideLayout = useSyncExternalStore(
     subscribeToWideLayout,
     getWideLayoutSnapshot,
@@ -2792,6 +2973,18 @@ export function PortfolioBrowser({
     const rightIcons = sectionNavIconRefs.current.right.filter(
       (icon): icon is SVGSVGElement => Boolean(icon)
     );
+    const leftDots = sectionNavDotRefs.current.left.filter(
+      (dot): dot is HTMLSpanElement => Boolean(dot)
+    );
+    const rightDots = sectionNavDotRefs.current.right.filter(
+      (dot): dot is HTMLSpanElement => Boolean(dot)
+    );
+    const leftVisuals = sectionNavVisualRefs.current.left.filter(
+      (visual): visual is HTMLSpanElement => Boolean(visual)
+    );
+    const rightVisuals = sectionNavVisualRefs.current.right.filter(
+      (visual): visual is HTMLSpanElement => Boolean(visual)
+    );
     const stacks = sectionNavStackRefs.current.filter(
       (stack): stack is HTMLDivElement => Boolean(stack)
     );
@@ -2803,7 +2996,11 @@ export function PortfolioBrowser({
       previews.length !== indicators.length ||
       stacks.length !== indicators.length ||
       leftIcons.length !== SECTION_NAV_COLORS.length ||
-      rightIcons.length !== SECTION_NAV_COLORS.length
+      rightIcons.length !== SECTION_NAV_COLORS.length ||
+      leftDots.length !== SECTION_NAV_COLORS.length ||
+      rightDots.length !== SECTION_NAV_COLORS.length ||
+      leftVisuals.length !== SECTION_NAV_COLORS.length ||
+      rightVisuals.length !== SECTION_NAV_COLORS.length
     ) {
       return;
     }
@@ -2816,6 +3013,58 @@ export function PortfolioBrowser({
 
         return `rgb(${red}, ${green}, ${blue})`;
       });
+      const iconGroups = [leftIcons, rightIcons];
+      const dotGroups = [leftDots, rightDots];
+      const setAffordanceLayers = (position: number) => {
+        const lowerIndex = Math.max(0, Math.floor(position));
+        const upperIndex = Math.min(
+          SECTION_NAV_HAS_SLIDES.length - 1,
+          Math.ceil(position)
+        );
+        const progress = position - lowerIndex;
+        const directDotTransition =
+          lowerIndex !== upperIndex &&
+          !SECTION_NAV_HAS_SLIDES[lowerIndex] &&
+          !SECTION_NAV_HAS_SLIDES[upperIndex];
+
+        SECTION_NAV_HAS_SLIDES.forEach((hasSlides, itemIndex) => {
+          let arrowOpacity = 1;
+          let dotOpacity = 0;
+          const pending = (['left', 'right'] as const).some(
+            (side) =>
+              sectionNavButtonRefs.current[side][itemIndex]?.querySelector(
+                '[aria-busy="true"]'
+              )
+          );
+
+          if (pending) {
+            arrowOpacity = 1;
+          } else if (!hasSlides) {
+            if (
+              directDotTransition &&
+              (itemIndex === lowerIndex || itemIndex === upperIndex)
+            ) {
+              arrowOpacity = 0;
+              dotOpacity =
+                itemIndex === lowerIndex ? 1 - progress : progress;
+            } else {
+              const activation = Math.max(
+                0,
+                1 - Math.abs(position - itemIndex)
+              );
+              ({ arrowOpacity, dotOpacity } =
+                getSectionNavAffordanceOpacity(activation));
+            }
+          }
+
+          iconGroups.forEach((icons) =>
+            gsap.set(icons[itemIndex], { opacity: arrowOpacity })
+          );
+          dotGroups.forEach((dots) =>
+            gsap.set(dots[itemIndex], { opacity: dotOpacity })
+          );
+        });
+      };
       const timeline = gsap.timeline({
         defaults: { ease: 'none' },
         scrollTrigger: {
@@ -2823,7 +3072,23 @@ export function PortfolioBrowser({
           start: 0,
           end: 'max',
           scrub: true,
-          onUpdate: () => {
+          onUpdate: (scrollTrigger) => {
+            const scrollPosition =
+              scrollTrigger.progress * (SECTION_NAV_COLORS.length - 1);
+            sectionNavScrollPositionRef.current = scrollPosition;
+            setAffordanceLayers(scrollPosition);
+
+            const hasPointer = Object.values(
+              sectionNavPointerArmedRefs.current
+            ).some(Boolean);
+            const hasClickTarget = Object.values(
+              sectionNavClickTargetIndexesRef.current
+            ).some((targetIndex) => targetIndex !== null);
+
+            if (!hasPointer && !hasClickTarget) {
+              applySectionNavScrollScale(scrollPosition);
+            }
+
             previews.forEach((preview, sideIndex) => {
               const previewIndex =
                 sectionNavPreviewIndexesRef.current[sideIndex];
@@ -2878,6 +3143,9 @@ export function PortfolioBrowser({
         stroke: 'currentColor',
         strokeWidth: 4,
       });
+      timeline.set([...leftVisuals, ...rightVisuals, ...rings], {
+        transformOrigin: '50% 50%',
+      });
       timeline.set(leftIcons, {
         rotation: (itemIndex) =>
           getSectionNavArrowRotation(itemIndex, 0, 'left'),
@@ -2888,6 +3156,8 @@ export function PortfolioBrowser({
           getSectionNavArrowRotation(itemIndex, 0, 'right'),
         transformOrigin: '50% 50%',
       });
+      setAffordanceLayers(initialSectionNavIndex);
+      applySectionNavScrollScale(initialSectionNavIndex);
 
       timelineColors.slice(1).forEach((color, index) => {
         const activeSectionIndex = index + 1;
@@ -2942,7 +3212,13 @@ export function PortfolioBrowser({
     }, keyboardSurfaceRef);
 
     return () => context.revert();
-  }, [isWideLayout, positionSectionNavClickTarget, trackSectionNavPointer]);
+  }, [
+    applySectionNavScrollScale,
+    initialSectionNavIndex,
+    isWideLayout,
+    positionSectionNavClickTarget,
+    trackSectionNavPointer,
+  ]);
 
   useEffect(() => {
     window.history.scrollRestoration = 'manual';
@@ -3292,6 +3568,12 @@ export function PortfolioBrowser({
         icon={isPending ? faSpinner : faArrowDown}
         iconRef={(node) => {
           sectionNavIconRefs.current[side][itemIndex] = node;
+        }}
+        dotRef={(node) => {
+          sectionNavDotRefs.current[side][itemIndex] = node;
+        }}
+        visualRef={(node) => {
+          sectionNavVisualRefs.current[side][itemIndex] = node;
         }}
         elementRef={(node) => {
           sectionNavButtonRefs.current[side][itemIndex] = node;
@@ -3887,6 +4169,10 @@ function AnimatedSlideIndicators({
 }) {
   const visibleSlides = slides.length > 1 ? slides : [];
   const targetCount = visibleSlides.length;
+  const boundedActiveIndex = Math.max(
+    0,
+    Math.min(activeIndex, Math.max(targetCount - 1, 0))
+  );
   const slidesIdentity = visibleSlides.map((slide) => slide.id).join('|');
   const previousCountRef = useRef(targetCount);
   const transitionFrameRef = useRef<number | null>(null);
@@ -3911,6 +4197,10 @@ function AnimatedSlideIndicators({
   const clickTargetIndexRef = useRef<number | null>(null);
   const focusedIndexRef = useRef<number | null>(null);
   const ringStrokeWidthRef = useRef<2 | 4>(4);
+  const activeIndexRef = useRef(boundedActiveIndex);
+  useLayoutEffect(() => {
+    activeIndexRef.current = boundedActiveIndex;
+  }, [boundedActiveIndex]);
   const [transitionState, setTransitionState] =
     useState<IndicatorTransitionState>({
       previousCount: targetCount,
@@ -3925,6 +4215,57 @@ function AnimatedSlideIndicators({
 
     clearTimeout(previewReturnTimeoutRef.current);
     previewReturnTimeoutRef.current = null;
+  };
+
+  const applyActiveScale = (position: number) => {
+    const container = containerRef.current;
+    const ring = ringRef.current;
+
+    if (!container || !ring) {
+      return;
+    }
+
+    const activeMarkerIndex = activeIndexRef.current;
+    const scale = getNavigationActiveScale(position, activeMarkerIndex);
+
+    container
+      .querySelectorAll<HTMLElement>(
+        '[data-portfolio-slide-indicator-visual]'
+      )
+      .forEach((visual) => {
+        const itemIndex = Number(
+          visual.dataset.portfolioSlideIndicatorVisual
+        );
+        gsap.set(visual, {
+          scale: itemIndex === activeMarkerIndex ? scale : 1,
+          transformOrigin: '50% 50%',
+        });
+      });
+
+    const ringVisual = ring.querySelector('svg');
+
+    if (ringVisual) {
+      gsap.set(ringVisual, {
+        scale,
+        transformOrigin: '50% 50%',
+      });
+    }
+  };
+
+  const applyActiveScaleFromRing = () => {
+    const ring = ringRef.current;
+
+    if (!ring) {
+      return;
+    }
+
+    const rootFontSize = rootFontSizeRef.current;
+    const step = NAVIGATION_INDICATOR_STEP_REM * rootFontSize;
+    const ringSize = NAVIGATION_RING_SIZE_REM * rootFontSize;
+    const ringX = Number(gsap.getProperty(ring, 'x')) || 0;
+    const position = (ringX + ringSize / 2) / step - 0.5;
+
+    applyActiveScale(position);
   };
 
   const animateRingStroke = (strokeWidth: 2 | 4) => {
@@ -3971,6 +4312,7 @@ function AnimatedSlideIndicators({
         : duration,
       ease: 'power3.out',
       overwrite: 'auto',
+      onUpdate: applyActiveScaleFromRing,
       onComplete,
     });
     ringTweenRef.current = tween;
@@ -4027,6 +4369,7 @@ function AnimatedSlideIndicators({
         duration: animatePosition ? 0.3 : 0.2,
         ease: 'power3.out',
         overwrite: 'auto',
+        onUpdate: applyActiveScaleFromRing,
         onComplete: () => {
           if (ringTweenRef.current === tween) {
             ringTweenRef.current = null;
@@ -4044,6 +4387,7 @@ function AnimatedSlideIndicators({
     if (snapIndex === null || snapChanged || reducedMotion) {
       ringTweenRef.current?.kill();
       gsap.set(ring, { x: targetX, yPercent: -50 });
+      applyActiveScaleFromRing();
       pointerAcquiringRef.current = false;
       snapTransitioningRef.current = false;
     }
@@ -4259,11 +4603,6 @@ function AnimatedSlideIndicators({
       : Array.from(new Set([...previousSlotIds, ...targetSlotIds])).sort(
           (a, b) => a - b
         );
-  const boundedActiveIndex = Math.max(
-    0,
-    Math.min(activeIndex, Math.max(targetCount - 1, 0))
-  );
-
   useLayoutEffect(() => {
     const ring = ringRef.current;
 
@@ -4288,6 +4627,7 @@ function AnimatedSlideIndicators({
         color,
         opacity: targetCount > 0 ? 1 : 0,
       });
+      applyActiveScale(boundedActiveIndex);
       ring.dataset.positioned = 'true';
       return;
     }
@@ -4312,6 +4652,7 @@ function AnimatedSlideIndicators({
       duration: reducedMotion ? 0 : 0.5,
       ease: 'power3.out',
       overwrite: 'auto',
+      onUpdate: applyActiveScaleFromRing,
     });
     ringTweenRef.current = tween;
 
@@ -4422,15 +4763,20 @@ function AnimatedSlideIndicators({
                   onSelect(slide);
                 }}
               >
-                {pendingIndex === targetIndex ? (
-                  <FontAwesomeIcon
-                    icon={faSpinner}
-                    className="size-3 animate-spin text-white"
-                    aria-hidden="true"
-                  />
-                ) : (
-                  <span className={NAVIGATION_DOT_CLASS} aria-hidden="true" />
-                )}
+                <span
+                  data-portfolio-slide-indicator-visual={targetIndex}
+                  className="grid size-3 place-items-center"
+                  aria-hidden="true"
+                >
+                  {pendingIndex === targetIndex ? (
+                    <FontAwesomeIcon
+                      icon={faSpinner}
+                      className="size-3 animate-spin text-white"
+                    />
+                  ) : (
+                    <span className={NAVIGATION_DOT_CLASS} />
+                  )}
+                </span>
               </button>
             ) : (
               <span className={NAVIGATION_DOT_CLASS} aria-hidden="true" />
@@ -4521,6 +4867,8 @@ function SideNavButton({
   icon,
   elementRef,
   iconRef,
+  dotRef,
+  visualRef,
   label,
   tooltipTitle,
   tooltipId,
@@ -4536,6 +4884,8 @@ function SideNavButton({
   icon: IconProp;
   elementRef: (node: HTMLDivElement | null) => void;
   iconRef?: (node: SVGSVGElement | null) => void;
+  dotRef: (node: HTMLSpanElement | null) => void;
+  visualRef: (node: HTMLSpanElement | null) => void;
   label: string;
   tooltipTitle: string;
   tooltipId: string;
@@ -4588,6 +4938,14 @@ function SideNavButton({
         icon={icon}
         iconRef={iconRef}
         iconClassName={`size-7 ${pending ? 'animate-spin' : ''}`}
+        visualRef={visualRef}
+        secondaryVisual={
+          <span
+            ref={dotRef}
+            className="absolute size-2.5 rounded-full bg-current opacity-0 drop-shadow-[1px_1px_0_black]"
+            aria-hidden="true"
+          />
+        }
         className="relative h-full w-12 cursor-pointer border-0 bg-transparent p-0 text-[var(--project-color)]"
         aria-label={label}
         aria-describedby={tooltipId}
@@ -4606,6 +4964,8 @@ function CircularIconButton({
   buttonRef,
   iconRef,
   iconClassName,
+  visualRef,
+  secondaryVisual,
   ring = false,
   className,
   ...buttonProps
@@ -4614,6 +4974,8 @@ function CircularIconButton({
   buttonRef?: (node: HTMLButtonElement | null) => void;
   iconRef?: (node: SVGSVGElement | null) => void;
   iconClassName: string;
+  visualRef?: (node: HTMLSpanElement | null) => void;
+  secondaryVisual?: ReactNode;
   ring?: boolean;
 }) {
   return (
@@ -4629,12 +4991,27 @@ function CircularIconButton({
           className="absolute inset-0 z-0"
         />
       ) : null}
-      <FontAwesomeIcon
-        ref={iconRef}
-        icon={icon}
-        className={`relative z-10 ${iconClassName} drop-shadow-[1px_1px_0_black]`}
-        aria-hidden="true"
-      />
+      {visualRef || secondaryVisual ? (
+        <span
+          ref={visualRef}
+          className="relative z-10 grid size-7 place-items-center"
+        >
+          <FontAwesomeIcon
+            ref={iconRef}
+            icon={icon}
+            className={`absolute ${iconClassName} drop-shadow-[1px_1px_0_black]`}
+            aria-hidden="true"
+          />
+          {secondaryVisual}
+        </span>
+      ) : (
+        <FontAwesomeIcon
+          ref={iconRef}
+          icon={icon}
+          className={`relative z-10 ${iconClassName} drop-shadow-[1px_1px_0_black]`}
+          aria-hidden="true"
+        />
+      )}
     </button>
   );
 }
