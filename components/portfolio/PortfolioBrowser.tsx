@@ -30,6 +30,8 @@ import {
   faArrowDown,
   faArrowUp,
   faFilePdf,
+  faRotateRight,
+  faSpinner,
   faXmark,
 } from '@fortawesome/free-solid-svg-icons';
 import ReactMarkdown from 'react-markdown';
@@ -40,11 +42,16 @@ import {
   PortfolioScreenshot,
   portfolioSlides,
 } from '@/lib/portfolio';
+import {
+  PortfolioMediaElement,
+  usePortfolioMediaReadiness,
+} from '@/components/portfolio/usePortfolioMediaReadiness';
 import type { Components } from 'react-markdown';
 
 type PortfolioBrowserProps = {
   initialProjectSlug?: string;
   initialScreenshotSlug?: string;
+  initialModalOpen?: boolean;
 };
 
 type ProjectSlide =
@@ -84,6 +91,12 @@ type ModalTransitionRect = {
   width: number;
   height: number;
 };
+type PortfolioIntroPhase = 'loading' | 'revealing' | 'ready' | 'error';
+type PendingNavigation =
+  | { kind: 'project'; projectIndex: number }
+  | { kind: 'slide'; projectIndex: number; slideIndex: number }
+  | { kind: 'modal'; screenshotId: string }
+  | null;
 const WIDE_LAYOUT_STYLE: WideLayoutStyle = {
   '--portfolio-description-rail-width':
     'min(calc(100vw - 4rem), calc(7rem + max(32rem, 48ch)))',
@@ -653,9 +666,48 @@ function hasBuildingWithAiTextSlide(project: PortfolioProject) {
   );
 }
 
+function carouselMediaKey(screenshot: PortfolioScreenshot) {
+  return `carousel:${screenshot.id}`;
+}
+
+function modalMediaKey(screenshot: PortfolioScreenshot) {
+  return `modal:${screenshot.id}`;
+}
+
+function getProjectMediaScreenshots(project: PortfolioProject) {
+  return project.screenshots.filter(
+    (screenshot) => !isBuildingWithAiTextScreenshot(project, screenshot)
+  );
+}
+
+function getSlideMediaKey(
+  project: PortfolioProject,
+  slide: ProjectSlide,
+  useDesktopVisual: boolean
+) {
+  if (
+    slide.kind === 'screenshot' &&
+    !isBuildingWithAiTextSlide(project, slide)
+  ) {
+    return carouselMediaKey(slide.screenshot);
+  }
+
+  if (useDesktopVisual) {
+    const firstScreenshot = getProjectMediaScreenshots(project)[0];
+    return firstScreenshot ? carouselMediaKey(firstScreenshot) : undefined;
+  }
+
+  return undefined;
+}
+
+function nextAnimationFrame() {
+  return new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+}
+
 export function PortfolioBrowser({
   initialProjectSlug,
   initialScreenshotSlug,
+  initialModalOpen = false,
 }: PortfolioBrowserProps) {
   const keyboardSurfaceRef = useRef<HTMLElement>(null);
   const verticalRef = useRef<HTMLDivElement>(null);
@@ -668,7 +720,12 @@ export function PortfolioBrowser({
     typeof setTimeout
   > | null>(null);
   const modalHistoryEntryRef = useRef(false);
-  const initialScrollSyncedRef = useRef(false);
+  const initialModalRequestedRef = useRef(initialModalOpen);
+  const curtainRef = useRef<HTMLDivElement>(null);
+  const introTimelineRef = useRef<gsap.core.Timeline | null>(null);
+  const initialRevealStartedRef = useRef(false);
+  const initialRevealCompleteRef = useRef(false);
+  const navigationIntentRef = useRef(0);
   const sectionNavIndicatorRefs = useRef<Array<HTMLDivElement | null>>([]);
   const sectionNavPreviewRefs = useRef<Array<HTMLDivElement | null>>([]);
   const sectionNavPreviewIndexesRef = useRef<Array<number | null>>([
@@ -722,6 +779,16 @@ export function PortfolioBrowser({
   >(null);
   const [sectionNavTooltipsSuppressed, setSectionNavTooltipsSuppressed] =
     useState(false);
+  const [introPhase, setIntroPhase] = useState<PortfolioIntroPhase>('loading');
+  const [pendingNavigation, setPendingNavigation] =
+    useState<PendingNavigation>(null);
+  const {
+    failure: mediaFailure,
+    registerMediaElement,
+    ensureMediaReady,
+    preloadQueue,
+    isMediaReady,
+  } = usePortfolioMediaReadiness();
   const animateSectionNavRingStroke = useCallback(
     (side: 'left' | 'right', strokeWidth: 2 | 4) => {
       if (sectionNavStrokeWidthRefs.current[side] === strokeWidth) {
@@ -1137,6 +1204,80 @@ export function PortfolioBrowser({
       }),
     [initialProjectSlug, initialScreenshotSlug]
   );
+  const projectMediaKeys = useMemo(
+    () =>
+      portfolioSlides.map((project) =>
+        getProjectMediaScreenshots(project).map((screenshot) =>
+          carouselMediaKey(screenshot)
+        )
+      ),
+    []
+  );
+  const sectionEntryMediaKeys = useMemo(
+    () => projectMediaKeys.flatMap((keys) => (keys[0] ? [keys[0]] : [])),
+    [projectMediaKeys]
+  );
+  const initialTargetScreenshot = useMemo(() => {
+    if (normalizedInitialProjectIndex < 0) {
+      return undefined;
+    }
+
+    const project = portfolioSlides[normalizedInitialProjectIndex];
+    const initialSlide = projectSlides[project.slug][
+      initialSlideIndexes[normalizedInitialProjectIndex] ?? 0
+    ];
+
+    return initialSlide?.kind === 'screenshot' &&
+      !isBuildingWithAiTextSlide(project, initialSlide)
+      ? initialSlide.screenshot
+      : undefined;
+  }, [initialSlideIndexes, normalizedInitialProjectIndex, projectSlides]);
+  const openingMediaKeys = useMemo(() => {
+    const journeyKeys = projectMediaKeys
+      .slice(0, normalizedInitialProjectIndex + 1)
+      .map((keys) => keys[0])
+      .filter(Boolean);
+
+    if (initialTargetScreenshot) {
+      journeyKeys.push(carouselMediaKey(initialTargetScreenshot));
+    }
+
+    return Array.from(new Set(journeyKeys));
+  }, [initialTargetScreenshot, normalizedInitialProjectIndex, projectMediaKeys]);
+  const backgroundMediaQueue = useMemo(() => {
+    const activeProjectMedia =
+      normalizedInitialProjectIndex >= 0
+        ? getProjectMediaScreenshots(
+            portfolioSlides[normalizedInitialProjectIndex]
+          )
+        : [];
+    const activeScreenshotIndex = initialTargetScreenshot
+      ? activeProjectMedia.findIndex(
+          (screenshot) => screenshot.id === initialTargetScreenshot.id
+        )
+      : 0;
+    const adjacentKeys = [-1, 1]
+      .map((offset) => activeProjectMedia[activeScreenshotIndex + offset])
+      .filter((screenshot): screenshot is PortfolioScreenshot => Boolean(screenshot))
+      .map(carouselMediaKey);
+
+    return Array.from(
+      new Set([
+        ...adjacentKeys,
+        ...sectionEntryMediaKeys,
+        ...projectMediaKeys.flat(),
+      ])
+    );
+  }, [
+    initialTargetScreenshot,
+    normalizedInitialProjectIndex,
+    projectMediaKeys,
+    sectionEntryMediaKeys,
+  ]);
+  const sectionEntryMediaReady = sectionEntryMediaKeys.every(isMediaReady);
+  const projectCarouselsReady = projectMediaKeys.map((keys) =>
+    keys.every(isMediaReady)
+  );
 
   const [activeProjectIndex, setActiveProjectIndex] = useState(
     normalizedInitialProjectIndex
@@ -1289,6 +1430,21 @@ export function PortfolioBrowser({
     [getCarouselIndexFromSlideIndex, getCarouselSlides]
   );
 
+  const syncHorizontalViewports = useCallback(
+    (
+      slideIndexes: number[],
+      behavior: ScrollBehavior
+    ) => {
+      portfolioSlides.forEach((project, currentProjectIndex) => {
+        scrollHorizontalToRealIndex(
+          project,
+          slideIndexes[currentProjectIndex] ?? 0,
+          behavior
+        );
+      });
+    },
+    [scrollHorizontalToRealIndex]
+  );
   const syncViewport = useCallback(
     (
       projectIndex: number,
@@ -1304,15 +1460,9 @@ export function PortfolioBrowser({
         });
       }
 
-      portfolioSlides.forEach((project, currentProjectIndex) => {
-        scrollHorizontalToRealIndex(
-          project,
-          slideIndexes[currentProjectIndex] ?? 0,
-          behavior
-        );
-      });
+      syncHorizontalViewports(slideIndexes, behavior);
     },
-    [scrollHorizontalToRealIndex]
+    [syncHorizontalViewports]
   );
 
   const readLocationState = useCallback(() => {
@@ -1362,7 +1512,7 @@ export function PortfolioBrowser({
   }, [projectSlides]);
 
   const applyLocationState = useCallback(
-    (behavior: ScrollBehavior) => {
+    async (behavior: ScrollBehavior) => {
       const locationState = readLocationState();
 
       if (!locationState) {
@@ -1375,6 +1525,43 @@ export function PortfolioBrowser({
           ? locationState.slideIndex
           : activeSlideIndexes[projectIndex] ?? 0
       );
+
+      if (locationState.projectIndex >= 0) {
+        const project = portfolioSlides[locationState.projectIndex];
+        const slide = projectSlides[project.slug][locationState.slideIndex];
+        const requiredKeys = [
+          getSlideMediaKey(project, slide, isWideLayout),
+          locationState.modalOpen && slide.kind === 'screenshot'
+            ? modalMediaKey(slide.screenshot)
+            : undefined,
+        ].filter((key): key is string => Boolean(key));
+        const intent = navigationIntentRef.current + 1;
+        navigationIntentRef.current = intent;
+
+        if (!requiredKeys.every(isMediaReady)) {
+          setPendingNavigation(
+            locationState.modalOpen && slide.kind === 'screenshot'
+              ? { kind: 'modal', screenshotId: slide.screenshot.id }
+              : {
+                  kind: 'slide',
+                  projectIndex: locationState.projectIndex,
+                  slideIndex: locationState.slideIndex,
+                }
+          );
+
+          try {
+            await ensureMediaReady(requiredKeys);
+          } catch {
+            return;
+          }
+
+          if (navigationIntentRef.current !== intent) {
+            return;
+          }
+        }
+
+        setPendingNavigation(null);
+      }
 
       setActiveProjectIndex(locationState.projectIndex);
       setActiveSlideIndexes(nextSlideIndexes);
@@ -1402,6 +1589,9 @@ export function PortfolioBrowser({
     },
     [
       activeSlideIndexes,
+      ensureMediaReady,
+      isMediaReady,
+      isWideLayout,
       projectSlides,
       readLocationState,
       resetDescriptionScroll,
@@ -1473,8 +1663,42 @@ export function PortfolioBrowser({
     [clearHorizontalScrollSync]
   );
 
+  const prepareMediaNavigation = useCallback(
+    async (
+      pending: Exclude<PendingNavigation, null>,
+      mediaKeys?: string | string[]
+    ) => {
+      const intent = navigationIntentRef.current + 1;
+      navigationIntentRef.current = intent;
+      const requiredKeys = (Array.isArray(mediaKeys) ? mediaKeys : [mediaKeys]).filter(
+        (key): key is string => Boolean(key)
+      );
+
+      if (requiredKeys.every(isMediaReady)) {
+        setPendingNavigation(null);
+        return true;
+      }
+
+      setPendingNavigation(pending);
+
+      try {
+        await ensureMediaReady(requiredKeys);
+      } catch {
+        return false;
+      }
+
+      if (navigationIntentRef.current !== intent) {
+        return false;
+      }
+
+      setPendingNavigation(null);
+      return true;
+    },
+    [ensureMediaReady, isMediaReady]
+  );
+
   const setActiveSlide = useCallback(
-    (
+    async (
       projectIndex: number,
       realIndex: number,
       mode: 'push' | 'replace',
@@ -1484,6 +1708,14 @@ export function PortfolioBrowser({
       const slides = projectSlides[project.slug];
       const nextIndex = positiveModulo(realIndex, slides.length);
       const nextSlide = slides[nextIndex];
+      const canNavigate = await prepareMediaNavigation(
+        { kind: 'slide', projectIndex, slideIndex: nextIndex },
+        getSlideMediaKey(project, nextSlide, isWideLayout)
+      );
+
+      if (!canNavigate) {
+        return;
+      }
 
       setActiveSlideIndexes((indexes) =>
         indexes.map((index, currentProjectIndex) =>
@@ -1504,6 +1736,8 @@ export function PortfolioBrowser({
     },
     [
       beginHorizontalScrollSync,
+      isWideLayout,
+      prepareMediaNavigation,
       projectSlides,
       resetDescriptionScroll,
       scrollHorizontalToRealIndex,
@@ -1512,7 +1746,7 @@ export function PortfolioBrowser({
   );
 
   const setActiveProject = useCallback(
-    (
+    async (
       nextProjectIndex: number,
       mode: 'push' | 'replace',
       behavior: ScrollBehavior = 'smooth',
@@ -1523,6 +1757,24 @@ export function PortfolioBrowser({
         Math.min(portfolioSlides.length - 1, nextProjectIndex)
       );
       const vertical = verticalRef.current;
+
+      if (boundedIndex !== START_SCREEN_INDEX) {
+        const project = portfolioSlides[boundedIndex];
+        const slideIndex =
+          targetSlideIndex ?? activeSlideIndexes[boundedIndex] ?? 0;
+        const slide = projectSlides[project.slug][slideIndex];
+        const canNavigate = await prepareMediaNavigation(
+          { kind: 'project', projectIndex: boundedIndex },
+          getSlideMediaKey(project, slide, isWideLayout)
+        );
+
+        if (!canNavigate) {
+          return;
+        }
+      } else {
+        navigationIntentRef.current += 1;
+        setPendingNavigation(null);
+      }
 
       userMovedRef.current = true;
       setActiveProjectIndex(boundedIndex);
@@ -1560,6 +1812,8 @@ export function PortfolioBrowser({
     },
     [
       activeSlideIndexes,
+      isWideLayout,
+      prepareMediaNavigation,
       projectSlides,
       resetDescriptionScroll,
       scrollHorizontalToRealIndex,
@@ -1601,7 +1855,7 @@ export function PortfolioBrowser({
   );
 
   const setActiveModalSlide = useCallback(
-    (slide: ProjectSlide, scrollBehavior: ScrollBehavior = 'smooth') => {
+    async (slide: ProjectSlide, scrollBehavior: ScrollBehavior = 'smooth') => {
       if (!activeProject || activeProjectIndex === START_SCREEN_INDEX) {
         return;
       }
@@ -1616,6 +1870,14 @@ export function PortfolioBrowser({
         0,
         slides.findIndex((projectSlide) => projectSlide.id === slide.id)
       );
+      const canNavigate = await prepareMediaNavigation(
+        { kind: 'modal', screenshotId: slide.screenshot.id },
+        modalMediaKey(slide.screenshot)
+      );
+
+      if (!canNavigate) {
+        return;
+      }
 
       setActiveSlideIndexes((indexes) =>
         indexes.map((index, currentProjectIndex) =>
@@ -1637,6 +1899,7 @@ export function PortfolioBrowser({
       activeProject,
       activeProjectIndex,
       beginHorizontalScrollSync,
+      prepareMediaNavigation,
       projectSlides,
       replaceModalUrl,
       resetModalView,
@@ -1687,13 +1950,25 @@ export function PortfolioBrowser({
   );
 
   const openModal = useCallback(
-    (slide: ProjectSlide = activeSlide, transitionRect?: ModalTransitionRect) => {
+    async (
+      slide: ProjectSlide = activeSlide,
+      transitionRect?: ModalTransitionRect
+    ) => {
       if (
         !activeProject ||
         !slide ||
         slide.kind !== 'screenshot' ||
         isBuildingWithAiTextSlide(activeProject, slide)
       ) {
+        return;
+      }
+
+      const canOpen = await prepareMediaNavigation(
+        { kind: 'modal', screenshotId: slide.screenshot.id },
+        modalMediaKey(slide.screenshot)
+      );
+
+      if (!canOpen) {
         return;
       }
 
@@ -1717,7 +1992,14 @@ export function PortfolioBrowser({
       modalHistoryEntryRef.current = true;
       setIsModalOpen(true);
     },
-    [activeProject, activeProjectIndex, activeSlide, projectSlides, resetModalView]
+    [
+      activeProject,
+      activeProjectIndex,
+      activeSlide,
+      prepareMediaNavigation,
+      projectSlides,
+      resetModalView,
+    ]
   );
 
   const finishCloseModal = useCallback(() => {
@@ -1769,8 +2051,13 @@ export function PortfolioBrowser({
     setIsModalClosing(false);
   }, [isModalClosing, shouldShowModal]);
 
-  const syncInitialScrollEvent = useEffectEvent(() => {
-    syncViewport(normalizedInitialProjectIndex, initialSlideIndexes, 'auto');
+  const startInitialRevealEvent = useEffectEvent(async () => {
+    const vertical = verticalRef.current;
+    const curtain = curtainRef.current;
+
+    if (!vertical || !curtain) {
+      return;
+    }
 
     const initialProject =
       normalizedInitialProjectIndex >= 0
@@ -1781,23 +2068,105 @@ export function PortfolioBrowser({
           initialSlideIndexes[normalizedInitialProjectIndex] ?? 0
         ]
       : undefined;
+    const shouldOpenInitialModal = Boolean(
+      initialModalRequestedRef.current &&
+        initialProject &&
+        initialSlide?.kind === 'screenshot' &&
+        !isBuildingWithAiTextSlide(initialProject, initialSlide)
+    );
+
+    window.history.scrollRestoration = 'manual';
+    scrollSyncRef.current = true;
+    vertical.scrollTo({ top: 0, behavior: 'auto' });
+    syncHorizontalViewports(initialSlideIndexes, 'auto');
+
+    await Promise.all([
+      document.fonts.ready.catch(() => undefined),
+      nextAnimationFrame().then(nextAnimationFrame),
+    ]);
 
     if (
-      window.location.search.includes('modal=image') &&
+      shouldOpenInitialModal &&
       initialProject &&
-      initialSlide?.kind === 'screenshot' &&
-      !isBuildingWithAiTextSlide(initialProject, initialSlide)
+      initialSlide?.kind === 'screenshot'
     ) {
       setIsModalOpen(true);
+      replaceModalUrl(initialProject, initialSlide);
+      await nextAnimationFrame();
+      await nextAnimationFrame();
     }
+
+    const requiredMediaKeys = [...openingMediaKeys];
+
+    if (shouldOpenInitialModal && initialTargetScreenshot) {
+      requiredMediaKeys.push(modalMediaKey(initialTargetScreenshot));
+    }
+
+    try {
+      await ensureMediaReady(requiredMediaKeys);
+    } catch {
+      setIntroPhase('error');
+      return;
+    }
+
+    const targetScrollTop =
+      vertical.clientHeight * (normalizedInitialProjectIndex + 1);
+    const reducedMotion = window.matchMedia(
+      '(prefers-reduced-motion: reduce)'
+    ).matches;
+    const revealDuration = reducedMotion
+      ? 0.2
+      : normalizedInitialProjectIndex === START_SCREEN_INDEX
+        ? 0.6
+        : 0.9;
+
+    setIntroPhase('revealing');
+    gsap.set(curtain, { autoAlpha: 1 });
+
+    await new Promise<void>((resolve) => {
+      if (reducedMotion) {
+        vertical.scrollTo({ top: targetScrollTop, behavior: 'auto' });
+      }
+
+      const timeline = gsap.timeline({
+        defaults: { ease: 'power3.inOut' },
+        onComplete: resolve,
+      });
+      introTimelineRef.current = timeline;
+
+      if (!reducedMotion && targetScrollTop !== 0) {
+        timeline.to(
+          vertical,
+          { scrollTop: targetScrollTop, duration: revealDuration },
+          0
+        );
+      }
+
+      timeline.to(
+        curtain,
+        { autoAlpha: 0, duration: revealDuration },
+        0
+      );
+    });
+
+    introTimelineRef.current = null;
+    initialRevealCompleteRef.current = true;
+    scrollSyncRef.current = false;
+    setIntroPhase('ready');
+    void preloadQueue(backgroundMediaQueue, 2).catch(() => undefined);
   });
 
   const handlePopStateEvent = useEffectEvent(() => {
     modalHistoryEntryRef.current = false;
-    applyLocationState('auto');
+    void applyLocationState('auto');
   });
 
   const syncCurrentViewportEvent = useEffectEvent(() => {
+    if (!initialRevealCompleteRef.current) {
+      syncHorizontalViewports(activeSlideIndexes, 'auto');
+      return;
+    }
+
     syncViewport(activeProjectIndex, activeSlideIndexes, 'auto');
   });
 
@@ -1836,6 +2205,10 @@ export function PortfolioBrowser({
       projectIndex: number,
       carousel: HTMLDivElement
     ) => {
+      if (!initialRevealCompleteRef.current && scrollSyncRef.current) {
+        return;
+      }
+
       const slides = getCarouselSlides(project);
       const clonedIndex = Math.round(carousel.scrollLeft / carousel.clientWidth);
       const realIndex = getRealCarouselIndex(clonedIndex, slides.length);
@@ -1863,6 +2236,10 @@ export function PortfolioBrowser({
       projectIndex: number,
       carousel: HTMLDivElement
     ) => {
+      if (!initialRevealCompleteRef.current && scrollSyncRef.current) {
+        return;
+      }
+
       const slides = getCarouselSlides(project);
       const clonedIndex = Math.round(carousel.scrollLeft / carousel.clientWidth);
       let realIndex = getRealCarouselIndex(clonedIndex, slides.length);
@@ -2093,18 +2470,42 @@ export function PortfolioBrowser({
   });
 
   useLayoutEffect(() => {
-    if (initialScrollSyncedRef.current) {
+    if (initialRevealStartedRef.current) {
       return;
     }
 
-    initialScrollSyncedRef.current = true;
+    initialRevealStartedRef.current = true;
+    void startInitialRevealEvent();
 
-    const rafId = requestAnimationFrame(() =>
-      requestAnimationFrame(syncInitialScrollEvent)
-    );
-
-    return () => cancelAnimationFrame(rafId);
+    return () => {
+      introTimelineRef.current?.kill();
+      introTimelineRef.current = null;
+    };
   }, []);
+
+  useEffect(() => {
+    if (!mediaFailure) {
+      return;
+    }
+
+    introTimelineRef.current?.kill();
+    introTimelineRef.current = null;
+    scrollSyncRef.current = false;
+    setIntroPhase('error');
+
+    const curtain = curtainRef.current;
+
+    if (!curtain) {
+      return;
+    }
+
+    gsap.to(curtain, {
+      autoAlpha: 1,
+      duration: initialRevealCompleteRef.current ? 0.3 : 0,
+      ease: 'power2.out',
+      overwrite: 'auto',
+    });
+  }, [mediaFailure]);
 
   useLayoutEffect(() => {
     const vertical = verticalRef.current;
@@ -2408,6 +2809,23 @@ export function PortfolioBrowser({
   const activeNavigationIndex = isModalPresentationActive
     ? activeModalScreenshotIndex
     : activeCarouselIndex;
+  const pendingNavigationSlide =
+    pendingNavigation?.kind === 'slide' &&
+    pendingNavigation.projectIndex === activeProjectIndex &&
+    activeProject
+      ? projectSlides[activeProject.slug][pendingNavigation.slideIndex]
+      : pendingNavigation?.kind === 'modal'
+        ? activeNavigationSlides.find(
+            (slide) =>
+              slide.kind === 'screenshot' &&
+              slide.screenshot.id === pendingNavigation.screenshotId
+          )
+        : undefined;
+  const pendingNavigationIndex = pendingNavigationSlide
+    ? activeNavigationSlides.findIndex(
+        (slide) => slide.id === pendingNavigationSlide.id
+      )
+    : null;
   const canMoveHorizontally = activeNavigationSlides.length > 1;
   const previousSlide = activeProject
     ? activeNavigationSlides[
@@ -2564,11 +2982,18 @@ export function PortfolioBrowser({
       label,
     } = getSectionNavItemPresentation(item, side);
     const tooltipId = `portfolio-${side}-section-nav-tooltip`;
+    const isPending = Boolean(
+      (pendingNavigation?.kind === 'project' &&
+        pendingNavigation.projectIndex === item.projectIndex) ||
+        ((pendingNavigation?.kind === 'slide' ||
+          pendingNavigation?.kind === 'modal') &&
+          isActiveSection)
+    );
 
     return (
       <SideNavButton
         key={`${side}-${item.id}`}
-        icon={faArrowDown}
+        icon={isPending ? faSpinner : faArrowDown}
         iconRef={(node) => {
           sectionNavIconRefs.current[side][itemIndex] = node;
         }}
@@ -2580,6 +3005,7 @@ export function PortfolioBrowser({
         side={side}
         color={item.color}
         activeButton={isActiveSection}
+        pending={isPending}
         concealed={isModalPresentationActive && !isActiveSection}
         onPreviewChange={(previewed) => {
           previewSectionNavItem(side, itemIndex, item.color, previewed);
@@ -2661,7 +3087,7 @@ export function PortfolioBrowser({
         onWheel={(event) => {
           const vertical = verticalRef.current;
 
-          if (!vertical) {
+          if (!vertical || !sectionEntryMediaReady) {
             return;
           }
 
@@ -2732,7 +3158,13 @@ export function PortfolioBrowser({
     >
       <div
         ref={verticalRef}
-        className="h-dvh snap-y snap-mandatory overflow-y-auto overscroll-none portfolio-scrollbar-none"
+        className={`h-dvh overscroll-none portfolio-scrollbar-none ${
+          introPhase === 'ready' ? 'snap-y snap-mandatory' : 'snap-none'
+        } ${
+          introPhase === 'ready' && sectionEntryMediaReady
+            ? 'overflow-y-auto'
+            : 'overflow-y-hidden'
+        }`}
       >
         <section className="relative flex h-dvh snap-start snap-always flex-col justify-center px-6 py-16 sm:px-10 lg:px-16">
           <div className="absolute inset-x-0 top-6 px-6 sm:px-10 lg:px-16">
@@ -2827,6 +3259,12 @@ export function PortfolioBrowser({
                       '--project-color': getProjectColor(index),
                     } as ProjectColorStyle
                   }
+                  aria-busy={
+                    pendingNavigation?.kind === 'project' &&
+                    pendingNavigation.projectIndex === index
+                      ? true
+                      : undefined
+                  }
                   onClick={() => {
                     focusKeyboardSurface();
                     setActiveProject(index, 'push', 'smooth', 0);
@@ -2836,7 +3274,15 @@ export function PortfolioBrowser({
                     <>
                       <span className="flex min-w-0 items-center">
                         <span className="-ml-12 w-12 shrink-0 text-sm font-light text-current sm:text-base">
-                          {String(index + 1).padStart(2, '0')}
+                          {pendingNavigation?.kind === 'project' &&
+                          pendingNavigation.projectIndex === index ? (
+                            <FontAwesomeIcon
+                              icon={faSpinner}
+                              className="size-4 animate-spin"
+                            />
+                          ) : (
+                            String(index + 1).padStart(2, '0')
+                          )}
                         </span>
                         <SectionTitle color={getProjectColor(index)}>
                           {project.title}
@@ -2856,7 +3302,15 @@ export function PortfolioBrowser({
                   )}
                   {!isWideLayout ? (
                     <span className="text-sm font-light text-current sm:text-base">
-                      {String(index + 1).padStart(2, '0')}
+                      {pendingNavigation?.kind === 'project' &&
+                      pendingNavigation.projectIndex === index ? (
+                        <FontAwesomeIcon
+                          icon={faSpinner}
+                          className="size-4 animate-spin"
+                        />
+                      ) : (
+                        String(index + 1).padStart(2, '0')
+                      )}
                     </span>
                   ) : null}
                 </button>
@@ -2894,7 +3348,11 @@ export function PortfolioBrowser({
               <div
                 ref={setHorizontalRef(project.slug)}
                 data-portfolio-carousel={project.slug}
-                className={`flex h-dvh snap-x snap-mandatory overflow-x-auto overflow-y-hidden overscroll-x-contain portfolio-scrollbar-none ${
+                className={`flex h-dvh snap-x snap-mandatory overflow-y-hidden overscroll-x-contain portfolio-scrollbar-none ${
+                  projectCarouselsReady[projectIndex]
+                    ? 'overflow-x-auto'
+                    : 'overflow-x-hidden'
+                } ${
                   isWideLayout ? 'w-screen' : ''
                 }`}
               >
@@ -2910,6 +3368,7 @@ export function PortfolioBrowser({
                       activeProjectIndex === projectIndex &&
                       activeCarouselIndex === realIndex
                     }
+                    registerMediaElement={registerMediaElement}
                     setDescriptionRef={setDescriptionRef(project.slug)}
                     onScreenshotClick={openModal}
                   />
@@ -2988,6 +3447,7 @@ export function PortfolioBrowser({
             projectTitle={activeProject?.title ?? 'Portfolio'}
             slides={activeNavigationSlides}
             activeIndex={activeNavigationIndex}
+            pendingIndex={pendingNavigationIndex}
             color={activeProjectColor ?? getProjectColor(0)}
             onSelect={(slide) => {
               if (!activeProject) {
@@ -3026,12 +3486,43 @@ export function PortfolioBrowser({
           offset={modalOffset}
           dragRef={modalDragRef}
           pinchRef={pinchRef}
+          registerMediaElement={registerMediaElement}
           setScale={setModalScale}
           setOffset={setModalOffset}
           onClose={closeModal}
           onExited={finishCloseModal}
         />
       ) : null}
+
+      <div
+        ref={curtainRef}
+        data-portfolio-loading-curtain
+        data-phase={introPhase}
+        className={`fixed inset-0 z-[100] grid place-items-center bg-black ${
+          introPhase === 'ready' ? 'pointer-events-none' : 'pointer-events-auto'
+        }`}
+      >
+        <div
+          role={introPhase === 'error' ? 'alert' : undefined}
+          className={`flex max-w-md flex-col items-center gap-5 px-8 text-center transition-opacity duration-300 ${
+            introPhase === 'error' ? 'opacity-100' : 'opacity-0'
+          }`}
+          aria-hidden={introPhase === 'error' ? undefined : true}
+        >
+          <p className="text-lg font-light leading-relaxed text-white/80">
+            Portfolio media didn&apos;t finish loading.
+          </p>
+          <CircularIconButton
+            icon={faRotateRight}
+            iconClassName="size-6"
+            ring
+            className="relative size-12 bg-black text-white"
+            aria-label="Reload page"
+            title="Reload page"
+            onClick={() => window.location.reload()}
+          />
+        </div>
+      </div>
     </main>
   );
 }
@@ -3089,12 +3580,14 @@ function AnimatedSlideIndicators({
   projectTitle,
   slides,
   activeIndex,
+  pendingIndex,
   color,
   onSelect,
 }: {
   projectTitle: string;
   slides: ProjectSlide[];
   activeIndex: number;
+  pendingIndex: number | null;
   color: string;
   onSelect: (slide: ProjectSlide) => void;
 }) {
@@ -3387,6 +3880,7 @@ function AnimatedSlideIndicators({
                 aria-current={
                   boundedActiveIndex === targetIndex ? 'true' : undefined
                 }
+                aria-busy={pendingIndex === targetIndex ? true : undefined}
                 data-portfolio-slide-indicator-index={targetIndex}
                 data-interactive-pop-companion='[data-portfolio-slide-indicator-marker="true"] circle'
                 onMouseEnter={() => startPreview(targetIndex, 'hover')}
@@ -3395,7 +3889,15 @@ function AnimatedSlideIndicators({
                 onBlur={() => endPreview(targetIndex, 'focus')}
                 onClick={() => onSelect(slide)}
               >
-                <span className={NAVIGATION_DOT_CLASS} aria-hidden="true" />
+                {pendingIndex === targetIndex ? (
+                  <FontAwesomeIcon
+                    icon={faSpinner}
+                    className="size-3 animate-spin text-white"
+                    aria-hidden="true"
+                  />
+                ) : (
+                  <span className={NAVIGATION_DOT_CLASS} aria-hidden="true" />
+                )}
               </button>
             ) : (
               <span className={NAVIGATION_DOT_CLASS} aria-hidden="true" />
@@ -3496,6 +3998,7 @@ function SideNavButton({
   side,
   color,
   activeButton = false,
+  pending = false,
   concealed = false,
   onPreviewChange,
   onPointerEngage,
@@ -3509,6 +4012,7 @@ function SideNavButton({
   side: 'left' | 'right';
   color?: string;
   activeButton?: boolean;
+  pending?: boolean;
   concealed?: boolean;
   onPreviewChange: (previewed: boolean) => void;
   onPointerEngage: (pointerY: number) => void;
@@ -3552,11 +4056,12 @@ function SideNavButton({
       <CircularIconButton
         icon={icon}
         iconRef={iconRef}
-        iconClassName="size-7"
+        iconClassName={`size-7 ${pending ? 'animate-spin' : ''}`}
         className="relative size-12 border-0 bg-transparent p-0 text-[var(--project-color)]"
         aria-label={label}
         aria-describedby={tooltipId}
         aria-current={activeButton ? 'page' : undefined}
+        aria-busy={pending ? true : undefined}
         data-interactive-pop-companion={`[data-portfolio-section-nav-preview="${side}"] circle`}
         tabIndex={concealed ? -1 : undefined}
         onClick={onClick}
@@ -3675,6 +4180,7 @@ function ProjectPanel({
   slide,
   isWideLayout,
   isActive,
+  registerMediaElement,
   setDescriptionRef,
   onScreenshotClick,
 }: {
@@ -3684,6 +4190,10 @@ function ProjectPanel({
   slide: ProjectSlide;
   isWideLayout: boolean;
   isActive: boolean;
+  registerMediaElement: (
+    key: string,
+    element: PortfolioMediaElement | null
+  ) => void;
   setDescriptionRef: (node: HTMLDivElement | null) => void;
   onScreenshotClick: (
     slide: ProjectSlide,
@@ -3774,6 +4284,8 @@ function ProjectPanel({
           >
             <ScreenshotMedia
               screenshot={slide.screenshot}
+              mediaKey={carouselMediaKey(slide.screenshot)}
+              registerMediaElement={registerMediaElement}
               priority={isActive}
               sizes="(min-aspect-ratio: 5/4) calc(100dvh - 8rem), 100vw"
               className={getCarouselMediaClass(isActive)}
@@ -3864,18 +4376,34 @@ function BuildingWithAiTextPanel({
 
 function ScreenshotMedia({
   screenshot,
+  mediaKey,
+  registerMediaElement,
   priority,
   sizes,
   className,
 }: {
   screenshot: PortfolioScreenshot;
+  mediaKey: string;
+  registerMediaElement: (
+    key: string,
+    element: PortfolioMediaElement | null
+  ) => void;
   priority?: boolean;
   sizes: string;
   className: string;
 }) {
+  const setMediaRef = (element: PortfolioMediaElement | null) => {
+    registerMediaElement(mediaKey, element);
+
+    if (mediaKey.startsWith('carousel:')) {
+      registerMediaElement(modalMediaKey(screenshot), element);
+    }
+  };
+
   if (isVideoScreenshot(screenshot)) {
     return (
       <video
+        ref={setMediaRef}
         src={screenshot.src}
         aria-label={screenshot.alt}
         autoPlay
@@ -3892,6 +4420,7 @@ function ScreenshotMedia({
 
   return (
     <Image
+      ref={setMediaRef}
       src={screenshot.src}
       alt={screenshot.alt}
       fill
@@ -3916,6 +4445,7 @@ function ImageModal({
   offset,
   dragRef,
   pinchRef,
+  registerMediaElement,
   setScale,
   setOffset,
   onClose,
@@ -3939,6 +4469,10 @@ function ImageModal({
     dragging: boolean;
   }>;
   pinchRef: React.MutableRefObject<{ distance: number; scale: number } | null>;
+  registerMediaElement: (
+    key: string,
+    element: PortfolioMediaElement | null
+  ) => void;
   setScale: (scale: number | ((current: number) => number)) => void;
   setOffset: (
     offset:
@@ -4438,6 +4972,8 @@ function ImageModal({
                 >
                   <ScreenshotMedia
                     screenshot={carouselScreenshot}
+                    mediaKey={modalMediaKey(carouselScreenshot)}
+                    registerMediaElement={registerMediaElement}
                     priority={carouselScreenshot.id === screenshot.id}
                     sizes="92vw"
                     className={getCarouselMediaClass(

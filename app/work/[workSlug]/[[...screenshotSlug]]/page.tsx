@@ -12,6 +12,9 @@ type SlidePageProps = {
     workSlug: string;
     screenshotSlug?: string[];
   }>;
+  searchParams: Promise<{
+    modal?: string;
+  }>;
 };
 
 function plainTextFromMarkdown(markdown: string) {
@@ -52,8 +55,11 @@ export async function generateMetadata({ params }: SlidePageProps) {
   };
 }
 
-export default async function SlidePage({ params }: SlidePageProps) {
-  const { workSlug, screenshotSlug = [] } = await params;
+export default async function SlidePage({ params, searchParams }: SlidePageProps) {
+  const [{ workSlug, screenshotSlug = [] }, { modal }] = await Promise.all([
+    params,
+    searchParams,
+  ]);
   const project = getPortfolioProject(workSlug);
 
   if (!project || screenshotSlug.length > 1) {
@@ -74,6 +80,7 @@ export default async function SlidePage({ params }: SlidePageProps) {
       <PortfolioBrowser
         initialProjectSlug={project.slug}
         initialScreenshotSlug={screenshot?.slug}
+        initialModalOpen={modal === 'image' && Boolean(screenshot)}
       />
     </Suspense>
   );
