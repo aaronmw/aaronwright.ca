@@ -4901,6 +4901,10 @@ function SideNavButton({
   const hoveredRef = useRef(false);
   const focusedRef = useRef(false);
   const projectColor = color ?? PROJECT_COLORS[0];
+  const gutterHitAreaClass =
+    side === 'left'
+      ? "before:absolute before:inset-y-0 before:right-0 before:w-[3.75rem] before:content-[''] sm:before:w-[4.5rem]"
+      : "before:absolute before:inset-y-0 before:left-0 before:w-[3.75rem] before:content-[''] sm:before:w-[4.5rem]";
   return (
     <div
       ref={elementRef}
@@ -4946,7 +4950,7 @@ function SideNavButton({
             aria-hidden="true"
           />
         }
-        className="relative h-full w-12 cursor-pointer border-0 bg-transparent p-0 text-[var(--project-color)]"
+        className={`relative h-full w-12 cursor-pointer border-0 bg-transparent p-0 text-[var(--project-color)] ${gutterHitAreaClass}`}
         aria-label={label}
         aria-describedby={tooltipId}
         aria-current={activeButton ? 'page' : undefined}
@@ -5059,7 +5063,7 @@ function ProjectDescription({
       </div>
       <div
         ref={setDescriptionRef}
-        className={`portfolio-themed-scrollbar min-h-0 min-w-0 overflow-x-hidden overflow-y-scroll overscroll-contain pr-10 ${
+        className={`portfolio-themed-scrollbar min-h-0 min-w-0 overflow-x-hidden overflow-y-scroll pr-10 ${
           isWideLayout ? 'w-[calc(48ch+2rem)] max-w-full' : 'w-full max-w-[calc(48ch+2rem)]'
         }`}
       >
@@ -5250,7 +5254,7 @@ function BuildingWithAiTextPanel({
       {isWideLayout ? (
         <div
           ref={setDescriptionRef}
-          className="portfolio-themed-scrollbar min-h-0 min-w-0 w-full max-w-[calc(108ch+9rem)] overflow-x-hidden overflow-y-scroll overscroll-contain pr-10"
+          className="portfolio-themed-scrollbar min-h-0 min-w-0 w-full max-w-[calc(108ch+9rem)] overflow-x-hidden overflow-y-scroll pr-10"
         >
           <div className="portfolio-markdown portfolio-markdown-scroll-body prose min-w-0 w-full max-w-[calc(108ch+7rem)] text-lg font-light leading-relaxed text-white/82 [column-count:3] [column-fill:balance] [column-gap:3.5rem]">
             <ReactMarkdown
@@ -5265,7 +5269,7 @@ function BuildingWithAiTextPanel({
       ) : (
         <div
           ref={setDescriptionRef}
-          className="portfolio-themed-scrollbar min-h-0 min-w-0 w-full max-w-[calc(48ch+2rem)] overflow-x-hidden overflow-y-scroll overscroll-contain pr-10"
+          className="portfolio-themed-scrollbar min-h-0 min-w-0 w-full max-w-[calc(48ch+2rem)] overflow-x-hidden overflow-y-scroll pr-10"
         >
           <div className="portfolio-markdown portfolio-markdown-scroll-body prose min-w-0 w-full max-w-[48ch] text-lg font-light leading-relaxed text-white/82">
             <ReactMarkdown
