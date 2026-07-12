@@ -9,6 +9,7 @@ import {
   MouseEvent as ReactMouseEvent,
   PointerEvent as ReactPointerEvent,
   ReactNode,
+  startTransition,
   TouchEvent as ReactTouchEvent,
   WheelEvent as ReactWheelEvent,
   useCallback,
@@ -724,6 +725,16 @@ export function PortfolioBrowser({
   const keyboardSurfaceRef = useRef<HTMLElement>(null);
   const verticalRef = useRef<HTMLDivElement>(null);
   const horizontalRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const horizontalScrollTweenRefs = useRef<
+    Record<string, gsap.core.Tween | null>
+  >({});
+  const horizontalTargetSlideIndexesRef = useRef<Record<string, number>>({});
+  const horizontalKeyboardIndicatorIndexesRef = useRef<
+    Record<string, number | undefined>
+  >({});
+  const horizontalPendingNavigationIntentRefs = useRef<
+    Record<string, number | undefined>
+  >({});
   const descriptionRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const userMovedRef = useRef(false);
   const scrollSyncRef = useRef(false);
@@ -1516,10 +1527,16 @@ export function PortfolioBrowser({
   );
 
   const scrollHorizontalToRealIndex = useCallback(
-    (project: PortfolioProject, slideIndex: number, behavior: ScrollBehavior) => {
+    (
+      project: PortfolioProject,
+      slideIndex: number,
+      behavior: ScrollBehavior,
+      onComplete?: () => void
+    ) => {
       const carousel = horizontalRefs.current[project.slug];
 
       if (!carousel) {
+        onComplete?.();
         return;
       }
 
@@ -1532,11 +1549,46 @@ export function PortfolioBrowser({
         nextCarouselIndex,
         slides.length
       );
+      const targetScrollLeft = carousel.clientWidth * nextRenderedIndex;
+      const currentTween = horizontalScrollTweenRefs.current[project.slug];
 
-      carousel.scrollTo({
-        left: carousel.clientWidth * nextRenderedIndex,
-        behavior,
+      if (
+        behavior !== 'smooth' ||
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      ) {
+        currentTween?.kill();
+        horizontalScrollTweenRefs.current[project.slug] = null;
+        carousel.style.removeProperty('scroll-snap-type');
+        carousel.scrollTo({ left: targetScrollLeft, behavior: 'auto' });
+        onComplete?.();
+        return;
+      }
+
+      carousel.style.scrollSnapType = 'none';
+      const distanceInSlides =
+        Math.abs(targetScrollLeft - carousel.scrollLeft) /
+        Math.max(carousel.clientWidth, 1);
+      const tween = gsap.to(carousel, {
+        scrollLeft: targetScrollLeft,
+        duration: Math.min(0.85, 0.48 + distanceInSlides * 0.08),
+        ease: 'power3.out',
+        overwrite: 'auto',
+        onComplete: () => {
+          if (horizontalScrollTweenRefs.current[project.slug] === tween) {
+            horizontalScrollTweenRefs.current[project.slug] = null;
+            carousel.style.removeProperty('scroll-snap-type');
+            carousel.scrollTo({ left: targetScrollLeft, behavior: 'auto' });
+            onComplete?.();
+          }
+        },
+        onInterrupt: () => {
+          if (horizontalScrollTweenRefs.current[project.slug] === tween) {
+            horizontalScrollTweenRefs.current[project.slug] = null;
+          }
+        },
       });
+
+      horizontalScrollTweenRefs.current[project.slug] = tween;
     },
     [getCarouselIndexFromSlideIndex, getCarouselSlides]
   );
@@ -1745,7 +1797,18 @@ export function PortfolioBrowser({
       return;
     }
 
+    const syncedProjectSlug = horizontalScrollSyncProjectRef.current;
     horizontalScrollSyncProjectRef.current = null;
+
+    if (project) {
+      delete horizontalTargetSlideIndexesRef.current[project.slug];
+      delete horizontalKeyboardIndicatorIndexesRef.current[project.slug];
+      delete horizontalPendingNavigationIntentRefs.current[project.slug];
+    } else if (syncedProjectSlug) {
+      delete horizontalTargetSlideIndexesRef.current[syncedProjectSlug];
+      delete horizontalKeyboardIndicatorIndexesRef.current[syncedProjectSlug];
+      delete horizontalPendingNavigationIntentRefs.current[syncedProjectSlug];
+    }
 
     if (horizontalScrollSyncTimeoutRef.current) {
       clearTimeout(horizontalScrollSyncTimeoutRef.current);
@@ -1760,6 +1823,7 @@ export function PortfolioBrowser({
       horizontalScrollSyncTimeoutRef.current = setTimeout(() => {
         if (horizontalScrollSyncProjectRef.current === project.slug) {
           horizontalScrollSyncProjectRef.current = null;
+          delete horizontalTargetSlideIndexesRef.current[project.slug];
         }
 
         horizontalScrollSyncTimeoutRef.current = null;
@@ -1813,20 +1877,37 @@ export function PortfolioBrowser({
       const slides = projectSlides[project.slug];
       const nextIndex = positiveModulo(realIndex, slides.length);
       const nextSlide = slides[nextIndex];
+      const horizontalIntent =
+        (horizontalPendingNavigationIntentRefs.current[project.slug] ?? 0) + 1;
+      horizontalPendingNavigationIntentRefs.current[project.slug] =
+        horizontalIntent;
+      horizontalTargetSlideIndexesRef.current[project.slug] = nextIndex;
+      horizontalKeyboardIndicatorIndexesRef.current[project.slug] =
+        getCarouselIndexFromSlideIndex(project, nextIndex);
       const canNavigate = await prepareMediaNavigation(
         { kind: 'slide', projectIndex, slideIndex: nextIndex },
         getSlideMediaKey(project, nextSlide, isWideLayout)
       );
 
       if (!canNavigate) {
+        if (
+          horizontalPendingNavigationIntentRefs.current[project.slug] ===
+          horizontalIntent
+        ) {
+          delete horizontalPendingNavigationIntentRefs.current[project.slug];
+          delete horizontalTargetSlideIndexesRef.current[project.slug];
+        }
         return;
       }
 
-      setActiveSlideIndexes((indexes) =>
-        indexes.map((index, currentProjectIndex) =>
-          currentProjectIndex === projectIndex ? nextIndex : index
-        )
-      );
+      if (
+        horizontalPendingNavigationIntentRefs.current[project.slug] !==
+        horizontalIntent
+      ) {
+        return;
+      }
+
+      delete horizontalPendingNavigationIntentRefs.current[project.slug];
 
       if (nextSlide.kind === 'description') {
         resetDescriptionScroll(project);
@@ -1836,11 +1917,23 @@ export function PortfolioBrowser({
         beginHorizontalScrollSync(project);
       }
 
-      scrollHorizontalToRealIndex(project, nextIndex, scrollBehavior);
-      updateUrl(project, nextSlide, mode);
+      horizontalTargetSlideIndexesRef.current[project.slug] = nextIndex;
+      horizontalKeyboardIndicatorIndexesRef.current[project.slug] =
+        getCarouselIndexFromSlideIndex(project, nextIndex);
+      scrollHorizontalToRealIndex(project, nextIndex, scrollBehavior, () => {
+        updateUrl(project, nextSlide, mode);
+        startTransition(() => {
+          setActiveSlideIndexes((indexes) =>
+            indexes.map((index, currentProjectIndex) =>
+              currentProjectIndex === projectIndex ? nextIndex : index
+            )
+          );
+        });
+      });
     },
     [
       beginHorizontalScrollSync,
+      getCarouselIndexFromSlideIndex,
       isWideLayout,
       prepareMediaNavigation,
       projectSlides,
@@ -1934,9 +2027,13 @@ export function PortfolioBrowser({
 
       const currentProject = portfolioSlides[activeProjectIndex];
       const slides = getCarouselSlides(currentProject);
+      const currentSlideIndex =
+        horizontalTargetSlideIndexesRef.current[currentProject.slug] ??
+        activeSlideIndexes[activeProjectIndex] ??
+        0;
       const currentCarouselIndex = getCarouselIndexFromSlideIndex(
         currentProject,
-        activeSlideIndexes[activeProjectIndex] ?? 0
+        currentSlideIndex
       );
       const nextCarouselIndex = positiveModulo(
         currentCarouselIndex + direction,
@@ -2309,6 +2406,14 @@ export function PortfolioBrowser({
         return;
       }
 
+      if (
+        horizontalPendingNavigationIntentRefs.current[project.slug] !==
+          undefined ||
+        horizontalScrollTweenRefs.current[project.slug]
+      ) {
+        return;
+      }
+
       const slides = getCarouselSlides(project);
       const clonedIndex = Math.round(carousel.scrollLeft / carousel.clientWidth);
       const realIndex = getRealCarouselIndex(clonedIndex, slides.length);
@@ -2337,6 +2442,14 @@ export function PortfolioBrowser({
       carousel: HTMLDivElement
     ) => {
       if (!initialRevealCompleteRef.current && scrollSyncRef.current) {
+        return;
+      }
+
+      if (
+        horizontalPendingNavigationIntentRefs.current[project.slug] !==
+          undefined ||
+        horizontalScrollTweenRefs.current[project.slug]
+      ) {
         return;
       }
 
@@ -2435,9 +2548,11 @@ export function PortfolioBrowser({
         'button[data-portfolio-slide-indicator-index]'
       )
     ).filter((button) => button.parentElement?.style.pointerEvents !== 'none');
-    const activeIndex = Number(
-      activeButton.dataset.portfolioSlideIndicatorIndex
-    );
+    const activeIndex =
+      !shouldShowModal && activeProject
+        ? horizontalKeyboardIndicatorIndexesRef.current[activeProject.slug] ??
+          Number(activeButton.dataset.portfolioSlideIndicatorIndex)
+        : Number(activeButton.dataset.portfolioSlideIndicatorIndex);
     const targetIndex = positiveModulo(activeIndex + direction, buttons.length);
     const targetButton = buttons.find(
       (button) =>
@@ -2448,9 +2563,13 @@ export function PortfolioBrowser({
       return false;
     }
 
+    if (!shouldShowModal && activeProject) {
+      horizontalKeyboardIndicatorIndexesRef.current[activeProject.slug] =
+        targetIndex;
+    }
     targetButton.click();
     return true;
-  }, []);
+  }, [activeProject, shouldShowModal]);
 
   const handleKeyDownEvent = useEffectEvent((event: KeyboardEvent) => {
     if (shouldShowModal) {
@@ -2892,6 +3011,12 @@ export function PortfolioBrowser({
   useEffect(
     () => () => {
       clearHorizontalScrollSync();
+      Object.values(horizontalScrollTweenRefs.current).forEach((tween) => {
+        tween?.kill();
+      });
+      Object.values(horizontalRefs.current).forEach((carousel) => {
+        carousel?.style.removeProperty('scroll-snap-type');
+      });
     },
     [clearHorizontalScrollSync]
   );
