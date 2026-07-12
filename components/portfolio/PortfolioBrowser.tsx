@@ -2455,22 +2455,41 @@ export function PortfolioBrowser({
       return;
     }
 
-    const nextTransitionRect = activeScreenshot
-      ? getVisibleScreenshotButtonRect(activeScreenshot.id)
-      : modalTransitionRect;
+    const beginClose = () => {
+      const nextTransitionRect = activeScreenshot
+        ? getVisibleScreenshotButtonRect(activeScreenshot.id)
+        : modalTransitionRect;
 
-    if (!nextTransitionRect) {
-      finishCloseModal();
+      if (!nextTransitionRect) {
+        finishCloseModal();
+        return;
+      }
+
+      setModalTransitionRect(nextTransitionRect);
+      setIsModalClosing(true);
+    };
+
+    if (!activeProject) {
+      beginClose();
       return;
     }
 
-    setModalTransitionRect(nextTransitionRect);
-    setIsModalClosing(true);
+    clearHorizontalScrollSync(activeProject);
+    scrollHorizontalToRealIndex(
+      activeProject,
+      activeSlideIndex,
+      'auto',
+      beginClose
+    );
   }, [
+    activeProject,
+    activeSlideIndex,
     activeScreenshot,
+    clearHorizontalScrollSync,
     finishCloseModal,
     isModalClosing,
     modalTransitionRect,
+    scrollHorizontalToRealIndex,
     shouldShowModal,
   ]);
 
@@ -3951,6 +3970,9 @@ export function PortfolioBrowser({
                       activeProjectIndex === projectIndex &&
                       activeCarouselIndex === realIndex
                     }
+                    concealedScreenshotId={
+                      isModalLayerActive ? activeScreenshot?.id : undefined
+                    }
                     registerMediaElement={registerMediaElement}
                     setDescriptionRef={setDescriptionRef(project.slug)}
                     onScreenshotClick={openModal}
@@ -5106,6 +5128,7 @@ function ProjectPanel({
   slide,
   isWideLayout,
   isActive,
+  concealedScreenshotId,
   registerMediaElement,
   setDescriptionRef,
   onScreenshotClick,
@@ -5116,6 +5139,7 @@ function ProjectPanel({
   slide: ProjectSlide;
   isWideLayout: boolean;
   isActive: boolean;
+  concealedScreenshotId?: string;
   registerMediaElement: (
     key: string,
     element: PortfolioMediaElement | null
@@ -5195,6 +5219,8 @@ function ProjectPanel({
           <button
             type="button"
             className={`relative overflow-hidden border border-transparent outline-none transition-colors hover:border-[var(--project-color)] focus-visible:border-[var(--project-color)] ${
+              concealedScreenshotId === slide.screenshot.id ? 'invisible' : ''
+            } ${
               isWideLayout
                 ? 'col-start-2 aspect-square h-[var(--portfolio-screenshot-size)] max-h-none w-[var(--portfolio-screenshot-size)] max-w-none self-center justify-self-end'
                 : 'h-full min-h-0 w-full'
@@ -5853,6 +5879,7 @@ function ImageModal({
         ? 'cursor-grabbing'
         : 'cursor-grab'
       : '';
+  const showTransitionMedia = isTransitioning || isClosing;
   return (
     <dialog
       open
@@ -5899,7 +5926,12 @@ function ImageModal({
         data-portfolio-modal-image-frame
         className={`fixed left-0 top-0 z-10 h-dvh w-screen origin-center ${panCursorClass}`}
       >
-        <div className="absolute inset-0 overflow-hidden">
+        <div
+          className={`absolute inset-0 overflow-hidden ${
+            showTransitionMedia ? 'invisible' : 'visible'
+          }`}
+          aria-hidden={showTransitionMedia}
+        >
           <div
             ref={carouselTrackRef}
             data-portfolio-modal-carousel-track
@@ -5926,6 +5958,21 @@ function ImageModal({
               )
             )}
           </div>
+        </div>
+        <div
+          className={`absolute inset-0 overflow-hidden ${
+            showTransitionMedia ? 'visible' : 'invisible'
+          }`}
+          aria-hidden={!showTransitionMedia}
+        >
+          <ScreenshotMedia
+            screenshot={screenshot}
+            mediaKey={modalMediaKey(screenshot)}
+            registerMediaElement={registerMediaElement}
+            priority
+            sizes="100vw"
+            className="object-contain"
+          />
         </div>
       </div>
     </dialog>
