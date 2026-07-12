@@ -47,7 +47,10 @@ export function InteractivePopEffects() {
     const activeAnimations = new Set<Animation>();
     const pointerTargets = new Map<number, HTMLElement>();
     const releasedAt = new WeakMap<HTMLElement, number>();
+    const pressCycles = new WeakMap<HTMLElement, number>();
+    const depressionAnimations = new WeakMap<HTMLElement, Animation[]>();
     let keyboardTarget: HTMLElement | null = null;
+    let disposed = false;
 
     const cancelAnimation = (element: Element) => {
       const animation = animations.get(element);
@@ -69,7 +72,7 @@ export function InteractivePopEffects() {
     ) => {
       if (reducedMotion.matches) {
         cancelAnimation(element);
-        return;
+        return null;
       }
 
       const currentScale = getRenderedScale(element);
@@ -83,7 +86,7 @@ export function InteractivePopEffects() {
       activeAnimations.add(animation);
 
       if (persist) {
-        return;
+        return animation;
       }
 
       animation.addEventListener('finish', () => {
@@ -95,11 +98,14 @@ export function InteractivePopEffects() {
         activeAnimations.delete(animation);
         animation.cancel();
       });
+
+      return animation;
     };
 
     const depress = (element: HTMLElement) => {
-      getAnimationTargets(element).forEach((target) => {
-        runAnimation(
+      const cycle = (pressCycles.get(element) ?? 0) + 1;
+      const animations = getAnimationTargets(element).flatMap((target) => {
+        const animation = runAnimation(
           target,
           [{ scale: '0.95' }],
           {
@@ -109,7 +115,37 @@ export function InteractivePopEffects() {
           },
           true
         );
+
+        return animation ? [animation] : [];
       });
+
+      pressCycles.set(element, cycle);
+      depressionAnimations.set(element, animations);
+    };
+
+    const afterDepression = (
+      element: HTMLElement,
+      callback: () => void
+    ) => {
+      const cycle = pressCycles.get(element);
+      const animations = depressionAnimations.get(element) ?? [];
+      const finish = () => {
+        if (disposed || pressCycles.get(element) !== cycle) {
+          return;
+        }
+
+        depressionAnimations.delete(element);
+        callback();
+      };
+
+      if (animations.length === 0) {
+        finish();
+        return;
+      }
+
+      void Promise.allSettled(
+        animations.map((animation) => animation.finished)
+      ).then(finish);
     };
 
     const release = (element: HTMLElement) => {
@@ -177,10 +213,10 @@ export function InteractivePopEffects() {
       const releaseTarget = document.elementFromPoint(event.clientX, event.clientY);
 
       if (releaseTarget && target.contains(releaseTarget)) {
-        release(target);
         markReleased(target);
+        afterDepression(target, () => release(target));
       } else {
-        settle(target);
+        afterDepression(target, () => settle(target));
       }
     };
 
@@ -192,7 +228,7 @@ export function InteractivePopEffects() {
       }
 
       pointerTargets.delete(event.pointerId);
-      settle(target);
+      afterDepression(target, () => settle(target));
     };
 
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -223,8 +259,8 @@ export function InteractivePopEffects() {
 
       const target = keyboardTarget;
       keyboardTarget = null;
-      release(target);
       markReleased(target);
+      afterDepression(target, () => release(target));
     };
 
     const handleClick = (event: MouseEvent) => {
@@ -242,7 +278,7 @@ export function InteractivePopEffects() {
       }
 
       depress(target);
-      requestAnimationFrame(() => release(target));
+      afterDepression(target, () => release(target));
     };
 
     const handleReducedMotionChange = () => {
@@ -263,6 +299,7 @@ export function InteractivePopEffects() {
     reducedMotion.addEventListener('change', handleReducedMotionChange);
 
     return () => {
+      disposed = true;
       document.removeEventListener('pointerdown', handlePointerDown, true);
       document.removeEventListener('pointerup', handlePointerUp, true);
       document.removeEventListener('pointercancel', handlePointerCancel, true);
