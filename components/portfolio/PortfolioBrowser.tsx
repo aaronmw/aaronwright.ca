@@ -1257,6 +1257,24 @@ export function PortfolioBrowser({
     },
     [hideSectionNavTooltips, positionSectionNavClickTarget]
   );
+  const lockSectionNavIndicatorsToItem = useCallback(
+    (
+      sourceSide: 'left' | 'right',
+      itemIndex: number,
+      axis: 'horizontal' | 'vertical',
+      onAttached?: () => void
+    ) => {
+      (['left', 'right'] as const).forEach((side) => {
+        lockSectionNavIndicatorToItem(
+          side,
+          itemIndex,
+          axis,
+          side === sourceSide ? onAttached : undefined
+        );
+      });
+    },
+    [lockSectionNavIndicatorToItem]
+  );
   const settleSectionNavClickTarget = useCallback(
     (side: 'left' | 'right', axis: 'horizontal' | 'vertical') => {
       const itemIndex = sectionNavClickTargetIndexesRef.current[side];
@@ -3313,7 +3331,7 @@ export function PortfolioBrowser({
           focusKeyboardSurface();
 
           if (hasHorizontalAction) {
-            lockSectionNavIndicatorToItem(side, itemIndex, 'horizontal');
+            lockSectionNavIndicatorsToItem(side, itemIndex, 'horizontal');
 
             if (isModalPresentationActive) {
               moveModalHorizontal(isLeftSide ? -1 : 1);
@@ -3328,14 +3346,14 @@ export function PortfolioBrowser({
               setActiveProject(item.projectIndex, 'push');
 
             if (event.detail === 0) {
-              lockSectionNavIndicatorToItem(
+              lockSectionNavIndicatorsToItem(
                 side,
                 itemIndex,
                 'vertical',
                 showProject
               );
             } else {
-              lockSectionNavIndicatorToItem(side, itemIndex, 'vertical');
+              lockSectionNavIndicatorsToItem(side, itemIndex, 'vertical');
               showProject();
             }
           }
