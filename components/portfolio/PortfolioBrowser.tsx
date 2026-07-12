@@ -6003,26 +6003,82 @@ function ImageModal({
       : '';
   const showTransitionMedia = isTransitioning || isClosing;
   return (
-    <dialog
-      open
-      data-portfolio-modal-root
-      className={`fixed inset-0 z-50 m-0 h-dvh max-h-none w-screen max-w-none touch-none overflow-hidden border-0 bg-transparent p-0 ${panCursorClass}`}
-      aria-label={`${project.title}: ${screenshot.alt}`}
-      onDoubleClick={handleDoubleClick}
-      onWheel={handleWheel}
-      onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={stopPointerDrag}
-      onPointerCancel={stopPointerDrag}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-    >
-      <div
-        ref={backdropRef}
-        className="fixed inset-0 bg-black"
-        aria-hidden="true"
-      />
+    <>
+      <dialog
+        open
+        data-portfolio-modal-root
+        className={`fixed inset-0 z-50 m-0 h-dvh max-h-none w-screen max-w-none touch-none overflow-hidden border-0 bg-transparent p-0 ${panCursorClass}`}
+        aria-label={`${project.title}: ${screenshot.alt}`}
+        onDoubleClick={handleDoubleClick}
+        onWheel={handleWheel}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={stopPointerDrag}
+        onPointerCancel={stopPointerDrag}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        <div
+          ref={backdropRef}
+          className="fixed inset-0 bg-black"
+          aria-hidden="true"
+        />
+        <div
+          ref={imageFrameRef}
+          data-portfolio-modal-image-frame
+          className={`fixed left-0 top-0 z-10 h-dvh w-screen origin-center ${panCursorClass}`}
+        >
+          <div
+            className={`absolute inset-0 overflow-hidden ${
+              showTransitionMedia ? 'invisible' : 'visible'
+            }`}
+            aria-hidden={showTransitionMedia}
+          >
+            <div
+              ref={carouselTrackRef}
+              data-portfolio-modal-carousel-track
+              className="flex h-full w-screen"
+              style={{ gap: `${MODAL_CAROUSEL_GAP_PX}px` }}
+            >
+              {renderedCarouselScreenshots.map(
+                ({ item: carouselScreenshot, key }) => (
+                  <div
+                    key={key}
+                    className="relative h-full w-screen shrink-0"
+                  >
+                    <ScreenshotMedia
+                      screenshot={carouselScreenshot}
+                      mediaKey={modalMediaKey(carouselScreenshot)}
+                      registerMediaElement={registerMediaElement}
+                      priority={carouselScreenshot.id === screenshot.id}
+                      sizes="100vw"
+                      className={getCarouselMediaClass(
+                        carouselCount > 2 && isBoundaryBlurTransition
+                      )}
+                    />
+                  </div>
+                )
+              )}
+            </div>
+          </div>
+          <div
+            className={`absolute inset-0 overflow-hidden ${
+              showTransitionMedia ? 'visible' : 'invisible'
+            }`}
+            aria-hidden={!showTransitionMedia}
+          >
+            <ScreenshotMedia
+              screenshot={screenshot}
+              mediaKey={modalMediaKey(screenshot)}
+              registerMediaElement={registerMediaElement}
+              priority
+              sizes="100vw"
+              className="object-contain"
+            />
+          </div>
+        </div>
+      </dialog>
       <CircularIconButton
         icon={faXmark}
         buttonRef={(node) => {
@@ -6031,7 +6087,7 @@ function ImageModal({
         iconClassName="size-7"
         ring
         data-portfolio-modal-close
-        className={`fixed right-5 top-5 z-20 isolate size-12 bg-black text-[var(--project-color)] ${
+        className={`fixed right-5 top-5 z-[70] isolate size-12 bg-black text-[var(--project-color)] ${
           isClosing ? 'pointer-events-none' : ''
         }`}
         style={
@@ -6043,60 +6099,6 @@ function ImageModal({
         title="Close"
         onClick={onClose}
       />
-      <div
-        ref={imageFrameRef}
-        data-portfolio-modal-image-frame
-        className={`fixed left-0 top-0 z-10 h-dvh w-screen origin-center ${panCursorClass}`}
-      >
-        <div
-          className={`absolute inset-0 overflow-hidden ${
-            showTransitionMedia ? 'invisible' : 'visible'
-          }`}
-          aria-hidden={showTransitionMedia}
-        >
-          <div
-            ref={carouselTrackRef}
-            data-portfolio-modal-carousel-track
-            className="flex h-full w-screen"
-            style={{ gap: `${MODAL_CAROUSEL_GAP_PX}px` }}
-          >
-            {renderedCarouselScreenshots.map(
-              ({ item: carouselScreenshot, key }) => (
-                <div
-                  key={key}
-                  className="relative h-full w-screen shrink-0"
-                >
-                  <ScreenshotMedia
-                    screenshot={carouselScreenshot}
-                    mediaKey={modalMediaKey(carouselScreenshot)}
-                    registerMediaElement={registerMediaElement}
-                    priority={carouselScreenshot.id === screenshot.id}
-                    sizes="100vw"
-                    className={getCarouselMediaClass(
-                      carouselCount > 2 && isBoundaryBlurTransition
-                    )}
-                  />
-                </div>
-              )
-            )}
-          </div>
-        </div>
-        <div
-          className={`absolute inset-0 overflow-hidden ${
-            showTransitionMedia ? 'visible' : 'invisible'
-          }`}
-          aria-hidden={!showTransitionMedia}
-        >
-          <ScreenshotMedia
-            screenshot={screenshot}
-            mediaKey={modalMediaKey(screenshot)}
-            registerMediaElement={registerMediaElement}
-            priority
-            sizes="100vw"
-            className="object-contain"
-          />
-        </div>
-      </div>
-    </dialog>
+    </>
   );
 }
