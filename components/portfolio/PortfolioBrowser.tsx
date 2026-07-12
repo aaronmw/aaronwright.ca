@@ -122,6 +122,9 @@ const PROJECT_COLOR_SATURATION = 78;
 const PROJECT_COLOR_LIGHTNESS = 54;
 const PROJECT_COLORS = buildProjectColors(portfolioSlides.length);
 const SECTION_NAV_COLORS = [TOP_SCREEN_COLOR, ...PROJECT_COLORS];
+const SECTION_NAV_RGB_COLORS = SECTION_NAV_COLORS.map(
+  (color) => gsap.utils.splitColor(color).slice(0, 3) as [number, number, number]
+);
 const INLINE_MARKDOWN_COMPONENTS = {
   p({ children }) {
     return <>{children}</>;
@@ -294,26 +297,59 @@ function getSectionNavPreviewOffsetFromClientY(
   return targetCenterY - unshiftedRingCenterY;
 }
 
+type SectionNavLayout = {
+  items: Array<{
+    index: number;
+    centerY: number;
+    color: string;
+    rgb: [number, number, number];
+  }>;
+  top: number;
+  bottom: number;
+};
+
+function getSectionNavLayout(
+  buttons: Array<HTMLDivElement | null>
+): SectionNavLayout | null {
+  const items: SectionNavLayout['items'] = [];
+  let top = Number.POSITIVE_INFINITY;
+  let bottom = Number.NEGATIVE_INFINITY;
+
+  buttons.forEach((button, index) => {
+    if (!button || button.getAttribute('aria-hidden') === 'true') {
+      return;
+    }
+
+    const rect = button.getBoundingClientRect();
+    top = Math.min(top, rect.top);
+    bottom = Math.max(bottom, rect.bottom);
+    items.push({
+      index,
+      centerY: rect.top + rect.height / 2,
+      color: SECTION_NAV_COLORS[index],
+      rgb: SECTION_NAV_RGB_COLORS[index],
+    });
+  });
+
+  return items.length > 0 ? { items, top, bottom } : null;
+}
+
 function getSectionNavSnapTarget(
-  buttons: Array<HTMLDivElement | null>,
+  layout: SectionNavLayout | null,
   pointerY: number,
   snapDistance = SECTION_NAV_SNAP_DISTANCE_PX
 ): { index: number; centerY: number; distance: number } | null {
   let closest: { index: number; centerY: number; distance: number } | null = null;
 
-  for (let index = 0; index < buttons.length; index += 1) {
-    const button = buttons[index];
+  if (!layout) {
+    return null;
+  }
 
-    if (!button || button.getAttribute('aria-hidden') === 'true') {
-      continue;
-    }
-
-    const rect = button.getBoundingClientRect();
-    const centerY = rect.top + rect.height / 2;
-    const distance = Math.abs(pointerY - centerY);
+  for (const item of layout.items) {
+    const distance = Math.abs(pointerY - item.centerY);
 
     if (distance <= snapDistance && (!closest || distance < closest.distance)) {
-      closest = { index, centerY, distance };
+      closest = { index: item.index, centerY: item.centerY, distance };
     }
   }
 
@@ -321,26 +357,10 @@ function getSectionNavSnapTarget(
 }
 
 function getSectionNavPointerColor(
-  buttons: Array<HTMLDivElement | null>,
+  layout: SectionNavLayout | null,
   pointerY: number
 ) {
-  const stops = buttons
-    .map((button, index) => {
-      if (!button || button.getAttribute('aria-hidden') === 'true') {
-        return null;
-      }
-
-      const rect = button.getBoundingClientRect();
-
-      return {
-        centerY: rect.top + rect.height / 2,
-        color: SECTION_NAV_COLORS[index],
-      };
-    })
-    .filter(
-      (stop): stop is { centerY: number; color: string } => stop !== null
-    )
-    .sort((first, second) => first.centerY - second.centerY);
+  const stops = layout?.items ?? [];
 
   if (stops.length === 0) {
     return null;
@@ -367,10 +387,8 @@ function getSectionNavPointerColor(
     const progress =
       (pointerY - previousStop.centerY) /
       (nextStop.centerY - previousStop.centerY);
-    const previousColor = gsap.utils.splitColor(previousStop.color);
-    const nextColor = gsap.utils.splitColor(nextStop.color);
-    const channels = previousColor.slice(0, 3).map((channel, channelIndex) =>
-      Math.round(channel + (nextColor[channelIndex] - channel) * progress)
+    const channels = previousStop.rgb.map((channel, channelIndex) =>
+      Math.round(channel + (nextStop.rgb[channelIndex] - channel) * progress)
     );
 
     return `rgb(${channels.join(', ')})`;
@@ -380,27 +398,21 @@ function getSectionNavPointerColor(
 }
 
 function isSectionNavBeyondBreakawayDistance(
-  buttons: Array<HTMLDivElement | null>,
+  layout: SectionNavLayout | null,
   pointerY: number,
   indicatorY: number,
   breakawayDistance = SECTION_NAV_BREAKAWAY_DISTANCE_PX
 ) {
-  const itemRects = buttons
-    .filter((button): button is HTMLDivElement => Boolean(button))
-    .map((button) => button.getBoundingClientRect());
-
-  if (itemRects.length === 0) {
+  if (!layout) {
     return true;
   }
 
-  const top = Math.min(...itemRects.map((rect) => rect.top));
-  const bottom = Math.max(...itemRects.map((rect) => rect.bottom));
   const isAbove =
-    pointerY < top - breakawayDistance &&
-    indicatorY < top - breakawayDistance;
+    pointerY < layout.top - breakawayDistance &&
+    indicatorY < layout.top - breakawayDistance;
   const isBelow =
-    pointerY > bottom + breakawayDistance &&
-    indicatorY > bottom + breakawayDistance;
+    pointerY > layout.bottom + breakawayDistance &&
+    indicatorY > layout.bottom + breakawayDistance;
 
   return isAbove || isBelow;
 }
@@ -743,6 +755,8 @@ export function PortfolioBrowser({
     right: null,
   });
   const sectionNavPointerOwnerRef = useRef<'left' | 'right' | null>(null);
+  const sectionNavPointerFrameRef = useRef<number | null>(null);
+  const sectionNavPendingPointerYRef = useRef<number | null>(null);
   const sectionNavPointerArmedRefs = useRef<Record<'left' | 'right', boolean>>({
     left: false,
     right: false,
@@ -766,6 +780,16 @@ export function PortfolioBrowser({
     left: 4,
     right: 4,
   });
+  const sectionNavReducedMotionRef = useRef(false);
+  const sectionNavColorSetterRefs = useRef<
+    Record<
+      'left' | 'right',
+      {
+        preview: HTMLDivElement;
+        setColor: (value: string) => void;
+      } | null
+    >
+  >({ left: null, right: null });
   const sectionNavIsMovingRef = useRef(false);
   const sectionNavStackRefs = useRef<Array<HTMLDivElement | null>>([]);
   const sectionNavIconRefs = useRef<
@@ -883,6 +907,7 @@ export function PortfolioBrowser({
     (
       side: 'left' | 'right',
       pointerY: number,
+      layout: SectionNavLayout | null,
       animatePosition = false,
       onPositionSettled?: () => void
     ) => {
@@ -914,17 +939,14 @@ export function PortfolioBrowser({
 
       const snapTarget = sectionNavIsMovingRef.current
         ? null
-        : getSectionNavSnapTarget(
-            sectionNavButtonRefs.current[side],
-            pointerY
-          );
+        : getSectionNavSnapTarget(layout, pointerY);
       const snapIndex = snapTarget?.index ?? null;
       const targetY = snapTarget?.centerY ?? pointerY;
 
       if (
         !sectionNavIsMovingRef.current &&
         isSectionNavBeyondBreakawayDistance(
-          sectionNavButtonRefs.current[side],
+          layout,
           pointerY,
           targetY
         )
@@ -934,15 +956,11 @@ export function PortfolioBrowser({
       }
 
       sectionNavPreviewIndexesRef.current[sideIndex] = snapIndex;
-      const reducedMotion = window.matchMedia(
-        '(prefers-reduced-motion: reduce)'
-      ).matches;
+      const reducedMotion = sectionNavReducedMotionRef.current;
       const targetOffset = getSectionNavPreviewOffsetFromClientY(
         preview,
         targetY
       );
-
-      gsap.killTweensOf(preview, 'y');
 
       if (animatePosition && !reducedMotion) {
         gsap.to(preview, {
@@ -958,27 +976,42 @@ export function PortfolioBrowser({
       }
 
       const targetColor =
-        getSectionNavPointerColor(
-          sectionNavButtonRefs.current[side],
-          targetY
-        ) ?? getComputedStyle(indicator).color;
+        getSectionNavPointerColor(layout, targetY) ??
+        getComputedStyle(indicator).color;
 
-      gsap.to(preview, {
-        color: targetColor,
-        duration: reducedMotion ? 0 : 0.15,
-        ease: 'power2.out',
-        overwrite: 'auto',
-      });
+      if (reducedMotion) {
+        gsap.set(preview, { color: targetColor });
+        return;
+      }
+
+      let colorSetter = sectionNavColorSetterRefs.current[side];
+
+      if (!colorSetter || colorSetter.preview !== preview) {
+        colorSetter = {
+          preview,
+          setColor: gsap.quickSetter(preview, 'color') as (
+            value: string
+          ) => void,
+        };
+        sectionNavColorSetterRefs.current[side] = colorSetter;
+      }
+
+      colorSetter.setColor(targetColor);
     },
     [animateSectionNavRingStroke, returnSectionNavPointerToIdle]
   );
   const trackSectionNavPointer = useCallback(
-    (side: 'left' | 'right', pointerY: number) => {
+    (
+      side: 'left' | 'right',
+      pointerY: number,
+      layout = getSectionNavLayout(sectionNavButtonRefs.current[side])
+    ) => {
       const acquiring = sectionNavPointerAcquiringRefs.current[side];
 
       updateSectionNavPointer(
         side,
         pointerY,
+        layout,
         acquiring,
         acquiring
           ? () => {
@@ -991,11 +1024,37 @@ export function PortfolioBrowser({
   );
   const trackSectionNavPointers = useCallback(
     (pointerY: number) => {
+      const layoutSide = sectionNavPointerOwnerRef.current ?? 'left';
+      const layout = getSectionNavLayout(
+        sectionNavButtonRefs.current[layoutSide]
+      );
+
       (['left', 'right'] as const).forEach((side) => {
-        trackSectionNavPointer(side, pointerY);
+        trackSectionNavPointer(side, pointerY, layout);
       });
     },
     [trackSectionNavPointer]
+  );
+  const scheduleSectionNavPointerTracking = useCallback(
+    (pointerY: number) => {
+      sectionNavPendingPointerYRef.current = pointerY;
+
+      if (sectionNavPointerFrameRef.current !== null) {
+        return;
+      }
+
+      sectionNavPointerFrameRef.current = requestAnimationFrame(() => {
+        sectionNavPointerFrameRef.current = null;
+        const pendingPointerY = sectionNavPendingPointerYRef.current;
+
+        if (pendingPointerY === null) {
+          return;
+        }
+
+        trackSectionNavPointers(pendingPointerY);
+      });
+    },
+    [trackSectionNavPointers]
   );
   const engageSectionNavPointers = useCallback(
     (pointerOwner: 'left' | 'right', pointerY: number) => {
@@ -1022,6 +1081,12 @@ export function PortfolioBrowser({
 
       sectionNavPointerOwnerRef.current = null;
       setSectionNavPointerOwner(null);
+      sectionNavPendingPointerYRef.current = null;
+
+      if (sectionNavPointerFrameRef.current !== null) {
+        cancelAnimationFrame(sectionNavPointerFrameRef.current);
+        sectionNavPointerFrameRef.current = null;
+      }
 
       (['left', 'right'] as const).forEach((side) => {
         returnSectionNavPointerToIdle(side, delayed);
@@ -2692,14 +2757,35 @@ export function PortfolioBrowser({
     syncCurrentViewportEvent();
   }, [isWideLayout]);
 
-  const reevaluateSectionNavPointersEvent = useEffectEvent(() => {
-    (['left', 'right'] as const).forEach((side) => {
-      const pointerY = sectionNavPointerYRefs.current[side];
+  useEffect(() => {
+    const reducedMotion = window.matchMedia(
+      '(prefers-reduced-motion: reduce)'
+    );
+    const syncReducedMotion = () => {
+      sectionNavReducedMotionRef.current = reducedMotion.matches;
+    };
 
-      if (pointerY !== null) {
-        trackSectionNavPointer(side, pointerY);
+    syncReducedMotion();
+    reducedMotion.addEventListener('change', syncReducedMotion);
+
+    return () => {
+      reducedMotion.removeEventListener('change', syncReducedMotion);
+
+      if (sectionNavPointerFrameRef.current !== null) {
+        cancelAnimationFrame(sectionNavPointerFrameRef.current);
+        sectionNavPointerFrameRef.current = null;
       }
-    });
+    };
+  }, []);
+
+  const reevaluateSectionNavPointersEvent = useEffectEvent(() => {
+    const pointerY =
+      sectionNavPointerYRefs.current.left ??
+      sectionNavPointerYRefs.current.right;
+
+    if (pointerY !== null) {
+      trackSectionNavPointers(pointerY);
+    }
   });
   const settleVerticalSectionNavClickTargetsEvent = useEffectEvent(
     (vertical: HTMLDivElement) => {
@@ -3080,7 +3166,7 @@ export function PortfolioBrowser({
             sectionNavPointerOwnerRef.current === side &&
             sectionNavPointerArmedRefs.current[side]
           ) {
-            trackSectionNavPointers(event.clientY);
+            scheduleSectionNavPointerTracking(event.clientY);
           }
         }}
         onPointerLeave={() => returnSectionNavPointersToIdle(side, true)}
