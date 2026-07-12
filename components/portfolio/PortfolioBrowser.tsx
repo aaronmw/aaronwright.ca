@@ -685,6 +685,7 @@ export function PortfolioBrowser({
     left: null,
     right: null,
   });
+  const sectionNavPointerOwnerRef = useRef<'left' | 'right' | null>(null);
   const sectionNavPointerArmedRefs = useRef<Record<'left' | 'right', boolean>>({
     left: false,
     right: false,
@@ -716,6 +717,9 @@ export function PortfolioBrowser({
   const [sectionNavTooltipIndexes, setSectionNavTooltipIndexes] = useState<
     Record<'left' | 'right', number | null>
   >({ left: null, right: null });
+  const [sectionNavPointerOwner, setSectionNavPointerOwner] = useState<
+    'left' | 'right' | null
+  >(null);
   const [sectionNavTooltipsSuppressed, setSectionNavTooltipsSuppressed] =
     useState(false);
   const animateSectionNavRingStroke = useCallback(
@@ -918,16 +922,45 @@ export function PortfolioBrowser({
     },
     [updateSectionNavPointer]
   );
-  const engageSectionNavPointer = useCallback(
-    (side: 'left' | 'right', pointerY: number) => {
-      if (!sectionNavPointerArmedRefs.current[side]) {
-        sectionNavPointerAcquiringRefs.current[side] = true;
-      }
-
-      sectionNavPointerArmedRefs.current[side] = true;
-      trackSectionNavPointer(side, pointerY);
+  const trackSectionNavPointers = useCallback(
+    (pointerY: number) => {
+      (['left', 'right'] as const).forEach((side) => {
+        trackSectionNavPointer(side, pointerY);
+      });
     },
     [trackSectionNavPointer]
+  );
+  const engageSectionNavPointers = useCallback(
+    (pointerOwner: 'left' | 'right', pointerY: number) => {
+      sectionNavPointerOwnerRef.current = pointerOwner;
+      setSectionNavPointerOwner(pointerOwner);
+
+      (['left', 'right'] as const).forEach((side) => {
+        if (!sectionNavPointerArmedRefs.current[side]) {
+          sectionNavPointerAcquiringRefs.current[side] = true;
+        }
+
+        sectionNavPointerArmedRefs.current[side] = true;
+      });
+
+      trackSectionNavPointers(pointerY);
+    },
+    [trackSectionNavPointers]
+  );
+  const returnSectionNavPointersToIdle = useCallback(
+    (pointerOwner: 'left' | 'right', delayed: boolean) => {
+      if (sectionNavPointerOwnerRef.current !== pointerOwner) {
+        return;
+      }
+
+      sectionNavPointerOwnerRef.current = null;
+      setSectionNavPointerOwner(null);
+
+      (['left', 'right'] as const).forEach((side) => {
+        returnSectionNavPointerToIdle(side, delayed);
+      });
+    },
+    [returnSectionNavPointerToIdle]
   );
   const positionSectionNavClickTarget = useCallback(
     (
@@ -2560,7 +2593,7 @@ export function PortfolioBrowser({
           }));
         }}
         onPointerEngage={(pointerY) =>
-          engageSectionNavPointer(side, pointerY)
+          engageSectionNavPointers(side, pointerY)
         }
         onClick={(event) => {
           focusKeyboardSurface();
@@ -2617,11 +2650,14 @@ export function PortfolioBrowser({
         }`}
         style={sideNavInteractiveZoneStyle}
         onPointerMove={(event) => {
-          if (sectionNavPointerArmedRefs.current[side]) {
-            trackSectionNavPointer(side, event.clientY);
+          if (
+            sectionNavPointerOwnerRef.current === side &&
+            sectionNavPointerArmedRefs.current[side]
+          ) {
+            trackSectionNavPointers(event.clientY);
           }
         }}
-        onPointerLeave={() => returnSectionNavPointerToIdle(side, true)}
+        onPointerLeave={() => returnSectionNavPointersToIdle(side, true)}
         onWheel={(event) => {
           const vertical = verticalRef.current;
 
@@ -2673,7 +2709,10 @@ export function PortfolioBrowser({
                 side,
                 title: tooltipTitle,
                 visible:
-                  tooltipItem !== null && !sectionNavTooltipsSuppressed,
+                  tooltipItem !== null &&
+                  !sectionNavTooltipsSuppressed &&
+                  (sectionNavPointerOwner === null ||
+                    sectionNavPointerOwner === side),
               }}
             />
             {sectionNavItems.map((item, itemIndex) =>
