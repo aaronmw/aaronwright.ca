@@ -446,6 +446,13 @@ function getCenteredIndicatorTransform(index: number, count: number) {
   return `translate3d(-50%, -50%, 0) translateX(${offsetRem}rem)`;
 }
 
+function getHorizontalIndicatorRingX(index: number) {
+  return (
+    index * NAVIGATION_INDICATOR_STEP_REM +
+    (NAVIGATION_INDICATOR_STEP_REM - NAVIGATION_RING_SIZE_REM) / 2
+  );
+}
+
 function getProjectColor(projectIndex: number) {
   return PROJECT_COLORS[positiveModulo(projectIndex, PROJECT_COLORS.length)];
 }
@@ -3849,23 +3856,22 @@ function AnimatedSlideIndicators({
   const previewReturnTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
     null
   );
-  const previewSourceIndexesRef = useRef<
-    Record<'hover' | 'focus', number | null>
-  >({ hover: null, focus: null });
-  const [previewState, setPreviewState] = useState<{
-    slidesIdentity: string;
-    index: number | null;
-  }>({ slidesIdentity, index: null });
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const pointerFrameRef = useRef<number | null>(null);
+  const pendingPointerXRef = useRef<number | null>(null);
+  const pointerXRef = useRef<number | null>(null);
+  const rootFontSizeRef = useRef(16);
+  const pointerArmedRef = useRef(false);
+  const pointerAcquiringRef = useRef(false);
+  const clickTargetIndexRef = useRef<number | null>(null);
+  const focusedIndexRef = useRef<number | null>(null);
+  const ringStrokeWidthRef = useRef<2 | 4>(4);
   const [transitionState, setTransitionState] =
     useState<IndicatorTransitionState>({
       previousCount: targetCount,
       targetCount,
       phase: 'idle',
     });
-  const previewIndex =
-    previewState.slidesIdentity === slidesIdentity
-      ? previewState.index
-      : null;
 
   const clearPreviewReturnTimeout = () => {
     if (!previewReturnTimeoutRef.current) {
@@ -3876,41 +3882,215 @@ function AnimatedSlideIndicators({
     previewReturnTimeoutRef.current = null;
   };
 
-  const startPreview = (index: number, source: 'hover' | 'focus') => {
-    clearPreviewReturnTimeout();
-    previewSourceIndexesRef.current[source] = index;
-    setPreviewState({ slidesIdentity, index });
+  const animateRingStroke = (strokeWidth: 2 | 4) => {
+    if (ringStrokeWidthRef.current === strokeWidth) {
+      return;
+    }
+
+    const circle = ringRef.current?.querySelector('circle');
+    ringStrokeWidthRef.current = strokeWidth;
+
+    if (!circle) {
+      return;
+    }
+
+    gsap.to(circle, {
+      strokeWidth,
+      duration: window.matchMedia('(prefers-reduced-motion: reduce)').matches
+        ? 0
+        : 0.2,
+      ease: 'power2.out',
+      autoRound: false,
+      overwrite: 'auto',
+    });
   };
 
-  const endPreview = (index: number, source: 'hover' | 'focus') => {
-    if (previewSourceIndexesRef.current[source] !== index) {
+  const moveRingToIndex = (
+    index: number,
+    duration = 0.3,
+    onComplete?: () => void
+  ) => {
+    const ring = ringRef.current;
+
+    if (!ring) {
+      onComplete?.();
       return;
     }
 
-    previewSourceIndexesRef.current[source] = null;
-    const remainingPreviewIndex =
-      previewSourceIndexesRef.current.focus ??
-      previewSourceIndexesRef.current.hover;
+    ringTweenRef.current?.kill();
+    const tween = gsap.to(ring, {
+      x: `${getHorizontalIndicatorRingX(index)}rem`,
+      yPercent: -50,
+      duration: window.matchMedia('(prefers-reduced-motion: reduce)').matches
+        ? 0
+        : duration,
+      ease: 'power3.out',
+      overwrite: 'auto',
+      onComplete,
+    });
+    ringTweenRef.current = tween;
+  };
 
-    if (remainingPreviewIndex !== null) {
-      clearPreviewReturnTimeout();
-      setPreviewState({ slidesIdentity, index: remainingPreviewIndex });
+  const trackPointer = (clientX: number, animatePosition = false) => {
+    const container = containerRef.current;
+    const ring = ringRef.current;
+
+    if (!container || !ring || clickTargetIndexRef.current !== null) {
       return;
     }
 
     clearPreviewReturnTimeout();
-    previewReturnTimeoutRef.current = setTimeout(() => {
+    pointerXRef.current = clientX;
+    animateRingStroke(2);
+
+    const containerRect = container.getBoundingClientRect();
+    const rootFontSize = rootFontSizeRef.current;
+    const step = NAVIGATION_INDICATOR_STEP_REM * rootFontSize;
+    const ringSize = NAVIGATION_RING_SIZE_REM * rootFontSize;
+    const localPointerX = clientX - containerRect.left;
+    const closestIndex = Math.max(
+      0,
+      Math.min(targetCount - 1, Math.round(localPointerX / step - 0.5))
+    );
+    const closestCenter = step / 2 + closestIndex * step;
+    const targetCenter =
+      Math.abs(localPointerX - closestCenter) <= SECTION_NAV_SNAP_DISTANCE_PX
+        ? closestCenter
+        : localPointerX;
+    const targetX = targetCenter - ringSize / 2;
+
+    ringTweenRef.current?.kill();
+
+    if (animatePosition) {
+      const tween = gsap.to(ring, {
+        x: targetX,
+        yPercent: -50,
+        duration: window.matchMedia('(prefers-reduced-motion: reduce)').matches
+          ? 0
+          : 0.3,
+        ease: 'power3.out',
+        overwrite: 'auto',
+        onComplete: () => {
+          if (ringTweenRef.current === tween) {
+            ringTweenRef.current = null;
+          }
+          pointerAcquiringRef.current = false;
+        },
+      });
+      ringTweenRef.current = tween;
+      return;
+    }
+
+    gsap.set(ring, { x: targetX, yPercent: -50 });
+  };
+
+  const schedulePointerTracking = (clientX: number) => {
+    pendingPointerXRef.current = clientX;
+
+    if (pointerFrameRef.current !== null) {
+      return;
+    }
+
+    pointerFrameRef.current = requestAnimationFrame(() => {
+      pointerFrameRef.current = null;
+      const pendingPointerX = pendingPointerXRef.current;
+
+      if (pendingPointerX !== null && pointerArmedRef.current) {
+        trackPointer(pendingPointerX, pointerAcquiringRef.current);
+      }
+    });
+  };
+
+  const engagePointer = (clientX: number) => {
+    clearPreviewReturnTimeout();
+    rootFontSizeRef.current = Number.parseFloat(
+      getComputedStyle(document.documentElement).fontSize
+    );
+    pointerArmedRef.current = true;
+    pointerAcquiringRef.current = true;
+    trackPointer(clientX, true);
+  };
+
+  const returnRingToIdle = (delayed: boolean) => {
+    clearPreviewReturnTimeout();
+    pointerArmedRef.current = false;
+    pointerAcquiringRef.current = false;
+    pointerXRef.current = null;
+    pendingPointerXRef.current = null;
+
+    if (clickTargetIndexRef.current !== null || focusedIndexRef.current !== null) {
+      return;
+    }
+
+    const returnToActive = () => {
       previewReturnTimeoutRef.current = null;
-      setPreviewState((current) =>
-        current.slidesIdentity === slidesIdentity
-          ? { ...current, index: null }
-          : current
-      );
-    }, SECTION_NAV_PREVIEW_RETURN_DELAY_MS);
+      animateRingStroke(4);
+      moveRingToIndex(boundedActiveIndex);
+    };
+
+    if (!delayed) {
+      returnToActive();
+      return;
+    }
+
+    previewReturnTimeoutRef.current = setTimeout(
+      returnToActive,
+      SECTION_NAV_PREVIEW_RETURN_DELAY_MS
+    );
+  };
+
+  const lockRingToIndex = (index: number) => {
+    clearPreviewReturnTimeout();
+    clickTargetIndexRef.current = index;
+    animateRingStroke(4);
+    moveRingToIndex(index, 0.3, () => {
+      if (clickTargetIndexRef.current !== index) {
+        return;
+      }
+
+      clickTargetIndexRef.current = null;
+      const pointerX = pointerXRef.current;
+
+      if (pointerArmedRef.current && pointerX !== null) {
+        pointerAcquiringRef.current = true;
+        animateRingStroke(2);
+        trackPointer(pointerX, true);
+        return;
+      }
+
+      if (focusedIndexRef.current !== null) {
+        animateRingStroke(2);
+        moveRingToIndex(focusedIndexRef.current);
+      }
+    });
+  };
+
+  const focusRingAtIndex = (index: number) => {
+    focusedIndexRef.current = index;
+
+    if (!pointerArmedRef.current && clickTargetIndexRef.current === null) {
+      clearPreviewReturnTimeout();
+      animateRingStroke(2);
+      moveRingToIndex(index);
+    }
+  };
+
+  const releaseFocusedRing = (index: number) => {
+    if (focusedIndexRef.current !== index) {
+      return;
+    }
+
+    focusedIndexRef.current = null;
+
+    if (!pointerArmedRef.current) {
+      returnRingToIdle(true);
+    }
   };
 
   useEffect(() => {
-    previewSourceIndexesRef.current = { hover: null, focus: null };
+    pointerArmedRef.current = false;
+    pointerXRef.current = null;
+    focusedIndexRef.current = null;
 
     if (previewReturnTimeoutRef.current) {
       clearTimeout(previewReturnTimeoutRef.current);
@@ -3984,7 +4164,17 @@ function AnimatedSlideIndicators({
     };
   }, [targetCount]);
 
-  useEffect(() => clearPreviewReturnTimeout, []);
+  useEffect(
+    () => () => {
+      clearPreviewReturnTimeout();
+      ringTweenRef.current?.kill();
+
+      if (pointerFrameRef.current !== null) {
+        cancelAnimationFrame(pointerFrameRef.current);
+      }
+    },
+    []
+  );
 
   const previousSlotIds = getIndicatorSlotIds(
     transitionState.phase === 'idle'
@@ -4002,11 +4192,6 @@ function AnimatedSlideIndicators({
     0,
     Math.min(activeIndex, Math.max(targetCount - 1, 0))
   );
-  const boundedPreviewIndex =
-    previewIndex === null
-      ? null
-      : Math.max(0, Math.min(previewIndex, Math.max(targetCount - 1, 0)));
-  const ringTargetIndex = boundedPreviewIndex ?? boundedActiveIndex;
 
   useLayoutEffect(() => {
     const ring = ringRef.current;
@@ -4018,12 +4203,12 @@ function AnimatedSlideIndicators({
     const reducedMotion = window.matchMedia(
       '(prefers-reduced-motion: reduce)'
     ).matches;
-    const targetXRem =
-      ringTargetIndex * NAVIGATION_INDICATOR_STEP_REM +
-      (NAVIGATION_INDICATOR_STEP_REM - NAVIGATION_RING_SIZE_REM) / 2;
+    const targetXRem = getHorizontalIndicatorRingX(boundedActiveIndex);
     const hasPosition = ring.dataset.positioned === 'true';
-
-    ringTweenRef.current?.kill();
+    const shouldPosition =
+      !pointerArmedRef.current &&
+      clickTargetIndexRef.current === null &&
+      focusedIndexRef.current === null;
 
     if (!hasPosition) {
       gsap.set(ring, {
@@ -4036,6 +4221,18 @@ function AnimatedSlideIndicators({
       return;
     }
 
+    if (!shouldPosition) {
+      gsap.to(ring, {
+        color,
+        opacity: targetCount > 0 ? 1 : 0,
+        duration: reducedMotion ? 0 : 0.3,
+        ease: 'power2.out',
+        overwrite: 'auto',
+      });
+      return;
+    }
+
+    ringTweenRef.current?.kill();
     const tween = gsap.to(ring, {
       x: `${targetXRem}rem`,
       yPercent: -50,
@@ -4053,15 +4250,22 @@ function AnimatedSlideIndicators({
       }
       tween.kill();
     };
-  }, [color, ringTargetIndex, targetCount]);
+  }, [boundedActiveIndex, color, targetCount]);
 
   return (
     <div
+      ref={containerRef}
       data-portfolio-slide-indicators
-      className="relative h-[3.25rem] transition-[width] duration-500 ease-out motion-reduce:transition-none"
+      className="pointer-events-auto relative h-[3.25rem] transition-[width] duration-500 ease-out motion-reduce:transition-none"
       style={{
         width: `${Math.max(targetCount, 1) * NAVIGATION_INDICATOR_STEP_REM}rem`,
       }}
+      onPointerMove={(event) => {
+        if (pointerArmedRef.current) {
+          schedulePointerTracking(event.clientX);
+        }
+      }}
+      onPointerLeave={() => returnRingToIdle(true)}
     >
       <NavigationActiveRing
         color={color}
@@ -4133,11 +4337,19 @@ function AnimatedSlideIndicators({
                 aria-busy={pendingIndex === targetIndex ? true : undefined}
                 data-portfolio-slide-indicator-index={targetIndex}
                 data-interactive-pop-companion='[data-portfolio-slide-indicator-marker="true"] circle'
-                onMouseEnter={() => startPreview(targetIndex, 'hover')}
-                onMouseLeave={() => endPreview(targetIndex, 'hover')}
-                onFocus={() => startPreview(targetIndex, 'focus')}
-                onBlur={() => endPreview(targetIndex, 'focus')}
-                onClick={() => onSelect(slide)}
+                onPointerEnter={(event) => {
+                  if (pointerArmedRef.current) {
+                    schedulePointerTracking(event.clientX);
+                  } else {
+                    engagePointer(event.clientX);
+                  }
+                }}
+                onFocus={() => focusRingAtIndex(targetIndex)}
+                onBlur={() => releaseFocusedRing(targetIndex)}
+                onClick={() => {
+                  lockRingToIndex(targetIndex);
+                  onSelect(slide);
+                }}
               >
                 {pendingIndex === targetIndex ? (
                   <FontAwesomeIcon
