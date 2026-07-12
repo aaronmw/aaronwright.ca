@@ -3583,6 +3583,7 @@ export function PortfolioBrowser({
           return;
         }
 
+        animateSectionNavRingStroke(side, active ? 2 : 4);
         sectionNavPreviewIndexesRef.current[sideIndex] = active
           ? itemIndex
           : null;
@@ -3623,7 +3624,7 @@ export function PortfolioBrowser({
         animatePreview(false);
       }, SECTION_NAV_PREVIEW_RETURN_DELAY_MS);
     },
-    []
+    [animateSectionNavRingStroke]
   );
   const sideNavStackStyle: CSSProperties = {
     transform: `translateY(${
@@ -3969,6 +3970,26 @@ export function PortfolioBrowser({
                       ? true
                       : undefined
                   }
+                  onPointerEnter={() => {
+                    (['left', 'right'] as const).forEach((side) => {
+                      previewSectionNavItem(
+                        side,
+                        index + 1,
+                        getProjectColor(index),
+                        true
+                      );
+                    });
+                  }}
+                  onPointerLeave={() => {
+                    (['left', 'right'] as const).forEach((side) => {
+                      previewSectionNavItem(
+                        side,
+                        index + 1,
+                        getProjectColor(index),
+                        false
+                      );
+                    });
+                  }}
                   onClick={() => {
                     focusKeyboardSurface();
                     setActiveProject(index, 'push', 'smooth', 0);
