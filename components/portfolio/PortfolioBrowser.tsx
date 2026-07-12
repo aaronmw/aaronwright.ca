@@ -3060,7 +3060,26 @@ export function PortfolioBrowser({
       });
       const iconGroups = [leftIcons, rightIcons];
       const dotGroups = [leftDots, rightDots];
-      const setAffordanceLayers = (position: number) => {
+      const reducedMotion = window.matchMedia(
+        '(prefers-reduced-motion: reduce)'
+      ).matches;
+      const iconOpacitySetters = iconGroups.map((icons) =>
+        icons.map((icon) =>
+          gsap.quickTo(icon, 'opacity', {
+            duration: 0.3,
+            ease: 'power1.out',
+          })
+        )
+      );
+      const dotOpacitySetters = dotGroups.map((dots) =>
+        dots.map((dot) =>
+          gsap.quickTo(dot, 'opacity', {
+            duration: 0.3,
+            ease: 'power1.out',
+          })
+        )
+      );
+      const setAffordanceLayers = (position: number, immediate = false) => {
         const lowerIndex = Math.max(0, Math.floor(position));
         const upperIndex = Math.min(
           SECTION_NAV_HAS_SLIDES.length - 1,
@@ -3102,12 +3121,22 @@ export function PortfolioBrowser({
             }
           }
 
-          iconGroups.forEach((icons) =>
-            gsap.set(icons[itemIndex], { opacity: arrowOpacity })
-          );
-          dotGroups.forEach((dots) =>
-            gsap.set(dots[itemIndex], { opacity: dotOpacity })
-          );
+          iconGroups.forEach((icons, groupIndex) => {
+            if (immediate || reducedMotion) {
+              gsap.set(icons[itemIndex], { opacity: arrowOpacity });
+              return;
+            }
+
+            iconOpacitySetters[groupIndex][itemIndex](arrowOpacity);
+          });
+          dotGroups.forEach((dots, groupIndex) => {
+            if (immediate || reducedMotion) {
+              gsap.set(dots[itemIndex], { opacity: dotOpacity });
+              return;
+            }
+
+            dotOpacitySetters[groupIndex][itemIndex](dotOpacity);
+          });
         });
       };
       const timeline = gsap.timeline({
@@ -3201,7 +3230,7 @@ export function PortfolioBrowser({
           getSectionNavArrowRotation(itemIndex, 0, 'right'),
         transformOrigin: '50% 50%',
       });
-      setAffordanceLayers(initialSectionNavIndex);
+      setAffordanceLayers(initialSectionNavIndex, true);
       applySectionNavScrollScale(initialSectionNavIndex);
 
       timelineColors.slice(1).forEach((color, index) => {
