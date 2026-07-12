@@ -116,6 +116,7 @@ const SECTION_NAV_ITEM_STEP_REM = 3.75;
 const SECTION_NAV_PREVIEW_RETURN_DELAY_MS = 140;
 const SECTION_NAV_SNAP_DISTANCE_PX = 10;
 const SECTION_NAV_BREAKAWAY_DISTANCE_PX = 50;
+const SECTION_NAV_BREAKAWAY_EDGE_BUFFER_PX = 8;
 const NAVIGATION_ACTIVE_SCALE = 1.1;
 // 0 is sequential; 1 keeps both affordances in a full crossfade.
 const SECTION_NAV_AFFORDANCE_OVERLAP = 1;
@@ -317,6 +318,8 @@ type SectionNavLayout = {
   }>;
   top: number;
   bottom: number;
+  trackingTop: number;
+  trackingBottom: number;
 };
 
 function getSectionNavLayout(
@@ -325,6 +328,12 @@ function getSectionNavLayout(
   const items: SectionNavLayout['items'] = [];
   let top = Number.POSITIVE_INFINITY;
   let bottom = Number.NEGATIVE_INFINITY;
+  const firstButton = buttons.find(
+    (button): button is HTMLDivElement => button !== null
+  );
+  const trackingRect = firstButton
+    ?.closest<HTMLElement>('[data-portfolio-section-nav-zone]')
+    ?.getBoundingClientRect();
 
   buttons.forEach((button, index) => {
     if (!button || button.getAttribute('aria-hidden') === 'true') {
@@ -342,7 +351,15 @@ function getSectionNavLayout(
     });
   });
 
-  return items.length > 0 ? { items, top, bottom } : null;
+  return items.length > 0
+    ? {
+        items,
+        top,
+        bottom,
+        trackingTop: trackingRect?.top ?? Number.NEGATIVE_INFINITY,
+        trackingBottom: trackingRect?.bottom ?? Number.POSITIVE_INFINITY,
+      }
+    : null;
 }
 
 function getSectionNavPosition(
@@ -475,12 +492,18 @@ function isSectionNavBeyondBreakawayDistance(
     return true;
   }
 
+  const topBreakawayY = Math.max(
+    layout.top - breakawayDistance,
+    layout.trackingTop + SECTION_NAV_BREAKAWAY_EDGE_BUFFER_PX
+  );
+  const bottomBreakawayY = Math.min(
+    layout.bottom + breakawayDistance,
+    layout.trackingBottom - SECTION_NAV_BREAKAWAY_EDGE_BUFFER_PX
+  );
   const isAbove =
-    pointerY < layout.top - breakawayDistance &&
-    indicatorY < layout.top - breakawayDistance;
+    pointerY < topBreakawayY && indicatorY < topBreakawayY;
   const isBelow =
-    pointerY > layout.bottom + breakawayDistance &&
-    indicatorY > layout.bottom + breakawayDistance;
+    pointerY > bottomBreakawayY && indicatorY > bottomBreakawayY;
 
   return isAbove || isBelow;
 }
@@ -3527,10 +3550,7 @@ export function PortfolioBrowser({
     }rem)`,
   };
   const sideNavInteractiveZoneStyle: CSSProperties = {
-    height: `${
-      NAVIGATION_RING_SIZE_REM +
-      Math.max(sectionNavItems.length - 1, 0) * SECTION_NAV_ITEM_STEP_REM * 2
-    }rem`,
+    height: '100dvh',
   };
   const getSectionNavItemPresentation = (
     item: (typeof sectionNavItems)[number],
