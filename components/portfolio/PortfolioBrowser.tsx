@@ -30,6 +30,7 @@ import type { IconProp } from '@fortawesome/fontawesome-svg-core';
 import {
   faArrowDown,
   faArrowUp,
+  faCircle,
   faFilePdf,
   faRotateRight,
   faSpinner,
@@ -105,7 +106,7 @@ const WIDE_LAYOUT_STYLE: WideLayoutStyle = {
   '--portfolio-screenshot-size':
     'min(100dvh, calc(100vw - var(--portfolio-description-rail-width) - var(--portfolio-control-gutter-width)))',
 };
-const NAVIGATION_DOT_CLASS = 'block size-2.5 rounded-full bg-white';
+const NAVIGATION_DOT_CLASS = 'size-2.5 text-white';
 const NAVIGATION_INDICATOR_STEP_REM = 2.5;
 const NAVIGATION_RING_SIZE_REM = 3;
 const NAVIGATION_INDICATOR_PAIR_STAGGER_MS = 90;
@@ -884,7 +885,7 @@ export function PortfolioBrowser({
     Record<'left' | 'right', Array<SVGSVGElement | null>>
   >({ left: [], right: [] });
   const sectionNavDotRefs = useRef<
-    Record<'left' | 'right', Array<HTMLSpanElement | null>>
+    Record<'left' | 'right', Array<SVGSVGElement | null>>
   >({ left: [], right: [] });
   const sectionNavVisualRefs = useRef<
     Record<'left' | 'right', Array<HTMLSpanElement | null>>
@@ -2974,10 +2975,10 @@ export function PortfolioBrowser({
       (icon): icon is SVGSVGElement => Boolean(icon)
     );
     const leftDots = sectionNavDotRefs.current.left.filter(
-      (dot): dot is HTMLSpanElement => Boolean(dot)
+      (dot): dot is SVGSVGElement => Boolean(dot)
     );
     const rightDots = sectionNavDotRefs.current.right.filter(
-      (dot): dot is HTMLSpanElement => Boolean(dot)
+      (dot): dot is SVGSVGElement => Boolean(dot)
     );
     const leftVisuals = sectionNavVisualRefs.current.left.filter(
       (visual): visual is HTMLSpanElement => Boolean(visual)
@@ -4774,12 +4775,19 @@ function AnimatedSlideIndicators({
                       className="size-3 animate-spin text-white"
                     />
                   ) : (
-                    <span className={NAVIGATION_DOT_CLASS} />
+                    <FontAwesomeIcon
+                      icon={faCircle}
+                      className={NAVIGATION_DOT_CLASS}
+                    />
                   )}
                 </span>
               </button>
             ) : (
-              <span className={NAVIGATION_DOT_CLASS} aria-hidden="true" />
+              <FontAwesomeIcon
+                icon={faCircle}
+                className={NAVIGATION_DOT_CLASS}
+                aria-hidden="true"
+              />
             )}
           </div>
         );
@@ -4884,7 +4892,7 @@ function SideNavButton({
   icon: IconProp;
   elementRef: (node: HTMLDivElement | null) => void;
   iconRef?: (node: SVGSVGElement | null) => void;
-  dotRef: (node: HTMLSpanElement | null) => void;
+  dotRef: (node: SVGSVGElement | null) => void;
   visualRef: (node: HTMLSpanElement | null) => void;
   label: string;
   tooltipTitle: string;
@@ -4944,9 +4952,10 @@ function SideNavButton({
         iconClassName={`size-7 ${pending ? 'animate-spin' : ''}`}
         visualRef={visualRef}
         secondaryVisual={
-          <span
+          <FontAwesomeIcon
             ref={dotRef}
-            className="absolute size-2.5 rounded-full bg-current opacity-0 drop-shadow-[1px_1px_0_black]"
+            icon={faCircle}
+            className="absolute size-2.5 text-current opacity-0 drop-shadow-[1px_1px_0_black]"
             aria-hidden="true"
           />
         }
