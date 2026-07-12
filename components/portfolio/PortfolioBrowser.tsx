@@ -245,9 +245,9 @@ function isCarouselBoundaryJump(
   );
 }
 
-function getCarouselMediaClass(isActive: boolean) {
+function getCarouselMediaClass(shouldBlur: boolean) {
   return `${CAROUSEL_MEDIA_CLASS} ${
-    isActive ? 'blur-0' : 'blur-[20px]'
+    shouldBlur ? 'blur-[20px]' : 'blur-0'
   }`;
 }
 
@@ -1687,6 +1687,9 @@ export function PortfolioBrowser({
   const [isModalClosing, setIsModalClosing] = useState(false);
   const [modalTransitionRect, setModalTransitionRect] =
     useState<ModalTransitionRect | null>(null);
+  const [boundaryBlurProjectSlugs, setBoundaryBlurProjectSlugs] = useState<
+    ReadonlySet<string>
+  >(() => new Set());
 
   const activeProject =
     activeProjectIndex >= 0 ? portfolioSlides[activeProjectIndex] : undefined;
@@ -1717,6 +1720,26 @@ export function PortfolioBrowser({
   const resetDescriptionScroll = useCallback((project: PortfolioProject) => {
     descriptionRefs.current[project.slug]?.scrollTo({ top: 0 });
   }, []);
+  const setProjectBoundaryBlur = useCallback(
+    (projectSlug: string, shouldBlur: boolean) => {
+      setBoundaryBlurProjectSlugs((currentSlugs) => {
+        if (currentSlugs.has(projectSlug) === shouldBlur) {
+          return currentSlugs;
+        }
+
+        const nextSlugs = new Set(currentSlugs);
+
+        if (shouldBlur) {
+          nextSlugs.add(projectSlug);
+        } else {
+          nextSlugs.delete(projectSlug);
+        }
+
+        return nextSlugs;
+      });
+    },
+    []
+  );
 
   const setHorizontalRef = useCallback(
     (slideSlug: string) => (node: HTMLDivElement | null) => {
@@ -1808,6 +1831,20 @@ export function PortfolioBrowser({
       );
       const targetScrollLeft = carousel.clientWidth * nextRenderedIndex;
       const currentTween = horizontalScrollTweenRefs.current[project.slug];
+      const currentRenderedIndex = Math.round(
+        carousel.scrollLeft / Math.max(carousel.clientWidth, 1)
+      );
+      const currentCarouselIndex = getRealCarouselIndex(
+        currentRenderedIndex,
+        slides.length
+      );
+      const shouldBlurBoundary =
+        slides.length > 2 &&
+        isCarouselBoundaryJump(
+          currentCarouselIndex,
+          nextCarouselIndex,
+          slides.length
+        );
 
       if (
         behavior !== 'smooth' ||
@@ -1815,6 +1852,7 @@ export function PortfolioBrowser({
       ) {
         currentTween?.kill();
         horizontalScrollTweenRefs.current[project.slug] = null;
+        setProjectBoundaryBlur(project.slug, false);
         carousel.style.removeProperty('scroll-snap-type');
         carousel.scrollTo({ left: targetScrollLeft, behavior: 'auto' });
         onComplete?.();
@@ -1835,19 +1873,26 @@ export function PortfolioBrowser({
             horizontalScrollTweenRefs.current[project.slug] = null;
             carousel.style.removeProperty('scroll-snap-type');
             carousel.scrollTo({ left: targetScrollLeft, behavior: 'auto' });
+            setProjectBoundaryBlur(project.slug, false);
             onComplete?.();
           }
         },
         onInterrupt: () => {
           if (horizontalScrollTweenRefs.current[project.slug] === tween) {
             horizontalScrollTweenRefs.current[project.slug] = null;
+            setProjectBoundaryBlur(project.slug, false);
           }
         },
       });
 
       horizontalScrollTweenRefs.current[project.slug] = tween;
+      setProjectBoundaryBlur(project.slug, shouldBlurBoundary);
     },
-    [getCarouselIndexFromSlideIndex, getCarouselSlides]
+    [
+      getCarouselIndexFromSlideIndex,
+      getCarouselSlides,
+      setProjectBoundaryBlur,
+    ]
   );
 
   const syncHorizontalViewports = useCallback(
@@ -2691,6 +2736,13 @@ export function PortfolioBrowser({
       }
 
       const slides = getCarouselSlides(project);
+      const renderedPosition =
+        carousel.scrollLeft / Math.max(carousel.clientWidth, 1);
+      setProjectBoundaryBlur(
+        project.slug,
+        slides.length > 2 &&
+          (renderedPosition < 1 || renderedPosition > slides.length)
+      );
       const clonedIndex = Math.round(carousel.scrollLeft / carousel.clientWidth);
       const realIndex = getRealCarouselIndex(clonedIndex, slides.length);
       const nextSlideIndex = getSlideIndexFromCarouselIndex(project, realIndex);
@@ -2778,6 +2830,7 @@ export function PortfolioBrowser({
         settleSectionNavClickTargets('horizontal');
       }
 
+      setProjectBoundaryBlur(project.slug, false);
       clearHorizontalScrollSync(project);
     }
   );
@@ -4019,6 +4072,10 @@ export function PortfolioBrowser({
                       activeProjectIndex === projectIndex &&
                       activeCarouselIndex === realIndex
                     }
+                    shouldBlurMedia={
+                      slides.length > 2 &&
+                      boundaryBlurProjectSlugs.has(project.slug)
+                    }
                     concealedScreenshotId={
                       isModalLayerActive ? activeScreenshot?.id : undefined
                     }
@@ -5177,6 +5234,7 @@ function ProjectPanel({
   slide,
   isWideLayout,
   isActive,
+  shouldBlurMedia,
   concealedScreenshotId,
   registerMediaElement,
   setDescriptionRef,
@@ -5188,6 +5246,7 @@ function ProjectPanel({
   slide: ProjectSlide;
   isWideLayout: boolean;
   isActive: boolean;
+  shouldBlurMedia: boolean;
   concealedScreenshotId?: string;
   registerMediaElement: (
     key: string,
@@ -5289,7 +5348,7 @@ function ProjectPanel({
               registerMediaElement={registerMediaElement}
               priority={isActive}
               sizes="(min-aspect-ratio: 5/4) calc(100dvh - 8rem), 100vw"
-              className={getCarouselMediaClass(isActive)}
+              className={getCarouselMediaClass(shouldBlurMedia)}
             />
           </button>
         )}
@@ -5471,6 +5530,8 @@ function ImageModal({
   const [isDragging, setIsDragging] = useState(false);
   const [isZoomed, setIsZoomed] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(Boolean(transitionRect));
+  const [isBoundaryBlurTransition, setIsBoundaryBlurTransition] =
+    useState(false);
   const renderedCarouselIndex = getCanonicalRenderedCarouselIndex(
     boundedActiveScreenshotIndex,
     carouselCount
@@ -5720,10 +5781,12 @@ function ImageModal({
       (window.innerWidth + MODAL_CAROUSEL_GAP_PX);
 
     if (isFirstPosition || didCarouselChange) {
+      setIsBoundaryBlurTransition(false);
       gsap.set(carouselTrack, { x: targetX, xPercent: 0 });
       return;
     }
 
+    setIsBoundaryBlurTransition(isBoundary && carouselCount > 2);
     gsap.set(carouselTrack, { willChange: 'transform' });
     const tween = gsap.to(carouselTrack, {
       x: targetX,
@@ -5732,7 +5795,17 @@ function ImageModal({
       ease: isBoundary ? 'power2.inOut' : 'power3.out',
       overwrite: 'auto',
       onComplete: () => {
+        if (carouselTweenRef.current === tween) {
+          carouselTweenRef.current = null;
+        }
+        setIsBoundaryBlurTransition(false);
         gsap.set(carouselTrack, { clearProps: 'willChange' });
+      },
+      onInterrupt: () => {
+        if (carouselTweenRef.current === tween) {
+          carouselTweenRef.current = null;
+          setIsBoundaryBlurTransition(false);
+        }
       },
     });
     carouselTweenRef.current = tween;
@@ -5988,7 +6061,7 @@ function ImageModal({
             style={{ gap: `${MODAL_CAROUSEL_GAP_PX}px` }}
           >
             {renderedCarouselScreenshots.map(
-              ({ item: carouselScreenshot, key, realIndex }) => (
+              ({ item: carouselScreenshot, key }) => (
                 <div
                   key={key}
                   className="relative h-full w-screen shrink-0"
@@ -6000,7 +6073,7 @@ function ImageModal({
                     priority={carouselScreenshot.id === screenshot.id}
                     sizes="100vw"
                     className={getCarouselMediaClass(
-                      realIndex === boundedActiveScreenshotIndex
+                      carouselCount > 2 && isBoundaryBlurTransition
                     )}
                   />
                 </div>
