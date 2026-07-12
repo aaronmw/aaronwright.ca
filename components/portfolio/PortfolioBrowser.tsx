@@ -131,6 +131,8 @@ const SECTION_NAV_HAS_SLIDES = [
   false,
   ...portfolioSlides.map((project) => project.screenshots.length > 1),
 ];
+const CAROUSEL_MEDIA_BLUR_PX = 20;
+const MODAL_CAROUSEL_GAP_PX = CAROUSEL_MEDIA_BLUR_PX * 2;
 const SECTION_NAV_RGB_COLORS = SECTION_NAV_COLORS.map(
   (color) => gsap.utils.splitColor(color).slice(0, 3) as [number, number, number]
 );
@@ -5638,15 +5640,19 @@ function ImageModal({
       itemCount: carouselCount,
     };
     carouselTweenRef.current?.kill();
+    const targetX =
+      -renderedCarouselIndex *
+      (window.innerWidth + MODAL_CAROUSEL_GAP_PX);
 
     if (isFirstPosition || didCarouselChange) {
-      gsap.set(carouselTrack, { xPercent: -renderedCarouselIndex * 100 });
+      gsap.set(carouselTrack, { x: targetX, xPercent: 0 });
       return;
     }
 
     gsap.set(carouselTrack, { willChange: 'transform' });
     const tween = gsap.to(carouselTrack, {
-      xPercent: -renderedCarouselIndex * 100,
+      x: targetX,
+      xPercent: 0,
       duration: prefersReducedMotion() ? 0 : isBoundary ? 1 : 0.5,
       ease: isBoundary ? 'power2.inOut' : 'power3.out',
       overwrite: 'auto',
@@ -5669,6 +5675,27 @@ function ImageModal({
     prefersReducedMotion,
     renderedCarouselIndex,
   ]);
+
+  useEffect(() => {
+    const syncCarouselWidth = () => {
+      const carouselTrack = carouselTrackRef.current;
+
+      if (!carouselTrack) {
+        return;
+      }
+
+      carouselTweenRef.current?.kill();
+      gsap.set(carouselTrack, {
+        x:
+          -renderedCarouselIndex *
+          (window.innerWidth + MODAL_CAROUSEL_GAP_PX),
+        xPercent: 0,
+      });
+    };
+
+    window.addEventListener('resize', syncCarouselWidth);
+    return () => window.removeEventListener('resize', syncCarouselWidth);
+  }, [renderedCarouselIndex]);
 
   useEffect(
     () => () => {
@@ -5877,6 +5904,7 @@ function ImageModal({
             ref={carouselTrackRef}
             data-portfolio-modal-carousel-track
             className="flex h-full w-screen"
+            style={{ gap: `${MODAL_CAROUSEL_GAP_PX}px` }}
           >
             {renderedCarouselScreenshots.map(
               ({ item: carouselScreenshot, key, realIndex }) => (
