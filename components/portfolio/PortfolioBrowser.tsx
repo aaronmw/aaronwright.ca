@@ -3444,7 +3444,7 @@ function SideNavButton({
       <span
         id={tooltipId}
         role="tooltip"
-        className={`pointer-events-none absolute top-1/2 z-30 whitespace-nowrap bg-black px-3 py-2 text-[0.6875rem] font-black uppercase leading-none tracking-[0.24em] text-[var(--project-color)] opacity-0 transition-[opacity,transform] duration-150 ease-out -translate-y-1/2 group-hover/nav-tooltip:opacity-100 group-focus-within/nav-tooltip:opacity-100 ${tooltipPositionClass}`}
+        className={`pointer-events-none absolute top-1/2 z-30 whitespace-nowrap bg-[var(--project-color)] px-3 py-2 text-[0.6875rem] font-black uppercase leading-none tracking-[0.24em] text-black opacity-0 transition-[opacity,transform] duration-150 ease-out -translate-y-1/2 group-hover/nav-tooltip:opacity-100 group-focus-within/nav-tooltip:opacity-100 ${tooltipPositionClass}`}
       >
         {tooltipTitle}
       </span>
