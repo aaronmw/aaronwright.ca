@@ -3570,7 +3570,15 @@ export function PortfolioBrowser({
         sectionNavPreviewReturnTimeoutRefs.current[side] = null;
       }
 
-      if (sectionNavPointerYRefs.current[side] !== null) {
+      const indicatorsLocked = Object.values(
+        sectionNavClickTargetIndexesRef.current
+      ).some((targetIndex) => targetIndex !== null);
+
+      if (
+        sectionNavPointerYRefs.current[side] !== null ||
+        sectionNavIsMovingRef.current ||
+        indicatorsLocked
+      ) {
         return;
       }
 
@@ -3990,9 +3998,26 @@ export function PortfolioBrowser({
                       );
                     });
                   }}
-                  onClick={() => {
+                  onClick={(event) => {
                     focusKeyboardSurface();
-                    setActiveProject(index, 'push', 'smooth', 0);
+                    const showProject = () =>
+                      setActiveProject(index, 'push', 'smooth', 0);
+
+                    if (event.detail === 0) {
+                      lockSectionNavIndicatorsToItem(
+                        'left',
+                        index + 1,
+                        'vertical',
+                        showProject
+                      );
+                    } else {
+                      lockSectionNavIndicatorsToItem(
+                        'left',
+                        index + 1,
+                        'vertical'
+                      );
+                      showProject();
+                    }
                   }}
                 >
                   {isWideLayout ? (
