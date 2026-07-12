@@ -1,5 +1,6 @@
 module.exports = {
   reactStrictMode: false,
+  reactCompiler: true,
   async redirects() {
     return [
       {

@@ -815,6 +815,9 @@ export function PortfolioBrowser({
     preloadQueue,
     isMediaReady,
   } = usePortfolioMediaReadiness();
+  const renderedIntroPhase: PortfolioIntroPhase = mediaFailure
+    ? 'error'
+    : introPhase;
   const setSectionNavTooltipText = useCallback(
     (side: 'left' | 'right', itemIndex: number, title?: string) => {
       const tooltipText = sectionNavTooltipTextRefs.current[side];
@@ -1041,14 +1044,16 @@ export function PortfolioBrowser({
     (
       side: 'left' | 'right',
       pointerY: number,
-      layout = getSectionNavLayout(sectionNavButtonRefs.current[side])
+      layout?: SectionNavLayout | null
     ) => {
       const acquiring = sectionNavPointerAcquiringRefs.current[side];
+      const resolvedLayout =
+        layout ?? getSectionNavLayout(sectionNavButtonRefs.current[side]);
 
       updateSectionNavPointer(
         side,
         pointerY,
-        layout,
+        resolvedLayout,
         acquiring,
         acquiring
           ? () => {
@@ -1414,17 +1419,6 @@ export function PortfolioBrowser({
   const [isModalClosing, setIsModalClosing] = useState(false);
   const [modalTransitionRect, setModalTransitionRect] =
     useState<ModalTransitionRect | null>(null);
-  const [modalScale, setModalScale] = useState(1);
-  const [modalOffset, setModalOffset] = useState({ x: 0, y: 0 });
-  const modalDragRef = useRef({
-    pointerId: 0,
-    startX: 0,
-    startY: 0,
-    originX: 0,
-    originY: 0,
-    dragging: false,
-  });
-  const pinchRef = useRef<{ distance: number; scale: number } | null>(null);
 
   const activeProject =
     activeProjectIndex >= 0 ? portfolioSlides[activeProjectIndex] : undefined;
@@ -1450,11 +1444,6 @@ export function PortfolioBrowser({
 
   const focusKeyboardSurface = useCallback(() => {
     keyboardSurfaceRef.current?.focus({ preventScroll: true });
-  }, []);
-
-  const resetModalView = useCallback(() => {
-    setModalScale(1);
-    setModalOffset({ x: 0, y: 0 });
   }, []);
 
   const resetDescriptionScroll = useCallback((project: PortfolioProject) => {
@@ -1689,10 +1678,6 @@ export function PortfolioBrowser({
       setActiveSlideIndexes(nextSlideIndexes);
       setIsModalOpen(locationState.modalOpen);
 
-      if (!locationState.modalOpen) {
-        resetModalView();
-      }
-
       if (locationState.projectIndex === START_SCREEN_INDEX) {
         document.title = pageTitle();
       }
@@ -1717,7 +1702,6 @@ export function PortfolioBrowser({
       projectSlides,
       readLocationState,
       resetDescriptionScroll,
-      resetModalView,
       syncViewport,
     ]
   );
@@ -1738,10 +1722,9 @@ export function PortfolioBrowser({
       window.history[`${mode}State`]({}, '', nextPath);
       document.title = pageTitle(project, slide);
       modalHistoryEntryRef.current = false;
-      resetModalView();
       setIsModalOpen(false);
     },
-    [resetModalView]
+    []
   );
 
   const replaceModalUrl = useCallback((project: PortfolioProject, slide: ProjectSlide) => {
@@ -2012,7 +1995,6 @@ export function PortfolioBrowser({
       }
 
       scrollHorizontalToRealIndex(activeProject, nextSlideIndex, scrollBehavior);
-      resetModalView();
       replaceModalUrl(activeProject, slide);
       // After modal-only navigation, Close should land on the current slide.
       modalHistoryEntryRef.current = false;
@@ -2024,7 +2006,6 @@ export function PortfolioBrowser({
       prepareMediaNavigation,
       projectSlides,
       replaceModalUrl,
-      resetModalView,
       scrollHorizontalToRealIndex,
     ]
   );
@@ -2108,7 +2089,6 @@ export function PortfolioBrowser({
       );
       setIsModalClosing(false);
       setModalTransitionRect(transitionRect ?? null);
-      resetModalView();
       window.history.pushState({}, '', `${projectUrl(activeProject, slide)}?modal=image`);
       document.title = pageTitle(activeProject, slide);
       modalHistoryEntryRef.current = true;
@@ -2120,12 +2100,10 @@ export function PortfolioBrowser({
       activeSlide,
       prepareMediaNavigation,
       projectSlides,
-      resetModalView,
     ]
   );
 
   const finishCloseModal = useCallback(() => {
-    resetModalView();
     setIsModalClosing(false);
     setModalTransitionRect(null);
     setIsModalOpen(false);
@@ -2139,7 +2117,7 @@ export function PortfolioBrowser({
     if (activeProject && activeSlide) {
       window.history.replaceState({}, '', projectUrl(activeProject, activeSlide));
     }
-  }, [activeProject, activeSlide, resetModalView]);
+  }, [activeProject, activeSlide]);
 
   const closeModal = useCallback(() => {
     if (!shouldShowModal || isModalClosing) {
@@ -2613,7 +2591,6 @@ export function PortfolioBrowser({
     introTimelineRef.current?.kill();
     introTimelineRef.current = null;
     scrollSyncRef.current = false;
-    setIntroPhase('error');
 
     const curtain = curtainRef.current;
 
@@ -3305,9 +3282,9 @@ export function PortfolioBrowser({
       <div
         ref={verticalRef}
         className={`h-dvh overscroll-none portfolio-scrollbar-none ${
-          introPhase === 'ready' ? 'snap-y snap-mandatory' : 'snap-none'
+          renderedIntroPhase === 'ready' ? 'snap-y snap-mandatory' : 'snap-none'
         } ${
-          introPhase === 'ready' && sectionEntryMediaReady
+          renderedIntroPhase === 'ready' && sectionEntryMediaReady
             ? 'overflow-y-auto'
             : 'overflow-y-hidden'
         }`}
@@ -3628,13 +3605,7 @@ export function PortfolioBrowser({
           activeScreenshotIndex={activeModalScreenshotIndex}
           transitionRect={modalTransitionRect}
           isClosing={isModalClosing}
-          scale={modalScale}
-          offset={modalOffset}
-          dragRef={modalDragRef}
-          pinchRef={pinchRef}
           registerMediaElement={registerMediaElement}
-          setScale={setModalScale}
-          setOffset={setModalOffset}
           onClose={closeModal}
           onExited={finishCloseModal}
         />
@@ -3643,17 +3614,19 @@ export function PortfolioBrowser({
       <div
         ref={curtainRef}
         data-portfolio-loading-curtain
-        data-phase={introPhase}
+        data-phase={renderedIntroPhase}
         className={`fixed inset-0 z-[100] grid place-items-center bg-black ${
-          introPhase === 'ready' ? 'pointer-events-none' : 'pointer-events-auto'
+          renderedIntroPhase === 'ready'
+            ? 'pointer-events-none'
+            : 'pointer-events-auto'
         }`}
       >
         <div
-          role={introPhase === 'error' ? 'alert' : undefined}
+          role={renderedIntroPhase === 'error' ? 'alert' : undefined}
           className={`flex max-w-md flex-col items-center gap-5 px-8 text-center transition-opacity duration-300 ${
-            introPhase === 'error' ? 'opacity-100' : 'opacity-0'
+            renderedIntroPhase === 'error' ? 'opacity-100' : 'opacity-0'
           }`}
-          aria-hidden={introPhase === 'error' ? undefined : true}
+          aria-hidden={renderedIntroPhase === 'error' ? undefined : true}
         >
           <p className="text-lg font-light leading-relaxed text-white/80">
             Portfolio media didn&apos;t finish loading.
@@ -3764,13 +3737,10 @@ function AnimatedSlideIndicators({
       targetCount,
       phase: 'idle',
     });
-
-  if (previewState.slidesIdentity !== slidesIdentity) {
-    previewSourceIndexesRef.current = { hover: null, focus: null };
-    setPreviewState({ slidesIdentity, index: null });
-  }
-
-  const previewIndex = previewState.index;
+  const previewIndex =
+    previewState.slidesIdentity === slidesIdentity
+      ? previewState.index
+      : null;
 
   const clearPreviewReturnTimeout = () => {
     if (!previewReturnTimeoutRef.current) {
@@ -3813,6 +3783,15 @@ function AnimatedSlideIndicators({
       );
     }, SECTION_NAV_PREVIEW_RETURN_DELAY_MS);
   };
+
+  useEffect(() => {
+    previewSourceIndexesRef.current = { hover: null, focus: null };
+
+    if (previewReturnTimeoutRef.current) {
+      clearTimeout(previewReturnTimeoutRef.current);
+      previewReturnTimeoutRef.current = null;
+    }
+  }, [slidesIdentity]);
 
   useLayoutEffect(() => {
     const previousCount = previousCountRef.current;
@@ -4585,13 +4564,7 @@ function ImageModal({
   activeScreenshotIndex,
   transitionRect,
   isClosing,
-  scale,
-  offset,
-  dragRef,
-  pinchRef,
   registerMediaElement,
-  setScale,
-  setOffset,
   onClose,
   onExited,
 }: {
@@ -4602,26 +4575,9 @@ function ImageModal({
   activeScreenshotIndex: number;
   transitionRect: ModalTransitionRect | null;
   isClosing: boolean;
-  scale: number;
-  offset: { x: number; y: number };
-  dragRef: React.MutableRefObject<{
-    pointerId: number;
-    startX: number;
-    startY: number;
-    originX: number;
-    originY: number;
-    dragging: boolean;
-  }>;
-  pinchRef: React.MutableRefObject<{ distance: number; scale: number } | null>;
   registerMediaElement: (
     key: string,
     element: PortfolioMediaElement | null
-  ) => void;
-  setScale: (scale: number | ((current: number) => number)) => void;
-  setOffset: (
-    offset:
-      | { x: number; y: number }
-      | ((current: { x: number; y: number }) => { x: number; y: number })
   ) => void;
   onClose: () => void;
   onExited: () => void;
@@ -4635,6 +4591,7 @@ function ImageModal({
   const renderedCarouselScreenshots =
     getLoopingCarouselEntries(carouselScreenshots);
   const [isDragging, setIsDragging] = useState(false);
+  const [isZoomed, setIsZoomed] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(Boolean(transitionRect));
   const renderedCarouselIndex = getCanonicalRenderedCarouselIndex(
     boundedActiveScreenshotIndex,
@@ -4644,8 +4601,18 @@ function ImageModal({
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const imageFrameRef = useRef<HTMLDivElement>(null);
   const carouselTrackRef = useRef<HTMLDivElement>(null);
-  const liveOffsetRef = useRef(offset);
-  const liveScaleRef = useRef(scale);
+  const liveOffsetRef = useRef({ x: 0, y: 0 });
+  const liveScaleRef = useRef(1);
+  const isZoomedRef = useRef(false);
+  const dragRef = useRef({
+    pointerId: 0,
+    startX: 0,
+    startY: 0,
+    originX: 0,
+    originY: 0,
+    dragging: false,
+  });
+  const pinchRef = useRef<{ distance: number; scale: number } | null>(null);
   const animationFrameRef = useRef<number | null>(null);
   const presentationTimelineRef = useRef<gsap.core.Timeline | null>(null);
   const carouselTweenRef = useRef<gsap.core.Tween | null>(null);
@@ -4688,23 +4655,38 @@ function ImageModal({
       applyLiveTransform();
     });
   }, [applyLiveTransform]);
+  const updateZoomedState = useCallback((zoomed: boolean) => {
+    if (isZoomedRef.current === zoomed) {
+      return;
+    }
+
+    isZoomedRef.current = zoomed;
+    setIsZoomed(zoomed);
+  }, []);
+  const resetLiveView = useCallback(
+    (applyTransform = true) => {
+      liveOffsetRef.current = { x: 0, y: 0 };
+      liveScaleRef.current = 1;
+      updateZoomedState(false);
+
+      if (applyTransform) {
+        applyLiveTransform();
+      }
+    },
+    [applyLiveTransform, updateZoomedState]
+  );
   const setLiveScale = useCallback(
     (nextScale: number) => {
       liveScaleRef.current = clampScale(nextScale);
+      updateZoomedState(liveScaleRef.current > 1);
       scheduleLiveTransform();
-      setScale(liveScaleRef.current);
     },
-    [clampScale, scheduleLiveTransform, setScale]
+    [clampScale, scheduleLiveTransform, updateZoomedState]
   );
 
   useLayoutEffect(() => {
-    liveOffsetRef.current = offset;
-    liveScaleRef.current = scale;
-
-    if (!isTransitioning) {
-      applyLiveTransform();
-    }
-  }, [applyLiveTransform, isTransitioning, offset, scale]);
+    resetLiveView(!isTransitioning);
+  }, [isTransitioning, resetLiveView, screenshot.id]);
 
   useLayoutEffect(() => {
     const backdrop = backdropRef.current;
@@ -4746,7 +4728,6 @@ function ImageModal({
     if (isClosing) {
       dragRef.current.dragging = false;
       pinchRef.current = null;
-      setIsDragging(false);
     }
 
     setIsTransitioning(true);
@@ -4767,15 +4748,11 @@ function ImageModal({
           return;
         }
 
-        liveOffsetRef.current = { x: 0, y: 0 };
-        liveScaleRef.current = 1;
         gsap.set(imageFrame, {
           clearProps: 'left,top,width,height,opacity,willChange',
         });
         imageFrame.style.transition = 'transform 160ms ease-out';
-        applyLiveTransform();
-        setScale(1);
-        setOffset({ x: 0, y: 0 });
+        resetLiveView();
         setIsTransitioning(false);
       },
     });
@@ -4833,8 +4810,7 @@ function ImageModal({
     onExited,
     pinchRef,
     prefersReducedMotion,
-    setOffset,
-    setScale,
+    resetLiveView,
     transitionRect,
   ]);
 
@@ -4931,21 +4907,15 @@ function ImageModal({
 
       dragRef.current.dragging = false;
       pinchRef.current = null;
-      liveOffsetRef.current = { x: 0, y: 0 };
-      liveScaleRef.current = 1;
-      applyLiveTransform();
+      resetLiveView();
       setIsDragging(false);
-      setScale(1);
-      setOffset({ x: 0, y: 0 });
     },
     [
-      applyLiveTransform,
       dragRef,
       isClosing,
       isTransitioning,
       pinchRef,
-      setOffset,
-      setScale,
+      resetLiveView,
     ]
   );
 
@@ -5005,11 +4975,10 @@ function ImageModal({
         if (imageFrameRef.current) {
           imageFrameRef.current.style.transition = 'transform 160ms ease-out';
         }
-        setOffset(liveOffsetRef.current);
         setIsDragging(false);
       }
     },
-    [dragRef, setOffset]
+    [dragRef]
   );
 
   const handleTouchStart = useCallback(
@@ -5051,7 +5020,7 @@ function ImageModal({
   }, [pinchRef]);
 
   const panCursorClass =
-    scale > 1 && !isTransitioning && !isClosing
+    isZoomed && !isTransitioning && !isClosing
       ? isDragging
         ? 'cursor-grabbing'
         : 'cursor-grab'
