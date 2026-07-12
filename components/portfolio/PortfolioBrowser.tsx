@@ -795,14 +795,16 @@ export function PortfolioBrowser({
   const sectionNavIconRefs = useRef<
     Record<'left' | 'right', Array<SVGSVGElement | null>>
   >({ left: [], right: [] });
-  const [sectionNavTooltipIndexes, setSectionNavTooltipIndexes] = useState<
+  const sectionNavTooltipRefs = useRef<
+    Record<'left' | 'right', HTMLDivElement | null>
+  >({ left: null, right: null });
+  const sectionNavTooltipTextRefs = useRef<
+    Record<'left' | 'right', HTMLSpanElement | null>
+  >({ left: null, right: null });
+  const sectionNavTooltipIndexesRef = useRef<
     Record<'left' | 'right', number | null>
   >({ left: null, right: null });
-  const [sectionNavPointerOwner, setSectionNavPointerOwner] = useState<
-    'left' | 'right' | null
-  >(null);
-  const [sectionNavTooltipsSuppressed, setSectionNavTooltipsSuppressed] =
-    useState(false);
+  const sectionNavTooltipsSuppressedRef = useRef(false);
   const [introPhase, setIntroPhase] = useState<PortfolioIntroPhase>('loading');
   const [pendingNavigation, setPendingNavigation] =
     useState<PendingNavigation>(null);
@@ -813,6 +815,41 @@ export function PortfolioBrowser({
     preloadQueue,
     isMediaReady,
   } = usePortfolioMediaReadiness();
+  const setSectionNavTooltipText = useCallback(
+    (side: 'left' | 'right', itemIndex: number, title?: string) => {
+      const tooltipText = sectionNavTooltipTextRefs.current[side];
+      const item = sectionNavButtonRefs.current[side][itemIndex];
+      const nextTitle =
+        title ?? item?.dataset.portfolioSectionNavTooltipTitle;
+
+      if (tooltipText && nextTitle) {
+        tooltipText.textContent = nextTitle;
+      }
+    },
+    []
+  );
+  const setSectionNavTooltipVisibility = useCallback(
+    (side: 'left' | 'right', visible: boolean) => {
+      const tooltip = sectionNavTooltipRefs.current[side];
+
+      if (!tooltip) {
+        return;
+      }
+
+      gsap.to(tooltip, {
+        autoAlpha: visible ? 1 : 0,
+        x: visible ? 0 : side === 'left' ? -4 : 4,
+        duration: sectionNavReducedMotionRef.current ? 0 : 0.15,
+        ease: 'power2.out',
+        overwrite: 'auto',
+      });
+    },
+    []
+  );
+  const hideSectionNavTooltips = useCallback(() => {
+    setSectionNavTooltipVisibility('left', false);
+    setSectionNavTooltipVisibility('right', false);
+  }, [setSectionNavTooltipVisibility]);
   const animateSectionNavRingStroke = useCallback(
     (side: 'left' | 'right', strokeWidth: 2 | 4) => {
       if (sectionNavStrokeWidthRefs.current[side] === strokeWidth) {
@@ -1059,7 +1096,10 @@ export function PortfolioBrowser({
   const engageSectionNavPointers = useCallback(
     (pointerOwner: 'left' | 'right', pointerY: number) => {
       sectionNavPointerOwnerRef.current = pointerOwner;
-      setSectionNavPointerOwner(pointerOwner);
+      setSectionNavTooltipVisibility(
+        pointerOwner === 'left' ? 'right' : 'left',
+        false
+      );
 
       (['left', 'right'] as const).forEach((side) => {
         if (!sectionNavPointerArmedRefs.current[side]) {
@@ -1071,7 +1111,7 @@ export function PortfolioBrowser({
 
       trackSectionNavPointers(pointerY);
     },
-    [trackSectionNavPointers]
+    [setSectionNavTooltipVisibility, trackSectionNavPointers]
   );
   const returnSectionNavPointersToIdle = useCallback(
     (pointerOwner: 'left' | 'right', delayed: boolean) => {
@@ -1080,8 +1120,8 @@ export function PortfolioBrowser({
       }
 
       sectionNavPointerOwnerRef.current = null;
-      setSectionNavPointerOwner(null);
       sectionNavPendingPointerYRef.current = null;
+      hideSectionNavTooltips();
 
       if (sectionNavPointerFrameRef.current !== null) {
         cancelAnimationFrame(sectionNavPointerFrameRef.current);
@@ -1092,7 +1132,7 @@ export function PortfolioBrowser({
         returnSectionNavPointerToIdle(side, delayed);
       });
     },
-    [returnSectionNavPointerToIdle]
+    [hideSectionNavTooltips, returnSectionNavPointerToIdle]
   );
   const positionSectionNavClickTarget = useCallback(
     (
@@ -1138,7 +1178,8 @@ export function PortfolioBrowser({
       sectionNavPointerAcquiringRefs.current[side] = false;
       sectionNavClickTargetIndexesRef.current[side] = itemIndex;
       sectionNavClickAxisRefs.current[side] = axis;
-      setSectionNavTooltipsSuppressed(true);
+      sectionNavTooltipsSuppressedRef.current = true;
+      hideSectionNavTooltips();
       sectionNavClickPhaseRefs.current[side] = onAttached
         ? 'attaching'
         : 'recentering';
@@ -1166,7 +1207,7 @@ export function PortfolioBrowser({
         finishAttachment
       );
     },
-    [positionSectionNavClickTarget]
+    [hideSectionNavTooltips, positionSectionNavClickTarget]
   );
   const settleSectionNavClickTarget = useCallback(
     (side: 'left' | 'right', axis: 'horizontal' | 'vertical') => {
@@ -1189,11 +1230,25 @@ export function PortfolioBrowser({
         sectionNavClickPhaseRefs.current[side] = null;
         sectionNavClickAxisRefs.current[side] = null;
         sectionNavAttachmentCallbacksRef.current[side] = null;
-        setSectionNavTooltipsSuppressed(
-          Object.values(sectionNavClickTargetIndexesRef.current).some(
-            (targetIndex) => targetIndex !== null
-          )
-        );
+        const tooltipsSuppressed = Object.values(
+          sectionNavClickTargetIndexesRef.current
+        ).some((targetIndex) => targetIndex !== null);
+        sectionNavTooltipsSuppressedRef.current = tooltipsSuppressed;
+
+        if (!tooltipsSuppressed) {
+          const pointerOwner = sectionNavPointerOwnerRef.current;
+
+          if (
+            pointerOwner &&
+            sectionNavTooltipIndexesRef.current[pointerOwner] !== null
+          ) {
+            setSectionNavTooltipText(
+              pointerOwner,
+              sectionNavTooltipIndexesRef.current[pointerOwner]
+            );
+            setSectionNavTooltipVisibility(pointerOwner, true);
+          }
+        }
         const pointerY = sectionNavPointerYRefs.current[side];
 
         if (pointerY !== null && sectionNavPointerArmedRefs.current[side]) {
@@ -1208,6 +1263,8 @@ export function PortfolioBrowser({
     [
       positionSectionNavClickTarget,
       returnSectionNavPointerToIdle,
+      setSectionNavTooltipText,
+      setSectionNavTooltipVisibility,
       trackSectionNavPointer,
     ]
   );
@@ -3066,6 +3123,7 @@ export function PortfolioBrowser({
       isActiveSection,
       isLeftSide,
       label,
+      tooltipTitle,
     } = getSectionNavItemPresentation(item, side);
     const tooltipId = `portfolio-${side}-section-nav-tooltip`;
     const isPending = Boolean(
@@ -3087,6 +3145,7 @@ export function PortfolioBrowser({
           sectionNavButtonRefs.current[side][itemIndex] = node;
         }}
         label={label}
+        tooltipTitle={tooltipTitle}
         tooltipId={tooltipId}
         side={side}
         color={item.color}
@@ -3095,14 +3154,23 @@ export function PortfolioBrowser({
         concealed={isModalPresentationActive && !isActiveSection}
         onPreviewChange={(previewed) => {
           previewSectionNavItem(side, itemIndex, item.color, previewed);
-          setSectionNavTooltipIndexes((current) => ({
-            ...current,
-            [side]: previewed
-              ? itemIndex
-              : current[side] === itemIndex
-                ? null
-                : current[side],
-          }));
+          const currentTooltipIndex =
+            sectionNavTooltipIndexesRef.current[side];
+
+          if (previewed) {
+            sectionNavTooltipIndexesRef.current[side] = itemIndex;
+            setSectionNavTooltipText(side, itemIndex, tooltipTitle);
+          } else if (currentTooltipIndex === itemIndex) {
+            sectionNavTooltipIndexesRef.current[side] = null;
+          }
+
+          const pointerOwner = sectionNavPointerOwnerRef.current;
+          const shouldShowTooltip =
+            sectionNavTooltipIndexesRef.current[side] === itemIndex &&
+            !sectionNavTooltipsSuppressedRef.current &&
+            (pointerOwner === null || pointerOwner === side);
+
+          setSectionNavTooltipVisibility(side, shouldShowTooltip);
         }}
         onPointerEngage={(pointerY) =>
           engageSectionNavPointers(side, pointerY)
@@ -3143,14 +3211,6 @@ export function PortfolioBrowser({
   };
   const renderSectionNavRail = (side: 'left' | 'right') => {
     const sideIndex = side === 'left' ? 0 : 1;
-    const tooltipItemIndex = sectionNavTooltipIndexes[side];
-    const tooltipItem =
-      tooltipItemIndex === null
-        ? null
-        : sectionNavItems[tooltipItemIndex] ?? null;
-    const tooltipTitle = tooltipItem
-      ? getSectionNavItemPresentation(tooltipItem, side).tooltipTitle
-      : '';
     const positionClass =
       side === 'left' ? 'left-3 sm:left-6' : 'right-3 sm:right-6';
 
@@ -3219,12 +3279,12 @@ export function PortfolioBrowser({
               tooltip={{
                 id: `portfolio-${side}-section-nav-tooltip`,
                 side,
-                title: tooltipTitle,
-                visible:
-                  tooltipItem !== null &&
-                  !sectionNavTooltipsSuppressed &&
-                  (sectionNavPointerOwner === null ||
-                    sectionNavPointerOwner === side),
+                elementRef: (node) => {
+                  sectionNavTooltipRefs.current[side] = node;
+                },
+                textElementRef: (node) => {
+                  sectionNavTooltipTextRefs.current[side] = node;
+                },
               }}
             />
             {sectionNavItems.map((item, itemIndex) =>
@@ -4015,8 +4075,8 @@ function NavigationActiveRing({
   tooltip?: {
     id: string;
     side: 'left' | 'right';
-    title: string;
-    visible: boolean;
+    elementRef: (node: HTMLDivElement | null) => void;
+    textElementRef: (node: HTMLSpanElement | null) => void;
   };
 }) {
   return (
@@ -4052,22 +4112,17 @@ function NavigationActiveRing({
         </svg>
         {tooltip ? (
           <div
+            ref={tooltip.elementRef}
             id={tooltip.id}
             role="tooltip"
-            className={`absolute top-1/2 z-30 whitespace-nowrap px-3 py-2 text-[0.6875rem] font-black uppercase leading-none tracking-[0.24em] transition-[opacity,transform] duration-150 ease-out -translate-y-1/2 ${
+            className={`invisible absolute top-1/2 z-30 -translate-y-1/2 whitespace-nowrap px-3 py-2 text-[0.6875rem] font-black uppercase leading-none tracking-[0.24em] opacity-0 ${
               tooltip.side === 'left'
-                ? 'left-full ml-3'
-                : 'right-full mr-3'
-            } ${
-              tooltip.visible
-                ? 'translate-x-0 opacity-100'
-                : tooltip.side === 'left'
-                  ? '-translate-x-1 opacity-0'
-                  : 'translate-x-1 opacity-0'
+                ? 'left-full ml-3 -translate-x-1'
+                : 'right-full mr-3 translate-x-1'
             }`}
             style={{ backgroundColor: 'currentColor' }}
           >
-            <span className="text-black">{tooltip.title}</span>
+            <span ref={tooltip.textElementRef} className="text-black" />
           </div>
         ) : null}
       </div>
@@ -4080,6 +4135,7 @@ function SideNavButton({
   elementRef,
   iconRef,
   label,
+  tooltipTitle,
   tooltipId,
   side,
   color,
@@ -4094,6 +4150,7 @@ function SideNavButton({
   elementRef: (node: HTMLDivElement | null) => void;
   iconRef?: (node: SVGSVGElement | null) => void;
   label: string;
+  tooltipTitle: string;
   tooltipId: string;
   side: 'left' | 'right';
   color?: string;
@@ -4110,6 +4167,7 @@ function SideNavButton({
   return (
     <div
       ref={elementRef}
+      data-portfolio-section-nav-tooltip-title={tooltipTitle}
       className={`relative z-10 grid size-12 place-items-center transition-[opacity,transform] duration-300 ease-out motion-reduce:transition-none ${
         concealed
           ? 'pointer-events-none scale-90 opacity-0'
