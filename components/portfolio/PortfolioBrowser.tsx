@@ -4351,7 +4351,11 @@ export function PortfolioBrowser({
             <p className="mb-[clamp(0.65rem,1.6vh,2rem)] text-xs font-light uppercase tracking-[0.35em] text-white/45">
               Sections
             </p>
-            <div className="divide-y divide-white/15 border-y border-white/15">
+            <div
+              className="divide-y divide-white/15 border-y border-white/15"
+              onPointerEnter={() => setSectionNavHovered(true)}
+              onPointerLeave={() => setSectionNavHovered(false)}
+            >
               {portfolioSlides.map((project, index) => (
                 <button
                   key={project.id}
@@ -4373,6 +4377,7 @@ export function PortfolioBrowser({
                       : undefined
                   }
                   onPointerEnter={() => {
+                    setSectionNavHovered(true);
                     (['left', 'right'] as const).forEach((side) => {
                       previewSectionNavItem(
                         side,
