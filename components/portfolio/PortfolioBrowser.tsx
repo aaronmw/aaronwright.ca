@@ -3247,6 +3247,9 @@ export function PortfolioBrowser({
           ) {
             arrowOpacity = 0;
             dotOpacity = 1;
+          } else if (verticalClickTarget !== undefined) {
+            arrowOpacity = 1;
+            dotOpacity = 0;
           } else if (!hasSlides) {
             if (
               directDotTransition &&
