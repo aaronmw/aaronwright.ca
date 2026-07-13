@@ -4750,12 +4750,12 @@ function KeyboardKey({
     >
       <span
         className={`grid h-[0.9375rem] min-w-[0.9375rem] -translate-y-px place-items-center rounded-xs bg-white font-black leading-none text-black ${
-          label ? 'px-[0.28125rem] text-[0.38671875rem]' : 'px-0'
+          label ? 'px-[0.28125rem] text-[0.5rem]' : 'px-0'
         }`}
         aria-hidden={ariaLabel ? true : undefined}
       >
         {icon ? (
-          <FontAwesomeIcon icon={icon} className="size-[0.4921875rem]" />
+          <FontAwesomeIcon icon={icon} className="size-[0.375rem]" />
         ) : (
           label
         )}
