@@ -557,6 +557,15 @@ function getOutsideInDelay(index: number, count: number) {
   return pairIndex * NAVIGATION_INDICATOR_PAIR_STAGGER_MS + leftSideDelay;
 }
 
+function getLongestOutsideInDelay(count: number) {
+  return Math.max(
+    0,
+    ...Array.from({ length: count }, (_, index) =>
+      getOutsideInDelay(index, count)
+    )
+  );
+}
+
 function getCenteredIndicatorTransform(index: number, count: number) {
   const offsetRem = (index - (count - 1) / 2) * NAVIGATION_INDICATOR_STEP_REM;
 
@@ -2917,7 +2926,7 @@ export function PortfolioBrowser({
   });
 
   const handleVerticalScrollEndEvent = useEffectEvent((vertical: HTMLDivElement) => {
-    if (scrollSyncRef.current) {
+    if (scrollSyncRef.current || verticalScrollTweenRef.current) {
       return;
     }
 
@@ -4705,7 +4714,7 @@ function SectionBlurb({
 type IndicatorTransitionState = {
   previousCount: number;
   targetCount: number;
-  phase: 'idle' | 'preparing' | 'animating';
+  phase: 'idle' | 'preparing' | 'fading' | 'settling';
 };
 
 function AnimatedSlideIndicators({
@@ -5169,20 +5178,29 @@ function AnimatedSlideIndicators({
         setTransitionState({
           previousCount,
           targetCount,
-          phase: 'animating',
+          phase: 'fading',
         });
 
-        const longestStagger =
-          Math.max(previousCount, targetCount, 1) *
-          NAVIGATION_INDICATOR_PAIR_STAGGER_MS;
+        const longestStagger = Math.max(
+          getLongestOutsideInDelay(previousCount),
+          getLongestOutsideInDelay(targetCount)
+        );
 
         transitionTimeoutRef.current = setTimeout(() => {
-          transitionTimeoutRef.current = null;
           setTransitionState({
-            previousCount: targetCount,
+            previousCount,
             targetCount,
-            phase: 'idle',
+            phase: 'settling',
           });
+
+          transitionTimeoutRef.current = setTimeout(() => {
+            transitionTimeoutRef.current = null;
+            setTransitionState({
+              previousCount: targetCount,
+              targetCount,
+              phase: 'idle',
+            });
+          }, NAVIGATION_INDICATOR_TRANSITION_MS);
         }, NAVIGATION_INDICATOR_TRANSITION_MS + longestStagger);
       });
     });
@@ -5316,9 +5334,12 @@ function AnimatedSlideIndicators({
         const targetIndex = targetSlotIds.indexOf(slotId);
         const isEntering = previousIndex < 0 && targetIndex >= 0;
         const isExiting = previousIndex >= 0 && targetIndex < 0;
+        const isRetained = previousIndex >= 0 && targetIndex >= 0;
         const usePreviousPosition =
           isExiting ||
-          (transitionState.phase === 'preparing' && previousIndex >= 0);
+          (isRetained &&
+            (transitionState.phase === 'preparing' ||
+              transitionState.phase === 'fading'));
         const positionIndex = usePreviousPosition ? previousIndex : targetIndex;
         const positionCount = usePreviousPosition
           ? transitionState.previousCount
@@ -5330,7 +5351,7 @@ function AnimatedSlideIndicators({
               ? previousIndex >= 0
               : targetIndex >= 0;
         const staggerDelay =
-          transitionState.phase === 'animating' && (isEntering || isExiting)
+          transitionState.phase === 'fading' && (isEntering || isExiting)
             ? getOutsideInDelay(
                 usePreviousPosition ? previousIndex : targetIndex,
                 usePreviousPosition
