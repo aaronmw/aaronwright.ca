@@ -4762,7 +4762,7 @@ function KeyboardKey({
         {icon ? (
           <FontAwesomeIcon icon={icon} />
         ) : (
-          label
+          <span className="translate-y-px">{label}</span>
         )}
       </span>
     </kbd>
