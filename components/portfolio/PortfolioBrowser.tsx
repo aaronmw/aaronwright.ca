@@ -117,6 +117,7 @@ const SECTION_NAV_PREVIEW_RETURN_DELAY_MS = 140;
 const SECTION_NAV_SNAP_DISTANCE_PX = 10;
 const SECTION_NAV_BREAKAWAY_DISTANCE_PX = 50;
 const SECTION_NAV_BREAKAWAY_EDGE_BUFFER_PX = 8;
+const SECTION_NAV_AUTO_CENTER_ACTIVE_ITEM = false;
 const NAVIGATION_ACTIVE_SCALE = 1.1;
 // 0 is sequential; 1 keeps both affordances in a full crossfade.
 const SECTION_NAV_AFFORDANCE_OVERLAP = 1;
@@ -3258,7 +3259,9 @@ export function PortfolioBrowser({
         },
       });
       const centeredStackOffsetRem =
-        ((SECTION_NAV_COLORS.length - 1) / 2) * SECTION_NAV_ITEM_STEP_REM;
+        SECTION_NAV_AUTO_CENTER_ACTIVE_ITEM
+          ? ((SECTION_NAV_COLORS.length - 1) / 2) * SECTION_NAV_ITEM_STEP_REM
+          : 0;
 
       timeline.set(indicators, {
         y: 0,
@@ -3298,17 +3301,19 @@ export function PortfolioBrowser({
           },
           index
         );
-        timeline.to(
-          stacks,
-          {
-            y: `${
-              centeredStackOffsetRem -
-              activeSectionIndex * SECTION_NAV_ITEM_STEP_REM
-            }rem`,
-            duration: 1,
-          },
-          index
-        );
+        if (SECTION_NAV_AUTO_CENTER_ACTIVE_ITEM) {
+          timeline.to(
+            stacks,
+            {
+              y: `${
+                centeredStackOffsetRem -
+                activeSectionIndex * SECTION_NAV_ITEM_STEP_REM
+              }rem`,
+              duration: 1,
+            },
+            index
+          );
+        }
         timeline.to(
           leftIcons,
           {
@@ -3636,8 +3641,10 @@ export function PortfolioBrowser({
   );
   const sideNavStackStyle: CSSProperties = {
     transform: `translateY(${
-      ((sectionNavItems.length - 1) / 2 - initialSectionNavIndex) *
-      SECTION_NAV_ITEM_STEP_REM
+      SECTION_NAV_AUTO_CENTER_ACTIVE_ITEM
+        ? ((sectionNavItems.length - 1) / 2 - initialSectionNavIndex) *
+          SECTION_NAV_ITEM_STEP_REM
+        : 0
     }rem)`,
   };
   const sideNavInteractiveZoneStyle: CSSProperties = {
