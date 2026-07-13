@@ -4749,13 +4749,13 @@ function KeyboardKey({
       className="relative mx-0.5 inline-grid h-[1.3125rem] min-w-[1.3125rem] place-items-center rounded-sm bg-white/40 px-[0.1875rem] pb-[0.1875rem] pt-[0.09375rem] align-middle"
     >
       <span
-        className={`grid h-[0.9375rem] min-w-[0.9375rem] -translate-y-px place-items-center rounded-xs bg-white font-black leading-none text-black ${
-          label ? 'px-[0.28125rem] text-[0.5rem]' : 'px-0'
+        className={`grid h-[0.9375rem] min-w-[0.9375rem] -translate-y-px place-items-center rounded-xs bg-white text-[0.5rem] font-black leading-none text-black ${
+          label ? 'px-[0.28125rem]' : 'px-0'
         }`}
         aria-hidden={ariaLabel ? true : undefined}
       >
         {icon ? (
-          <FontAwesomeIcon icon={icon} className="size-[0.375rem]" />
+          <FontAwesomeIcon icon={icon} />
         ) : (
           label
         )}
