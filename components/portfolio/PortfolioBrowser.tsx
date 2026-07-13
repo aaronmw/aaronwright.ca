@@ -4746,16 +4746,16 @@ function KeyboardKey({
   return (
     <kbd
       aria-label={ariaLabel}
-      className="relative mx-0.5 inline-grid h-7 min-w-7 place-items-center rounded-sm bg-white/40 px-1 pb-1 pt-0.5 align-middle"
+      className="relative mx-0.5 inline-grid h-[1.3125rem] min-w-[1.3125rem] place-items-center rounded-sm bg-white/40 px-[0.1875rem] pb-[0.1875rem] pt-[0.09375rem] align-middle"
     >
       <span
-        className={`grid h-5 min-w-5 -translate-y-0.5 place-items-center rounded-xs bg-white font-black leading-none text-black ${
-          label ? 'px-1.5 text-[0.6875rem]' : 'px-0'
+        className={`grid h-[0.9375rem] min-w-[0.9375rem] -translate-y-px place-items-center rounded-xs bg-white font-black leading-none text-black ${
+          label ? 'px-[0.28125rem] text-[0.515625rem]' : 'px-0'
         }`}
         aria-hidden={ariaLabel ? true : undefined}
       >
         {icon ? (
-          <FontAwesomeIcon icon={icon} className="size-3.5" />
+          <FontAwesomeIcon icon={icon} className="size-[0.65625rem]" />
         ) : (
           label
         )}
@@ -4794,7 +4794,7 @@ function PortfolioHelperMessage({
       }`}
     >
       {renderedKind === 'navigation' ? (
-        <span className="leading-8">
+        <span className="leading-6">
           Use{' '}
           <KeyboardKey icon={faArrowLeft} ariaLabel="left arrow" />
           <KeyboardKey icon={faArrowRight} ariaLabel="right arrow" />
@@ -4804,7 +4804,7 @@ function PortfolioHelperMessage({
           <KeyboardKey label="1" />, etc. to navigate sections
         </span>
       ) : (
-        <span className="leading-8">
+        <span className="leading-6">
           Press <KeyboardKey label="ESC" /> to close
         </span>
       )}
