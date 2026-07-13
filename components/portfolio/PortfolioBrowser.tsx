@@ -29,6 +29,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import type { IconProp } from '@fortawesome/fontawesome-svg-core';
 import {
   faArrowDown,
+  faArrowLeft,
+  faArrowRight,
   faArrowUp,
   faCircle,
   faFilePdf,
@@ -101,6 +103,7 @@ type ModalTransitionRect = {
   height: number;
 };
 type PortfolioIntroPhase = 'loading' | 'revealing' | 'ready' | 'error';
+type PortfolioHelperMessageKind = 'navigation' | 'close' | null;
 type PendingNavigation =
   | { kind: 'project'; projectIndex: number }
   | { kind: 'slide'; projectIndex: number; slideIndex: number }
@@ -3880,13 +3883,13 @@ export function PortfolioBrowser({
         (slide) => slide.id === pendingNavigationSlide.id
       )
     : null;
-  const helperMessage =
+  const helperMessageKind: PortfolioHelperMessageKind =
     renderedIntroPhase !== 'ready'
       ? null
       : shouldShowModal
-        ? 'Press ESC to close'
+        ? 'close'
         : activeProjectIndex === START_SCREEN_INDEX
-          ? 'Use arrow or number keys to navigate'
+          ? 'navigation'
           : null;
   const canMoveHorizontally = activeNavigationSlides.length > 1;
   const previousSlide = activeProject
@@ -4648,7 +4651,7 @@ export function PortfolioBrowser({
         />
       ) : null}
 
-      <PortfolioHelperMessage message={helperMessage} />
+      <PortfolioHelperMessage kind={helperMessageKind} />
 
       <div
         ref={curtainRef}
@@ -4731,25 +4734,80 @@ function SectionBlurb({
   );
 }
 
-function PortfolioHelperMessage({ message }: { message: string | null }) {
-  const messageRef = useRef<HTMLSpanElement | null>(null);
+function KeyboardKey({
+  icon,
+  label,
+  ariaLabel,
+}: {
+  icon?: IconProp;
+  label?: string;
+  ariaLabel?: string;
+}) {
+  return (
+    <kbd
+      aria-label={ariaLabel}
+      className="relative mx-0.5 inline-grid h-7 min-w-7 place-items-center rounded-sm bg-white/40 px-1 pb-1 pt-0.5 align-middle"
+    >
+      <span
+        className={`grid h-5 min-w-5 -translate-y-0.5 place-items-center rounded-xs bg-white font-black leading-none text-black ${
+          label ? 'px-1.5 text-[0.6875rem]' : 'px-0'
+        }`}
+        aria-hidden={ariaLabel ? true : undefined}
+      >
+        {icon ? (
+          <FontAwesomeIcon icon={icon} className="size-3.5" />
+        ) : (
+          label
+        )}
+      </span>
+    </kbd>
+  );
+}
 
-  useLayoutEffect(() => {
-    if (message && messageRef.current) {
-      messageRef.current.textContent = message;
+function PortfolioHelperMessage({
+  kind,
+}: {
+  kind: PortfolioHelperMessageKind;
+}) {
+  const [renderedKind, setRenderedKind] = useState<
+    Exclude<PortfolioHelperMessageKind, null>
+  >(kind ?? 'navigation');
+  const isVisible = kind !== null && renderedKind === kind;
+
+  useEffect(() => {
+    if (!kind || kind === renderedKind) {
+      return;
     }
-  }, [message]);
+
+    const frame = requestAnimationFrame(() => setRenderedKind(kind));
+
+    return () => cancelAnimationFrame(frame);
+  }, [kind, renderedKind]);
 
   return (
     <div
       role="status"
       aria-live="polite"
-      aria-hidden={message ? undefined : true}
+      aria-hidden={isVisible ? undefined : true}
       className={`pointer-events-none fixed bottom-5 right-5 z-[110] max-w-[calc(100vw-2.5rem)] rounded-full bg-black/80 px-4 py-2 text-sm font-bold leading-tight text-white backdrop-blur-md transition-[opacity,transform] duration-300 ease-out motion-reduce:transform-none motion-reduce:transition-opacity ${
-        message ? 'translate-y-0 opacity-100' : 'translate-y-2 opacity-0'
+        isVisible ? 'translate-y-0 opacity-100' : 'translate-y-2 opacity-0'
       }`}
     >
-      <span ref={messageRef} />
+      {renderedKind === 'navigation' ? (
+        <span className="leading-8">
+          Use{' '}
+          <KeyboardKey icon={faArrowLeft} ariaLabel="left arrow" />
+          <KeyboardKey icon={faArrowRight} ariaLabel="right arrow" />
+          <KeyboardKey icon={faArrowUp} ariaLabel="up arrow" />
+          <KeyboardKey icon={faArrowDown} ariaLabel="down arrow" />, or{' '}
+          <KeyboardKey label="0" />,
+          <KeyboardKey label="1" />, etc. to navigate sections
+        </span>
+      ) : (
+        <span className="leading-8">
+          Press <KeyboardKey label="ESC" /> to close
+        </span>
+      )}
     </div>
   );
 }
