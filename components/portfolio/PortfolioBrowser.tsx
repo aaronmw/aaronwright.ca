@@ -3886,7 +3886,7 @@ export function PortfolioBrowser({
   const helperMessageKind: PortfolioHelperMessageKind =
     renderedIntroPhase !== 'ready'
       ? null
-      : shouldShowModal
+      : isModalPresentationActive
         ? 'close'
         : activeProjectIndex === START_SCREEN_INDEX
           ? 'navigation'
