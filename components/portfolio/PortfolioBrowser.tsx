@@ -119,6 +119,10 @@ const NAVIGATION_RING_SIZE_REM = 3;
 const NAVIGATION_INDICATOR_PAIR_STAGGER_MS = 90;
 const NAVIGATION_INDICATOR_SIDE_LEAD_MS = 30;
 const NAVIGATION_INDICATOR_TRANSITION_MS = 500;
+const NAVIGATION_TRAVEL_BASE_SECONDS = 0.48;
+const NAVIGATION_TRAVEL_SECONDS_PER_SCREEN = 0.08;
+const NAVIGATION_TRAVEL_MAX_SECONDS = 0.85;
+const NAVIGATION_TRAVEL_EASE = 'power2.inOut';
 const SECTION_NAV_ITEM_STEP_REM = 3.75;
 const SECTION_NAV_PREVIEW_RETURN_DELAY_MS = 140;
 const SECTION_NAV_SNAP_DISTANCE_PX = 10;
@@ -197,6 +201,21 @@ type LoopingCarouselEntry<T> = {
   key: string;
   realIndex: number;
 };
+
+type SlideIndicatorMotionController = {
+  begin: (targetIndex: number) => void;
+  update: (position: number) => void;
+  complete: (targetIndex: number) => void;
+  cancel: () => void;
+};
+
+function getNavigationTravelDuration(distanceInScreens: number) {
+  return Math.min(
+    NAVIGATION_TRAVEL_MAX_SECONDS,
+    NAVIGATION_TRAVEL_BASE_SECONDS +
+      Math.abs(distanceInScreens) * NAVIGATION_TRAVEL_SECONDS_PER_SCREEN
+  );
+}
 
 function getLoopingCarouselEntries<T extends { id: string }>(
   items: T[],
@@ -829,6 +848,9 @@ export function PortfolioBrowser({
 }: PortfolioBrowserProps) {
   const keyboardSurfaceRef = useRef<HTMLElement>(null);
   const verticalRef = useRef<HTMLDivElement>(null);
+  const verticalScrollTweenRef = useRef<gsap.core.Tween | null>(null);
+  const slideIndicatorMotionControllerRef =
+    useRef<SlideIndicatorMotionController | null>(null);
   const horizontalRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const horizontalScrollTweenRefs = useRef<
     Record<string, gsap.core.Tween | null>
@@ -896,6 +918,9 @@ export function PortfolioBrowser({
   const sectionNavClickAxisRefs = useRef<
     Record<'left' | 'right', 'horizontal' | 'vertical' | null>
   >({ left: null, right: null });
+  const sectionNavClickMotionRefs = useRef<
+    Record<'left' | 'right', 'target-pinned' | 'scroll-linked'>
+  >({ left: 'target-pinned', right: 'target-pinned' });
   const sectionNavClickTargetPinnedRefs = useRef<
     Record<'left' | 'right', boolean>
   >({ left: false, right: false });
@@ -1442,7 +1467,8 @@ export function PortfolioBrowser({
       side: 'left' | 'right',
       itemIndex: number,
       axis: 'horizontal' | 'vertical',
-      onAttached?: () => void
+      onAttached?: () => void,
+      motion: 'target-pinned' | 'scroll-linked' = 'target-pinned'
     ) => {
       const sideIndex = side === 'left' ? 0 : 1;
       const preview = sectionNavPreviewRefs.current[sideIndex];
@@ -1461,6 +1487,7 @@ export function PortfolioBrowser({
       sectionNavPointerAcquiringRefs.current[side] = false;
       sectionNavClickTargetIndexesRef.current[side] = itemIndex;
       sectionNavClickAxisRefs.current[side] = axis;
+      sectionNavClickMotionRefs.current[side] = motion;
       sectionNavClickTargetPinnedRefs.current[side] = alreadyPinned;
       if (axis === 'vertical') {
         sectionNavAffordancePreviewIndexRef.current = null;
@@ -1470,6 +1497,18 @@ export function PortfolioBrowser({
       }
       sectionNavTooltipsSuppressedRef.current = true;
       hideSectionNavTooltips();
+      if (motion === 'scroll-linked') {
+        sectionNavClickPhaseRefs.current[side] = 'recentering';
+        sectionNavAttachmentCallbacksRef.current[side] = null;
+        sectionNavPreviewIndexesRef.current[sideIndex] = null;
+        animateSectionNavRingStroke(side, 4);
+        if (preview) {
+          gsap.killTweensOf(preview);
+          gsap.set(preview, { y: 0, clearProps: 'color' });
+        }
+        return;
+      }
+
       sectionNavClickPhaseRefs.current[side] = onAttached
         ? 'attaching'
         : 'recentering';
@@ -1512,14 +1551,16 @@ export function PortfolioBrowser({
       sourceSide: 'left' | 'right',
       itemIndex: number,
       axis: 'horizontal' | 'vertical',
-      onAttached?: () => void
+      onAttached?: () => void,
+      motion: 'target-pinned' | 'scroll-linked' = 'target-pinned'
     ) => {
       (['left', 'right'] as const).forEach((side) => {
         lockSectionNavIndicatorToItem(
           side,
           itemIndex,
           axis,
-          side === sourceSide ? onAttached : undefined
+          side === sourceSide ? onAttached : undefined,
+          motion
         );
       });
     },
@@ -1537,52 +1578,60 @@ export function PortfolioBrowser({
         return;
       }
 
+      const finishSettlement = () => {
+        if (sectionNavClickTargetIndexesRef.current[side] !== itemIndex) {
+          return;
+        }
+
+        sectionNavClickTargetIndexesRef.current[side] = null;
+        sectionNavClickPhaseRefs.current[side] = null;
+        sectionNavClickAxisRefs.current[side] = null;
+        sectionNavClickMotionRefs.current[side] = 'target-pinned';
+        sectionNavClickTargetPinnedRefs.current[side] = false;
+        sectionNavAttachmentCallbacksRef.current[side] = null;
+        const tooltipsSuppressed = Object.values(
+          sectionNavClickTargetIndexesRef.current
+        ).some((targetIndex) => targetIndex !== null);
+        sectionNavTooltipsSuppressedRef.current = tooltipsSuppressed;
+        sectionNavAffordanceSyncRef.current(
+          sectionNavScrollPositionRef.current
+        );
+
+        if (!tooltipsSuppressed) {
+          const pointerOwner = sectionNavPointerOwnerRef.current;
+
+          if (
+            pointerOwner &&
+            sectionNavTooltipIndexesRef.current[pointerOwner] !== null
+          ) {
+            setSectionNavTooltipText(
+              pointerOwner,
+              sectionNavTooltipIndexesRef.current[pointerOwner]
+            );
+            setSectionNavTooltipVisibility(pointerOwner, true);
+          }
+        }
+        const pointerY = sectionNavPointerYRefs.current[side];
+
+        if (pointerY !== null && sectionNavPointerArmedRefs.current[side]) {
+          sectionNavPointerAcquiringRefs.current[side] = true;
+          trackSectionNavPointer(side, pointerY);
+          return;
+        }
+
+        returnSectionNavPointerToIdle(side, false);
+      };
+
+      if (sectionNavClickMotionRefs.current[side] === 'scroll-linked') {
+        finishSettlement();
+        return;
+      }
+
       positionSectionNavClickTarget(
         side,
         itemIndex,
         sectionNavClickTargetPinnedRefs.current[side] ? 0 : 0.2,
-        () => {
-          if (sectionNavClickTargetIndexesRef.current[side] !== itemIndex) {
-            return;
-          }
-
-          sectionNavClickTargetIndexesRef.current[side] = null;
-          sectionNavClickPhaseRefs.current[side] = null;
-          sectionNavClickAxisRefs.current[side] = null;
-          sectionNavClickTargetPinnedRefs.current[side] = false;
-          sectionNavAttachmentCallbacksRef.current[side] = null;
-          const tooltipsSuppressed = Object.values(
-            sectionNavClickTargetIndexesRef.current
-          ).some((targetIndex) => targetIndex !== null);
-          sectionNavTooltipsSuppressedRef.current = tooltipsSuppressed;
-          sectionNavAffordanceSyncRef.current(
-            sectionNavScrollPositionRef.current
-          );
-
-          if (!tooltipsSuppressed) {
-            const pointerOwner = sectionNavPointerOwnerRef.current;
-
-            if (
-              pointerOwner &&
-              sectionNavTooltipIndexesRef.current[pointerOwner] !== null
-            ) {
-              setSectionNavTooltipText(
-                pointerOwner,
-                sectionNavTooltipIndexesRef.current[pointerOwner]
-              );
-              setSectionNavTooltipVisibility(pointerOwner, true);
-            }
-          }
-          const pointerY = sectionNavPointerYRefs.current[side];
-
-          if (pointerY !== null && sectionNavPointerArmedRefs.current[side]) {
-            sectionNavPointerAcquiringRefs.current[side] = true;
-            trackSectionNavPointer(side, pointerY);
-            return;
-          }
-
-          returnSectionNavPointerToIdle(side, false);
-        }
+        finishSettlement
       );
     },
     [
@@ -1618,6 +1667,33 @@ export function PortfolioBrowser({
     },
     [settleSectionNavClickTarget]
   );
+  const cancelScrollLinkedSectionNavigation = useCallback(() => {
+    (['left', 'right'] as const).forEach((side, sideIndex) => {
+      if (
+        sectionNavClickTargetIndexesRef.current[side] === null ||
+        sectionNavClickMotionRefs.current[side] !== 'scroll-linked'
+      ) {
+        return;
+      }
+
+      sectionNavClickTargetIndexesRef.current[side] = null;
+      sectionNavClickPhaseRefs.current[side] = null;
+      sectionNavClickAxisRefs.current[side] = null;
+      sectionNavClickMotionRefs.current[side] = 'target-pinned';
+      sectionNavClickTargetPinnedRefs.current[side] = false;
+      sectionNavAttachmentCallbacksRef.current[side] = null;
+      sectionNavPreviewIndexesRef.current[sideIndex] = null;
+      const preview = sectionNavPreviewRefs.current[sideIndex];
+
+      if (preview) {
+        gsap.killTweensOf(preview);
+        gsap.set(preview, { y: 0, clearProps: 'color' });
+      }
+    });
+
+    sectionNavTooltipsSuppressedRef.current = false;
+    sectionNavAffordanceSyncRef.current(sectionNavScrollPositionRef.current);
+  }, []);
 
   const projectSlides = useMemo(
     () =>
@@ -1776,6 +1852,18 @@ export function PortfolioBrowser({
   const focusKeyboardSurface = useCallback(() => {
     keyboardSurfaceRef.current?.focus({ preventScroll: true });
   }, []);
+  const restoreVerticalScrollSnap = useCallback(() => {
+    verticalRef.current?.style.removeProperty('scroll-snap-type');
+  }, []);
+  const cancelVerticalScrollTween = useCallback(() => {
+    verticalScrollTweenRef.current?.kill();
+    verticalScrollTweenRef.current = null;
+    restoreVerticalScrollSnap();
+  }, [restoreVerticalScrollSnap]);
+  const cancelVerticalUserTravel = useCallback(() => {
+    cancelVerticalScrollTween();
+    cancelScrollLinkedSectionNavigation();
+  }, [cancelScrollLinkedSectionNavigation, cancelVerticalScrollTween]);
 
   const resetDescriptionScroll = useCallback((project: PortfolioProject) => {
     descriptionRefs.current[project.slug]?.scrollTo({ top: 0 });
@@ -1871,7 +1959,8 @@ export function PortfolioBrowser({
       project: PortfolioProject,
       slideIndex: number,
       behavior: ScrollBehavior,
-      onComplete?: () => void
+      onComplete?: () => void,
+      syncIndicator = false
     ) => {
       const carousel = horizontalRefs.current[project.slug];
 
@@ -1915,6 +2004,12 @@ export function PortfolioBrowser({
         setProjectBoundaryBlur(project.slug, false);
         carousel.style.removeProperty('scroll-snap-type');
         carousel.scrollTo({ left: targetScrollLeft, behavior: 'auto' });
+        if (syncIndicator) {
+          slideIndicatorMotionControllerRef.current?.update(nextCarouselIndex);
+          slideIndicatorMotionControllerRef.current?.complete(
+            nextCarouselIndex
+          );
+        }
         onComplete?.();
         return;
       }
@@ -1925,15 +2020,34 @@ export function PortfolioBrowser({
         Math.max(carousel.clientWidth, 1);
       const tween = gsap.to(carousel, {
         scrollLeft: targetScrollLeft,
-        duration: Math.min(0.85, 0.48 + distanceInSlides * 0.08),
-        ease: 'power3.out',
+        duration: getNavigationTravelDuration(distanceInSlides),
+        ease: NAVIGATION_TRAVEL_EASE,
         overwrite: 'auto',
+        onUpdate: () => {
+          if (!syncIndicator) {
+            return;
+          }
+
+          const renderedPosition =
+            carousel.scrollLeft / Math.max(carousel.clientWidth, 1);
+          slideIndicatorMotionControllerRef.current?.update(
+            renderedPosition - 1
+          );
+        },
         onComplete: () => {
           if (horizontalScrollTweenRefs.current[project.slug] === tween) {
             horizontalScrollTweenRefs.current[project.slug] = null;
             carousel.style.removeProperty('scroll-snap-type');
             carousel.scrollTo({ left: targetScrollLeft, behavior: 'auto' });
             setProjectBoundaryBlur(project.slug, false);
+            if (syncIndicator) {
+              slideIndicatorMotionControllerRef.current?.update(
+                nextCarouselIndex
+              );
+              slideIndicatorMotionControllerRef.current?.complete(
+                nextCarouselIndex
+              );
+            }
             onComplete?.();
           }
         },
@@ -2282,16 +2396,27 @@ export function PortfolioBrowser({
       horizontalTargetSlideIndexesRef.current[project.slug] = nextIndex;
       horizontalKeyboardIndicatorIndexesRef.current[project.slug] =
         getCarouselIndexFromSlideIndex(project, nextIndex);
-      scrollHorizontalToRealIndex(project, nextIndex, scrollBehavior, () => {
-        updateUrl(project, nextSlide, mode);
-        startTransition(() => {
-          setActiveSlideIndexes((indexes) =>
-            indexes.map((index, currentProjectIndex) =>
-              currentProjectIndex === projectIndex ? nextIndex : index
-            )
-          );
-        });
-      });
+      const nextCarouselIndex = getCarouselIndexFromSlideIndex(
+        project,
+        nextIndex
+      );
+      slideIndicatorMotionControllerRef.current?.begin(nextCarouselIndex);
+      scrollHorizontalToRealIndex(
+        project,
+        nextIndex,
+        scrollBehavior,
+        () => {
+          updateUrl(project, nextSlide, mode);
+          startTransition(() => {
+            setActiveSlideIndexes((indexes) =>
+              indexes.map((index, currentProjectIndex) =>
+                currentProjectIndex === projectIndex ? nextIndex : index
+              )
+            );
+          });
+        },
+        true
+      );
     },
     [
       beginHorizontalScrollSync,
@@ -2340,10 +2465,42 @@ export function PortfolioBrowser({
       setActiveProjectIndex(boundedIndex);
 
       if (vertical) {
-        vertical.scrollTo({
-          top: vertical.clientHeight * (boundedIndex + 1),
-          behavior,
-        });
+        const targetScrollTop = vertical.clientHeight * (boundedIndex + 1);
+        const distanceInScreens =
+          Math.abs(targetScrollTop - vertical.scrollTop) /
+          Math.max(vertical.clientHeight, 1);
+
+        cancelVerticalScrollTween();
+        if (
+          behavior !== 'smooth' ||
+          window.matchMedia('(prefers-reduced-motion: reduce)').matches
+        ) {
+          vertical.scrollTo({ top: targetScrollTop, behavior: 'auto' });
+        } else {
+          vertical.style.setProperty('scroll-snap-type', 'none');
+          const tween = gsap.to(vertical, {
+            scrollTop: targetScrollTop,
+            duration: getNavigationTravelDuration(distanceInScreens),
+            ease: NAVIGATION_TRAVEL_EASE,
+            overwrite: 'auto',
+            onUpdate: () => {
+              ScrollTrigger.update();
+            },
+            onComplete: () => {
+              if (verticalScrollTweenRef.current === tween) {
+                verticalScrollTweenRef.current = null;
+              }
+              restoreVerticalScrollSnap();
+            },
+            onInterrupt: () => {
+              if (verticalScrollTweenRef.current === tween) {
+                verticalScrollTweenRef.current = null;
+              }
+              restoreVerticalScrollSnap();
+            },
+          });
+          verticalScrollTweenRef.current = tween;
+        }
       }
 
       if (boundedIndex === START_SCREEN_INDEX) {
@@ -2372,10 +2529,12 @@ export function PortfolioBrowser({
     },
     [
       activeSlideIndexes,
+      cancelVerticalScrollTween,
       isWideLayout,
       prepareMediaNavigation,
       projectSlides,
       resetDescriptionScroll,
+      restoreVerticalScrollSnap,
       scrollHorizontalToRealIndex,
       updateUrl,
     ]
@@ -2442,6 +2601,15 @@ export function PortfolioBrowser({
       if (!canNavigate) {
         return;
       }
+
+      const modalCarouselIndex = projectSlides[activeProject.slug]
+        .filter((projectSlide) =>
+          isModalScreenshotSlide(activeProject, projectSlide)
+        )
+        .findIndex((projectSlide) => projectSlide.id === slide.id);
+      slideIndicatorMotionControllerRef.current?.begin(
+        Math.max(0, modalCarouselIndex)
+      );
 
       setActiveSlideIndexes((indexes) =>
         indexes.map((index, currentProjectIndex) =>
@@ -3028,6 +3196,13 @@ export function PortfolioBrowser({
       if (event.key === '0') {
         event.preventDefault();
         focusKeyboardSurface();
+        lockSectionNavIndicatorsToItem(
+          'left',
+          0,
+          'vertical',
+          undefined,
+          'scroll-linked'
+        );
         setActiveProject(START_SCREEN_INDEX, 'push');
         return;
       }
@@ -3038,6 +3213,13 @@ export function PortfolioBrowser({
         if (projectIndex < portfolioSlides.length) {
           event.preventDefault();
           focusKeyboardSurface();
+          lockSectionNavIndicatorsToItem(
+            'left',
+            projectIndex + 1,
+            'vertical',
+            undefined,
+            'scroll-linked'
+          );
           setActiveProject(projectIndex, 'push', 'smooth', 0);
           return;
         }
@@ -3335,11 +3517,13 @@ export function PortfolioBrowser({
             const hasPointer = Object.values(
               sectionNavPointerArmedRefs.current
             ).some(Boolean);
-            const hasClickTarget = Object.values(
-              sectionNavClickTargetIndexesRef.current
-            ).some((targetIndex) => targetIndex !== null);
+            const hasPinnedClickTarget = (['left', 'right'] as const).some(
+              (side) =>
+                sectionNavClickTargetIndexesRef.current[side] !== null &&
+                sectionNavClickMotionRefs.current[side] === 'target-pinned'
+            );
 
-            if (!hasPointer && !hasClickTarget) {
+            if (!hasPointer && !hasPinnedClickTarget) {
               applySectionNavScrollScale(scrollPosition);
             }
 
@@ -3352,6 +3536,13 @@ export function PortfolioBrowser({
               const pointerY = sectionNavPointerYRefs.current[side];
 
               if (clickTargetIndex !== null) {
+                if (
+                  sectionNavClickMotionRefs.current[side] === 'scroll-linked'
+                ) {
+                  gsap.set(preview, { y: 0, clearProps: 'color' });
+                  return;
+                }
+
                 positionSectionNavClickTarget(
                   side,
                   clickTargetIndex,
@@ -3607,6 +3798,9 @@ export function PortfolioBrowser({
   useEffect(
     () => () => {
       clearHorizontalScrollSync();
+      verticalScrollTweenRef.current?.kill();
+      verticalScrollTweenRef.current = null;
+      restoreVerticalScrollSnap();
       Object.values(horizontalScrollTweenRefs.current).forEach((tween) => {
         tween?.kill();
       });
@@ -3614,7 +3808,7 @@ export function PortfolioBrowser({
         carousel?.style.removeProperty('scroll-snap-type');
       });
     },
-    [clearHorizontalScrollSync]
+    [clearHorizontalScrollSync, restoreVerticalScrollSnap]
   );
 
   useEffect(
@@ -3926,8 +4120,10 @@ export function PortfolioBrowser({
                 side,
                 itemIndex,
                 'vertical',
-                showProject
+                undefined,
+                'scroll-linked'
               );
+              showProject();
             } else {
               lockSectionNavIndicatorsToItem(side, itemIndex, 'vertical');
               showProject();
@@ -3970,6 +4166,7 @@ export function PortfolioBrowser({
           }
 
           event.preventDefault();
+          cancelVerticalUserTravel();
           const deltaScale =
             event.deltaMode === WheelEvent.DOM_DELTA_LINE
               ? 16
@@ -4035,6 +4232,9 @@ export function PortfolioBrowser({
     >
       <div
         ref={verticalRef}
+        onPointerDownCapture={cancelVerticalUserTravel}
+        onTouchStartCapture={cancelVerticalUserTravel}
+        onWheelCapture={cancelVerticalUserTravel}
         className={`h-dvh overscroll-none portfolio-scrollbar-none ${
           renderedIntroPhase === 'ready' ? 'snap-y snap-mandatory' : 'snap-none'
         } ${
@@ -4375,6 +4575,7 @@ export function PortfolioBrowser({
           }`}
         >
           <AnimatedSlideIndicators
+            controllerRef={slideIndicatorMotionControllerRef}
             projectTitle={activeProject?.title ?? 'Portfolio'}
             slides={activeNavigationSlides}
             activeIndex={activeNavigationIndex}
@@ -4406,6 +4607,7 @@ export function PortfolioBrowser({
 
       {shouldShowModal && activeProject && activeScreenshot ? (
         <ImageModal
+          indicatorMotionControllerRef={slideIndicatorMotionControllerRef}
           project={activeProject}
           projectColor={activeProjectColor}
           screenshot={activeScreenshot}
@@ -4507,6 +4709,7 @@ type IndicatorTransitionState = {
 };
 
 function AnimatedSlideIndicators({
+  controllerRef,
   projectTitle,
   slides,
   activeIndex,
@@ -4514,6 +4717,9 @@ function AnimatedSlideIndicators({
   color,
   onSelect,
 }: {
+  controllerRef: {
+    current: SlideIndicatorMotionController | null;
+  };
   projectTitle: string;
   slides: ProjectSlide[];
   activeIndex: number;
@@ -4804,33 +5010,74 @@ function AnimatedSlideIndicators({
     );
   };
 
-  const lockRingToIndex = (index: number) => {
+  const beginSourceLinkedTravel = (index: number) => {
     clearPreviewReturnTimeout();
     snappedIndexRef.current = null;
     snapTransitioningRef.current = false;
     clickTargetIndexRef.current = index;
+    activeIndexRef.current = index;
     animateRingStroke(4);
-    moveRingToIndex(index, 0.3, () => {
-      if (clickTargetIndexRef.current !== index) {
-        return;
-      }
-
-      clickTargetIndexRef.current = null;
-      const pointerX = pointerXRef.current;
-
-      if (pointerArmedRef.current && pointerX !== null) {
-        pointerAcquiringRef.current = true;
-        animateRingStroke(2);
-        trackPointer(pointerX, true);
-        return;
-      }
-
-      if (focusedIndexRef.current !== null) {
-        animateRingStroke(2);
-        moveRingToIndex(focusedIndexRef.current);
-      }
-    });
+    ringTweenRef.current?.kill();
+    ringTweenRef.current = null;
   };
+
+  const updateSourceLinkedTravel = (position: number) => {
+    const ring = ringRef.current;
+
+    if (!ring) {
+      return;
+    }
+
+    ringTweenRef.current?.kill();
+    ringTweenRef.current = null;
+    gsap.set(ring, {
+      x: `${getHorizontalIndicatorRingX(position)}rem`,
+      yPercent: -50,
+    });
+    applyActiveScale(position);
+  };
+
+  const completeSourceLinkedTravel = (index: number) => {
+    updateSourceLinkedTravel(index);
+
+    if (clickTargetIndexRef.current !== index) {
+      return;
+    }
+
+    clickTargetIndexRef.current = null;
+    const pointerX = pointerXRef.current;
+
+    if (pointerArmedRef.current && pointerX !== null) {
+      pointerAcquiringRef.current = true;
+      animateRingStroke(2);
+      trackPointer(pointerX, true);
+      return;
+    }
+
+    if (focusedIndexRef.current !== null) {
+      animateRingStroke(2);
+      moveRingToIndex(focusedIndexRef.current);
+    }
+  };
+
+  useLayoutEffect(() => {
+    const controller: SlideIndicatorMotionController = {
+      begin: beginSourceLinkedTravel,
+      update: updateSourceLinkedTravel,
+      complete: completeSourceLinkedTravel,
+      cancel: () => {
+        clickTargetIndexRef.current = null;
+        moveRingToIndex(boundedActiveIndex);
+      },
+    };
+    controllerRef.current = controller;
+
+    return () => {
+      if (controllerRef.current === controller) {
+        controllerRef.current = null;
+      }
+    };
+  });
 
   const focusRingAtIndex = (index: number) => {
     focusedIndexRef.current = index;
@@ -5112,10 +5359,7 @@ function AnimatedSlideIndicators({
                 }}
                 onFocus={() => focusRingAtIndex(targetIndex)}
                 onBlur={() => releaseFocusedRing(targetIndex)}
-                onClick={() => {
-                  lockRingToIndex(targetIndex);
-                  onSelect(slide);
-                }}
+                onClick={() => onSelect(slide)}
               >
                 <span
                   data-portfolio-slide-indicator-visual={targetIndex}
@@ -5719,6 +5963,7 @@ function ScreenshotMedia({
 }
 
 function ImageModal({
+  indicatorMotionControllerRef,
   project,
   projectColor,
   screenshot,
@@ -5730,6 +5975,9 @@ function ImageModal({
   onClose,
   onExited,
 }: {
+  indicatorMotionControllerRef: {
+    current: SlideIndicatorMotionController | null;
+  };
   project: PortfolioProject;
   projectColor?: string;
   screenshot: PortfolioScreenshot;
@@ -6004,27 +6252,47 @@ function ImageModal({
     const targetX =
       -renderedCarouselIndex *
       (window.innerWidth + MODAL_CAROUSEL_GAP_PX);
+    const carouselStride = window.innerWidth + MODAL_CAROUSEL_GAP_PX;
 
     if (isFirstPosition || didCarouselChange) {
       setIsBoundaryBlurTransition(false);
       gsap.set(carouselTrack, { x: targetX, xPercent: 0 });
+      indicatorMotionControllerRef.current?.update(
+        boundedActiveScreenshotIndex
+      );
       return;
     }
 
     setIsBoundaryBlurTransition(isBoundary && carouselCount > 2);
     gsap.set(carouselTrack, { willChange: 'transform' });
+    const currentX = Number(gsap.getProperty(carouselTrack, 'x')) || 0;
+    const distanceInSlides = Math.abs(targetX - currentX) / carouselStride;
     const tween = gsap.to(carouselTrack, {
       x: targetX,
       xPercent: 0,
-      duration: prefersReducedMotion() ? 0 : isBoundary ? 1 : 0.5,
-      ease: isBoundary ? 'power2.inOut' : 'power3.out',
+      duration: prefersReducedMotion()
+        ? 0
+        : getNavigationTravelDuration(distanceInSlides),
+      ease: NAVIGATION_TRAVEL_EASE,
       overwrite: 'auto',
+      onUpdate: () => {
+        const liveX = Number(gsap.getProperty(carouselTrack, 'x')) || 0;
+        indicatorMotionControllerRef.current?.update(
+          -liveX / carouselStride - 1
+        );
+      },
       onComplete: () => {
         if (carouselTweenRef.current === tween) {
           carouselTweenRef.current = null;
         }
         setIsBoundaryBlurTransition(false);
         gsap.set(carouselTrack, { clearProps: 'willChange' });
+        indicatorMotionControllerRef.current?.update(
+          boundedActiveScreenshotIndex
+        );
+        indicatorMotionControllerRef.current?.complete(
+          boundedActiveScreenshotIndex
+        );
       },
       onInterrupt: () => {
         if (carouselTweenRef.current === tween) {
@@ -6045,6 +6313,7 @@ function ImageModal({
   }, [
     boundedActiveScreenshotIndex,
     carouselCount,
+    indicatorMotionControllerRef,
     prefersReducedMotion,
     renderedCarouselIndex,
   ]);
