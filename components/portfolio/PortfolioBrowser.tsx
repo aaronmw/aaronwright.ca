@@ -4755,6 +4755,7 @@ function AnimatedSlideIndicators({
   const snappedIndexRef = useRef<number | null>(null);
   const snapTransitioningRef = useRef(false);
   const clickTargetIndexRef = useRef<number | null>(null);
+  const pointerPinnedIndexRef = useRef<number | null>(null);
   const focusedIndexRef = useRef<number | null>(null);
   const ringStrokeWidthRef = useRef<2 | 4>(4);
   const activeIndexRef = useRef(boundedActiveIndex);
@@ -5017,14 +5018,28 @@ function AnimatedSlideIndicators({
     clickTargetIndexRef.current = index;
     activeIndexRef.current = index;
     animateRingStroke(4);
-    ringTweenRef.current?.kill();
-    ringTweenRef.current = null;
+
+    if (pointerPinnedIndexRef.current === null) {
+      ringTweenRef.current?.kill();
+      ringTweenRef.current = null;
+    }
+  };
+
+  const pinPointerTravel = (index: number) => {
+    clearPreviewReturnTimeout();
+    snappedIndexRef.current = index;
+    snapTransitioningRef.current = false;
+    clickTargetIndexRef.current = index;
+    pointerPinnedIndexRef.current = index;
+    activeIndexRef.current = index;
+    animateRingStroke(4);
+    moveRingToIndex(index, 0.2);
   };
 
   const updateSourceLinkedTravel = (position: number) => {
     const ring = ringRef.current;
 
-    if (!ring) {
+    if (!ring || pointerPinnedIndexRef.current !== null) {
       return;
     }
 
@@ -5038,12 +5053,17 @@ function AnimatedSlideIndicators({
   };
 
   const completeSourceLinkedTravel = (index: number) => {
-    updateSourceLinkedTravel(index);
+    const wasPointerPinned = pointerPinnedIndexRef.current === index;
+
+    if (!wasPointerPinned) {
+      updateSourceLinkedTravel(index);
+    }
 
     if (clickTargetIndexRef.current !== index) {
       return;
     }
 
+    pointerPinnedIndexRef.current = null;
     clickTargetIndexRef.current = null;
     const pointerX = pointerXRef.current;
 
@@ -5066,6 +5086,7 @@ function AnimatedSlideIndicators({
       update: updateSourceLinkedTravel,
       complete: completeSourceLinkedTravel,
       cancel: () => {
+        pointerPinnedIndexRef.current = null;
         clickTargetIndexRef.current = null;
         moveRingToIndex(boundedActiveIndex);
       },
@@ -5106,6 +5127,7 @@ function AnimatedSlideIndicators({
     pointerXRef.current = null;
     snappedIndexRef.current = null;
     snapTransitioningRef.current = false;
+    pointerPinnedIndexRef.current = null;
     focusedIndexRef.current = null;
 
     if (previewReturnTimeoutRef.current) {
@@ -5275,6 +5297,7 @@ function AnimatedSlideIndicators({
       }}
       onPointerMove={(event) => {
         if (pointerArmedRef.current) {
+          pointerXRef.current = event.clientX;
           schedulePointerTracking(event.clientX);
         }
       }}
@@ -5357,6 +5380,7 @@ function AnimatedSlideIndicators({
                     engagePointer(event.clientX);
                   }
                 }}
+                onPointerDown={() => pinPointerTravel(targetIndex)}
                 onFocus={() => focusRingAtIndex(targetIndex)}
                 onBlur={() => releaseFocusedRing(targetIndex)}
                 onClick={() => onSelect(slide)}
