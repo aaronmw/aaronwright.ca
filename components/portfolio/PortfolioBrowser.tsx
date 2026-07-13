@@ -926,6 +926,10 @@ export function PortfolioBrowser({
   >({ left: [], right: [] });
   const sectionNavScrollPositionRef = useRef(0);
   const sectionNavActiveIndexRef = useRef(0);
+  const sectionNavAffordancePreviewIndexRef = useRef<number | null>(null);
+  const sectionNavAffordanceSyncRef = useRef<
+    (position: number, immediate?: boolean) => void
+  >(() => {});
   const sectionNavTooltipRefs = useRef<
     Record<'left' | 'right', HTMLDivElement | null>
   >({ left: null, right: null });
@@ -1440,6 +1444,12 @@ export function PortfolioBrowser({
       sectionNavPointerAcquiringRefs.current[side] = false;
       sectionNavClickTargetIndexesRef.current[side] = itemIndex;
       sectionNavClickAxisRefs.current[side] = axis;
+      if (axis === 'vertical') {
+        sectionNavAffordancePreviewIndexRef.current = null;
+        sectionNavAffordanceSyncRef.current(
+          sectionNavScrollPositionRef.current
+        );
+      }
       sectionNavTooltipsSuppressedRef.current = true;
       hideSectionNavTooltips();
       sectionNavClickPhaseRefs.current[side] = onAttached
@@ -1514,6 +1524,9 @@ export function PortfolioBrowser({
           sectionNavClickTargetIndexesRef.current
         ).some((targetIndex) => targetIndex !== null);
         sectionNavTooltipsSuppressedRef.current = tooltipsSuppressed;
+        sectionNavAffordanceSyncRef.current(
+          sectionNavScrollPositionRef.current
+        );
 
         if (!tooltipsSuppressed) {
           const pointerOwner = sectionNavPointerOwnerRef.current;
@@ -3196,6 +3209,14 @@ export function PortfolioBrowser({
         )
       );
       const setAffordanceLayers = (position: number, immediate = false) => {
+        const previewIndex = sectionNavAffordancePreviewIndexRef.current;
+        const verticalClickTarget = (['left', 'right'] as const)
+          .map((side) =>
+            sectionNavClickAxisRefs.current[side] === 'vertical'
+              ? sectionNavClickTargetIndexesRef.current[side]
+              : null
+          )
+          .find((itemIndex): itemIndex is number => itemIndex !== null);
         const lowerIndex = Math.max(0, Math.floor(position));
         const upperIndex = Math.min(
           SECTION_NAV_HAS_SLIDES.length - 1,
@@ -3219,6 +3240,13 @@ export function PortfolioBrowser({
 
           if (pending) {
             arrowOpacity = 1;
+          } else if (
+            itemIndex === verticalClickTarget ||
+            (itemIndex === previewIndex &&
+              itemIndex !== sectionNavActiveIndexRef.current)
+          ) {
+            arrowOpacity = 0;
+            dotOpacity = 1;
           } else if (!hasSlides) {
             if (
               directDotTransition &&
@@ -3255,6 +3283,7 @@ export function PortfolioBrowser({
           });
         });
       };
+      sectionNavAffordanceSyncRef.current = setAffordanceLayers;
       const timeline = gsap.timeline({
         defaults: { ease: 'none' },
         scrollTrigger: {
@@ -3412,7 +3441,10 @@ export function PortfolioBrowser({
       });
     }, keyboardSurfaceRef);
 
-    return () => context.revert();
+    return () => {
+      sectionNavAffordanceSyncRef.current = () => {};
+      context.revert();
+    };
   }, [
     applySectionNavScrollScale,
     initialSectionNavIndex,
@@ -3650,11 +3682,22 @@ export function PortfolioBrowser({
         sectionNavClickTargetIndexesRef.current
       ).some((targetIndex) => targetIndex !== null);
 
-      if (
-        sectionNavPointerYRefs.current[side] !== null ||
-        sectionNavIsMovingRef.current ||
-        indicatorsLocked
+      if (sectionNavIsMovingRef.current || indicatorsLocked) {
+        return;
+      }
+
+      if (previewed) {
+        sectionNavAffordancePreviewIndexRef.current = itemIndex;
+      } else if (
+        sectionNavAffordancePreviewIndexRef.current === itemIndex
       ) {
+        sectionNavAffordancePreviewIndexRef.current = null;
+      }
+      sectionNavAffordanceSyncRef.current(
+        sectionNavScrollPositionRef.current
+      );
+
+      if (sectionNavPointerYRefs.current[side] !== null) {
         return;
       }
 
