@@ -896,6 +896,9 @@ export function PortfolioBrowser({
   const sectionNavClickAxisRefs = useRef<
     Record<'left' | 'right', 'horizontal' | 'vertical' | null>
   >({ left: null, right: null });
+  const sectionNavClickTargetPinnedRefs = useRef<
+    Record<'left' | 'right', boolean>
+  >({ left: false, right: false });
   const sectionNavAttachmentCallbacksRef = useRef<
     Record<'left' | 'right', (() => void) | null>
   >({ left: null, right: null });
@@ -1441,9 +1444,24 @@ export function PortfolioBrowser({
       axis: 'horizontal' | 'vertical',
       onAttached?: () => void
     ) => {
+      const sideIndex = side === 'left' ? 0 : 1;
+      const preview = sectionNavPreviewRefs.current[sideIndex];
+      const target = sectionNavButtonRefs.current[side][itemIndex];
+      const currentPreviewY = preview
+        ? Number(gsap.getProperty(preview, 'y')) || 0
+        : 0;
+      const targetPreviewY =
+        preview && target
+          ? getSectionNavPreviewOffset(preview, target)
+          : currentPreviewY;
+      const alreadyPinned =
+        Boolean(preview && target) &&
+        Math.abs(currentPreviewY - targetPreviewY) <= 1;
+
       sectionNavPointerAcquiringRefs.current[side] = false;
       sectionNavClickTargetIndexesRef.current[side] = itemIndex;
       sectionNavClickAxisRefs.current[side] = axis;
+      sectionNavClickTargetPinnedRefs.current[side] = alreadyPinned;
       if (axis === 'vertical') {
         sectionNavAffordancePreviewIndexRef.current = null;
         sectionNavAffordanceSyncRef.current(
@@ -1469,14 +1487,22 @@ export function PortfolioBrowser({
             onAttached();
           }
         : undefined;
+      const finishPositioning = () => {
+        if (sectionNavClickTargetIndexesRef.current[side] !== itemIndex) {
+          return;
+        }
+
+        sectionNavClickTargetPinnedRefs.current[side] = true;
+        finishAttachment?.();
+      };
 
       sectionNavAttachmentCallbacksRef.current[side] =
-        finishAttachment ?? null;
+        onAttached ? finishPositioning : null;
       positionSectionNavClickTarget(
         side,
         itemIndex,
-        0.3,
-        finishAttachment
+        alreadyPinned ? 0 : 0.3,
+        finishPositioning
       );
     },
     [hideSectionNavTooltips, positionSectionNavClickTarget]
@@ -1511,47 +1537,53 @@ export function PortfolioBrowser({
         return;
       }
 
-      positionSectionNavClickTarget(side, itemIndex, 0.2, () => {
-        if (sectionNavClickTargetIndexesRef.current[side] !== itemIndex) {
-          return;
-        }
-
-        sectionNavClickTargetIndexesRef.current[side] = null;
-        sectionNavClickPhaseRefs.current[side] = null;
-        sectionNavClickAxisRefs.current[side] = null;
-        sectionNavAttachmentCallbacksRef.current[side] = null;
-        const tooltipsSuppressed = Object.values(
-          sectionNavClickTargetIndexesRef.current
-        ).some((targetIndex) => targetIndex !== null);
-        sectionNavTooltipsSuppressedRef.current = tooltipsSuppressed;
-        sectionNavAffordanceSyncRef.current(
-          sectionNavScrollPositionRef.current
-        );
-
-        if (!tooltipsSuppressed) {
-          const pointerOwner = sectionNavPointerOwnerRef.current;
-
-          if (
-            pointerOwner &&
-            sectionNavTooltipIndexesRef.current[pointerOwner] !== null
-          ) {
-            setSectionNavTooltipText(
-              pointerOwner,
-              sectionNavTooltipIndexesRef.current[pointerOwner]
-            );
-            setSectionNavTooltipVisibility(pointerOwner, true);
+      positionSectionNavClickTarget(
+        side,
+        itemIndex,
+        sectionNavClickTargetPinnedRefs.current[side] ? 0 : 0.2,
+        () => {
+          if (sectionNavClickTargetIndexesRef.current[side] !== itemIndex) {
+            return;
           }
-        }
-        const pointerY = sectionNavPointerYRefs.current[side];
 
-        if (pointerY !== null && sectionNavPointerArmedRefs.current[side]) {
-          sectionNavPointerAcquiringRefs.current[side] = true;
-          trackSectionNavPointer(side, pointerY);
-          return;
-        }
+          sectionNavClickTargetIndexesRef.current[side] = null;
+          sectionNavClickPhaseRefs.current[side] = null;
+          sectionNavClickAxisRefs.current[side] = null;
+          sectionNavClickTargetPinnedRefs.current[side] = false;
+          sectionNavAttachmentCallbacksRef.current[side] = null;
+          const tooltipsSuppressed = Object.values(
+            sectionNavClickTargetIndexesRef.current
+          ).some((targetIndex) => targetIndex !== null);
+          sectionNavTooltipsSuppressedRef.current = tooltipsSuppressed;
+          sectionNavAffordanceSyncRef.current(
+            sectionNavScrollPositionRef.current
+          );
 
-        returnSectionNavPointerToIdle(side, false);
-      });
+          if (!tooltipsSuppressed) {
+            const pointerOwner = sectionNavPointerOwnerRef.current;
+
+            if (
+              pointerOwner &&
+              sectionNavTooltipIndexesRef.current[pointerOwner] !== null
+            ) {
+              setSectionNavTooltipText(
+                pointerOwner,
+                sectionNavTooltipIndexesRef.current[pointerOwner]
+              );
+              setSectionNavTooltipVisibility(pointerOwner, true);
+            }
+          }
+          const pointerY = sectionNavPointerYRefs.current[side];
+
+          if (pointerY !== null && sectionNavPointerArmedRefs.current[side]) {
+            sectionNavPointerAcquiringRefs.current[side] = true;
+            trackSectionNavPointer(side, pointerY);
+            return;
+          }
+
+          returnSectionNavPointerToIdle(side, false);
+        }
+      );
     },
     [
       positionSectionNavClickTarget,
@@ -3323,7 +3355,7 @@ export function PortfolioBrowser({
                 positionSectionNavClickTarget(
                   side,
                   clickTargetIndex,
-                  0.12,
+                  sectionNavClickTargetPinnedRefs.current[side] ? 0 : 0.12,
                   sectionNavClickPhaseRefs.current[side] === 'attaching'
                     ? sectionNavAttachmentCallbacksRef.current[side] ?? undefined
                     : undefined
