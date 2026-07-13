@@ -3880,6 +3880,14 @@ export function PortfolioBrowser({
         (slide) => slide.id === pendingNavigationSlide.id
       )
     : null;
+  const helperMessage =
+    renderedIntroPhase !== 'ready'
+      ? null
+      : shouldShowModal
+        ? 'Press ESC to close'
+        : activeProjectIndex === START_SCREEN_INDEX
+          ? 'Use arrow or number keys to navigate'
+          : null;
   const canMoveHorizontally = activeNavigationSlides.length > 1;
   const previousSlide = activeProject
     ? activeNavigationSlides[
@@ -4640,6 +4648,8 @@ export function PortfolioBrowser({
         />
       ) : null}
 
+      <PortfolioHelperMessage message={helperMessage} />
+
       <div
         ref={curtainRef}
         data-portfolio-loading-curtain
@@ -4718,6 +4728,29 @@ function SectionBlurb({
         {children}
       </ReactMarkdown>
     </span>
+  );
+}
+
+function PortfolioHelperMessage({ message }: { message: string | null }) {
+  const messageRef = useRef<HTMLSpanElement | null>(null);
+
+  useLayoutEffect(() => {
+    if (message && messageRef.current) {
+      messageRef.current.textContent = message;
+    }
+  }, [message]);
+
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      aria-hidden={message ? undefined : true}
+      className={`pointer-events-none fixed bottom-5 right-5 z-[110] max-w-[calc(100vw-2.5rem)] rounded-full bg-black/80 px-4 py-2 text-sm font-bold leading-tight text-white backdrop-blur-md transition-[opacity,transform] duration-300 ease-out motion-reduce:transform-none motion-reduce:transition-opacity ${
+        message ? 'translate-y-0 opacity-100' : 'translate-y-2 opacity-0'
+      }`}
+    >
+      <span ref={messageRef} />
+    </div>
   );
 }
 
