@@ -4794,8 +4794,8 @@ function PortfolioHelperMessage({
       role="status"
       aria-live="polite"
       aria-hidden={isVisible ? undefined : true}
-      className={`pointer-events-none fixed bottom-5 right-5 z-[110] max-w-[calc(100vw-2.5rem)] rounded-full bg-white/10 px-4 py-2 text-sm font-normal leading-tight text-white backdrop-blur-md transition-opacity duration-300 ease-out ${
-        isVisible ? 'opacity-100' : 'opacity-0'
+      className={`pointer-events-none fixed bottom-5 right-5 z-[110] max-w-[calc(100vw-2.5rem)] rounded-full bg-white/10 px-4 py-2 text-sm font-normal leading-tight text-white backdrop-blur-md transition-[opacity,transform] duration-300 ease-out motion-reduce:transform-none motion-reduce:transition-opacity ${
+        isVisible ? 'translate-y-0 opacity-100' : 'translate-y-16 opacity-0'
       }`}
     >
       {renderedKind === 'navigation' ? (
@@ -6287,7 +6287,7 @@ function ImageModal({
         transformOrigin: 'center center',
       });
       gsap.set(backdrop, { opacity: 0 });
-      gsap.set(closeButton, { x: 64, rotation: 90, opacity: 0 });
+      gsap.set(closeButton, { x: 0, y: -64, rotation: 90, opacity: 0 });
     }
 
     if (isClosing) {
@@ -6353,7 +6353,8 @@ function ImageModal({
       .to(
         closeButton,
         {
-          x: isClosing ? 64 : 0,
+          x: 0,
+          y: isClosing ? -64 : 0,
           rotation: isClosing ? 90 : 0,
           opacity: isClosing ? 0 : 1,
           duration: accessoryDuration,
