@@ -4774,6 +4774,8 @@ function PortfolioHelperMessage({
 }: {
   kind: PortfolioHelperMessageKind;
 }) {
+  const bubbleRef = useRef<HTMLDivElement>(null);
+  const hasInitializedMotionRef = useRef(false);
   const [renderedKind, setRenderedKind] = useState<
     Exclude<PortfolioHelperMessageKind, null>
   >(kind ?? 'navigation');
@@ -4789,14 +4791,44 @@ function PortfolioHelperMessage({
     return () => cancelAnimationFrame(frame);
   }, [kind, renderedKind]);
 
+  useLayoutEffect(() => {
+    const bubble = bubbleRef.current;
+
+    if (!bubble) {
+      return;
+    }
+
+    const reducedMotion = window.matchMedia(
+      '(prefers-reduced-motion: reduce)'
+    ).matches;
+    const y = isVisible || reducedMotion ? 0 : 64;
+
+    gsap.killTweensOf(bubble);
+
+    if (!hasInitializedMotionRef.current) {
+      hasInitializedMotionRef.current = true;
+      gsap.set(bubble, { y, opacity: isVisible ? 1 : 0 });
+      return;
+    }
+
+    gsap.to(bubble, {
+      y,
+      opacity: isVisible ? 1 : 0,
+      duration: reducedMotion ? 0 : 0.3,
+      ease: isVisible ? 'expo.out' : 'power2.in',
+      overwrite: 'auto',
+    });
+
+    return () => gsap.killTweensOf(bubble);
+  }, [isVisible]);
+
   return (
     <div
+      ref={bubbleRef}
       role="status"
       aria-live="polite"
       aria-hidden={isVisible ? undefined : true}
-      className={`pointer-events-none fixed bottom-5 right-5 z-[110] max-w-[calc(100vw-2.5rem)] rounded-full bg-white/10 px-4 py-2 text-sm font-normal leading-tight text-white backdrop-blur-md transition-[opacity,transform] duration-300 ease-out motion-reduce:transform-none motion-reduce:transition-opacity ${
-        isVisible ? 'translate-y-0 opacity-100' : 'translate-y-16 opacity-0'
-      }`}
+      className="pointer-events-none fixed bottom-5 right-5 z-[110] max-w-[calc(100vw-2.5rem)] translate-y-16 rounded-full bg-white/10 px-4 py-2 text-sm font-normal leading-tight text-white opacity-0 backdrop-blur-md motion-reduce:translate-y-0"
     >
       {renderedKind === 'navigation' ? (
         <span className="leading-6">
