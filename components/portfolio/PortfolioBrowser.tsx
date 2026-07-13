@@ -941,6 +941,7 @@ export function PortfolioBrowser({
       itemStepPx: SECTION_NAV_ITEM_STEP_REM * 16,
       stackOffsetPx: 0,
     });
+  const [sectionNavHovered, setSectionNavHovered] = useState(false);
   const [introPhase, setIntroPhase] = useState<PortfolioIntroPhase>('loading');
   const [pendingNavigation, setPendingNavigation] =
     useState<PendingNavigation>(null);
@@ -3798,6 +3799,7 @@ export function PortfolioBrowser({
         side={side}
         color={item.color}
         activeButton={isActiveSection}
+        dimmed={!isActiveSection && !sectionNavHovered}
         pending={isPending}
         concealed={isModalPresentationActive && !isActiveSection}
         onPreviewChange={(previewed) => {
@@ -3877,7 +3879,11 @@ export function PortfolioBrowser({
             scheduleSectionNavPointerTracking(event.clientY);
           }
         }}
-        onPointerLeave={() => returnSectionNavPointersToIdle(side, true)}
+        onPointerEnter={() => setSectionNavHovered(true)}
+        onPointerLeave={() => {
+          setSectionNavHovered(false);
+          returnSectionNavPointersToIdle(side, true);
+        }}
         onWheel={(event) => {
           const vertical = verticalRef.current;
 
@@ -5154,6 +5160,7 @@ function SideNavButton({
   side,
   color,
   activeButton = false,
+  dimmed = false,
   pending = false,
   concealed = false,
   onPreviewChange,
@@ -5171,6 +5178,7 @@ function SideNavButton({
   side: 'left' | 'right';
   color?: string;
   activeButton?: boolean;
+  dimmed?: boolean;
   pending?: boolean;
   concealed?: boolean;
   onPreviewChange: (previewed: boolean) => void;
@@ -5191,7 +5199,7 @@ function SideNavButton({
       className={`relative z-10 grid h-[var(--section-nav-item-step)] w-12 place-items-center transition-[opacity,transform] duration-300 ease-out motion-reduce:transition-none ${
         concealed
           ? 'pointer-events-none scale-90 opacity-0'
-          : 'scale-100 opacity-100'
+          : `scale-100 ${dimmed ? 'opacity-50' : 'opacity-100'}`
       }`}
       aria-hidden={concealed ? true : undefined}
       onPointerEnter={(event) => onPointerEngage(event.clientY)}
