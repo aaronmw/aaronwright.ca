@@ -557,12 +557,22 @@ function getOutsideInDelay(index: number, count: number) {
   return pairIndex * NAVIGATION_INDICATOR_PAIR_STAGGER_MS + leftSideDelay;
 }
 
-function getLongestOutsideInDelay(count: number) {
+function getInsideOutDelay(index: number, count: number) {
+  const centerIndex = (count - 1) / 2;
+  const pairIndex = Math.floor(Math.abs(index - centerIndex));
+  const leftSideDelay =
+    index < centerIndex ? NAVIGATION_INDICATOR_SIDE_LEAD_MS : 0;
+
+  return pairIndex * NAVIGATION_INDICATOR_PAIR_STAGGER_MS + leftSideDelay;
+}
+
+function getLongestIndicatorDelay(
+  count: number,
+  getDelay: (index: number, count: number) => number
+) {
   return Math.max(
     0,
-    ...Array.from({ length: count }, (_, index) =>
-      getOutsideInDelay(index, count)
-    )
+    ...Array.from({ length: count }, (_, index) => getDelay(index, count))
   );
 }
 
@@ -5182,8 +5192,8 @@ function AnimatedSlideIndicators({
         });
 
         const longestStagger = Math.max(
-          getLongestOutsideInDelay(previousCount),
-          getLongestOutsideInDelay(targetCount)
+          getLongestIndicatorDelay(previousCount, getOutsideInDelay),
+          getLongestIndicatorDelay(targetCount, getInsideOutDelay)
         );
 
         transitionTimeoutRef.current = setTimeout(() => {
@@ -5352,12 +5362,12 @@ function AnimatedSlideIndicators({
               : targetIndex >= 0;
         const staggerDelay =
           transitionState.phase === 'fading' && (isEntering || isExiting)
-            ? getOutsideInDelay(
-                usePreviousPosition ? previousIndex : targetIndex,
-                usePreviousPosition
-                  ? transitionState.previousCount
-                  : transitionState.targetCount
-              )
+            ? isEntering
+              ? getInsideOutDelay(targetIndex, transitionState.targetCount)
+              : getOutsideInDelay(
+                  previousIndex,
+                  transitionState.previousCount
+                )
             : 0;
         const slide = targetIndex >= 0 ? visibleSlides[targetIndex] : undefined;
 
