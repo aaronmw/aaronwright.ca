@@ -4794,7 +4794,7 @@ function PortfolioHelperMessage({
       role="status"
       aria-live="polite"
       aria-hidden={isVisible ? undefined : true}
-      className={`pointer-events-none fixed bottom-5 right-5 z-[110] max-w-[calc(100vw-2.5rem)] rounded-full bg-black/80 px-4 py-2 text-sm font-bold leading-tight text-white backdrop-blur-md transition-[opacity,transform] duration-300 ease-out motion-reduce:transform-none motion-reduce:transition-opacity ${
+      className={`pointer-events-none fixed bottom-5 right-5 z-[110] max-w-[calc(100vw-2.5rem)] rounded-full bg-white/10 px-4 py-2 text-sm font-normal leading-tight text-white backdrop-blur-md transition-[opacity,transform] duration-300 ease-out motion-reduce:transform-none motion-reduce:transition-opacity ${
         isVisible ? 'translate-y-0 opacity-100' : 'translate-y-2 opacity-0'
       }`}
     >
@@ -4805,8 +4805,9 @@ function PortfolioHelperMessage({
           <KeyboardKey icon={faArrowRight} ariaLabel="right arrow" />
           <KeyboardKey icon={faArrowUp} ariaLabel="up arrow" />
           <KeyboardKey icon={faArrowDown} ariaLabel="down arrow" />, or{' '}
-          <KeyboardKey label="0" />,
-          <KeyboardKey label="1" />, etc. to navigate sections
+          <KeyboardKey label="1" />,
+          <KeyboardKey label="2" />, ... <KeyboardKey label="0" /> to navigate
+          sections
         </span>
       ) : (
         <span className="leading-6">
