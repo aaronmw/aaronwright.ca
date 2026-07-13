@@ -80,6 +80,13 @@ type WideLayoutStyle = CSSProperties & {
 type ProjectColorStyle = CSSProperties & {
   '--project-color': string;
 };
+type SectionNavStackStyle = CSSProperties & {
+  '--section-nav-item-step': string;
+};
+type SectionNavMenuAlignment = {
+  itemStepPx: number;
+  stackOffsetPx: number;
+};
 type MarkdownLinkProps = AnchorHTMLAttributes<HTMLAnchorElement> & {
   node?: unknown;
 };
@@ -848,6 +855,7 @@ export function PortfolioBrowser({
   const initialRevealCompleteRef = useRef(false);
   const navigationIntentRef = useRef(0);
   const sectionNavIndicatorRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const sectionMenuTitleRefs = useRef<Array<HTMLSpanElement | null>>([]);
   const sectionNavPreviewRefs = useRef<Array<HTMLDivElement | null>>([]);
   const sectionNavPreviewIndexesRef = useRef<Array<number | null>>([
     null,
@@ -928,6 +936,11 @@ export function PortfolioBrowser({
     Record<'left' | 'right', number | null>
   >({ left: null, right: null });
   const sectionNavTooltipsSuppressedRef = useRef(false);
+  const [sectionNavMenuAlignment, setSectionNavMenuAlignment] =
+    useState<SectionNavMenuAlignment>({
+      itemStepPx: SECTION_NAV_ITEM_STEP_REM * 16,
+      stackOffsetPx: 0,
+    });
   const [introPhase, setIntroPhase] = useState<PortfolioIntroPhase>('loading');
   const [pendingNavigation, setPendingNavigation] =
     useState<PendingNavigation>(null);
@@ -3057,6 +3070,54 @@ export function PortfolioBrowser({
 
   useLayoutEffect(() => {
     const vertical = verticalRef.current;
+    const titles = sectionMenuTitleRefs.current.filter(
+      (title): title is HTMLSpanElement => Boolean(title)
+    );
+
+    if (!vertical || titles.length < 2) {
+      return;
+    }
+
+    const syncAlignment = () => {
+      const titleCenters = titles.map((title) => {
+        const rect = title.getBoundingClientRect();
+        return rect.top + vertical.scrollTop + rect.height / 2;
+      });
+      const firstCenter = titleCenters[0];
+      const lastCenter = titleCenters[titleCenters.length - 1];
+      const itemStepPx =
+        (lastCenter - firstCenter) / (titleCenters.length - 1);
+      const stackCenterY =
+        firstCenter +
+        ((SECTION_NAV_COLORS.length - 1) / 2 - 1) * itemStepPx;
+      const stackOffsetPx = stackCenterY - vertical.clientHeight / 2;
+
+      if (!Number.isFinite(itemStepPx) || itemStepPx <= 0) {
+        return;
+      }
+
+      setSectionNavMenuAlignment((current) => {
+        if (
+          Math.abs(current.itemStepPx - itemStepPx) < 0.1 &&
+          Math.abs(current.stackOffsetPx - stackOffsetPx) < 0.1
+        ) {
+          return current;
+        }
+
+        return { itemStepPx, stackOffsetPx };
+      });
+    };
+
+    syncAlignment();
+    const resizeObserver = new ResizeObserver(syncAlignment);
+    resizeObserver.observe(vertical);
+    titles.forEach((title) => resizeObserver.observe(title));
+
+    return () => resizeObserver.disconnect();
+  }, [isWideLayout]);
+
+  useLayoutEffect(() => {
+    const vertical = verticalRef.current;
     const indicators = sectionNavIndicatorRefs.current.filter(
       (indicator): indicator is HTMLDivElement => Boolean(indicator)
     );
@@ -3262,12 +3323,19 @@ export function PortfolioBrowser({
         SECTION_NAV_AUTO_CENTER_ACTIVE_ITEM
           ? ((SECTION_NAV_COLORS.length - 1) / 2) * SECTION_NAV_ITEM_STEP_REM
           : 0;
+      const stackStartY = SECTION_NAV_AUTO_CENTER_ACTIVE_ITEM
+        ? `${centeredStackOffsetRem}rem`
+        : sectionNavMenuAlignment.stackOffsetPx;
+      const getIndicatorOffset = (itemIndex: number) =>
+        SECTION_NAV_AUTO_CENTER_ACTIVE_ITEM
+          ? `${itemIndex * SECTION_NAV_ITEM_STEP_REM}rem`
+          : itemIndex * sectionNavMenuAlignment.itemStepPx;
 
       timeline.set(indicators, {
         y: 0,
         color: timelineColors[0],
       });
-      timeline.set(stacks, { y: `${centeredStackOffsetRem}rem` });
+      timeline.set(stacks, { y: stackStartY });
       timeline.set(previews, { y: 0 });
       timeline.set(rings, {
         stroke: 'currentColor',
@@ -3295,7 +3363,7 @@ export function PortfolioBrowser({
         timeline.to(
           indicators,
           {
-            y: `${(index + 1) * SECTION_NAV_ITEM_STEP_REM}rem`,
+            y: getIndicatorOffset(index + 1),
             color,
             duration: 1,
           },
@@ -3349,6 +3417,8 @@ export function PortfolioBrowser({
     initialSectionNavIndex,
     isWideLayout,
     positionSectionNavClickTarget,
+    sectionNavMenuAlignment.itemStepPx,
+    sectionNavMenuAlignment.stackOffsetPx,
     trackSectionNavPointer,
   ]);
 
@@ -3639,13 +3709,17 @@ export function PortfolioBrowser({
     },
     [animateSectionNavRingStroke]
   );
-  const sideNavStackStyle: CSSProperties = {
-    transform: `translateY(${
-      SECTION_NAV_AUTO_CENTER_ACTIVE_ITEM
-        ? ((sectionNavItems.length - 1) / 2 - initialSectionNavIndex) *
-          SECTION_NAV_ITEM_STEP_REM
-        : 0
-    }rem)`,
+  const sectionNavItemStep = SECTION_NAV_AUTO_CENTER_ACTIVE_ITEM
+    ? `${SECTION_NAV_ITEM_STEP_REM}rem`
+    : `${sectionNavMenuAlignment.itemStepPx}px`;
+  const initialSectionNavIndicatorOffset = SECTION_NAV_AUTO_CENTER_ACTIVE_ITEM
+    ? `${initialSectionNavIndex * SECTION_NAV_ITEM_STEP_REM}rem`
+    : `${initialSectionNavIndex * sectionNavMenuAlignment.itemStepPx}px`;
+  const sideNavStackStyle: SectionNavStackStyle = {
+    '--section-nav-item-step': sectionNavItemStep,
+    transform: SECTION_NAV_AUTO_CENTER_ACTIVE_ITEM
+      ? `translateY(${((sectionNavItems.length - 1) / 2 - initialSectionNavIndex) * SECTION_NAV_ITEM_STEP_REM}rem)`
+      : `translateY(${sectionNavMenuAlignment.stackOffsetPx}px)`,
   };
   const sideNavInteractiveZoneStyle: CSSProperties = {
     height: '100dvh',
@@ -3838,11 +3912,10 @@ export function PortfolioBrowser({
               previewElementRef={(node) => {
                 sectionNavPreviewRefs.current[sideIndex] = node;
               }}
-              className="absolute left-0 top-1.5 z-0"
+              className="absolute left-0 z-0"
               style={{
-                transform: `translate3d(0, ${
-                  initialSectionNavIndex * SECTION_NAV_ITEM_STEP_REM
-                }rem, 0)`,
+                top: 'calc((var(--section-nav-item-step) - 3rem) / 2)',
+                transform: `translate3d(0, ${initialSectionNavIndicatorOffset}, 0)`,
               }}
               dataAttributes={{
                 'data-portfolio-section-nav-fill': side,
@@ -4041,7 +4114,12 @@ export function PortfolioBrowser({
                             String(index + 1).padStart(2, '0')
                           )}
                         </span>
-                        <SectionTitle color={getProjectColor(index)}>
+                        <SectionTitle
+                          color={getProjectColor(index)}
+                          elementRef={(node) => {
+                            sectionMenuTitleRefs.current[index] = node;
+                          }}
+                        >
                           {project.title}
                         </SectionTitle>
                       </span>
@@ -4051,7 +4129,12 @@ export function PortfolioBrowser({
                     </>
                   ) : (
                     <span className="flex min-w-0 flex-col gap-[clamp(0.15rem,0.55vh,0.75rem)]">
-                      <SectionTitle color={getProjectColor(index)}>
+                      <SectionTitle
+                        color={getProjectColor(index)}
+                        elementRef={(node) => {
+                          sectionMenuTitleRefs.current[index] = node;
+                        }}
+                      >
                         {project.title}
                       </SectionTitle>
                       <SectionBlurb>{project.blurb}</SectionBlurb>
@@ -4290,12 +4373,15 @@ export function PortfolioBrowser({
 function SectionTitle({
   children,
   color,
+  elementRef,
 }: {
   children: string;
   color: string;
+  elementRef?: (node: HTMLSpanElement | null) => void;
 }) {
   return (
     <span
+      ref={elementRef}
       className="min-w-0 text-[clamp(1.1rem,3.4vh,2rem)] font-black uppercase leading-none tracking-normal sm:text-[clamp(1.25rem,4.2vh,4.2rem)] lg:text-[clamp(1.5rem,4.8vh,4.8rem)]"
       style={{ color }}
     >
@@ -5102,7 +5188,7 @@ function SideNavButton({
     <div
       ref={elementRef}
       data-portfolio-section-nav-tooltip-title={tooltipTitle}
-      className={`relative z-10 grid h-[3.75rem] w-12 place-items-center transition-[opacity,transform] duration-300 ease-out motion-reduce:transition-none ${
+      className={`relative z-10 grid h-[var(--section-nav-item-step)] w-12 place-items-center transition-[opacity,transform] duration-300 ease-out motion-reduce:transition-none ${
         concealed
           ? 'pointer-events-none scale-90 opacity-0'
           : 'scale-100 opacity-100'
