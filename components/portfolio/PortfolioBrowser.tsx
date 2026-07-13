@@ -4794,8 +4794,8 @@ function PortfolioHelperMessage({
       role="status"
       aria-live="polite"
       aria-hidden={isVisible ? undefined : true}
-      className={`pointer-events-none fixed bottom-5 right-5 z-[110] max-w-[calc(100vw-2.5rem)] rounded-full bg-white/10 px-4 py-2 text-sm font-normal leading-tight text-white backdrop-blur-md transition-[opacity,transform] duration-300 ease-out motion-reduce:transform-none motion-reduce:transition-opacity ${
-        isVisible ? 'translate-y-0 opacity-100' : 'translate-y-2 opacity-0'
+      className={`pointer-events-none fixed bottom-5 right-5 z-[110] max-w-[calc(100vw-2.5rem)] rounded-full bg-white/10 px-4 py-2 text-sm font-normal leading-tight text-white backdrop-blur-md transition-opacity duration-300 ease-out ${
+        isVisible ? 'opacity-100' : 'opacity-0'
       }`}
     >
       {renderedKind === 'navigation' ? (
