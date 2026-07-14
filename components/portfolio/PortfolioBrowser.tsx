@@ -4274,8 +4274,20 @@ export function PortfolioBrowser({
             : 'overflow-y-hidden'
         }`}
       >
-        <section className="relative flex h-dvh snap-start snap-always flex-col justify-center px-6 py-16 sm:px-10 lg:px-16">
-          <div className="absolute inset-x-0 top-6 px-6 sm:px-10 lg:px-16">
+        <section
+          className={`relative h-dvh snap-start snap-always px-6 sm:px-10 lg:px-16 ${
+            isWideLayout
+              ? 'flex flex-col justify-center py-16'
+              : 'grid grid-rows-[auto_minmax(0,1fr)] py-6'
+          }`}
+        >
+          <div
+            className={
+              isWideLayout
+                ? 'absolute inset-x-0 top-6 px-6 sm:px-10 lg:px-16'
+                : 'min-w-0'
+            }
+          >
             <div
               className={`mx-auto flex w-full max-w-6xl gap-4 ${
                 isWideLayout
@@ -4348,7 +4360,11 @@ export function PortfolioBrowser({
               </address>
             </div>
           </div>
-          <div className="mx-auto w-full max-w-6xl">
+          <div
+            className={`mx-auto w-full max-w-6xl ${
+              isWideLayout ? '' : 'min-h-0 self-center'
+            }`}
+          >
             <p className="mb-[clamp(0.65rem,1.6vh,2rem)] text-xs font-light uppercase tracking-[0.35em] text-white/45">
               Sections
             </p>
