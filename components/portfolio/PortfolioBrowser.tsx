@@ -6143,7 +6143,7 @@ function ScreenshotMedia({
         onDragStart={(event) => event.preventDefault()}
         playsInline
         preload={priority ? 'auto' : 'metadata'}
-        className={`absolute inset-0 h-full w-full select-none ${className}`}
+        className={`absolute inset-0 h-full w-full select-none p-6 ${className}`}
       />
     );
   }
@@ -6158,7 +6158,7 @@ function ScreenshotMedia({
       onDragStart={(event) => event.preventDefault()}
       priority={priority}
       sizes={sizes}
-      className={`select-none ${className}`}
+      className={`select-none p-6 ${className}`}
     />
   );
 }
