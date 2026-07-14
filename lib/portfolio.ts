@@ -10,6 +10,7 @@ export type PortfolioProject = {
   slug: string;
   title: string;
   blurb: string;
+  url?: string;
   descriptionMarkdown: string;
   screenshots: PortfolioScreenshot[];
 };
@@ -142,7 +143,6 @@ My first Figma plugins were simple replacements for features I'd missed from oth
 
 There are few things from which I derive more satisfaction than my Figma plugins. They were useful to me, sure, but knowing that so many others have been spared the same tedium I'd faced myself is just 👩‍🍳🤌 I think they're the best expression of what I'm all about.
 
-[Visit Project](#)
 `,
     screenshots: [
       {
@@ -236,24 +236,43 @@ In Contentful, everything is in the shape of a single, consistent object that I 
     slug: 'mini-series-browser',
     title: 'Mini Series Browser',
     blurb:
-      'A placeholder section for browsing and organizing **short-run series**.',
+      'I can never decide what to watch, and am too easily persuaded (or disuaded) by cover art. So I built this.',
+    url: 'https://mini-series-browser.netlify.app',
     descriptionMarkdown: `
-Content coming soon.
+Deciding what to watch is harder and harder with all the options spread over all the providers. I've also grown a little resentful of "normal" television series failing to conclude either because they were cancelled, or because concluding would mean they couldn't make another season. This led me to narrow the pool substantially to limited series productions only: stories that are started with an ending in mind, told over an arc of 2 to 12 episodes.
 
-[Visit Project](https://mini-series-browser.netlify.app)
+The UI has evolved from a very scrappy list titles, to a much more functional tool usable by people other than myself. With over 600 titles to render, there was a lot of optimization work including list virtualization, image caching, and more.
+
+The most immediate "optimization" was free, and the reason I built it in the first place: by default, it only shows short descriptions of each title. No cover art. No ratings. No ways to watch. No distractions!
+
+It's also got some fun details and bits of polish, especially on desktop: the spotlight follows your focus, the keyboard will move you around, into, and out of title cards, and even the direction in which cards open on screen is designed to prevent as much scrolling as possible, since it's easy to lose one's place in a sea of 600+ pretty similar-looking items.
+
+It's still getting regular updates and polish as I find opportunities.
 `,
     screenshots: [
       {
-        id: 'mini-series-browser-desktop',
-        slug: 'desktop',
-        src: '/portfolio/mini-series-browser/desktop.png',
-        alt: '1 of 2: Mini Series Browser desktop cards',
+        id: 'mini-series-browser-descriptions-only',
+        slug: 'descriptions-only',
+        src: '/portfolio/mini-series-browser/mini-series-browser--1-descriptions-only.png',
+        alt: '1 of 4: Mini Series Browser descriptions-only view on desktop and mobile',
       },
       {
-        id: 'mini-series-browser-mobile',
-        slug: 'mobile',
-        src: '/portfolio/mini-series-browser/mobile.png',
-        alt: '2 of 2: Mini Series Browser mobile cards',
+        id: 'mini-series-browser-expanded-card',
+        slug: 'expanded-card',
+        src: '/portfolio/mini-series-browser/mini-series-browser--2-expanded-card.png',
+        alt: '2 of 4: Mini Series Browser expanded card on desktop and mobile',
+      },
+      {
+        id: 'mini-series-browser-filters',
+        slug: 'filters',
+        src: '/portfolio/mini-series-browser/mini-series-browser--3-filters.png',
+        alt: '3 of 4: Mini Series Browser filters on desktop and mobile',
+      },
+      {
+        id: 'mini-series-browser-poster-grid',
+        slug: 'poster-grid',
+        src: '/portfolio/mini-series-browser/mini-series-browser--4-poster-grid.png',
+        alt: '4 of 4: Mini Series Browser poster cards on desktop and mobile',
       },
     ],
   },
@@ -263,10 +282,9 @@ Content coming soon.
     title: 'NextPhrase',
     blurb:
       'A placeholder section for a mobile **phrase guessing** party game.',
+    url: 'https://nextphrase.app',
     descriptionMarkdown: `
 Content coming soon.
-
-[Visit Project](https://nextphrase.app)
 `,
     screenshots: [
       {

@@ -5857,24 +5857,43 @@ function ProjectDescription({
         </h1>
       </div>
       <div
-        ref={setDescriptionRef}
-        className={`portfolio-themed-scrollbar min-h-0 min-w-0 overflow-x-hidden overflow-y-scroll pr-10 ${
-          isWideLayout ? 'w-[calc(48ch+2rem)] max-w-full' : 'w-full max-w-[calc(48ch+2rem)]'
+        className={`grid min-h-0 min-w-0 grid-rows-[minmax(0,1fr)_auto] ${
+          isWideLayout
+            ? 'w-[calc(48ch+2rem)] max-w-full'
+            : 'w-full max-w-[calc(48ch+2rem)]'
         }`}
       >
         <div
-          className={`portfolio-markdown portfolio-markdown-scroll-body prose min-w-0 w-full max-w-[48ch] font-light leading-relaxed text-white/82 ${
-            isWideLayout ? 'text-xl' : 'text-lg'
-          }`}
+          ref={setDescriptionRef}
+          className="portfolio-themed-scrollbar min-h-0 min-w-0 overflow-x-hidden overflow-y-scroll pr-10"
         >
-          <ReactMarkdown
-            remarkPlugins={[remarkGfm]}
-            rehypePlugins={[rehypeRaw]}
-            components={PORTFOLIO_MARKDOWN_COMPONENTS}
+          <div
+            className={`portfolio-markdown portfolio-markdown-scroll-body prose min-w-0 w-full max-w-[48ch] font-light leading-relaxed text-white/82 ${
+              isWideLayout ? 'text-xl' : 'text-lg'
+            }`}
           >
-            {project.descriptionMarkdown}
-          </ReactMarkdown>
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              rehypePlugins={[rehypeRaw]}
+              components={PORTFOLIO_MARKDOWN_COMPONENTS}
+            >
+              {project.descriptionMarkdown}
+            </ReactMarkdown>
+          </div>
         </div>
+        {project.url ? (
+          <div className="pr-10 pt-5">
+            <a
+              href={project.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex min-h-14 w-full items-center justify-center rounded-lg px-6 py-4 text-center text-base font-black leading-none tracking-normal text-black outline-none transition-[filter] duration-200 hover:brightness-110 focus-visible:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--project-color)] active:brightness-95 motion-reduce:transition-none"
+              style={{ backgroundColor: projectColor }}
+            >
+              Visit Project
+            </a>
+          </div>
+        ) : null}
       </div>
     </div>
   );
