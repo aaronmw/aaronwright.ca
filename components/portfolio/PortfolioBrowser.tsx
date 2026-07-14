@@ -50,6 +50,7 @@ import {
   PortfolioMediaElement,
   usePortfolioMediaReadiness,
 } from '@/components/portfolio/usePortfolioMediaReadiness';
+import { OverscrollIndicator } from '@/components/OverscrollIndicator';
 import type { Components } from 'react-markdown';
 
 type PortfolioBrowserProps = {
@@ -5863,24 +5864,21 @@ function ProjectDescription({
             : 'w-full max-w-[calc(48ch+2rem)]'
         }`}
       >
-        <div
+        <OverscrollIndicator
           ref={setDescriptionRef}
-          className="portfolio-themed-scrollbar min-h-0 min-w-0 overflow-x-hidden overflow-y-scroll pr-10"
+          className="portfolio-themed-scrollbar overflow-x-hidden pr-10"
+          contentClassName={`portfolio-markdown portfolio-markdown-scroll-body prose min-w-0 w-full max-w-[48ch] font-light leading-relaxed text-white/82 ${
+            isWideLayout ? 'text-xl' : 'text-lg'
+          }`}
         >
-          <div
-            className={`portfolio-markdown portfolio-markdown-scroll-body prose min-w-0 w-full max-w-[48ch] font-light leading-relaxed text-white/82 ${
-              isWideLayout ? 'text-xl' : 'text-lg'
-            }`}
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            rehypePlugins={[rehypeRaw]}
+            components={PORTFOLIO_MARKDOWN_COMPONENTS}
           >
-            <ReactMarkdown
-              remarkPlugins={[remarkGfm]}
-              rehypePlugins={[rehypeRaw]}
-              components={PORTFOLIO_MARKDOWN_COMPONENTS}
-            >
-              {project.descriptionMarkdown}
-            </ReactMarkdown>
-          </div>
-        </div>
+            {project.descriptionMarkdown}
+          </ReactMarkdown>
+        </OverscrollIndicator>
         {project.url ? (
           <div className="pr-10 pt-5">
             <a
@@ -6072,35 +6070,35 @@ function BuildingWithAiTextPanel({
         </h1>
       </div>
       {isWideLayout ? (
-        <div
+        <OverscrollIndicator
           ref={setDescriptionRef}
-          className="portfolio-themed-scrollbar min-h-0 min-w-0 w-full max-w-[calc(108ch+9rem)] overflow-x-hidden overflow-y-scroll pr-10"
+          wrapperClassName="w-full max-w-[calc(108ch+9rem)]"
+          className="portfolio-themed-scrollbar overflow-x-hidden pr-10"
+          contentClassName="portfolio-markdown portfolio-markdown-scroll-body prose min-w-0 w-full max-w-[calc(108ch+7rem)] text-lg font-light leading-relaxed text-white/82 [column-count:3] [column-fill:balance] [column-gap:3.5rem]"
         >
-          <div className="portfolio-markdown portfolio-markdown-scroll-body prose min-w-0 w-full max-w-[calc(108ch+7rem)] text-lg font-light leading-relaxed text-white/82 [column-count:3] [column-fill:balance] [column-gap:3.5rem]">
-            <ReactMarkdown
-              remarkPlugins={[remarkGfm]}
-              rehypePlugins={[rehypeRaw]}
-              components={PORTFOLIO_MARKDOWN_COMPONENTS}
-            >
-              {project.descriptionMarkdown}
-            </ReactMarkdown>
-          </div>
-        </div>
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            rehypePlugins={[rehypeRaw]}
+            components={PORTFOLIO_MARKDOWN_COMPONENTS}
+          >
+            {project.descriptionMarkdown}
+          </ReactMarkdown>
+        </OverscrollIndicator>
       ) : (
-        <div
+        <OverscrollIndicator
           ref={setDescriptionRef}
-          className="portfolio-themed-scrollbar min-h-0 min-w-0 w-full max-w-[calc(48ch+2rem)] overflow-x-hidden overflow-y-scroll pr-10"
+          wrapperClassName="w-full max-w-[calc(48ch+2rem)]"
+          className="portfolio-themed-scrollbar overflow-x-hidden pr-10"
+          contentClassName="portfolio-markdown portfolio-markdown-scroll-body prose min-w-0 w-full max-w-[48ch] text-lg font-light leading-relaxed text-white/82"
         >
-          <div className="portfolio-markdown portfolio-markdown-scroll-body prose min-w-0 w-full max-w-[48ch] text-lg font-light leading-relaxed text-white/82">
-            <ReactMarkdown
-              remarkPlugins={[remarkGfm]}
-              rehypePlugins={[rehypeRaw]}
-              components={PORTFOLIO_MARKDOWN_COMPONENTS}
-            >
-              {project.descriptionMarkdown}
-            </ReactMarkdown>
-          </div>
-        </div>
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            rehypePlugins={[rehypeRaw]}
+            components={PORTFOLIO_MARKDOWN_COMPONENTS}
+          >
+            {project.descriptionMarkdown}
+          </ReactMarkdown>
+        </OverscrollIndicator>
       )}
     </section>
   );
