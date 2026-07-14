@@ -4275,13 +4275,7 @@ export function PortfolioBrowser({
         }`}
       >
         <section className="relative flex h-dvh snap-start snap-always flex-col justify-center px-6 py-16 sm:px-10 lg:px-16">
-          <div
-            className={
-              isWideLayout
-                ? 'absolute inset-x-0 top-6 px-6 sm:px-10 lg:px-16'
-                : 'mx-auto w-full max-w-6xl'
-            }
-          >
+          <div className="absolute inset-x-0 top-6 px-6 sm:px-10 lg:px-16">
             <div
               className={`mx-auto flex w-full max-w-6xl gap-4 ${
                 isWideLayout
@@ -4354,11 +4348,7 @@ export function PortfolioBrowser({
               </address>
             </div>
           </div>
-          <div
-            className={`mx-auto w-full max-w-6xl ${
-              isWideLayout ? '' : 'mt-4'
-            }`}
-          >
+          <div className="mx-auto w-full max-w-6xl">
             <p className="mb-[clamp(0.65rem,1.6vh,2rem)] text-xs font-light uppercase tracking-[0.35em] text-white/45">
               Sections
             </p>
