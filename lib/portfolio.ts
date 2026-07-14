@@ -184,7 +184,7 @@ There are few things from which I derive more satisfaction than my Figma plugins
     blurb:
       'A CMS-backed workflow that let content owners update the site without waiting on developers.',
     descriptionMarkdown: `
-Informal was a freelance customer of mine when their needs grew into a full-time role as the sole UX/UI developer. I got to wear the hats of researcher, designer, developer, internal tool builder, and more. One of my earliest contributions serves as a good example of what I brought:
+Informal was a freelance customer of mine when their needs grew into a full-time role for me as their sole UX/UI developer. I got to wear the hats of researcher, designer, developer, internal tool builder, and more. One of my earliest contributions serves as a good example of what I brought:
 
 The website I'd built was a simple NextJS app and lived as code on Github and as a hosted app on Netlify. Making a copy change was just another task for me, but a bit of a steep hill to climb for someone just looking to fix a typo on a blog post. Time to hire a CMS.
 
@@ -192,7 +192,7 @@ I chose Contentful for its headlessness and built a lightweight editing workflow
 
 The staging version of the site pulls its content from Contentful, but includes content marked as \`draft\` whereas production only shows \`published\` content. My solution took the following shape:
 
-# One Contentful Object to Rule Them All...
+> One Contentful Object to Rule Them All...
 
 In Contentful, everything is in the shape of a single, consistent object that I dubbed, \`spot_copy_entry\`.
 
@@ -204,10 +204,13 @@ In Contentful, everything is in the shape of a single, consistent object that I 
 
 - \`json\`: Optional. An escape hatch for content that doesn't fit the mould. Typically holds simple arrays or objects, often just references to other \`spot_copy_entry\` paths.
 
-# One Query to Bring Them All...
+> One Query to Bring Them All...
 
+The websites that consume Contentful content need only make a single request, constructed at request time based on the route's needs. This fetches the copy and images (only the paths, not the data) for the request and makes it available to the page via React Context.
 
-# And in the React Component layer, Bind Them
+> And in the React Component layer, Bind Them
+
+Finally, I built a \`ContentfulSpotCopy\` component which accepts a \`path\` and a \`render\` prop that receives the fields for the given chunk of copy. From there, I can do whatever I want! Build a carousel from the images, style the body however I want, etc. The writers own the content while I own the design 👌
 
 `,
     screenshots: [
@@ -281,10 +284,16 @@ It's still getting regular updates and polish as I find opportunities.
     slug: 'nextphrase',
     title: 'NextPhrase',
     blurb:
-      'A placeholder section for a mobile **phrase guessing** party game.',
+      'My own version of my favourite party game.',
     url: 'https://nextphrase.app',
     descriptionMarkdown: `
-Content coming soon.
+Some of you may recognize the concept (it's [Catch Phrase](https://en.wikipedia.org/wiki/Catch_Phrase_(game)) by Hasbro) but I've put my own twists on it, of course.
+
+My original motivation for making the game was two-fold: first, I kept finding myself at parties with friends wanting to play Catch Phrase, but nobody had it. If only I had it on my phone... Secondly, I wanted to try my hand at React Native.
+
+I've built this game at least five times now. I've built it with different themes, different mechanics, and on different technologies. Now it's just a simple PWA app because it's the most accessible: just visit [NextPhrase.app](https://nextphrase.app) and add it to your home screen for the best experience.
+
+I've learned a LOT building this game over and over, including the architectural challenges of building a game where pretty much everything is animated, despite running on a wee computer without 16GB of memory to lean on. Give it a shot at your next party!
 `,
     screenshots: [
       {
