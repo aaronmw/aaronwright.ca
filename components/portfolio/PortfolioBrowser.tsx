@@ -580,10 +580,19 @@ function getLongestIndicatorDelay(
   );
 }
 
-function getCenteredIndicatorTransform(index: number, count: number) {
-  const offsetRem = (index - (count - 1) / 2) * NAVIGATION_INDICATOR_STEP_REM;
+function getCenteredIndicatorSlotTransform(slotId: number) {
+  const offsetRem = slotId * NAVIGATION_INDICATOR_STEP_REM;
 
   return `translate3d(-50%, -50%, 0) translateX(${offsetRem}rem)`;
+}
+
+function getCenteredIndicatorTrackTransform(count: number) {
+  const offsetRem =
+    count > 0 && count % 2 === 0
+      ? -NAVIGATION_INDICATOR_STEP_REM / 2
+      : 0;
+
+  return `translate3d(${offsetRem}rem, 0, 0)`;
 }
 
 function getHorizontalIndicatorRingX(index: number) {
@@ -5400,6 +5409,10 @@ function AnimatedSlideIndicators({
       : Array.from(new Set([...previousSlotIds, ...targetSlotIds])).sort(
           (a, b) => a - b
         );
+  const positionCount =
+    transitionState.phase === 'preparing'
+      ? transitionState.previousCount
+      : transitionState.targetCount;
   useLayoutEffect(() => {
     const ring = ringRef.current;
 
@@ -5485,113 +5498,116 @@ function AnimatedSlideIndicators({
         className="absolute left-0 top-1/2 z-10"
         dataAttributes={{ 'data-portfolio-slide-indicator-marker': 'true' }}
       />
-      {renderedSlotIds.map((slotId) => {
-        const previousIndex = previousSlotIds.indexOf(slotId);
-        const targetIndex = targetSlotIds.indexOf(slotId);
-        const isEntering = previousIndex < 0 && targetIndex >= 0;
-        const isExiting = previousIndex >= 0 && targetIndex < 0;
-        const isRetained = previousIndex >= 0 && targetIndex >= 0;
-        const usePreviousPosition =
-          isExiting ||
-          (isRetained &&
-            (transitionState.phase === 'preparing' ||
-              transitionState.phase === 'fading'));
-        const positionIndex = usePreviousPosition ? previousIndex : targetIndex;
-        const positionCount = usePreviousPosition
-          ? transitionState.previousCount
-          : transitionState.targetCount;
-        const isVisible =
-          transitionState.phase === 'idle'
-            ? targetIndex >= 0
-            : transitionState.phase === 'preparing'
-              ? previousIndex >= 0
-              : targetIndex >= 0;
-        const staggerDelay =
-          transitionState.phase === 'fading' && (isEntering || isExiting)
-            ? isEntering
-              ? getInsideOutDelay(targetIndex, transitionState.targetCount)
-              : getOutsideInDelay(
-                  previousIndex,
-                  transitionState.previousCount
-                )
-            : 0;
-        const slide = targetIndex >= 0 ? visibleSlides[targetIndex] : undefined;
+      <div
+        className="absolute inset-0 transition-transform duration-500 [transition-timing-function:cubic-bezier(0.19,1,0.22,1)] motion-reduce:transition-none"
+        style={{
+          transform: getCenteredIndicatorTrackTransform(positionCount),
+          transitionDuration:
+            transitionState.phase === 'preparing'
+              ? '0ms'
+              : `${NAVIGATION_INDICATOR_TRANSITION_MS}ms`,
+        }}
+      >
+        {renderedSlotIds.map((slotId) => {
+          const previousIndex = previousSlotIds.indexOf(slotId);
+          const targetIndex = targetSlotIds.indexOf(slotId);
+          const isEntering = previousIndex < 0 && targetIndex >= 0;
+          const isExiting = previousIndex >= 0 && targetIndex < 0;
+          const isVisible =
+            transitionState.phase === 'idle'
+              ? targetIndex >= 0
+              : transitionState.phase === 'preparing'
+                ? previousIndex >= 0
+                : targetIndex >= 0;
+          const staggerDelay =
+            transitionState.phase === 'fading' && (isEntering || isExiting)
+              ? isEntering
+                ? getInsideOutDelay(targetIndex, transitionState.targetCount)
+                : getOutsideInDelay(
+                    previousIndex,
+                    transitionState.previousCount
+                  )
+              : 0;
+          const slide =
+            targetIndex >= 0 ? visibleSlides[targetIndex] : undefined;
 
-        return (
-          <div
-            key={slotId}
-            data-portfolio-slide-indicator-slot={slotId}
-            data-indicator-presence={
-              isEntering ? 'entering' : isExiting ? 'exiting' : 'retained'
-            }
-            className="absolute left-1/2 top-1/2 grid size-10 place-items-center transition-[opacity,transform] duration-500 [transition-timing-function:cubic-bezier(0.19,1,0.22,1)] motion-reduce:transition-none"
-            style={{
-              opacity: isVisible ? 1 : 0,
-              pointerEvents: slide && isVisible ? 'auto' : 'none',
-              transform: getCenteredIndicatorTransform(
-                positionIndex,
-                Math.max(positionCount, 1)
-              ),
-              transitionDelay: `${staggerDelay}ms`,
-            }}
-          >
-            {slide ? (
-              <button
-                type="button"
-                className="pointer-events-auto grid size-10 cursor-pointer place-items-center outline-none"
-                aria-label={
-                  slide.kind === 'description'
-                    ? `Show ${projectTitle} description`
-                    : `Show ${slide.screenshot.alt}`
-                }
-                aria-current={
-                  boundedActiveIndex === targetIndex ? 'true' : undefined
-                }
-                aria-busy={pendingIndex === targetIndex ? true : undefined}
-                data-portfolio-slide-indicator-index={targetIndex}
-                data-interactive-pop-companion='[data-portfolio-slide-indicator-marker="true"] svg'
-                onPointerEnter={(event) => {
-                  if (pointerArmedRef.current) {
-                    schedulePointerTracking(event.clientX);
-                  } else {
-                    engagePointer(event.clientX);
+          return (
+            <div
+              key={slotId}
+              data-portfolio-slide-indicator-slot={slotId}
+              data-indicator-presence={
+                isEntering ? 'entering' : isExiting ? 'exiting' : 'retained'
+              }
+              className="absolute left-1/2 top-1/2 grid size-10 place-items-center transition-opacity duration-500 [transition-timing-function:cubic-bezier(0.19,1,0.22,1)] motion-reduce:transition-none"
+              style={{
+                opacity: isVisible ? 1 : 0,
+                pointerEvents: slide && isVisible ? 'auto' : 'none',
+                transform: getCenteredIndicatorSlotTransform(slotId),
+                transitionDuration:
+                  transitionState.phase === 'preparing'
+                    ? '0ms'
+                    : `${NAVIGATION_INDICATOR_TRANSITION_MS}ms`,
+                transitionDelay: `${staggerDelay}ms`,
+              }}
+            >
+              {slide ? (
+                <button
+                  type="button"
+                  className="pointer-events-auto grid size-10 cursor-pointer place-items-center outline-none"
+                  aria-label={
+                    slide.kind === 'description'
+                      ? `Show ${projectTitle} description`
+                      : `Show ${slide.screenshot.alt}`
                   }
-                }}
-                onPointerDown={() => pinPointerTravel(targetIndex)}
-                onFocus={() => focusRingAtIndex(targetIndex)}
-                onBlur={() => releaseFocusedRing(targetIndex)}
-                onClick={() => onSelect(slide)}
-              >
-                <span
-                  data-portfolio-slide-indicator-visual={targetIndex}
-                  className="grid size-3 place-items-center"
-                  aria-hidden="true"
+                  aria-current={
+                    boundedActiveIndex === targetIndex ? 'true' : undefined
+                  }
+                  aria-busy={pendingIndex === targetIndex ? true : undefined}
+                  data-portfolio-slide-indicator-index={targetIndex}
+                  data-interactive-pop-companion='[data-portfolio-slide-indicator-marker="true"] svg'
+                  onPointerEnter={(event) => {
+                    if (pointerArmedRef.current) {
+                      schedulePointerTracking(event.clientX);
+                    } else {
+                      engagePointer(event.clientX);
+                    }
+                  }}
+                  onPointerDown={() => pinPointerTravel(targetIndex)}
+                  onFocus={() => focusRingAtIndex(targetIndex)}
+                  onBlur={() => releaseFocusedRing(targetIndex)}
+                  onClick={() => onSelect(slide)}
                 >
-                  {pendingIndex === targetIndex ? (
-                    <FontAwesomeIcon
-                      icon={faSpinner}
-                      className="size-3 animate-spin text-white"
-                    />
-                  ) : (
-                    <FontAwesomeIcon
-                      icon={faCircle}
-                      className={NAVIGATION_DOT_CLASS}
-                      style={{ width: '0.625rem', height: '0.625rem' }}
-                    />
-                  )}
-                </span>
-              </button>
-            ) : (
-              <FontAwesomeIcon
-                icon={faCircle}
-                className={NAVIGATION_DOT_CLASS}
-                style={{ width: '0.625rem', height: '0.625rem' }}
-                aria-hidden="true"
-              />
-            )}
-          </div>
-        );
-      })}
+                  <span
+                    data-portfolio-slide-indicator-visual={targetIndex}
+                    className="grid size-3 place-items-center"
+                    aria-hidden="true"
+                  >
+                    {pendingIndex === targetIndex ? (
+                      <FontAwesomeIcon
+                        icon={faSpinner}
+                        className="size-3 animate-spin text-white"
+                      />
+                    ) : (
+                      <FontAwesomeIcon
+                        icon={faCircle}
+                        className={NAVIGATION_DOT_CLASS}
+                        style={{ width: '0.625rem', height: '0.625rem' }}
+                      />
+                    )}
+                  </span>
+                </button>
+              ) : (
+                <FontAwesomeIcon
+                  icon={faCircle}
+                  className={NAVIGATION_DOT_CLASS}
+                  style={{ width: '0.625rem', height: '0.625rem' }}
+                  aria-hidden="true"
+                />
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
