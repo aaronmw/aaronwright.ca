@@ -221,6 +221,11 @@ type SlideIndicatorMotionController = {
   cancel: () => void;
 };
 
+type HorizontalScrollOptions = {
+  syncIndicator?: boolean;
+  boundarySourceIndex?: number;
+};
+
 function getNavigationTravelDuration(distanceInScreens: number) {
   return Math.min(
     NAVIGATION_TRAVEL_MAX_SECONDS,
@@ -2089,8 +2094,9 @@ export function PortfolioBrowser({
       slideIndex: number,
       behavior: ScrollBehavior,
       onComplete?: () => void,
-      syncIndicator = false
+      options: HorizontalScrollOptions = {}
     ) => {
+      const { syncIndicator = false, boundarySourceIndex } = options;
       const carousel = horizontalRefs.current[project.slug];
 
       if (!carousel) {
@@ -2108,6 +2114,7 @@ export function PortfolioBrowser({
         slides.length
       );
       const targetScrollLeft = carousel.clientWidth * nextRenderedIndex;
+      const initialScrollLeft = carousel.scrollLeft;
       const currentTween = horizontalScrollTweenRefs.current[project.slug];
       const currentRenderedIndex = Math.round(
         carousel.scrollLeft / Math.max(carousel.clientWidth, 1)
@@ -2118,10 +2125,12 @@ export function PortfolioBrowser({
       );
       const shouldBlurBoundary =
         slides.length > 2 &&
-        isCarouselBoundaryJump(
-          currentCarouselIndex,
-          nextCarouselIndex,
-          slides.length
+        (boundarySourceIndex !== undefined ||
+          isCarouselBoundaryJump(
+            currentCarouselIndex,
+            nextCarouselIndex,
+            slides.length
+          )
         );
 
       if (
@@ -2159,8 +2168,28 @@ export function PortfolioBrowser({
 
           const renderedPosition =
             carousel.scrollLeft / Math.max(carousel.clientWidth, 1);
+          if (boundarySourceIndex === undefined) {
+            slideIndicatorMotionControllerRef.current?.update(
+              renderedPosition - 1
+            );
+            return;
+          }
+
+          const scrollDistance = targetScrollLeft - initialScrollLeft;
+          const progress =
+            Math.abs(scrollDistance) < 0.5
+              ? 1
+              : gsap.utils.clamp(
+                  0,
+                  1,
+                  (carousel.scrollLeft - initialScrollLeft) / scrollDistance
+                );
           slideIndicatorMotionControllerRef.current?.update(
-            renderedPosition - 1
+            gsap.utils.interpolate(
+              boundarySourceIndex,
+              nextCarouselIndex,
+              progress
+            )
           );
         },
         onComplete: () => {
@@ -2476,7 +2505,8 @@ export function PortfolioBrowser({
       projectIndex: number,
       realIndex: number,
       mode: 'push' | 'replace',
-      scrollBehavior: ScrollBehavior
+      scrollBehavior: ScrollBehavior,
+      boundarySourceIndex?: number
     ) => {
       const project = portfolioSlides[projectIndex];
       const slides = projectSlides[project.slug];
@@ -2553,7 +2583,7 @@ export function PortfolioBrowser({
             );
           });
         },
-        true
+        { syncIndicator: true, boundarySourceIndex }
       );
     },
     [
@@ -3053,13 +3083,16 @@ export function PortfolioBrowser({
       const slides = getCarouselSlides(project);
       const renderedPosition =
         carousel.scrollLeft / Math.max(carousel.clientWidth, 1);
-      setProjectBoundaryBlur(
-        project.slug,
-        slides.length > 2 &&
-          (renderedPosition < 1 || renderedPosition > slides.length)
-      );
-      const clonedIndex = Math.round(carousel.scrollLeft / carousel.clientWidth);
-      const realIndex = getRealCarouselIndex(clonedIndex, slides.length);
+      setProjectBoundaryBlur(project.slug, false);
+      const realIndex =
+        renderedPosition < 1
+          ? 0
+          : renderedPosition > slides.length
+            ? slides.length - 1
+            : getRealCarouselIndex(
+                Math.round(renderedPosition),
+                slides.length
+              );
       const nextSlideIndex = getSlideIndexFromCarouselIndex(project, realIndex);
 
       if (horizontalScrollSyncProjectRef.current === project.slug) {
@@ -3098,30 +3131,29 @@ export function PortfolioBrowser({
 
       const slides = getCarouselSlides(project);
       const clonedIndex = Math.round(carousel.scrollLeft / carousel.clientWidth);
-      let realIndex = getRealCarouselIndex(clonedIndex, slides.length);
+      const isBeforeFirstSlide = slides.length > 1 && clonedIndex === 0;
+      const isAfterLastSlide =
+        slides.length > 1 && clonedIndex === slides.length + 1;
 
-      if (clonedIndex === 0) {
-        realIndex = slides.length - 1;
-        scrollSyncRef.current = true;
-        carousel.scrollTo({
-          left: carousel.clientWidth * slides.length,
-          behavior: 'auto',
-        });
-        requestAnimationFrame(() => {
-          scrollSyncRef.current = false;
-        });
+      if (isBeforeFirstSlide || isAfterLastSlide) {
+        const sourceIndex = isBeforeFirstSlide ? 0 : slides.length - 1;
+        const targetIndex = isBeforeFirstSlide ? slides.length - 1 : 0;
+        const targetSlideIndex = getSlideIndexFromCarouselIndex(
+          project,
+          targetIndex
+        );
+
+        void setActiveSlide(
+          projectIndex,
+          targetSlideIndex,
+          'replace',
+          'smooth',
+          sourceIndex
+        );
+        return;
       }
 
-      if (clonedIndex === slides.length + 1) {
-        realIndex = 0;
-        scrollSyncRef.current = true;
-        carousel.scrollTo({ left: carousel.clientWidth, behavior: 'auto' });
-        requestAnimationFrame(() => {
-          scrollSyncRef.current = false;
-        });
-      }
-
-      const nextIndex = realIndex;
+      const nextIndex = getRealCarouselIndex(clonedIndex, slides.length);
       const nextSlideIndex = getSlideIndexFromCarouselIndex(project, nextIndex);
       const nextSlide = projectSlides[project.slug][nextSlideIndex];
 
