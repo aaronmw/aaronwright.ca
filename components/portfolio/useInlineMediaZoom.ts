@@ -11,8 +11,10 @@ import {
 const MAX_SCALE = 6;
 const ZOOM_EPSILON = 0.001;
 const WHEEL_ZOOM_SENSITIVITY = 0.0015;
+const KEYBOARD_ZOOM_DELTA_Y = -100;
 
 export const INLINE_MEDIA_RESET_EVENT = 'portfolio:reset-inline-media-zoom';
+export const INLINE_MEDIA_ZOOM_IN_EVENT = 'portfolio:zoom-inline-media-in';
 
 type TouchPoint = {
   identifier: number;
@@ -157,6 +159,23 @@ export function useInlineMediaZoom(
     liveOffsetRef.current = clampOffset(nextOffset, normalizedScale);
     updateZoomedState(normalizedScale > 1);
     scheduleLiveTransform();
+  };
+
+  const zoomAtPoint = (
+    nextScale: number,
+    point: { x: number; y: number }
+  ) => {
+    const currentScale = liveScaleRef.current;
+    const offset = liveOffsetRef.current;
+    const contentPoint = {
+      x: (point.x - offset.x) / currentScale,
+      y: (point.y - offset.y) / currentScale,
+    };
+
+    setLiveView(nextScale, {
+      x: point.x - contentPoint.x * nextScale,
+      y: point.y - contentPoint.y * nextScale,
+    });
   };
 
   const resetLiveView = (animate: boolean) => {
@@ -363,22 +382,12 @@ export function useInlineMediaZoom(
         : event.deltaMode === WheelEvent.DOM_DELTA_PAGE
           ? (surfaceRef.current?.clientHeight ?? 1)
           : 1;
-    const currentScale = liveScaleRef.current;
     const nextScale = normalizeScale(
-      currentScale *
+      liveScaleRef.current *
         Math.exp(-event.deltaY * deltaMultiplier * WHEEL_ZOOM_SENSITIVITY)
     );
-    const point = localPoint(event.clientX, event.clientY);
-    const offset = liveOffsetRef.current;
-    const contentPoint = {
-      x: (point.x - offset.x) / currentScale,
-      y: (point.y - offset.y) / currentScale,
-    };
 
-    setLiveView(nextScale, {
-      x: point.x - contentPoint.x * nextScale,
-      y: point.y - contentPoint.y * nextScale,
-    });
+    zoomAtPoint(nextScale, localPoint(event.clientX, event.clientY));
   });
 
   const handlePointerDown = useEffectEvent((event: PointerEvent) => {
@@ -440,6 +449,20 @@ export function useInlineMediaZoom(
     resetLiveView(true);
   });
 
+  const handleKeyboardZoomIn = useEffectEvent(() => {
+    if (!active) {
+      return;
+    }
+
+    contentRef.current?.style.setProperty('transition', 'none');
+    const nextScale = normalizeScale(
+      liveScaleRef.current *
+        Math.exp(-KEYBOARD_ZOOM_DELTA_Y * WHEEL_ZOOM_SENSITIVITY)
+    );
+
+    zoomAtPoint(nextScale, { x: 0, y: 0 });
+  });
+
   useEffect(() => {
     const surface = surfaceRef.current;
 
@@ -459,6 +482,7 @@ export function useInlineMediaZoom(
     surface.addEventListener('pointerup', handlePointerEnd);
     surface.addEventListener('pointercancel', handlePointerEnd);
     surface.addEventListener(INLINE_MEDIA_RESET_EVENT, handleReset);
+    surface.addEventListener(INLINE_MEDIA_ZOOM_IN_EVENT, handleKeyboardZoomIn);
 
     return () => {
       surface.removeEventListener('touchstart', handleTouchStart);
@@ -471,6 +495,10 @@ export function useInlineMediaZoom(
       surface.removeEventListener('pointerup', handlePointerEnd);
       surface.removeEventListener('pointercancel', handlePointerEnd);
       surface.removeEventListener(INLINE_MEDIA_RESET_EVENT, handleReset);
+      surface.removeEventListener(
+        INLINE_MEDIA_ZOOM_IN_EVENT,
+        handleKeyboardZoomIn
+      );
     };
   }, []);
 
