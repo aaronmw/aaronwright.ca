@@ -135,6 +135,7 @@ const NAVIGATION_TRAVEL_BASE_SECONDS = 0.48;
 const NAVIGATION_TRAVEL_SECONDS_PER_SCREEN = 0.08;
 const NAVIGATION_TRAVEL_MAX_SECONDS = 0.85;
 const NAVIGATION_TRAVEL_EASE = 'power2.inOut';
+const CAROUSEL_PULL_ACTIVATION_PROGRESS = 0.25;
 const SECTION_NAV_ITEM_STEP_REM = 3.75;
 const SECTION_NAV_PREVIEW_RETURN_DELAY_MS = 140;
 const SECTION_NAV_SNAP_DISTANCE_PX = 10;
@@ -212,6 +213,7 @@ type LoopingCarouselEntry<T> = {
   item: T;
   key: string;
   realIndex: number;
+  kind: 'canonical' | 'clone-before' | 'clone-after';
 };
 
 type SlideIndicatorMotionController = {
@@ -226,12 +228,26 @@ type HorizontalScrollOptions = {
   boundarySourceIndex?: number;
 };
 
+type HorizontalBoundaryPullState = {
+  edge: 'before' | 'after' | null;
+  armed: boolean;
+};
+
 function getNavigationTravelDuration(distanceInScreens: number) {
   return Math.min(
     NAVIGATION_TRAVEL_MAX_SECONDS,
     NAVIGATION_TRAVEL_BASE_SECONDS +
       Math.abs(distanceInScreens) * NAVIGATION_TRAVEL_SECONDS_PER_SCREEN
   );
+}
+
+function getCanonicalCarouselEntries<T extends { id: string }>(items: T[]) {
+  return items.map((item, realIndex) => ({
+    item,
+    key: `real:${item.id}`,
+    realIndex,
+    kind: 'canonical' as const,
+  }));
 }
 
 function getLoopingCarouselEntries<T extends { id: string }>(
@@ -242,11 +258,7 @@ function getLoopingCarouselEntries<T extends { id: string }>(
     return [];
   }
 
-  const entries = items.map((item, realIndex) => ({
-    item,
-    key: `real:${item.id}`,
-    realIndex,
-  }));
+  const entries = getCanonicalCarouselEntries(items);
 
   if (items.length === 1 && !cloneSingleton) {
     return entries;
@@ -259,18 +271,38 @@ function getLoopingCarouselEntries<T extends { id: string }>(
       item: items[lastIndex],
       key: `clone-before:${items[lastIndex].id}`,
       realIndex: lastIndex,
+      kind: 'clone-before',
     },
     ...entries,
     {
       item: items[0],
       key: `clone-after:${items[0].id}`,
       realIndex: 0,
+      kind: 'clone-after',
     },
   ];
 }
 
-function getRealCarouselIndex(renderedIndex: number, itemCount: number) {
-  return positiveModulo(renderedIndex - 1, itemCount);
+function getCarouselPosition(carousel: HTMLDivElement) {
+  const firstCanonicalPanel = carousel.querySelector<HTMLElement>(
+    '[data-portfolio-carousel-panel="canonical"][data-portfolio-carousel-index="0"]'
+  );
+
+  return (
+    (carousel.scrollLeft - (firstCanonicalPanel?.offsetLeft ?? 0)) /
+    Math.max(carousel.clientWidth, 1)
+  );
+}
+
+function getCarouselTargetScrollLeft(
+  carousel: HTMLDivElement,
+  carouselIndex: number
+) {
+  const targetPanel = carousel.querySelector<HTMLElement>(
+    `[data-portfolio-carousel-panel="canonical"][data-portfolio-carousel-index="${carouselIndex}"]`
+  );
+
+  return targetPanel?.offsetLeft ?? carousel.clientWidth * carouselIndex;
 }
 
 function getCanonicalRenderedCarouselIndex(realIndex: number, itemCount: number) {
@@ -947,6 +979,9 @@ export function PortfolioBrowser({
   >({});
   const horizontalPendingNavigationIntentRefs = useRef<
     Record<string, number | undefined>
+  >({});
+  const horizontalBoundaryPullRefs = useRef<
+    Record<string, HorizontalBoundaryPullState | undefined>
   >({});
   const inlineZoomHandoffScreenshotIdRef = useRef<string | null>(null);
   const descriptionRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -2109,23 +2144,22 @@ export function PortfolioBrowser({
         project,
         slideIndex
       );
-      const nextRenderedIndex = getCanonicalRenderedCarouselIndex(
-        nextCarouselIndex,
-        slides.length
+      const targetScrollLeft = getCarouselTargetScrollLeft(
+        carousel,
+        nextCarouselIndex
       );
-      const targetScrollLeft = carousel.clientWidth * nextRenderedIndex;
       const initialScrollLeft = carousel.scrollLeft;
       const currentTween = horizontalScrollTweenRefs.current[project.slug];
-      const currentRenderedIndex = Math.round(
-        carousel.scrollLeft / Math.max(carousel.clientWidth, 1)
+      const currentCarouselIndex = Math.max(
+        0,
+        Math.min(slides.length - 1, Math.round(getCarouselPosition(carousel)))
       );
-      const currentCarouselIndex = getRealCarouselIndex(
-        currentRenderedIndex,
-        slides.length
-      );
+      const isBoundaryTravel =
+        boundarySourceIndex !== undefined &&
+        boundarySourceIndex !== nextCarouselIndex;
       const shouldBlurBoundary =
         slides.length > 2 &&
-        (boundarySourceIndex !== undefined ||
+        (isBoundaryTravel ||
           isCarouselBoundaryJump(
             currentCarouselIndex,
             nextCarouselIndex,
@@ -2166,11 +2200,9 @@ export function PortfolioBrowser({
             return;
           }
 
-          const renderedPosition =
-            carousel.scrollLeft / Math.max(carousel.clientWidth, 1);
           if (boundarySourceIndex === undefined) {
             slideIndicatorMotionControllerRef.current?.update(
-              renderedPosition - 1
+              getCarouselPosition(carousel)
             );
             return;
           }
@@ -3081,18 +3113,12 @@ export function PortfolioBrowser({
       }
 
       const slides = getCarouselSlides(project);
-      const renderedPosition =
-        carousel.scrollLeft / Math.max(carousel.clientWidth, 1);
+      const carouselPosition = getCarouselPosition(carousel);
       setProjectBoundaryBlur(project.slug, false);
-      const realIndex =
-        renderedPosition < 1
-          ? 0
-          : renderedPosition > slides.length
-            ? slides.length - 1
-            : getRealCarouselIndex(
-                Math.round(renderedPosition),
-                slides.length
-              );
+      const realIndex = Math.max(
+        0,
+        Math.min(slides.length - 1, Math.round(carouselPosition))
+      );
       const nextSlideIndex = getSlideIndexFromCarouselIndex(project, realIndex);
 
       if (horizontalScrollSyncProjectRef.current === project.slug) {
@@ -3130,18 +3156,30 @@ export function PortfolioBrowser({
       }
 
       const slides = getCarouselSlides(project);
-      const clonedIndex = Math.round(carousel.scrollLeft / carousel.clientWidth);
-      const isBeforeFirstSlide = slides.length > 1 && clonedIndex === 0;
+      const carouselPosition = getCarouselPosition(carousel);
+      const isBeforeFirstSlide =
+        slides.length > 1 && carouselPosition < -0.01;
       const isAfterLastSlide =
-        slides.length > 1 && clonedIndex === slides.length + 1;
+        slides.length > 1 && carouselPosition > slides.length - 1 + 0.01;
 
       if (isBeforeFirstSlide || isAfterLastSlide) {
         const sourceIndex = isBeforeFirstSlide ? 0 : slides.length - 1;
-        const targetIndex = isBeforeFirstSlide ? slides.length - 1 : 0;
+        const boundaryEdge = isBeforeFirstSlide ? 'before' : 'after';
+        const pullState = horizontalBoundaryPullRefs.current[project.slug];
+        const shouldWrap =
+          isWideLayout ||
+          (pullState?.armed === true && pullState.edge === boundaryEdge);
+        const targetIndex = shouldWrap
+          ? isBeforeFirstSlide
+            ? slides.length - 1
+            : 0
+          : sourceIndex;
         const targetSlideIndex = getSlideIndexFromCarouselIndex(
           project,
           targetIndex
         );
+
+        delete horizontalBoundaryPullRefs.current[project.slug];
 
         void setActiveSlide(
           projectIndex,
@@ -3153,7 +3191,21 @@ export function PortfolioBrowser({
         return;
       }
 
-      const nextIndex = getRealCarouselIndex(clonedIndex, slides.length);
+      delete horizontalBoundaryPullRefs.current[project.slug];
+
+      const nextIndex = Math.max(
+        0,
+        Math.min(slides.length - 1, Math.round(carouselPosition))
+      );
+      const settledScrollLeft = getCarouselTargetScrollLeft(
+        carousel,
+        nextIndex
+      );
+
+      if (Math.abs(carousel.scrollLeft - settledScrollLeft) > 0.5) {
+        carousel.scrollTo({ left: settledScrollLeft, behavior: 'auto' });
+      }
+
       const nextSlideIndex = getSlideIndexFromCarouselIndex(project, nextIndex);
       const nextSlide = projectSlides[project.slug][nextSlideIndex];
 
@@ -3880,6 +3932,37 @@ export function PortfolioBrowser({
       settleVerticalSectionNavClickTargets(vertical);
     }
   );
+  const beginHorizontalBoundaryPullEvent = useEffectEvent(
+    (project: PortfolioProject) => {
+      horizontalBoundaryPullRefs.current[project.slug] = {
+        edge: null,
+        armed: false,
+      };
+    }
+  );
+  const updateHorizontalBoundaryPullEvent = useEffectEvent(
+    (project: PortfolioProject, carousel: HTMLDivElement) => {
+      const pullState = horizontalBoundaryPullRefs.current[project.slug];
+
+      if (!pullState || pullState.armed) {
+        return;
+      }
+
+      const slides = getCarouselSlides(project);
+      const carouselPosition = getCarouselPosition(carousel);
+
+      if (carouselPosition <= -CAROUSEL_PULL_ACTIVATION_PROGRESS) {
+        pullState.edge = 'before';
+        pullState.armed = true;
+      } else if (
+        carouselPosition >=
+        slides.length - 1 + CAROUSEL_PULL_ACTIVATION_PROGRESS
+      ) {
+        pullState.edge = 'after';
+        pullState.armed = true;
+      }
+    }
+  );
 
   useEffect(() => {
     const vertical = verticalRef.current;
@@ -3925,13 +4008,26 @@ export function PortfolioBrowser({
         updateActiveSlideFromScrollEvent(project, projectIndex, carousel);
       const handleHorizontalScrollEnd = () =>
         handleHorizontalScrollEndEvent(project, projectIndex, carousel);
+      const handleTouchStart = () =>
+        beginHorizontalBoundaryPullEvent(project);
+      const handleTouchMove = () =>
+        updateHorizontalBoundaryPullEvent(project, carousel);
       carousel.addEventListener('scroll', updateActiveSlideFromScroll, {
         passive: true,
       });
       carousel.addEventListener('scrollend', handleHorizontalScrollEnd);
+      carousel.addEventListener('touchstart', handleTouchStart, {
+        passive: true,
+      });
+      carousel.addEventListener('touchmove', handleTouchMove, {
+        passive: true,
+      });
       return () => {
         carousel.removeEventListener('scroll', updateActiveSlideFromScroll);
         carousel.removeEventListener('scrollend', handleHorizontalScrollEnd);
+        carousel.removeEventListener('touchstart', handleTouchStart);
+        carousel.removeEventListener('touchmove', handleTouchMove);
+        delete horizontalBoundaryPullRefs.current[project.slug];
       };
     });
 
@@ -4622,7 +4718,11 @@ export function PortfolioBrowser({
 
         {portfolioSlides.map((project, projectIndex) => {
           const slides = getCarouselSlides(project);
-          const renderedSlides = getLoopingCarouselEntries(slides, true);
+          const renderedSlides = isWideLayout
+            ? getLoopingCarouselEntries(slides, true)
+            : getCanonicalCarouselEntries(slides);
+          const hasMobilePullBoundaries =
+            !isWideLayout && slides.length > 1;
           const projectNumber = String(projectIndex + 1).padStart(2, '0');
           const activeCarouselIndex = getCarouselIndexFromSlideIndex(
             project,
@@ -4662,13 +4762,21 @@ export function PortfolioBrowser({
                   isWideLayout ? 'w-screen' : ''
                 }`}
               >
-                {renderedSlides.map(({ item: slide, key, realIndex }) => (
+                {hasMobilePullBoundaries ? (
+                  <CarouselPullBoundary
+                    edge="before"
+                    projectColor={getProjectColor(projectIndex)}
+                  />
+                ) : null}
+                {renderedSlides.map(({ item: slide, key, realIndex, kind }) => (
                   <ProjectPanel
                     key={`${project.id}-${key}`}
                     project={project}
                     projectNumber={projectNumber}
                     projectColor={getProjectColor(projectIndex)}
                     slide={slide}
+                    carouselIndex={realIndex}
+                    carouselEntryKind={kind}
                     isWideLayout={isWideLayout}
                     isActive={
                       activeProjectIndex === projectIndex &&
@@ -4690,6 +4798,12 @@ export function PortfolioBrowser({
                     onInlinePresentationChange={handleInlinePresentationChange}
                   />
                 ))}
+                {hasMobilePullBoundaries ? (
+                  <CarouselPullBoundary
+                    edge="after"
+                    projectColor={getProjectColor(projectIndex)}
+                  />
+                ) : null}
               </div>
             </section>
           );
@@ -6156,11 +6270,41 @@ function ZoomableScreenshot({
   );
 }
 
+function CarouselPullBoundary({
+  edge,
+  projectColor,
+}: {
+  edge: 'before' | 'after';
+  projectColor: string;
+}) {
+  return (
+    <div
+      data-portfolio-carousel-boundary={edge}
+      className={`pointer-events-none grid h-dvh w-[50vw] shrink-0 place-items-center bg-black ${
+        edge === 'before' ? 'snap-start snap-always' : 'snap-end snap-always'
+      }`}
+      style={
+        {
+          '--project-color': projectColor,
+        } as ProjectColorStyle
+      }
+      aria-hidden="true"
+    >
+      <FontAwesomeIcon
+        icon={edge === 'before' ? faArrowRight : faArrowLeft}
+        className="size-7 text-[var(--project-color)] drop-shadow-[1px_1px_0_black]"
+      />
+    </div>
+  );
+}
+
 function ProjectPanel({
   project,
   projectNumber,
   projectColor,
   slide,
+  carouselIndex,
+  carouselEntryKind,
   isWideLayout,
   isActive,
   inlineZoomPresentationActive,
@@ -6174,6 +6318,8 @@ function ProjectPanel({
   projectNumber: string;
   projectColor: string;
   slide: ProjectSlide;
+  carouselIndex: number;
+  carouselEntryKind: LoopingCarouselEntry<ProjectSlide>['kind'];
   isWideLayout: boolean;
   isActive: boolean;
   inlineZoomPresentationActive: boolean;
@@ -6204,6 +6350,8 @@ function ProjectPanel({
 
   return (
     <article
+      data-portfolio-carousel-panel={carouselEntryKind}
+      data-portfolio-carousel-index={carouselIndex}
       className={`grid h-dvh w-screen shrink-0 snap-start snap-always grid-rows-[1fr] bg-black ${
         isWideLayout ? 'px-0 py-0' : 'px-6 pb-24 pt-8 sm:px-10'
       }`}
