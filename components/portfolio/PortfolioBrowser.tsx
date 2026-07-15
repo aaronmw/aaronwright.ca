@@ -6088,7 +6088,7 @@ function ZoomableScreenshot({
       }`}
       style={
         {
-          '--portfolio-media-padding': isPresented ? '3rem' : '1.5rem',
+          '--portfolio-media-padding': isPresented ? '6rem' : '1.5rem',
           touchAction: isZoomed ? 'none' : 'pan-x pan-y',
           position: expandToViewport ? 'absolute' : undefined,
           right: expandToViewport
