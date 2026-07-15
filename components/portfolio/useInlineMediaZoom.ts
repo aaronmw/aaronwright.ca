@@ -12,6 +12,7 @@ const MAX_SCALE = 6;
 const ZOOM_EPSILON = 0.001;
 const WHEEL_ZOOM_SENSITIVITY = 0.0015;
 const KEYBOARD_ZOOM_DELTA_Y = -100;
+const PRESENTATION_EXPANSION_DURATION_MS = 500;
 
 export const INLINE_MEDIA_RESET_EVENT = 'portfolio:reset-inline-media-zoom';
 export const INLINE_MEDIA_ZOOM_IN_EVENT = 'portfolio:zoom-inline-media-in';
@@ -81,7 +82,7 @@ function normalizeScale(scale: number) {
 
 export function useInlineMediaZoom(
   active: boolean,
-  onZoomChange?: (zoomed: boolean) => void
+  onPresentationChange?: (presented: boolean) => void
 ) {
   const surfaceRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -98,7 +99,10 @@ export function useInlineMediaZoom(
   });
   const animationFrameRef = useRef<number | null>(null);
   const isZoomedRef = useRef(false);
+  const isPresentedRef = useRef(false);
+  const presentationEnteredAtRef = useRef(0);
   const [isZoomed, setIsZoomed] = useState(false);
+  const [isPresented, setIsPresented] = useState(false);
   const [isPointerDragging, setIsPointerDragging] = useState(false);
 
   const updateZoomedState = (zoomed: boolean) => {
@@ -108,7 +112,21 @@ export function useInlineMediaZoom(
 
     isZoomedRef.current = zoomed;
     setIsZoomed(zoomed);
-    onZoomChange?.(zoomed);
+  };
+
+  const updatePresentedState = (presented: boolean) => {
+    if (isPresentedRef.current === presented) {
+      return;
+    }
+
+    isPresentedRef.current = presented;
+    setIsPresented(presented);
+    onPresentationChange?.(presented);
+  };
+
+  const enterPresentation = () => {
+    presentationEnteredAtRef.current = performance.now();
+    updatePresentedState(true);
   };
 
   const applyLiveTransform = () => {
@@ -158,6 +176,11 @@ export function useInlineMediaZoom(
     liveScaleRef.current = normalizedScale;
     liveOffsetRef.current = clampOffset(nextOffset, normalizedScale);
     updateZoomedState(normalizedScale > 1);
+
+    if (normalizedScale > 1) {
+      updatePresentedState(true);
+    }
+
     scheduleLiveTransform();
   };
 
@@ -191,7 +214,9 @@ export function useInlineMediaZoom(
     pointerDragRef.current.dragging = false;
     liveScaleRef.current = 1;
     liveOffsetRef.current = { x: 0, y: 0 };
+    presentationEnteredAtRef.current = 0;
     updateZoomedState(false);
+    updatePresentedState(false);
     setIsPointerDragging(false);
 
     if (content) {
@@ -373,8 +398,33 @@ export function useInlineMediaZoom(
       return;
     }
 
+    const isZoomingIn = event.deltaY < 0;
+
+    if (!isZoomingIn && !isPresentedRef.current) {
+      return;
+    }
+
     event.preventDefault();
     event.stopPropagation();
+
+    if (isZoomingIn && !isPresentedRef.current) {
+      enterPresentation();
+      return;
+    }
+
+    if (!isZoomingIn && liveScaleRef.current <= 1) {
+      resetLiveView(true);
+      return;
+    }
+
+    if (
+      isZoomingIn &&
+      performance.now() - presentationEnteredAtRef.current <
+        PRESENTATION_EXPANSION_DURATION_MS
+    ) {
+      return;
+    }
+
     contentRef.current?.style.setProperty('transition', 'none');
     const deltaMultiplier =
       event.deltaMode === WheelEvent.DOM_DELTA_LINE
@@ -454,6 +504,18 @@ export function useInlineMediaZoom(
       return;
     }
 
+    if (!isPresentedRef.current) {
+      enterPresentation();
+      return;
+    }
+
+    if (
+      performance.now() - presentationEnteredAtRef.current <
+      PRESENTATION_EXPANSION_DURATION_MS
+    ) {
+      return;
+    }
+
     contentRef.current?.style.setProperty('transition', 'none');
     const nextScale = normalizeScale(
       liveScaleRef.current *
@@ -504,6 +566,7 @@ export function useInlineMediaZoom(
 
   return {
     contentRef,
+    isPresented,
     isZoomed,
     isPointerDragging,
     surfaceRef,

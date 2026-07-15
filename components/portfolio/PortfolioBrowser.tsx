@@ -1935,9 +1935,12 @@ export function PortfolioBrowser({
   const activeProjectColor =
     activeProjectIndex >= 0 ? getProjectColor(activeProjectIndex) : undefined;
 
-  const handleInlineZoomChange = (screenshotId: string, zoomed: boolean) => {
+  const handleInlinePresentationChange = (
+    screenshotId: string,
+    presented: boolean
+  ) => {
     setInlineZoomedScreenshotId((currentId) =>
-      zoomed
+      presented
         ? screenshotId
         : inlineZoomHandoffScreenshotIdRef.current
           ? currentId
@@ -4649,7 +4652,7 @@ export function PortfolioBrowser({
                     }
                     registerMediaElement={registerMediaElement}
                     setDescriptionRef={setDescriptionRef(project.slug)}
-                    onInlineZoomChange={handleInlineZoomChange}
+                    onInlinePresentationChange={handleInlinePresentationChange}
                   />
                 ))}
               </div>
@@ -6044,7 +6047,7 @@ function ZoomableScreenshot({
   className,
   expandToViewport,
   presentationActive,
-  onZoomChange,
+  onPresentationChange,
   children,
 }: {
   active: boolean;
@@ -6053,25 +6056,30 @@ function ZoomableScreenshot({
   className: string;
   expandToViewport: boolean;
   presentationActive: boolean;
-  onZoomChange: (screenshotId: string, zoomed: boolean) => void;
+  onPresentationChange: (screenshotId: string, presented: boolean) => void;
   children: ReactNode;
 }) {
-  const { contentRef, isPointerDragging, isZoomed, surfaceRef } =
-    useInlineMediaZoom(active, (zoomed) =>
-      onZoomChange(screenshotId, zoomed)
-    );
+  const {
+    contentRef,
+    isPointerDragging,
+    isPresented: isLocallyPresented,
+    isZoomed,
+    surfaceRef,
+  } = useInlineMediaZoom(active, (presented) =>
+    onPresentationChange(screenshotId, presented)
+  );
   const cursorClass = isZoomed
     ? isPointerDragging
       ? 'cursor-grabbing'
       : 'cursor-grab'
     : '';
-  const isPresented = isZoomed || presentationActive;
+  const isPresented = isLocallyPresented || presentationActive;
 
   return (
     <div
       ref={surfaceRef}
       data-portfolio-screenshot-id={screenshotId}
-      data-portfolio-inline-zoomed={isZoomed ? 'true' : 'false'}
+      data-portfolio-inline-zoomed={isLocallyPresented ? 'true' : 'false'}
       className={`relative overflow-hidden border border-transparent transition-[width,height,right] duration-500 ease-out motion-reduce:transition-none ${className} ${cursorClass} ${
         concealed ? 'invisible' : ''
       }`}
@@ -6122,7 +6130,7 @@ function ProjectPanel({
   concealedScreenshotId,
   registerMediaElement,
   setDescriptionRef,
-  onInlineZoomChange,
+  onInlinePresentationChange,
 }: {
   project: PortfolioProject;
   projectNumber: string;
@@ -6138,7 +6146,10 @@ function ProjectPanel({
     element: PortfolioMediaElement | null
   ) => void;
   setDescriptionRef: (node: HTMLDivElement | null) => void;
-  onInlineZoomChange: (screenshotId: string, zoomed: boolean) => void;
+  onInlinePresentationChange: (
+    screenshotId: string,
+    presented: boolean
+  ) => void;
 }) {
   const isTextSlide = isBuildingWithAiTextSlide(project, slide);
   const shouldShowDescriptionPlaceholder =
@@ -6212,7 +6223,7 @@ function ProjectPanel({
             concealed={concealedScreenshotId === slide.screenshot.id}
             expandToViewport={isWideLayout}
             presentationActive={inlineZoomPresentationActive}
-            onZoomChange={onInlineZoomChange}
+            onPresentationChange={onInlinePresentationChange}
             className={
               isWideLayout
                 ? 'col-start-2 aspect-square h-[var(--portfolio-screenshot-size)] max-h-none w-[var(--portfolio-screenshot-size)] max-w-none self-center justify-self-end'
