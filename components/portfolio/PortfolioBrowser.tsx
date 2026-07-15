@@ -135,7 +135,6 @@ const NAVIGATION_TRAVEL_BASE_SECONDS = 0.48;
 const NAVIGATION_TRAVEL_SECONDS_PER_SCREEN = 0.08;
 const NAVIGATION_TRAVEL_MAX_SECONDS = 0.85;
 const NAVIGATION_TRAVEL_EASE = 'power2.inOut';
-const CAROUSEL_PULL_ACTIVATION_PROGRESS = 0.25;
 const SECTION_NAV_ITEM_STEP_REM = 3.75;
 const SECTION_NAV_PREVIEW_RETURN_DELAY_MS = 140;
 const SECTION_NAV_SNAP_DISTANCE_PX = 10;
@@ -226,12 +225,6 @@ type SlideIndicatorMotionController = {
 type HorizontalScrollOptions = {
   syncIndicator?: boolean;
   boundarySourceIndex?: number;
-};
-
-type HorizontalBoundaryPullState = {
-  edge: 'before' | 'after' | null;
-  armed: boolean;
-  tracking: boolean;
 };
 
 function getNavigationTravelDuration(distanceInScreens: number) {
@@ -980,9 +973,6 @@ export function PortfolioBrowser({
   >({});
   const horizontalPendingNavigationIntentRefs = useRef<
     Record<string, number | undefined>
-  >({});
-  const horizontalBoundaryPullRefs = useRef<
-    Record<string, HorizontalBoundaryPullState | undefined>
   >({});
   const inlineZoomHandoffScreenshotIdRef = useRef<string | null>(null);
   const descriptionRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -3165,22 +3155,11 @@ export function PortfolioBrowser({
 
       if (isBeforeFirstSlide || isAfterLastSlide) {
         const sourceIndex = isBeforeFirstSlide ? 0 : slides.length - 1;
-        const boundaryEdge = isBeforeFirstSlide ? 'before' : 'after';
-        const pullState = horizontalBoundaryPullRefs.current[project.slug];
-        const shouldWrap =
-          isWideLayout ||
-          (pullState?.armed === true && pullState.edge === boundaryEdge);
-        const targetIndex = shouldWrap
-          ? isBeforeFirstSlide
-            ? slides.length - 1
-            : 0
-          : sourceIndex;
+        const targetIndex = isBeforeFirstSlide ? slides.length - 1 : 0;
         const targetSlideIndex = getSlideIndexFromCarouselIndex(
           project,
           targetIndex
         );
-
-        delete horizontalBoundaryPullRefs.current[project.slug];
 
         void setActiveSlide(
           projectIndex,
@@ -3191,8 +3170,6 @@ export function PortfolioBrowser({
         );
         return;
       }
-
-      delete horizontalBoundaryPullRefs.current[project.slug];
 
       const nextIndex = Math.max(
         0,
@@ -3933,49 +3910,6 @@ export function PortfolioBrowser({
       settleVerticalSectionNavClickTargets(vertical);
     }
   );
-  const beginHorizontalBoundaryPullEvent = useEffectEvent(
-    (project: PortfolioProject) => {
-      horizontalBoundaryPullRefs.current[project.slug] = {
-        edge: null,
-        armed: false,
-        tracking: true,
-      };
-    }
-  );
-  const updateHorizontalBoundaryPullEvent = useEffectEvent(
-    (project: PortfolioProject, carousel: HTMLDivElement) => {
-      const pullState = horizontalBoundaryPullRefs.current[project.slug];
-
-      if (!pullState?.tracking || pullState.armed) {
-        return;
-      }
-
-      const slides = getCarouselSlides(project);
-      const carouselPosition = getCarouselPosition(carousel);
-
-      if (carouselPosition <= -CAROUSEL_PULL_ACTIVATION_PROGRESS) {
-        pullState.edge = 'before';
-        pullState.armed = true;
-      } else if (
-        carouselPosition >=
-        slides.length - 1 + CAROUSEL_PULL_ACTIVATION_PROGRESS
-      ) {
-        pullState.edge = 'after';
-        pullState.armed = true;
-      }
-    }
-  );
-  const endHorizontalBoundaryPullEvent = useEffectEvent(
-    (project: PortfolioProject, carousel: HTMLDivElement) => {
-      updateHorizontalBoundaryPullEvent(project, carousel);
-
-      const pullState = horizontalBoundaryPullRefs.current[project.slug];
-
-      if (pullState) {
-        pullState.tracking = false;
-      }
-    }
-  );
 
   useEffect(() => {
     const vertical = verticalRef.current;
@@ -4017,42 +3951,17 @@ export function PortfolioBrowser({
         return () => {};
       }
 
-      const updateActiveSlideFromScroll = () => {
-        updateHorizontalBoundaryPullEvent(project, carousel);
+      const updateActiveSlideFromScroll = () =>
         updateActiveSlideFromScrollEvent(project, projectIndex, carousel);
-      };
       const handleHorizontalScrollEnd = () =>
         handleHorizontalScrollEndEvent(project, projectIndex, carousel);
-      const handleTouchStart = () =>
-        beginHorizontalBoundaryPullEvent(project);
-      const handleTouchMove = () =>
-        updateHorizontalBoundaryPullEvent(project, carousel);
-      const handleTouchEnd = () =>
-        endHorizontalBoundaryPullEvent(project, carousel);
       carousel.addEventListener('scroll', updateActiveSlideFromScroll, {
         passive: true,
       });
       carousel.addEventListener('scrollend', handleHorizontalScrollEnd);
-      carousel.addEventListener('touchstart', handleTouchStart, {
-        passive: true,
-      });
-      carousel.addEventListener('touchmove', handleTouchMove, {
-        passive: true,
-      });
-      carousel.addEventListener('touchend', handleTouchEnd, {
-        passive: true,
-      });
-      carousel.addEventListener('touchcancel', handleTouchEnd, {
-        passive: true,
-      });
       return () => {
         carousel.removeEventListener('scroll', updateActiveSlideFromScroll);
         carousel.removeEventListener('scrollend', handleHorizontalScrollEnd);
-        carousel.removeEventListener('touchstart', handleTouchStart);
-        carousel.removeEventListener('touchmove', handleTouchMove);
-        carousel.removeEventListener('touchend', handleTouchEnd);
-        carousel.removeEventListener('touchcancel', handleTouchEnd);
-        delete horizontalBoundaryPullRefs.current[project.slug];
       };
     });
 
