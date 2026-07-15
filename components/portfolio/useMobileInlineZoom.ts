@@ -1,0 +1,343 @@
+'use client';
+
+import {
+  useEffect,
+  useEffectEvent,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
+
+const MAX_SCALE = 6;
+const ZOOM_EPSILON = 0.001;
+
+type TouchPoint = {
+  identifier: number;
+  clientX: number;
+  clientY: number;
+};
+
+type TouchPointList = {
+  readonly length: number;
+  readonly [index: number]: TouchPoint;
+};
+
+type InlineMediaGesture =
+  | { kind: 'idle' }
+  | {
+      kind: 'pinch';
+      startDistance: number;
+      startScale: number;
+      contentPoint: { x: number; y: number };
+    }
+  | {
+      kind: 'pan';
+      touchId: number;
+      startX: number;
+      startY: number;
+      originX: number;
+      originY: number;
+    };
+
+function getTouchDistance(touches: TouchPointList) {
+  const first = touches[0];
+  const second = touches[1];
+
+  return Math.hypot(
+    first.clientX - second.clientX,
+    first.clientY - second.clientY
+  );
+}
+
+function getTouchCenter(touches: TouchPointList) {
+  const first = touches[0];
+  const second = touches[1];
+
+  return {
+    x: (first.clientX + second.clientX) / 2,
+    y: (first.clientY + second.clientY) / 2,
+  };
+}
+
+export function useMobileInlineZoom(active: boolean) {
+  const surfaceRef = useRef<HTMLButtonElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const liveScaleRef = useRef(1);
+  const liveOffsetRef = useRef({ x: 0, y: 0 });
+  const gestureRef = useRef<InlineMediaGesture>({ kind: 'idle' });
+  const animationFrameRef = useRef<number | null>(null);
+  const suppressClickUntilRef = useRef(0);
+  const isZoomedRef = useRef(false);
+  const [isZoomed, setIsZoomed] = useState(false);
+
+  const updateZoomedState = (zoomed: boolean) => {
+    if (isZoomedRef.current === zoomed) {
+      return;
+    }
+
+    isZoomedRef.current = zoomed;
+    setIsZoomed(zoomed);
+  };
+
+  const applyLiveTransform = () => {
+    const content = contentRef.current;
+
+    if (!content) {
+      return;
+    }
+
+    const { x, y } = liveOffsetRef.current;
+    content.style.transform =
+      `translate3d(${x}px, ${y}px, 0) scale(${liveScaleRef.current})`;
+  };
+
+  const scheduleLiveTransform = () => {
+    if (animationFrameRef.current !== null) {
+      return;
+    }
+
+    animationFrameRef.current = requestAnimationFrame(() => {
+      animationFrameRef.current = null;
+      applyLiveTransform();
+    });
+  };
+
+  const clampOffset = (
+    offset: { x: number; y: number },
+    scale: number
+  ) => {
+    const surface = surfaceRef.current;
+
+    if (!surface || scale <= 1) {
+      return { x: 0, y: 0 };
+    }
+
+    const maximumX = (surface.clientWidth * (scale - 1)) / 2;
+    const maximumY = (surface.clientHeight * (scale - 1)) / 2;
+
+    return {
+      x: Math.max(-maximumX, Math.min(maximumX, offset.x)),
+      y: Math.max(-maximumY, Math.min(maximumY, offset.y)),
+    };
+  };
+
+  const setLiveView = (
+    nextScale: number,
+    nextOffset: { x: number; y: number }
+  ) => {
+    const clampedScale = Math.min(MAX_SCALE, Math.max(1, nextScale));
+    const normalizedScale =
+      clampedScale <= 1 + ZOOM_EPSILON ? 1 : clampedScale;
+
+    liveScaleRef.current = normalizedScale;
+    liveOffsetRef.current = clampOffset(nextOffset, normalizedScale);
+    updateZoomedState(normalizedScale > 1);
+    scheduleLiveTransform();
+  };
+
+  const resetLiveView = (animate: boolean) => {
+    const content = contentRef.current;
+
+    gestureRef.current = { kind: 'idle' };
+    liveScaleRef.current = 1;
+    liveOffsetRef.current = { x: 0, y: 0 };
+    updateZoomedState(false);
+
+    if (content) {
+      content.style.transition = animate
+        ? 'transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1)'
+        : 'none';
+    }
+
+    applyLiveTransform();
+  };
+
+  const localTouchCenter = (touches: TouchPointList) => {
+    const surface = surfaceRef.current;
+    const center = getTouchCenter(touches);
+
+    if (!surface) {
+      return center;
+    }
+
+    const rect = surface.getBoundingClientRect();
+
+    return {
+      x: center.x - (rect.left + rect.width / 2),
+      y: center.y - (rect.top + rect.height / 2),
+    };
+  };
+
+  const beginPinch = (touches: TouchPointList) => {
+    const center = localTouchCenter(touches);
+    const scale = liveScaleRef.current;
+    const offset = liveOffsetRef.current;
+
+    gestureRef.current = {
+      kind: 'pinch',
+      startDistance: Math.max(1, getTouchDistance(touches)),
+      startScale: scale,
+      contentPoint: {
+        x: (center.x - offset.x) / scale,
+        y: (center.y - offset.y) / scale,
+      },
+    };
+  };
+
+  const beginPan = (touch: TouchPoint) => {
+    const offset = liveOffsetRef.current;
+
+    gestureRef.current = {
+      kind: 'pan',
+      touchId: touch.identifier,
+      startX: touch.clientX,
+      startY: touch.clientY,
+      originX: offset.x,
+      originY: offset.y,
+    };
+  };
+
+  const resetLiveViewEvent = useEffectEvent(resetLiveView);
+
+  useLayoutEffect(() => {
+    if (!active) {
+      resetLiveViewEvent(false);
+    }
+  }, [active]);
+
+  useEffect(
+    () => () => {
+      if (animationFrameRef.current !== null) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    },
+    []
+  );
+
+  const handleTouchStart = useEffectEvent((event: TouchEvent) => {
+    if (!active) {
+      return;
+    }
+
+    if (event.touches.length >= 2) {
+      event.preventDefault();
+      event.stopPropagation();
+      contentRef.current?.style.setProperty('transition', 'none');
+      suppressClickUntilRef.current = performance.now() + 500;
+      beginPinch(event.touches);
+      return;
+    }
+
+    if (event.touches.length === 1 && isZoomedRef.current) {
+      event.preventDefault();
+      event.stopPropagation();
+      contentRef.current?.style.setProperty('transition', 'none');
+      suppressClickUntilRef.current = performance.now() + 500;
+      beginPan(event.touches[0]);
+    }
+  });
+
+  const handleTouchMove = useEffectEvent((event: TouchEvent) => {
+    const gesture = gestureRef.current;
+
+    if (!active || gesture.kind === 'idle') {
+      return;
+    }
+
+    if (gesture.kind === 'pinch' && event.touches.length >= 2) {
+      event.preventDefault();
+      event.stopPropagation();
+      suppressClickUntilRef.current = performance.now() + 500;
+      const scale =
+        (getTouchDistance(event.touches) / gesture.startDistance) *
+        gesture.startScale;
+      const center = localTouchCenter(event.touches);
+
+      setLiveView(scale, {
+        x: center.x - gesture.contentPoint.x * scale,
+        y: center.y - gesture.contentPoint.y * scale,
+      });
+      return;
+    }
+
+    if (gesture.kind === 'pan' && event.touches.length === 1) {
+      const touch = Array.from(event.touches).find(
+        (candidate) => candidate.identifier === gesture.touchId
+      );
+
+      if (!touch) {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+      suppressClickUntilRef.current = performance.now() + 500;
+      setLiveView(liveScaleRef.current, {
+        x: gesture.originX + touch.clientX - gesture.startX,
+        y: gesture.originY + touch.clientY - gesture.startY,
+      });
+    }
+  });
+
+  const handleTouchEnd = useEffectEvent((event: TouchEvent) => {
+    const gesture = gestureRef.current;
+
+    if (gesture.kind === 'pinch' && event.touches.length === 1) {
+      if (isZoomedRef.current) {
+        beginPan(event.touches[0]);
+      } else {
+        resetLiveView(true);
+      }
+      return;
+    }
+
+    if (event.touches.length === 0) {
+      gestureRef.current = { kind: 'idle' };
+
+      if (!isZoomedRef.current) {
+        resetLiveView(true);
+      }
+    }
+  });
+
+  const handleTouchCancel = useEffectEvent(() => {
+    gestureRef.current = { kind: 'idle' };
+
+    if (!isZoomedRef.current) {
+      resetLiveView(true);
+    }
+  });
+
+  useEffect(() => {
+    const surface = surfaceRef.current;
+
+    if (!surface) {
+      return;
+    }
+
+    const listenerOptions: AddEventListenerOptions = { passive: false };
+
+    surface.addEventListener('touchstart', handleTouchStart, listenerOptions);
+    surface.addEventListener('touchmove', handleTouchMove, listenerOptions);
+    surface.addEventListener('touchend', handleTouchEnd, listenerOptions);
+    surface.addEventListener('touchcancel', handleTouchCancel, listenerOptions);
+
+    return () => {
+      surface.removeEventListener('touchstart', handleTouchStart);
+      surface.removeEventListener('touchmove', handleTouchMove);
+      surface.removeEventListener('touchend', handleTouchEnd);
+      surface.removeEventListener('touchcancel', handleTouchCancel);
+    };
+  }, []);
+
+  const shouldSuppressActivation = () =>
+    isZoomedRef.current ||
+    performance.now() < suppressClickUntilRef.current;
+
+  return {
+    contentRef,
+    isZoomed,
+    shouldSuppressActivation,
+    surfaceRef,
+  };
+}

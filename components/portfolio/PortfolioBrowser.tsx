@@ -50,6 +50,7 @@ import {
   PortfolioMediaElement,
   usePortfolioMediaReadiness,
 } from '@/components/portfolio/usePortfolioMediaReadiness';
+import { useMobileInlineZoom } from '@/components/portfolio/useMobileInlineZoom';
 import { OverscrollIndicator } from '@/components/OverscrollIndicator';
 import type { Components } from 'react-markdown';
 
@@ -5929,6 +5930,58 @@ function ProjectDescription({
   );
 }
 
+function MobileZoomableScreenshot({
+  active,
+  screenshotId,
+  ariaLabel,
+  concealed,
+  onActivate,
+  children,
+}: {
+  active: boolean;
+  screenshotId: string;
+  ariaLabel: string;
+  concealed: boolean;
+  onActivate: (element: HTMLButtonElement) => void;
+  children: ReactNode;
+}) {
+  const { contentRef, isZoomed, shouldSuppressActivation, surfaceRef } =
+    useMobileInlineZoom(active);
+  const handleClick = (event: ReactMouseEvent<HTMLButtonElement>) => {
+    if (shouldSuppressActivation()) {
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+
+    onActivate(event.currentTarget);
+  };
+
+  return (
+    <button
+      ref={surfaceRef}
+      type="button"
+      data-portfolio-screenshot-id={screenshotId}
+      data-portfolio-inline-zoomed={isZoomed ? 'true' : 'false'}
+      className={`relative h-full min-h-0 w-full overflow-hidden border border-transparent outline-none transition-colors ${
+        concealed ? 'invisible' : ''
+      }`}
+      style={{ touchAction: isZoomed ? 'none' : 'pan-x pan-y' }}
+      aria-label={ariaLabel}
+      onClick={handleClick}
+    >
+      <div
+        ref={contentRef}
+        data-portfolio-inline-zoom-content
+        className="absolute inset-0 origin-center"
+        style={{ willChange: isZoomed ? 'transform' : 'auto' }}
+      >
+        {children}
+      </div>
+    </button>
+  );
+}
+
 function ProjectPanel({
   project,
   projectNumber,
@@ -6025,16 +6078,12 @@ function ProjectPanel({
             isWideLayout={isWideLayout}
             setDescriptionRef={setDescriptionRef}
           />
-        ) : (
+        ) : isWideLayout ? (
           <button
             type="button"
             className={`relative overflow-hidden border border-transparent outline-none transition-colors hover:border-[var(--project-color)] focus-visible:border-[var(--project-color)] ${
               concealedScreenshotId === slide.screenshot.id ? 'invisible' : ''
-            } ${
-              isWideLayout
-                ? 'col-start-2 aspect-square h-[var(--portfolio-screenshot-size)] max-h-none w-[var(--portfolio-screenshot-size)] max-w-none self-center justify-self-end'
-                : 'h-full min-h-0 w-full'
-            }`}
+            } col-start-2 aspect-square h-[var(--portfolio-screenshot-size)] max-h-none w-[var(--portfolio-screenshot-size)] max-w-none self-center justify-self-end`}
             data-portfolio-screenshot-id={slide.screenshot.id}
             onClick={(event) =>
               onScreenshotClick(
@@ -6053,6 +6102,28 @@ function ProjectPanel({
               className={getCarouselMediaClass(shouldBlurMedia)}
             />
           </button>
+        ) : (
+          <MobileZoomableScreenshot
+            active={isActive}
+            screenshotId={slide.screenshot.id}
+            ariaLabel={`Open ${slide.screenshot.alt} fullscreen`}
+            concealed={concealedScreenshotId === slide.screenshot.id}
+            onActivate={(element) =>
+              onScreenshotClick(
+                slide,
+                snapshotClientRect(element.getBoundingClientRect())
+              )
+            }
+          >
+            <ScreenshotMedia
+              screenshot={slide.screenshot}
+              mediaKey={carouselMediaKey(slide.screenshot)}
+              registerMediaElement={registerMediaElement}
+              priority={isActive}
+              sizes="100vw"
+              className={getCarouselMediaClass(shouldBlurMedia)}
+            />
+          </MobileZoomableScreenshot>
         )}
       </div>
     </article>
