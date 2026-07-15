@@ -50,7 +50,10 @@ import {
   PortfolioMediaElement,
   usePortfolioMediaReadiness,
 } from '@/components/portfolio/usePortfolioMediaReadiness';
-import { useMobileInlineZoom } from '@/components/portfolio/useMobileInlineZoom';
+import {
+  INLINE_MEDIA_RESET_EVENT,
+  useInlineMediaZoom,
+} from '@/components/portfolio/useInlineMediaZoom';
 import { OverscrollIndicator } from '@/components/OverscrollIndicator';
 import type { Components } from 'react-markdown';
 
@@ -772,6 +775,14 @@ function getVisibleScreenshotButtonRect(
   });
 
   return bestRect ? snapshotClientRect(bestRect) : null;
+}
+
+function resetInlineMediaZoom() {
+  document
+    .querySelectorAll<HTMLElement>('[data-portfolio-inline-zoomed="true"]')
+    .forEach((surface) => {
+      surface.dispatchEvent(new Event(INLINE_MEDIA_RESET_EVENT));
+    });
 }
 
 function getModalFrameRect(): ModalTransitionRect {
@@ -2712,57 +2723,6 @@ export function PortfolioBrowser({
     [activeProjectIndex, setActiveProject]
   );
 
-  const openModal = useCallback(
-    async (
-      slide: ProjectSlide = activeSlide,
-      transitionRect?: ModalTransitionRect
-    ) => {
-      if (
-        !activeProject ||
-        !slide ||
-        slide.kind !== 'screenshot' ||
-        isBuildingWithAiTextSlide(activeProject, slide)
-      ) {
-        return;
-      }
-
-      const canOpen = await prepareMediaNavigation(
-        { kind: 'modal', screenshotId: slide.screenshot.id },
-        modalMediaKey(slide.screenshot)
-      );
-
-      if (!canOpen) {
-        return;
-      }
-
-      const slideIndex = Math.max(
-        0,
-        projectSlides[activeProject.slug].findIndex(
-          (projectSlide) => projectSlide.id === slide.id
-        )
-      );
-
-      setActiveSlideIndexes((indexes) =>
-        indexes.map((index, currentProjectIndex) =>
-          currentProjectIndex === activeProjectIndex ? slideIndex : index
-        )
-      );
-      setIsModalClosing(false);
-      setModalTransitionRect(transitionRect ?? null);
-      window.history.pushState({}, '', `${projectUrl(activeProject, slide)}?modal=image`);
-      document.title = pageTitle(activeProject, slide);
-      modalHistoryEntryRef.current = true;
-      setIsModalOpen(true);
-    },
-    [
-      activeProject,
-      activeProjectIndex,
-      activeSlide,
-      prepareMediaNavigation,
-      projectSlides,
-    ]
-  );
-
   const finishCloseModal = useCallback(() => {
     setIsModalClosing(false);
     setModalTransitionRect(null);
@@ -3203,26 +3163,12 @@ export function PortfolioBrowser({
     }
 
     if (
-      (event.key === 'Enter' || event.code === 'Space') &&
-      !isEditableTarget(event.target) &&
-      activeProject
+      event.key === 'ArrowUp' ||
+      event.key === 'ArrowDown' ||
+      event.key === 'ArrowLeft' ||
+      event.key === 'ArrowRight'
     ) {
-      const carouselSlides = getCarouselSlides(activeProject);
-      const carouselIndex = getCarouselIndexFromSlideIndex(
-        activeProject,
-        activeSlideIndex
-      );
-      const slide = carouselSlides[carouselIndex];
-
-      if (slide && isModalScreenshotSlide(activeProject, slide)) {
-        event.preventDefault();
-        focusKeyboardSurface();
-        openModal(
-          slide,
-          getVisibleScreenshotButtonRect(slide.screenshot.id) ?? undefined
-        );
-        return;
-      }
+      resetInlineMediaZoom();
     }
 
     if (!event.metaKey && !event.ctrlKey && !event.altKey) {
@@ -4563,7 +4509,6 @@ export function PortfolioBrowser({
                     }
                     registerMediaElement={registerMediaElement}
                     setDescriptionRef={setDescriptionRef(project.slug)}
-                    onScreenshotClick={openModal}
                   />
                 ))}
               </div>
@@ -5930,55 +5875,46 @@ function ProjectDescription({
   );
 }
 
-function MobileZoomableScreenshot({
+function ZoomableScreenshot({
   active,
   screenshotId,
-  ariaLabel,
   concealed,
-  onActivate,
+  className,
   children,
 }: {
   active: boolean;
   screenshotId: string;
-  ariaLabel: string;
   concealed: boolean;
-  onActivate: (element: HTMLButtonElement) => void;
+  className: string;
   children: ReactNode;
 }) {
-  const { contentRef, isZoomed, shouldSuppressActivation, surfaceRef } =
-    useMobileInlineZoom(active);
-  const handleClick = (event: ReactMouseEvent<HTMLButtonElement>) => {
-    if (shouldSuppressActivation()) {
-      event.preventDefault();
-      event.stopPropagation();
-      return;
-    }
-
-    onActivate(event.currentTarget);
-  };
+  const { contentRef, isPointerDragging, isZoomed, surfaceRef } =
+    useInlineMediaZoom(active);
+  const cursorClass = isZoomed
+    ? isPointerDragging
+      ? 'cursor-grabbing'
+      : 'cursor-grab'
+    : '';
 
   return (
-    <button
+    <div
       ref={surfaceRef}
-      type="button"
       data-portfolio-screenshot-id={screenshotId}
       data-portfolio-inline-zoomed={isZoomed ? 'true' : 'false'}
-      className={`relative h-full min-h-0 w-full overflow-hidden border border-transparent outline-none transition-colors ${
+      className={`relative overflow-hidden border border-transparent ${className} ${cursorClass} ${
         concealed ? 'invisible' : ''
       }`}
       style={{ touchAction: isZoomed ? 'none' : 'pan-x pan-y' }}
-      aria-label={ariaLabel}
-      onClick={handleClick}
     >
       <div
         ref={contentRef}
         data-portfolio-inline-zoom-content
-        className="absolute inset-0 origin-center"
+        className="pointer-events-none absolute inset-0 origin-center select-none"
         style={{ willChange: isZoomed ? 'transform' : 'auto' }}
       >
         {children}
       </div>
-    </button>
+    </div>
   );
 }
 
@@ -5993,7 +5929,6 @@ function ProjectPanel({
   concealedScreenshotId,
   registerMediaElement,
   setDescriptionRef,
-  onScreenshotClick,
 }: {
   project: PortfolioProject;
   projectNumber: string;
@@ -6008,10 +5943,6 @@ function ProjectPanel({
     element: PortfolioMediaElement | null
   ) => void;
   setDescriptionRef: (node: HTMLDivElement | null) => void;
-  onScreenshotClick: (
-    slide: ProjectSlide,
-    transitionRect?: ModalTransitionRect
-  ) => void;
 }) {
   const isTextSlide = isBuildingWithAiTextSlide(project, slide);
   const shouldShowDescriptionPlaceholder =
@@ -6078,41 +6009,15 @@ function ProjectPanel({
             isWideLayout={isWideLayout}
             setDescriptionRef={setDescriptionRef}
           />
-        ) : isWideLayout ? (
-          <button
-            type="button"
-            className={`relative overflow-hidden border border-transparent outline-none transition-colors hover:border-[var(--project-color)] focus-visible:border-[var(--project-color)] ${
-              concealedScreenshotId === slide.screenshot.id ? 'invisible' : ''
-            } col-start-2 aspect-square h-[var(--portfolio-screenshot-size)] max-h-none w-[var(--portfolio-screenshot-size)] max-w-none self-center justify-self-end`}
-            data-portfolio-screenshot-id={slide.screenshot.id}
-            onClick={(event) =>
-              onScreenshotClick(
-                slide,
-                snapshotClientRect(event.currentTarget.getBoundingClientRect())
-              )
-            }
-            aria-label={`Open ${slide.screenshot.alt} fullscreen`}
-          >
-            <ScreenshotMedia
-              screenshot={slide.screenshot}
-              mediaKey={carouselMediaKey(slide.screenshot)}
-              registerMediaElement={registerMediaElement}
-              priority={isActive}
-              sizes="(min-aspect-ratio: 5/4) calc(100dvh - 8rem), 100vw"
-              className={getCarouselMediaClass(shouldBlurMedia)}
-            />
-          </button>
         ) : (
-          <MobileZoomableScreenshot
+          <ZoomableScreenshot
             active={isActive}
             screenshotId={slide.screenshot.id}
-            ariaLabel={`Open ${slide.screenshot.alt} fullscreen`}
             concealed={concealedScreenshotId === slide.screenshot.id}
-            onActivate={(element) =>
-              onScreenshotClick(
-                slide,
-                snapshotClientRect(element.getBoundingClientRect())
-              )
+            className={
+              isWideLayout
+                ? 'col-start-2 aspect-square h-[var(--portfolio-screenshot-size)] max-h-none w-[var(--portfolio-screenshot-size)] max-w-none self-center justify-self-end'
+                : 'h-full min-h-0 w-full'
             }
           >
             <ScreenshotMedia
@@ -6120,10 +6025,14 @@ function ProjectPanel({
               mediaKey={carouselMediaKey(slide.screenshot)}
               registerMediaElement={registerMediaElement}
               priority={isActive}
-              sizes="100vw"
+              sizes={
+                isWideLayout
+                  ? '(min-aspect-ratio: 5/4) calc(100dvh - 8rem), 100vw'
+                  : '100vw'
+              }
               className={getCarouselMediaClass(shouldBlurMedia)}
             />
-          </MobileZoomableScreenshot>
+          </ZoomableScreenshot>
         )}
       </div>
     </article>

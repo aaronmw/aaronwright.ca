@@ -10,6 +10,9 @@ import {
 
 const MAX_SCALE = 6;
 const ZOOM_EPSILON = 0.001;
+const WHEEL_ZOOM_SENSITIVITY = 0.0015;
+
+export const INLINE_MEDIA_RESET_EVENT = 'portfolio:reset-inline-media-zoom';
 
 type TouchPoint = {
   identifier: number;
@@ -39,6 +42,15 @@ type InlineMediaGesture =
       originY: number;
     };
 
+type PointerDrag = {
+  pointerId: number;
+  startX: number;
+  startY: number;
+  originX: number;
+  originY: number;
+  dragging: boolean;
+};
+
 function getTouchDistance(touches: TouchPointList) {
   const first = touches[0];
   const second = touches[1];
@@ -59,16 +71,24 @@ function getTouchCenter(touches: TouchPointList) {
   };
 }
 
-export function useMobileInlineZoom(active: boolean) {
-  const surfaceRef = useRef<HTMLButtonElement>(null);
+export function useInlineMediaZoom(active: boolean) {
+  const surfaceRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const liveScaleRef = useRef(1);
   const liveOffsetRef = useRef({ x: 0, y: 0 });
   const gestureRef = useRef<InlineMediaGesture>({ kind: 'idle' });
+  const pointerDragRef = useRef<PointerDrag>({
+    pointerId: 0,
+    startX: 0,
+    startY: 0,
+    originX: 0,
+    originY: 0,
+    dragging: false,
+  });
   const animationFrameRef = useRef<number | null>(null);
-  const suppressClickUntilRef = useRef(0);
   const isZoomedRef = useRef(false);
   const [isZoomed, setIsZoomed] = useState(false);
+  const [isPointerDragging, setIsPointerDragging] = useState(false);
 
   const updateZoomedState = (zoomed: boolean) => {
     if (isZoomedRef.current === zoomed) {
@@ -87,8 +107,7 @@ export function useMobileInlineZoom(active: boolean) {
     }
 
     const { x, y } = liveOffsetRef.current;
-    content.style.transform =
-      `translate3d(${x}px, ${y}px, 0) scale(${liveScaleRef.current})`;
+    content.style.transform = `translate3d(${x}px, ${y}px, 0) scale(${liveScaleRef.current})`;
   };
 
   const scheduleLiveTransform = () => {
@@ -102,10 +121,7 @@ export function useMobileInlineZoom(active: boolean) {
     });
   };
 
-  const clampOffset = (
-    offset: { x: number; y: number },
-    scale: number
-  ) => {
+  const clampOffset = (offset: { x: number; y: number }, scale: number) => {
     const surface = surfaceRef.current;
 
     if (!surface || scale <= 1) {
@@ -121,13 +137,17 @@ export function useMobileInlineZoom(active: boolean) {
     };
   };
 
+  const normalizeScale = (scale: number) => {
+    const clampedScale = Math.min(MAX_SCALE, Math.max(1, scale));
+
+    return clampedScale <= 1 + ZOOM_EPSILON ? 1 : clampedScale;
+  };
+
   const setLiveView = (
     nextScale: number,
     nextOffset: { x: number; y: number }
   ) => {
-    const clampedScale = Math.min(MAX_SCALE, Math.max(1, nextScale));
-    const normalizedScale =
-      clampedScale <= 1 + ZOOM_EPSILON ? 1 : clampedScale;
+    const normalizedScale = normalizeScale(nextScale);
 
     liveScaleRef.current = normalizedScale;
     liveOffsetRef.current = clampOffset(nextOffset, normalizedScale);
@@ -137,14 +157,26 @@ export function useMobileInlineZoom(active: boolean) {
 
   const resetLiveView = (animate: boolean) => {
     const content = contentRef.current;
+    const surface = surfaceRef.current;
+    const pointerId = pointerDragRef.current.pointerId;
+
+    if (surface?.hasPointerCapture(pointerId)) {
+      surface.releasePointerCapture(pointerId);
+    }
 
     gestureRef.current = { kind: 'idle' };
+    pointerDragRef.current.dragging = false;
     liveScaleRef.current = 1;
     liveOffsetRef.current = { x: 0, y: 0 };
     updateZoomedState(false);
+    setIsPointerDragging(false);
 
     if (content) {
-      content.style.transition = animate
+      const shouldAnimate =
+        animate &&
+        !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      content.style.transition = shouldAnimate
         ? 'transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1)'
         : 'none';
     }
@@ -152,20 +184,25 @@ export function useMobileInlineZoom(active: boolean) {
     applyLiveTransform();
   };
 
-  const localTouchCenter = (touches: TouchPointList) => {
+  const localPoint = (clientX: number, clientY: number) => {
     const surface = surfaceRef.current;
-    const center = getTouchCenter(touches);
 
     if (!surface) {
-      return center;
+      return { x: clientX, y: clientY };
     }
 
     const rect = surface.getBoundingClientRect();
 
     return {
-      x: center.x - (rect.left + rect.width / 2),
-      y: center.y - (rect.top + rect.height / 2),
+      x: clientX - (rect.left + rect.width / 2),
+      y: clientY - (rect.top + rect.height / 2),
     };
+  };
+
+  const localTouchCenter = (touches: TouchPointList) => {
+    const center = getTouchCenter(touches);
+
+    return localPoint(center.x, center.y);
   };
 
   const beginPinch = (touches: TouchPointList) => {
@@ -223,7 +260,6 @@ export function useMobileInlineZoom(active: boolean) {
       event.preventDefault();
       event.stopPropagation();
       contentRef.current?.style.setProperty('transition', 'none');
-      suppressClickUntilRef.current = performance.now() + 500;
       beginPinch(event.touches);
       return;
     }
@@ -232,7 +268,6 @@ export function useMobileInlineZoom(active: boolean) {
       event.preventDefault();
       event.stopPropagation();
       contentRef.current?.style.setProperty('transition', 'none');
-      suppressClickUntilRef.current = performance.now() + 500;
       beginPan(event.touches[0]);
     }
   });
@@ -247,7 +282,6 @@ export function useMobileInlineZoom(active: boolean) {
     if (gesture.kind === 'pinch' && event.touches.length >= 2) {
       event.preventDefault();
       event.stopPropagation();
-      suppressClickUntilRef.current = performance.now() + 500;
       const scale =
         (getTouchDistance(event.touches) / gesture.startDistance) *
         gesture.startScale;
@@ -271,7 +305,6 @@ export function useMobileInlineZoom(active: boolean) {
 
       event.preventDefault();
       event.stopPropagation();
-      suppressClickUntilRef.current = performance.now() + 500;
       setLiveView(liveScaleRef.current, {
         x: gesture.originX + touch.clientX - gesture.startX,
         y: gesture.originY + touch.clientY - gesture.startY,
@@ -308,6 +341,97 @@ export function useMobileInlineZoom(active: boolean) {
     }
   });
 
+  const handleWheel = useEffectEvent((event: WheelEvent) => {
+    if (!active || event.deltaY === 0) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    contentRef.current?.style.setProperty('transition', 'none');
+    const deltaMultiplier =
+      event.deltaMode === WheelEvent.DOM_DELTA_LINE
+        ? 16
+        : event.deltaMode === WheelEvent.DOM_DELTA_PAGE
+          ? (surfaceRef.current?.clientHeight ?? 1)
+          : 1;
+    const currentScale = liveScaleRef.current;
+    const nextScale = normalizeScale(
+      currentScale *
+        Math.exp(-event.deltaY * deltaMultiplier * WHEEL_ZOOM_SENSITIVITY)
+    );
+    const point = localPoint(event.clientX, event.clientY);
+    const offset = liveOffsetRef.current;
+    const contentPoint = {
+      x: (point.x - offset.x) / currentScale,
+      y: (point.y - offset.y) / currentScale,
+    };
+
+    setLiveView(nextScale, {
+      x: point.x - contentPoint.x * nextScale,
+      y: point.y - contentPoint.y * nextScale,
+    });
+  });
+
+  const handlePointerDown = useEffectEvent((event: PointerEvent) => {
+    if (
+      !active ||
+      event.pointerType === 'touch' ||
+      event.button !== 0 ||
+      liveScaleRef.current <= 1
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    contentRef.current?.style.setProperty('transition', 'none');
+    const offset = liveOffsetRef.current;
+
+    surfaceRef.current?.setPointerCapture(event.pointerId);
+    pointerDragRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      originX: offset.x,
+      originY: offset.y,
+      dragging: true,
+    };
+    setIsPointerDragging(true);
+  });
+
+  const handlePointerMove = useEffectEvent((event: PointerEvent) => {
+    const drag = pointerDragRef.current;
+
+    if (!drag.dragging || drag.pointerId !== event.pointerId) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    setLiveView(liveScaleRef.current, {
+      x: drag.originX + event.clientX - drag.startX,
+      y: drag.originY + event.clientY - drag.startY,
+    });
+  });
+
+  const handlePointerEnd = useEffectEvent((event: PointerEvent) => {
+    if (pointerDragRef.current.pointerId !== event.pointerId) {
+      return;
+    }
+
+    pointerDragRef.current.dragging = false;
+    setIsPointerDragging(false);
+
+    if (surfaceRef.current?.hasPointerCapture(event.pointerId)) {
+      surfaceRef.current.releasePointerCapture(event.pointerId);
+    }
+  });
+
+  const handleReset = useEffectEvent(() => {
+    resetLiveView(true);
+  });
+
   useEffect(() => {
     const surface = surfaceRef.current;
 
@@ -321,23 +445,31 @@ export function useMobileInlineZoom(active: boolean) {
     surface.addEventListener('touchmove', handleTouchMove, listenerOptions);
     surface.addEventListener('touchend', handleTouchEnd, listenerOptions);
     surface.addEventListener('touchcancel', handleTouchCancel, listenerOptions);
+    surface.addEventListener('wheel', handleWheel, listenerOptions);
+    surface.addEventListener('pointerdown', handlePointerDown);
+    surface.addEventListener('pointermove', handlePointerMove);
+    surface.addEventListener('pointerup', handlePointerEnd);
+    surface.addEventListener('pointercancel', handlePointerEnd);
+    surface.addEventListener(INLINE_MEDIA_RESET_EVENT, handleReset);
 
     return () => {
       surface.removeEventListener('touchstart', handleTouchStart);
       surface.removeEventListener('touchmove', handleTouchMove);
       surface.removeEventListener('touchend', handleTouchEnd);
       surface.removeEventListener('touchcancel', handleTouchCancel);
+      surface.removeEventListener('wheel', handleWheel);
+      surface.removeEventListener('pointerdown', handlePointerDown);
+      surface.removeEventListener('pointermove', handlePointerMove);
+      surface.removeEventListener('pointerup', handlePointerEnd);
+      surface.removeEventListener('pointercancel', handlePointerEnd);
+      surface.removeEventListener(INLINE_MEDIA_RESET_EVENT, handleReset);
     };
   }, []);
-
-  const shouldSuppressActivation = () =>
-    isZoomedRef.current ||
-    performance.now() < suppressClickUntilRef.current;
 
   return {
     contentRef,
     isZoomed,
-    shouldSuppressActivation,
+    isPointerDragging,
     surfaceRef,
   };
 }
