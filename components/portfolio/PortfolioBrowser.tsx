@@ -940,6 +940,7 @@ export function PortfolioBrowser({
   const horizontalPendingNavigationIntentRefs = useRef<
     Record<string, number | undefined>
   >({});
+  const inlineZoomHandoffScreenshotIdRef = useRef<string | null>(null);
   const descriptionRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const userMovedRef = useRef(false);
   const scrollSyncRef = useRef(false);
@@ -1936,9 +1937,40 @@ export function PortfolioBrowser({
 
   const handleInlineZoomChange = (screenshotId: string, zoomed: boolean) => {
     setInlineZoomedScreenshotId((currentId) =>
-      zoomed ? screenshotId : currentId === screenshotId ? null : currentId
+      zoomed
+        ? screenshotId
+        : inlineZoomHandoffScreenshotIdRef.current
+          ? currentId
+          : currentId === screenshotId
+            ? null
+            : currentId
     );
   };
+
+  const exitInlineZoomPresentation = () => {
+    inlineZoomHandoffScreenshotIdRef.current = null;
+    resetInlineMediaZoom();
+  };
+
+  useLayoutEffect(() => {
+    const handoffScreenshotId = inlineZoomHandoffScreenshotIdRef.current;
+
+    if (!handoffScreenshotId || activeScreenshot?.id !== handoffScreenshotId) {
+      return;
+    }
+
+    const frame = requestAnimationFrame(() => {
+      if (zoomVisibleInlineMediaIn()) {
+        inlineZoomHandoffScreenshotIdRef.current = null;
+      }
+    });
+
+    return () => cancelAnimationFrame(frame);
+  }, [activeScreenshot]);
+
+  useEffect(() => {
+    inlineZoomHandoffScreenshotIdRef.current = null;
+  }, [activeProjectIndex]);
 
   const focusKeyboardSurface = useCallback(() => {
     keyboardSurfaceRef.current?.focus({ preventScroll: true });
@@ -2444,6 +2476,8 @@ export function PortfolioBrowser({
       const slides = projectSlides[project.slug];
       const nextIndex = positiveModulo(realIndex, slides.length);
       const nextSlide = slides[nextIndex];
+      const nextScreenshotId =
+        nextSlide.kind === 'screenshot' ? nextSlide.screenshot.id : null;
       const horizontalIntent =
         (horizontalPendingNavigationIntentRefs.current[project.slug] ?? 0) + 1;
       horizontalPendingNavigationIntentRefs.current[project.slug] =
@@ -2457,6 +2491,13 @@ export function PortfolioBrowser({
       );
 
       if (!canNavigate) {
+        if (
+          nextScreenshotId &&
+          inlineZoomHandoffScreenshotIdRef.current === nextScreenshotId
+        ) {
+          inlineZoomHandoffScreenshotIdRef.current = null;
+        }
+
         if (
           horizontalPendingNavigationIntentRefs.current[project.slug] ===
           horizontalIntent
@@ -3128,7 +3169,10 @@ export function PortfolioBrowser({
     },
     [activeProjectIndex]
   );
-  const clickHorizontalSlideIndicator = useCallback((direction: -1 | 1) => {
+  const clickHorizontalSlideIndicator = useCallback((
+    direction: -1 | 1,
+    preserveInlineZoom = false
+  ) => {
     const navigation = document.querySelector(
       '[data-portfolio-slide-indicators]'
     );
@@ -3163,10 +3207,19 @@ export function PortfolioBrowser({
     if (!shouldShowModal && activeProject) {
       horizontalKeyboardIndicatorIndexesRef.current[activeProject.slug] =
         targetIndex;
+
+      if (preserveInlineZoom && targetIndex !== activeIndex) {
+        const targetSlide = getCarouselSlides(activeProject)[targetIndex];
+
+        if (targetSlide?.kind === 'screenshot') {
+          inlineZoomHandoffScreenshotIdRef.current =
+            targetSlide.screenshot.id;
+        }
+      }
     }
     targetButton.click();
     return true;
-  }, [activeProject, shouldShowModal]);
+  }, [activeProject, getCarouselSlides, shouldShowModal]);
 
   const handleKeyDownEvent = useEffectEvent((event: KeyboardEvent) => {
     if (shouldShowModal) {
@@ -3207,7 +3260,7 @@ export function PortfolioBrowser({
 
     if (event.key === 'Escape' && isInlineZoomPresentationActive) {
       event.preventDefault();
-      resetInlineMediaZoom();
+      exitInlineZoomPresentation();
       return;
     }
 
@@ -3228,11 +3281,11 @@ export function PortfolioBrowser({
       return;
     }
 
-    if (
-      event.key === 'ArrowUp' ||
-      event.key === 'ArrowDown' ||
-      event.key === 'ArrowLeft' ||
-      event.key === 'ArrowRight'
+    if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+      exitInlineZoomPresentation();
+    } else if (
+      (event.key === 'ArrowLeft' || event.key === 'ArrowRight') &&
+      !isInlineZoomPresentationActive
     ) {
       resetInlineMediaZoom();
     }
@@ -3240,6 +3293,7 @@ export function PortfolioBrowser({
     if (!event.metaKey && !event.ctrlKey && !event.altKey) {
       if (event.key === '0') {
         event.preventDefault();
+        exitInlineZoomPresentation();
         focusKeyboardSurface();
         lockSectionNavIndicatorsToItem(
           'left',
@@ -3257,6 +3311,7 @@ export function PortfolioBrowser({
 
         if (projectIndex < portfolioSlides.length) {
           event.preventDefault();
+          exitInlineZoomPresentation();
           focusKeyboardSurface();
           lockSectionNavIndicatorsToItem(
             'left',
@@ -3289,7 +3344,12 @@ export function PortfolioBrowser({
 
     if (event.key === 'ArrowRight') {
       event.preventDefault();
-      if (!clickHorizontalSlideIndicator(1)) {
+      if (
+        !clickHorizontalSlideIndicator(
+          1,
+          isInlineZoomPresentationActive
+        )
+      ) {
         focusKeyboardSurface();
         moveHorizontal(1);
       }
@@ -3297,7 +3357,12 @@ export function PortfolioBrowser({
 
     if (event.key === 'ArrowLeft') {
       event.preventDefault();
-      if (!clickHorizontalSlideIndicator(-1)) {
+      if (
+        !clickHorizontalSlideIndicator(
+          -1,
+          isInlineZoomPresentationActive
+        )
+      ) {
         focusKeyboardSurface();
         moveHorizontal(-1);
       }
@@ -4571,6 +4636,10 @@ export function PortfolioBrowser({
                       activeProjectIndex === projectIndex &&
                       activeCarouselIndex === realIndex
                     }
+                    inlineZoomPresentationActive={
+                      isInlineZoomPresentationActive &&
+                      activeProjectIndex === projectIndex
+                    }
                     shouldBlurMedia={
                       slides.length > 2 &&
                       boundaryBlurProjectSlugs.has(project.slug)
@@ -4702,7 +4771,7 @@ export function PortfolioBrowser({
         title="Close"
         aria-hidden={isInlineZoomPresentationActive ? undefined : true}
         tabIndex={isInlineZoomPresentationActive ? undefined : -1}
-        onClick={resetInlineMediaZoom}
+        onClick={exitInlineZoomPresentation}
       />
 
       {shouldShowModal && activeProject && activeScreenshot ? (
@@ -5974,6 +6043,7 @@ function ZoomableScreenshot({
   concealed,
   className,
   expandToViewport,
+  presentationActive,
   onZoomChange,
   children,
 }: {
@@ -5982,6 +6052,7 @@ function ZoomableScreenshot({
   concealed: boolean;
   className: string;
   expandToViewport: boolean;
+  presentationActive: boolean;
   onZoomChange: (screenshotId: string, zoomed: boolean) => void;
   children: ReactNode;
 }) {
@@ -5994,6 +6065,7 @@ function ZoomableScreenshot({
       ? 'cursor-grabbing'
       : 'cursor-grab'
     : '';
+  const isPresented = isZoomed || presentationActive;
 
   return (
     <div
@@ -6007,23 +6079,23 @@ function ZoomableScreenshot({
         touchAction: isZoomed ? 'none' : 'pan-x pan-y',
         position: expandToViewport ? 'absolute' : undefined,
         right: expandToViewport
-          ? isZoomed
+          ? isPresented
             ? '0px'
             : 'var(--portfolio-control-gutter-width)'
           : undefined,
         top: expandToViewport ? '50%' : undefined,
         width: expandToViewport
-          ? isZoomed
+          ? isPresented
             ? '100vw'
             : 'var(--portfolio-screenshot-size)'
           : undefined,
         height: expandToViewport
-          ? isZoomed
+          ? isPresented
             ? '100dvh'
             : 'var(--portfolio-screenshot-size)'
           : undefined,
         transform: expandToViewport ? 'translate3d(0, -50%, 0)' : undefined,
-        willChange: isZoomed ? 'width, height, right' : undefined,
+        willChange: isPresented ? 'width, height, right' : undefined,
       }}
     >
       <div
@@ -6045,6 +6117,7 @@ function ProjectPanel({
   slide,
   isWideLayout,
   isActive,
+  inlineZoomPresentationActive,
   shouldBlurMedia,
   concealedScreenshotId,
   registerMediaElement,
@@ -6057,6 +6130,7 @@ function ProjectPanel({
   slide: ProjectSlide;
   isWideLayout: boolean;
   isActive: boolean;
+  inlineZoomPresentationActive: boolean;
   shouldBlurMedia: boolean;
   concealedScreenshotId?: string;
   registerMediaElement: (
@@ -6137,6 +6211,7 @@ function ProjectPanel({
             screenshotId={slide.screenshot.id}
             concealed={concealedScreenshotId === slide.screenshot.id}
             expandToViewport={isWideLayout}
+            presentationActive={inlineZoomPresentationActive}
             onZoomChange={onInlineZoomChange}
             className={
               isWideLayout
