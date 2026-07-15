@@ -145,7 +145,7 @@ const NAVIGATION_ACTIVE_SCALE = 1.1;
 // 0 is sequential; 1 keeps both affordances in a full crossfade.
 const SECTION_NAV_AFFORDANCE_OVERLAP = 1;
 const CAROUSEL_MEDIA_CLASS =
-  'object-contain transition-[filter_1000ms_ease-in-out,padding_500ms_ease-out] motion-reduce:transition-none';
+  'object-contain transition-[filter,padding] [transition-duration:1000ms,500ms] [transition-timing-function:ease-in-out,var(--ease-out)] motion-reduce:transition-none';
 const TOP_SCREEN_COLOR = 'hsl(0 0% 100%)';
 const PROJECT_COLOR_START_HUE = 342;
 const PROJECT_COLOR_SATURATION = 78;
