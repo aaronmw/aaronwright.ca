@@ -71,7 +71,16 @@ function getTouchCenter(touches: TouchPointList) {
   };
 }
 
-export function useInlineMediaZoom(active: boolean) {
+function normalizeScale(scale: number) {
+  const clampedScale = Math.min(MAX_SCALE, Math.max(1, scale));
+
+  return clampedScale <= 1 + ZOOM_EPSILON ? 1 : clampedScale;
+}
+
+export function useInlineMediaZoom(
+  active: boolean,
+  onZoomChange?: (zoomed: boolean) => void
+) {
   const surfaceRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const liveScaleRef = useRef(1);
@@ -97,6 +106,7 @@ export function useInlineMediaZoom(active: boolean) {
 
     isZoomedRef.current = zoomed;
     setIsZoomed(zoomed);
+    onZoomChange?.(zoomed);
   };
 
   const applyLiveTransform = () => {
@@ -135,12 +145,6 @@ export function useInlineMediaZoom(active: boolean) {
       x: Math.max(-maximumX, Math.min(maximumX, offset.x)),
       y: Math.max(-maximumY, Math.min(maximumY, offset.y)),
     };
-  };
-
-  const normalizeScale = (scale: number) => {
-    const clampedScale = Math.min(MAX_SCALE, Math.max(1, scale));
-
-    return clampedScale <= 1 + ZOOM_EPSILON ? 1 : clampedScale;
   };
 
   const setLiveView = (
@@ -237,9 +241,13 @@ export function useInlineMediaZoom(active: boolean) {
   const resetLiveViewEvent = useEffectEvent(resetLiveView);
 
   useLayoutEffect(() => {
-    if (!active) {
-      resetLiveViewEvent(false);
+    if (active) {
+      return;
     }
+
+    const frame = requestAnimationFrame(() => resetLiveViewEvent(false));
+
+    return () => cancelAnimationFrame(frame);
   }, [active]);
 
   useEffect(

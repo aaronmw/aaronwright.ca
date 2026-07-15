@@ -1865,6 +1865,9 @@ export function PortfolioBrowser({
   );
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isModalClosing, setIsModalClosing] = useState(false);
+  const [inlineZoomedScreenshotId, setInlineZoomedScreenshotId] = useState<
+    string | null
+  >(null);
   const [modalTransitionRect, setModalTransitionRect] =
     useState<ModalTransitionRect | null>(null);
   const [boundaryBlurProjectSlugs, setBoundaryBlurProjectSlugs] = useState<
@@ -1890,8 +1893,18 @@ export function PortfolioBrowser({
     );
   const isModalPresentationActive = shouldShowModal && !isModalClosing;
   const isModalLayerActive = shouldShowModal;
+  const isInlineZoomPresentationActive =
+    isWideLayout && inlineZoomedScreenshotId !== null;
+  const shouldCenterSlideNavigation =
+    isModalPresentationActive || isInlineZoomPresentationActive;
   const activeProjectColor =
     activeProjectIndex >= 0 ? getProjectColor(activeProjectIndex) : undefined;
+
+  const handleInlineZoomChange = (screenshotId: string, zoomed: boolean) => {
+    setInlineZoomedScreenshotId((currentId) =>
+      zoomed ? screenshotId : currentId === screenshotId ? null : currentId
+    );
+  };
 
   const focusKeyboardSurface = useCallback(() => {
     keyboardSurfaceRef.current?.focus({ preventScroll: true });
@@ -4474,7 +4487,12 @@ export function PortfolioBrowser({
                   projectColor={getProjectColor(projectIndex)}
                   setDescriptionRef={setDescriptionRef(project.slug)}
                   isWideLayout={isWideLayout}
-                  className="absolute bottom-10 left-0 top-10 z-10 w-[var(--portfolio-description-rail-width)] bg-black/80 py-6 pl-[var(--portfolio-control-gutter-width)] pr-6 backdrop-blur-md"
+                  className={`absolute bottom-10 left-0 top-10 z-10 w-[var(--portfolio-description-rail-width)] bg-black/80 py-6 pl-[var(--portfolio-control-gutter-width)] pr-6 backdrop-blur-md transition-opacity duration-500 ease-out motion-reduce:transition-none ${
+                    isInlineZoomPresentationActive &&
+                    activeProjectIndex === projectIndex
+                      ? 'pointer-events-none opacity-0'
+                      : 'opacity-100'
+                  }`}
                 />
               ) : null}
               <div
@@ -4509,6 +4527,7 @@ export function PortfolioBrowser({
                     }
                     registerMediaElement={registerMediaElement}
                     setDescriptionRef={setDescriptionRef(project.slug)}
+                    onInlineZoomChange={handleInlineZoomChange}
                   />
                 ))}
               </div>
@@ -4576,7 +4595,7 @@ export function PortfolioBrowser({
           className={`relative transition-transform duration-500 ease-out motion-reduce:transition-none ${
             isWideLayout ? 'col-start-2 justify-self-center' : ''
           } ${
-            isWideLayout && isModalPresentationActive
+            isWideLayout && shouldCenterSlideNavigation
               ? 'translate-x-[var(--portfolio-modal-indicator-translate-x)] will-change-transform'
               : 'translate-x-0'
           }`}
@@ -5880,16 +5899,20 @@ function ZoomableScreenshot({
   screenshotId,
   concealed,
   className,
+  onZoomChange,
   children,
 }: {
   active: boolean;
   screenshotId: string;
   concealed: boolean;
   className: string;
+  onZoomChange: (screenshotId: string, zoomed: boolean) => void;
   children: ReactNode;
 }) {
   const { contentRef, isPointerDragging, isZoomed, surfaceRef } =
-    useInlineMediaZoom(active);
+    useInlineMediaZoom(active, (zoomed) =>
+      onZoomChange(screenshotId, zoomed)
+    );
   const cursorClass = isZoomed
     ? isPointerDragging
       ? 'cursor-grabbing'
@@ -5929,6 +5952,7 @@ function ProjectPanel({
   concealedScreenshotId,
   registerMediaElement,
   setDescriptionRef,
+  onInlineZoomChange,
 }: {
   project: PortfolioProject;
   projectNumber: string;
@@ -5943,6 +5967,7 @@ function ProjectPanel({
     element: PortfolioMediaElement | null
   ) => void;
   setDescriptionRef: (node: HTMLDivElement | null) => void;
+  onInlineZoomChange: (screenshotId: string, zoomed: boolean) => void;
 }) {
   const isTextSlide = isBuildingWithAiTextSlide(project, slide);
   const shouldShowDescriptionPlaceholder =
@@ -6014,6 +6039,7 @@ function ProjectPanel({
             active={isActive}
             screenshotId={slide.screenshot.id}
             concealed={concealedScreenshotId === slide.screenshot.id}
+            onZoomChange={onInlineZoomChange}
             className={
               isWideLayout
                 ? 'col-start-2 aspect-square h-[var(--portfolio-screenshot-size)] max-h-none w-[var(--portfolio-screenshot-size)] max-w-none self-center justify-self-end'
