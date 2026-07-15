@@ -5138,9 +5138,6 @@ function AnimatedSlideIndicators({
   const focusedIndexRef = useRef<number | null>(null);
   const ringStrokeWidthRef = useRef<2 | 4>(4);
   const activeIndexRef = useRef(boundedActiveIndex);
-  useLayoutEffect(() => {
-    activeIndexRef.current = boundedActiveIndex;
-  }, [boundedActiveIndex]);
   const [transitionState, setTransitionState] =
     useState<IndicatorTransitionState>({
       previousCount: targetCount,
@@ -5202,11 +5199,20 @@ function AnimatedSlideIndicators({
     const rootFontSize = rootFontSizeRef.current;
     const step = NAVIGATION_INDICATOR_STEP_REM * rootFontSize;
     const ringSize = NAVIGATION_RING_SIZE_REM * rootFontSize;
-    const ringX = Number(gsap.getProperty(ring, 'x')) || 0;
+    const computedTransform = getComputedStyle(ring).transform;
+    const ringX =
+      computedTransform === 'none'
+        ? 0
+        : new DOMMatrixReadOnly(computedTransform).m41;
     const position = (ringX + ringSize / 2) / step - 0.5;
 
     applyActiveScale(position);
   };
+
+  useLayoutEffect(() => {
+    activeIndexRef.current = boundedActiveIndex;
+    applyActiveScaleFromRing();
+  }, [boundedActiveIndex]);
 
   const animateRingStroke = (strokeWidth: 2 | 4) => {
     if (ringStrokeWidthRef.current === strokeWidth) {
@@ -5433,9 +5439,12 @@ function AnimatedSlideIndicators({
 
   const completeSourceLinkedTravel = (index: number) => {
     const wasPointerPinned = pointerPinnedIndexRef.current === index;
+    activeIndexRef.current = index;
 
     if (!wasPointerPinned) {
       updateSourceLinkedTravel(index);
+    } else {
+      applyActiveScale(index);
     }
 
     if (clickTargetIndexRef.current !== index) {
@@ -5769,7 +5778,7 @@ function AnimatedSlideIndicators({
                   }
                   aria-busy={pendingIndex === targetIndex ? true : undefined}
                   data-portfolio-slide-indicator-index={targetIndex}
-                  data-interactive-pop-companion='[data-portfolio-slide-indicator-marker="true"] svg'
+                  data-interactive-pop-companion='[data-portfolio-slide-indicator-marker="true"] [data-navigation-ring-pop-layer="true"]'
                   onPointerEnter={(event) => {
                     if (pointerArmedRef.current) {
                       schedulePointerTracking(event.clientX);
@@ -5857,6 +5866,7 @@ function NavigationActiveRing({
       <div
         ref={previewElementRef}
         {...previewDataAttributes}
+        data-navigation-ring-pop-layer="true"
         className="relative size-12"
       >
         <svg
@@ -5999,7 +6009,7 @@ function SideNavButton({
         aria-describedby={tooltipId}
         aria-current={activeButton ? 'page' : undefined}
         aria-busy={pending ? true : undefined}
-        data-interactive-pop-companion={`[data-portfolio-section-nav-preview="${side}"] svg`}
+        data-interactive-pop-companion={`[data-portfolio-section-nav-preview="${side}"]`}
         tabIndex={concealed ? -1 : undefined}
         onClick={onClick}
       />
