@@ -231,6 +231,7 @@ type HorizontalScrollOptions = {
 type HorizontalBoundaryPullState = {
   edge: 'before' | 'after' | null;
   armed: boolean;
+  tracking: boolean;
 };
 
 function getNavigationTravelDuration(distanceInScreens: number) {
@@ -3937,6 +3938,7 @@ export function PortfolioBrowser({
       horizontalBoundaryPullRefs.current[project.slug] = {
         edge: null,
         armed: false,
+        tracking: true,
       };
     }
   );
@@ -3944,7 +3946,7 @@ export function PortfolioBrowser({
     (project: PortfolioProject, carousel: HTMLDivElement) => {
       const pullState = horizontalBoundaryPullRefs.current[project.slug];
 
-      if (!pullState || pullState.armed) {
+      if (!pullState?.tracking || pullState.armed) {
         return;
       }
 
@@ -3960,6 +3962,17 @@ export function PortfolioBrowser({
       ) {
         pullState.edge = 'after';
         pullState.armed = true;
+      }
+    }
+  );
+  const endHorizontalBoundaryPullEvent = useEffectEvent(
+    (project: PortfolioProject, carousel: HTMLDivElement) => {
+      updateHorizontalBoundaryPullEvent(project, carousel);
+
+      const pullState = horizontalBoundaryPullRefs.current[project.slug];
+
+      if (pullState) {
+        pullState.tracking = false;
       }
     }
   );
@@ -4004,14 +4017,18 @@ export function PortfolioBrowser({
         return () => {};
       }
 
-      const updateActiveSlideFromScroll = () =>
+      const updateActiveSlideFromScroll = () => {
+        updateHorizontalBoundaryPullEvent(project, carousel);
         updateActiveSlideFromScrollEvent(project, projectIndex, carousel);
+      };
       const handleHorizontalScrollEnd = () =>
         handleHorizontalScrollEndEvent(project, projectIndex, carousel);
       const handleTouchStart = () =>
         beginHorizontalBoundaryPullEvent(project);
       const handleTouchMove = () =>
         updateHorizontalBoundaryPullEvent(project, carousel);
+      const handleTouchEnd = () =>
+        endHorizontalBoundaryPullEvent(project, carousel);
       carousel.addEventListener('scroll', updateActiveSlideFromScroll, {
         passive: true,
       });
@@ -4022,11 +4039,19 @@ export function PortfolioBrowser({
       carousel.addEventListener('touchmove', handleTouchMove, {
         passive: true,
       });
+      carousel.addEventListener('touchend', handleTouchEnd, {
+        passive: true,
+      });
+      carousel.addEventListener('touchcancel', handleTouchEnd, {
+        passive: true,
+      });
       return () => {
         carousel.removeEventListener('scroll', updateActiveSlideFromScroll);
         carousel.removeEventListener('scrollend', handleHorizontalScrollEnd);
         carousel.removeEventListener('touchstart', handleTouchStart);
         carousel.removeEventListener('touchmove', handleTouchMove);
+        carousel.removeEventListener('touchend', handleTouchEnd);
+        carousel.removeEventListener('touchcancel', handleTouchEnd);
         delete horizontalBoundaryPullRefs.current[project.slug];
       };
     });
