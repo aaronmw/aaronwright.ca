@@ -91,6 +91,9 @@ type ProjectColorStyle = CSSProperties & {
 type SectionNavStackStyle = CSSProperties & {
   '--section-nav-item-step': string;
 };
+type InlineMediaSurfaceStyle = CSSProperties & {
+  '--portfolio-media-padding': string;
+};
 type SectionNavMenuAlignment = {
   itemStepPx: number;
   stackOffsetPx: number;
@@ -142,7 +145,7 @@ const NAVIGATION_ACTIVE_SCALE = 1.1;
 // 0 is sequential; 1 keeps both affordances in a full crossfade.
 const SECTION_NAV_AFFORDANCE_OVERLAP = 1;
 const CAROUSEL_MEDIA_CLASS =
-  'object-contain transition-[filter] duration-1000 ease-in-out';
+  'object-contain transition-[filter_1000ms_ease-in-out,padding_500ms_ease-out] motion-reduce:transition-none';
 const TOP_SCREEN_COLOR = 'hsl(0 0% 100%)';
 const PROJECT_COLOR_START_HUE = 342;
 const PROJECT_COLOR_SATURATION = 78;
@@ -6083,28 +6086,31 @@ function ZoomableScreenshot({
       className={`relative overflow-hidden border border-transparent transition-[width,height,right] duration-500 ease-out motion-reduce:transition-none ${className} ${cursorClass} ${
         concealed ? 'invisible' : ''
       }`}
-      style={{
-        touchAction: isZoomed ? 'none' : 'pan-x pan-y',
-        position: expandToViewport ? 'absolute' : undefined,
-        right: expandToViewport
-          ? isPresented
-            ? '0px'
-            : 'var(--portfolio-control-gutter-width)'
-          : undefined,
-        top: expandToViewport ? '50%' : undefined,
-        width: expandToViewport
-          ? isPresented
-            ? '100vw'
-            : 'var(--portfolio-screenshot-size)'
-          : undefined,
-        height: expandToViewport
-          ? isPresented
-            ? '100dvh'
-            : 'var(--portfolio-screenshot-size)'
-          : undefined,
-        transform: expandToViewport ? 'translate3d(0, -50%, 0)' : undefined,
-        willChange: isPresented ? 'width, height, right' : undefined,
-      }}
+      style={
+        {
+          '--portfolio-media-padding': isPresented ? '3rem' : '1.5rem',
+          touchAction: isZoomed ? 'none' : 'pan-x pan-y',
+          position: expandToViewport ? 'absolute' : undefined,
+          right: expandToViewport
+            ? isPresented
+              ? '0px'
+              : 'var(--portfolio-control-gutter-width)'
+            : undefined,
+          top: expandToViewport ? '50%' : undefined,
+          width: expandToViewport
+            ? isPresented
+              ? '100vw'
+              : 'var(--portfolio-screenshot-size)'
+            : undefined,
+          height: expandToViewport
+            ? isPresented
+              ? '100dvh'
+              : 'var(--portfolio-screenshot-size)'
+            : undefined,
+          transform: expandToViewport ? 'translate3d(0, -50%, 0)' : undefined,
+          willChange: isPresented ? 'width, height, right' : undefined,
+        } as InlineMediaSurfaceStyle
+      }
     >
       <div
         ref={contentRef}
@@ -6365,7 +6371,7 @@ function ScreenshotMedia({
         onDragStart={(event) => event.preventDefault()}
         playsInline
         preload={priority ? 'auto' : 'metadata'}
-        className={`absolute inset-0 h-full w-full select-none p-6 ${className}`}
+        className={`absolute inset-0 h-full w-full select-none [padding:var(--portfolio-media-padding,1.5rem)] ${className}`}
       />
     );
   }
@@ -6380,7 +6386,7 @@ function ScreenshotMedia({
       onDragStart={(event) => event.preventDefault()}
       priority={priority}
       sizes={sizes}
-      className={`select-none p-6 ${className}`}
+      className={`select-none [padding:var(--portfolio-media-padding,1.5rem)] ${className}`}
     />
   );
 }
