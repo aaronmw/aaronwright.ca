@@ -3171,6 +3171,12 @@ export function PortfolioBrowser({
       return;
     }
 
+    if (event.key === 'Escape' && isInlineZoomPresentationActive) {
+      event.preventDefault();
+      resetInlineMediaZoom();
+      return;
+    }
+
     if (isTextEntryTarget(event.target)) {
       return;
     }
@@ -3856,7 +3862,7 @@ export function PortfolioBrowser({
   const helperMessageKind: PortfolioHelperMessageKind =
     renderedIntroPhase !== 'ready'
       ? null
-      : isModalPresentationActive
+      : isModalPresentationActive || isInlineZoomPresentationActive
         ? 'close'
         : activeProjectIndex === START_SCREEN_INDEX
           ? 'navigation'
@@ -4630,6 +4636,27 @@ export function PortfolioBrowser({
           />
         </div>
       </nav>
+
+      <CircularIconButton
+        icon={faXmark}
+        iconClassName="size-7"
+        ring
+        className={`fixed right-5 top-5 z-[70] isolate size-12 bg-black text-[var(--project-color)] transition-[transform,opacity] duration-300 motion-reduce:transition-none ${
+          isInlineZoomPresentationActive
+            ? 'translate-y-0 rotate-0 opacity-100'
+            : 'pointer-events-none -translate-y-16 rotate-90 opacity-0'
+        }`}
+        style={
+          {
+            '--project-color': activeProjectColor ?? PROJECT_COLORS[0],
+          } as ProjectColorStyle
+        }
+        aria-label="Reset image zoom"
+        title="Close"
+        aria-hidden={isInlineZoomPresentationActive ? undefined : true}
+        tabIndex={isInlineZoomPresentationActive ? undefined : -1}
+        onClick={resetInlineMediaZoom}
+      />
 
       {shouldShowModal && activeProject && activeScreenshot ? (
         <ImageModal
@@ -5899,6 +5926,7 @@ function ZoomableScreenshot({
   screenshotId,
   concealed,
   className,
+  expandToViewport,
   onZoomChange,
   children,
 }: {
@@ -5906,6 +5934,7 @@ function ZoomableScreenshot({
   screenshotId: string;
   concealed: boolean;
   className: string;
+  expandToViewport: boolean;
   onZoomChange: (screenshotId: string, zoomed: boolean) => void;
   children: ReactNode;
 }) {
@@ -5924,10 +5953,21 @@ function ZoomableScreenshot({
       ref={surfaceRef}
       data-portfolio-screenshot-id={screenshotId}
       data-portfolio-inline-zoomed={isZoomed ? 'true' : 'false'}
-      className={`relative overflow-hidden border border-transparent ${className} ${cursorClass} ${
+      className={`relative overflow-hidden border border-transparent transition-[width,transform] duration-500 ease-out motion-reduce:transition-none ${className} ${cursorClass} ${
         concealed ? 'invisible' : ''
       }`}
-      style={{ touchAction: isZoomed ? 'none' : 'pan-x pan-y' }}
+      style={{
+        touchAction: isZoomed ? 'none' : 'pan-x pan-y',
+        width: expandToViewport
+          ? isZoomed
+            ? '100vw'
+            : 'var(--portfolio-screenshot-size)'
+          : undefined,
+        transform: expandToViewport
+          ? `translate3d(${isZoomed ? 'var(--portfolio-control-gutter-width)' : '0px'}, 0, 0)`
+          : undefined,
+        willChange: isZoomed ? 'width, transform' : undefined,
+      }}
     >
       <div
         ref={contentRef}
@@ -6039,6 +6079,7 @@ function ProjectPanel({
             active={isActive}
             screenshotId={slide.screenshot.id}
             concealed={concealedScreenshotId === slide.screenshot.id}
+            expandToViewport={isWideLayout}
             onZoomChange={onInlineZoomChange}
             className={
               isWideLayout
