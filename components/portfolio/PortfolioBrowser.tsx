@@ -5953,20 +5953,25 @@ function ZoomableScreenshot({
       ref={surfaceRef}
       data-portfolio-screenshot-id={screenshotId}
       data-portfolio-inline-zoomed={isZoomed ? 'true' : 'false'}
-      className={`relative overflow-hidden border border-transparent transition-[width,transform] duration-500 ease-out motion-reduce:transition-none ${className} ${cursorClass} ${
+      className={`relative overflow-hidden border border-transparent transition-[width,right] duration-500 ease-out motion-reduce:transition-none ${className} ${cursorClass} ${
         concealed ? 'invisible' : ''
       }`}
       style={{
         touchAction: isZoomed ? 'none' : 'pan-x pan-y',
+        position: expandToViewport ? 'absolute' : undefined,
+        right: expandToViewport
+          ? isZoomed
+            ? '0px'
+            : 'var(--portfolio-control-gutter-width)'
+          : undefined,
+        top: expandToViewport ? '50%' : undefined,
         width: expandToViewport
           ? isZoomed
             ? '100vw'
             : 'var(--portfolio-screenshot-size)'
           : undefined,
-        transform: expandToViewport
-          ? `translate3d(${isZoomed ? 'var(--portfolio-control-gutter-width)' : '0px'}, 0, 0)`
-          : undefined,
-        willChange: isZoomed ? 'width, transform' : undefined,
+        transform: expandToViewport ? 'translate3d(0, -50%, 0)' : undefined,
+        willChange: isZoomed ? 'width, right' : undefined,
       }}
     >
       <div
@@ -6048,7 +6053,7 @@ function ProjectPanel({
       />
 
       <div
-        className={`grid min-h-0 ${panelContentClass} ${
+        className={`relative grid min-h-0 ${panelContentClass} ${
           slide.kind === 'description' && !shouldShowDescriptionPlaceholder
             ? 'hidden'
             : ''
