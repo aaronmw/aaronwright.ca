@@ -4753,7 +4753,7 @@ export function PortfolioBrowser({
 
       {!isWideLayout ? (
         <div
-          className={`fixed bottom-5 right-5 z-30 grid size-12 place-items-center transition-opacity duration-300 ease-out ${
+          className={`fixed bottom-5 right-5 z-30 grid h-[3.25rem] w-12 place-items-center transition-opacity duration-300 ease-out ${
             activeProjectIndex === START_SCREEN_INDEX
               ? 'pointer-events-none opacity-0'
               : 'opacity-100'
