@@ -6219,14 +6219,34 @@ function CarouselPullBoundary({
     />
   );
 
+  if (edge === 'after') {
+    return (
+      <>
+        <div
+          data-portfolio-carousel-boundary={edge}
+          className="pointer-events-none -ml-[50vw] h-dvh w-[50vw] shrink-0 snap-start snap-always"
+          aria-hidden="true"
+        />
+        <div
+          data-portfolio-carousel-boundary-visual={edge}
+          className="pointer-events-none grid h-dvh w-[50vw] shrink-0 place-items-center bg-black"
+          style={
+            {
+              '--project-color': projectColor,
+            } as ProjectColorStyle
+          }
+          aria-hidden="true"
+        >
+          {icon}
+        </div>
+      </>
+    );
+  }
+
   return (
     <div
       data-portfolio-carousel-boundary={edge}
-      className={`pointer-events-none grid h-dvh shrink-0 snap-start snap-always ${
-        edge === 'before'
-          ? 'w-[50vw] place-items-center bg-black'
-          : '-ml-[50vw] w-screen grid-cols-2'
-      }`}
+      className="pointer-events-none grid h-dvh w-[50vw] shrink-0 snap-start snap-always place-items-center bg-black"
       style={
         {
           '--project-color': projectColor,
@@ -6234,13 +6254,7 @@ function CarouselPullBoundary({
       }
       aria-hidden="true"
     >
-      {edge === 'before' ? (
-        icon
-      ) : (
-        <span className="col-start-2 grid h-full place-items-center bg-black">
-          {icon}
-        </span>
-      )}
+      {icon}
     </div>
   );
 }
