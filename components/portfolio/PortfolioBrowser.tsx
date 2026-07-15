@@ -5953,7 +5953,7 @@ function ZoomableScreenshot({
       ref={surfaceRef}
       data-portfolio-screenshot-id={screenshotId}
       data-portfolio-inline-zoomed={isZoomed ? 'true' : 'false'}
-      className={`relative overflow-hidden border border-transparent transition-[width,right] duration-500 ease-out motion-reduce:transition-none ${className} ${cursorClass} ${
+      className={`relative overflow-hidden border border-transparent transition-[width,height,right] duration-500 ease-out motion-reduce:transition-none ${className} ${cursorClass} ${
         concealed ? 'invisible' : ''
       }`}
       style={{
@@ -5970,8 +5970,13 @@ function ZoomableScreenshot({
             ? '100vw'
             : 'var(--portfolio-screenshot-size)'
           : undefined,
+        height: expandToViewport
+          ? isZoomed
+            ? '100dvh'
+            : 'var(--portfolio-screenshot-size)'
+          : undefined,
         transform: expandToViewport ? 'translate3d(0, -50%, 0)' : undefined,
-        willChange: isZoomed ? 'width, right' : undefined,
+        willChange: isZoomed ? 'width, height, right' : undefined,
       }}
     >
       <div
