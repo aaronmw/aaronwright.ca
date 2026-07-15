@@ -4807,6 +4807,17 @@ export function PortfolioBrowser({
               ? 'translate-x-[var(--portfolio-modal-indicator-translate-x)] will-change-transform'
               : 'translate-x-0'
           }`}
+          style={
+            !isWideLayout
+              ? {
+                  transform: `translateX(calc(-1 * max(0px, calc(${
+                    Math.max(activeNavigationSlides.length - 1, 0) *
+                      (NAVIGATION_INDICATOR_STEP_REM / 2) +
+                    6.5
+                  }rem - 50vw))))`,
+                }
+              : undefined
+          }
         >
           <AnimatedSlideIndicators
             controllerRef={slideIndicatorMotionControllerRef}
@@ -5808,6 +5819,7 @@ function AnimatedSlideIndicators({
 
 function NavigationActiveRing({
   color,
+  visualScale = 1,
   elementRef,
   previewElementRef,
   className,
@@ -5817,6 +5829,7 @@ function NavigationActiveRing({
   tooltip,
 }: {
   color: string;
+  visualScale?: number;
   elementRef?: (node: HTMLDivElement | null) => void;
   previewElementRef?: (node: HTMLDivElement | null) => void;
   className: string;
@@ -5849,6 +5862,15 @@ function NavigationActiveRing({
         <svg
           className="absolute inset-0 size-12 overflow-visible"
           viewBox="0 0 48 48"
+          style={
+            visualScale === 1
+              ? undefined
+              : {
+                  transform: `scale(${visualScale})`,
+                  transformBox: 'fill-box',
+                  transformOrigin: '50% 50%',
+                }
+          }
           aria-hidden="true"
         >
           <circle
@@ -6014,8 +6036,8 @@ function CircularIconButton({
       {ring ? (
         <NavigationActiveRing
           color="inherit"
+          visualScale={NAVIGATION_ACTIVE_SCALE}
           className="absolute inset-0 z-0"
-          style={{ transform: `scale(${NAVIGATION_ACTIVE_SCALE})` }}
         />
       ) : null}
       {visualRef || secondaryVisual ? (
