@@ -6015,6 +6015,7 @@ function CircularIconButton({
         <NavigationActiveRing
           color="inherit"
           className="absolute inset-0 z-0"
+          style={{ transform: `scale(${NAVIGATION_ACTIVE_SCALE})` }}
         />
       ) : null}
       {visualRef || secondaryVisual ? (
@@ -6211,11 +6212,20 @@ function CarouselPullBoundary({
   edge: 'before' | 'after';
   projectColor: string;
 }) {
+  const icon = (
+    <FontAwesomeIcon
+      icon={edge === 'before' ? faArrowRight : faArrowLeft}
+      className="size-7 text-[var(--project-color)] drop-shadow-[1px_1px_0_black]"
+    />
+  );
+
   return (
     <div
       data-portfolio-carousel-boundary={edge}
-      className={`pointer-events-none grid h-dvh w-[50vw] shrink-0 place-items-center bg-black ${
-        edge === 'before' ? 'snap-start snap-always' : 'snap-end snap-always'
+      className={`pointer-events-none grid h-dvh shrink-0 snap-start snap-always ${
+        edge === 'before'
+          ? 'w-[50vw] place-items-center bg-black'
+          : '-ml-[50vw] w-screen grid-cols-2'
       }`}
       style={
         {
@@ -6224,10 +6234,13 @@ function CarouselPullBoundary({
       }
       aria-hidden="true"
     >
-      <FontAwesomeIcon
-        icon={edge === 'before' ? faArrowRight : faArrowLeft}
-        className="size-7 text-[var(--project-color)] drop-shadow-[1px_1px_0_black]"
-      />
+      {edge === 'before' ? (
+        icon
+      ) : (
+        <span className="col-start-2 grid h-full place-items-center bg-black">
+          {icon}
+        </span>
+      )}
     </div>
   );
 }
