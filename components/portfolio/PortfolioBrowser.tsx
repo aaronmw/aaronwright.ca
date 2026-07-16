@@ -2773,7 +2773,7 @@ export function PortfolioBrowser({
                 <button
                   key={project.id}
                   type="button"
-                  className={`w-full items-center gap-[clamp(0.75rem,1.8vh,1.5rem)] py-[clamp(0.2rem,0.65vh,0.75rem)] text-left text-white outline-none transition-colors hover:text-[var(--project-color)] focus-visible:text-[var(--project-color)] sm:py-[clamp(0.3rem,0.85vh,1.25rem)] ${
+                  className={`group w-full items-center gap-[clamp(0.75rem,1.8vh,1.5rem)] py-[clamp(0.2rem,0.65vh,0.75rem)] text-left text-white outline-none transition-colors hover:text-[var(--project-color)] focus-visible:text-[var(--project-color)] sm:py-[clamp(0.3rem,0.85vh,1.25rem)] ${
                     isWideLayout
                       ? 'grid grid-cols-[minmax(0,1fr)_36ch]'
                       : 'flex justify-between'
@@ -2817,7 +2817,7 @@ export function PortfolioBrowser({
                   {isWideLayout ? (
                     <>
                       <span className="relative flex min-w-0 items-center">
-                        <span className="absolute right-full mr-3 w-8 shrink-0 text-right text-sm font-light text-current sm:text-base">
+                        <span className="absolute right-full mr-5 w-8 shrink-0 text-right text-sm font-light text-current opacity-70 transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100 sm:text-base">
                           {pendingNavigation?.kind === 'project' &&
                           pendingNavigation.projectIndex === index ? (
                             <FontAwesomeIcon
@@ -2855,7 +2855,7 @@ export function PortfolioBrowser({
                     </span>
                   )}
                   {!isWideLayout ? (
-                    <span className="text-sm font-light text-current sm:text-base">
+                    <span className="text-sm font-light text-current opacity-70 transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100 sm:text-base">
                       {pendingNavigation?.kind === 'project' &&
                       pendingNavigation.projectIndex === index ? (
                         <FontAwesomeIcon
@@ -3235,7 +3235,7 @@ function SectionBlurb({
 }) {
   return (
     <span
-      className={`max-w-[54ch] text-[clamp(0.58rem,1.25vh,0.82rem)] font-light normal-case leading-snug tracking-normal text-current opacity-70 sm:text-[clamp(0.68rem,1.45vh,1rem)] ${
+      className={`max-w-[54ch] text-[clamp(0.75rem,1.5vh,0.9rem)] font-light normal-case leading-snug tracking-normal text-current opacity-70 sm:text-[clamp(0.75rem,1.55vh,1rem)] ${
         className ?? ''
       }`}
     >
