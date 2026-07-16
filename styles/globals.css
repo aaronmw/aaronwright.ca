@@ -17,6 +17,30 @@ button {
   cursor: pointer;
 }
 
+.portfolio-safe-inline {
+  --portfolio-safe-inline-padding: 1.5rem;
+  padding-left: max(
+    var(--portfolio-safe-inline-padding),
+    env(safe-area-inset-left, 0px)
+  );
+  padding-right: max(
+    var(--portfolio-safe-inline-padding),
+    env(safe-area-inset-right, 0px)
+  );
+}
+
+@media (min-width: 40rem) {
+  .portfolio-safe-inline {
+    --portfolio-safe-inline-padding: 2.5rem;
+  }
+}
+
+@media (min-width: 64rem) {
+  .portfolio-safe-inline {
+    --portfolio-safe-inline-padding: 4rem;
+  }
+}
+
 @utility portfolio-scrollbar-none {
   scrollbar-width: none;
 

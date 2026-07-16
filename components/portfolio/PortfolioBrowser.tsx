@@ -80,6 +80,7 @@ type ProjectSlide =
 const START_SCREEN_INDEX = -1;
 const WIDE_LAYOUT_MEDIA_QUERY =
   '(min-aspect-ratio: 5/4) and (min-width: 43rem)';
+const TOUCH_INPUT_MEDIA_QUERY = '(hover: none) and (pointer: coarse)';
 type WideLayoutStyle = CSSProperties & {
   '--portfolio-description-rail-width': string;
   '--portfolio-control-gutter-width': string;
@@ -259,6 +260,21 @@ function getWideLayoutServerSnapshot() {
 
 function subscribeToWideLayout(callback: () => void) {
   const mediaQuery = window.matchMedia(WIDE_LAYOUT_MEDIA_QUERY);
+  mediaQuery.addEventListener('change', callback);
+
+  return () => mediaQuery.removeEventListener('change', callback);
+}
+
+function getTouchInputSnapshot() {
+  return window.matchMedia(TOUCH_INPUT_MEDIA_QUERY).matches;
+}
+
+function getTouchInputServerSnapshot() {
+  return false;
+}
+
+function subscribeToTouchInput(callback: () => void) {
+  const mediaQuery = window.matchMedia(TOUCH_INPUT_MEDIA_QUERY);
   mediaQuery.addEventListener('change', callback);
 
   return () => mediaQuery.removeEventListener('change', callback);
@@ -1992,6 +2008,12 @@ export function PortfolioBrowser({
     getWideLayoutSnapshot,
     getWideLayoutServerSnapshot
   );
+  const isTouchInput = useSyncExternalStore(
+    subscribeToTouchInput,
+    getTouchInputSnapshot,
+    getTouchInputServerSnapshot
+  );
+  const isTouchLandscapeLayout = isWideLayout && isTouchInput;
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isModalClosing, setIsModalClosing] = useState(false);
   const [inlineZoomedScreenshotId, setInlineZoomedScreenshotId] = useState<
@@ -2023,7 +2045,7 @@ export function PortfolioBrowser({
   const isModalPresentationActive = shouldShowModal && !isModalClosing;
   const isModalLayerActive = shouldShowModal;
   const isInlineZoomPresentationActive =
-    isWideLayout && inlineZoomedScreenshotId !== null;
+    isWideLayout && !isTouchInput && inlineZoomedScreenshotId !== null;
   const shouldCenterSlideNavigation =
     isModalPresentationActive || isInlineZoomPresentationActive;
   const activeProjectColor =
@@ -4379,18 +4401,27 @@ export function PortfolioBrowser({
       />
     );
   };
-  const renderSectionNavRail = (side: 'left' | 'right') => {
+  const renderSectionNavRail = (
+    side: 'left' | 'right',
+    isConcealed = false
+  ) => {
     const sideIndex = side === 'left' ? 0 : 1;
-    const positionClass =
-      side === 'left' ? 'left-3 sm:left-6' : 'right-3 sm:right-6';
+    const safeAreaPosition =
+      side === 'left'
+        ? { left: 'max(1.5rem, env(safe-area-inset-left, 0px))' }
+        : { right: 'max(1.5rem, env(safe-area-inset-right, 0px))' };
 
     return (
       <div
         data-portfolio-section-nav-zone={side}
-        className={`fixed top-1/2 w-11 -translate-y-1/2 ${positionClass} ${
+        className={`fixed top-1/2 w-11 -translate-y-1/2 ${
+          isConcealed ? 'invisible pointer-events-none' : ''
+        } ${
           isModalLayerActive ? 'z-[60]' : 'z-20'
         }`}
-        style={sideNavInteractiveZoneStyle}
+        aria-hidden={isConcealed ? true : undefined}
+        inert={isConcealed ? true : undefined}
+        style={{ ...sideNavInteractiveZoneStyle, ...safeAreaPosition }}
         onPointerMove={(event) => {
           if (
             sectionNavPointerOwnerRef.current === side &&
@@ -4490,29 +4521,49 @@ export function PortfolioBrowser({
         }`}
       >
         <section
-          className={`relative h-dvh snap-start snap-always px-6 sm:px-10 lg:px-16 ${
-            isWideLayout
+          className={`portfolio-safe-inline relative h-dvh snap-start snap-always ${
+            isTouchLandscapeLayout
+              ? 'grid grid-rows-[auto_minmax(0,1fr)] gap-2'
+              : isWideLayout
               ? 'flex flex-col justify-center py-16'
               : 'grid grid-rows-[auto_minmax(0,1fr)] py-6'
           }`}
+          style={
+            isTouchLandscapeLayout
+              ? {
+                  paddingTop:
+                    'max(0.75rem, env(safe-area-inset-top, 0px))',
+                  paddingBottom:
+                    'max(0.75rem, env(safe-area-inset-bottom, 0px))',
+                  paddingLeft:
+                    'max(4.5rem, calc(env(safe-area-inset-left, 0px) + 4.25rem))',
+                }
+              : undefined
+          }
         >
           <div
             className={
-              isWideLayout
-                ? 'absolute inset-x-0 top-6 px-6 sm:px-10 lg:px-16'
+              isTouchLandscapeLayout
+                ? 'min-w-0'
+                : isWideLayout
+                  ? 'portfolio-safe-inline absolute inset-x-0 top-6'
                 : 'min-w-0'
             }
           >
             <div
               className={`mx-auto flex w-full max-w-6xl gap-4 ${
-                isWideLayout
+                isTouchLandscapeLayout
+                  ? 'items-start justify-between'
+                  : isWideLayout
                   ? 'items-center justify-between'
                   : 'flex-col items-start justify-start'
               }`}
             >
               <div className="flex shrink-0 items-center gap-5">
                 <svg
-                  className="size-12 shrink-0 text-white"
+                  className={`shrink-0 text-white ${
+                    isTouchLandscapeLayout ? 'size-9' : 'size-12'
+                  }`}
                   viewBox="0 0 7 7"
                   aria-hidden="true"
                 >
@@ -4532,11 +4583,23 @@ export function PortfolioBrowser({
                   <rect x="4" y="5" width="1" height="1" fill="currentColor" />
                   <rect x="5" y="5" width="1" height="1" fill="currentColor" />
                 </svg>
-                <p className="text-base font-light text-white/70">Aaron M. Wright</p>
+                <p
+                  className={`font-light text-white/70 ${
+                    isTouchLandscapeLayout ? 'text-sm' : 'text-base'
+                  }`}
+                >
+                  Aaron M. Wright
+                </p>
               </div>
               <address
-                className={`flex min-w-0 flex-col gap-1 text-base font-light not-italic leading-relaxed text-white/70 ${
-                  isWideLayout ? 'items-end text-right' : 'items-start text-left'
+                className={`flex min-w-0 flex-col font-light not-italic text-white/70 ${
+                  isTouchLandscapeLayout
+                    ? 'items-end gap-0 text-right text-sm leading-snug'
+                    : `gap-1 text-base leading-relaxed ${
+                        isWideLayout
+                          ? 'items-end text-right'
+                          : 'items-start text-left'
+                      }`
                 }`}
               >
                 <p>302-70 Dyrgas Gate</p>
@@ -4577,7 +4640,9 @@ export function PortfolioBrowser({
           </div>
           <div
             className={`mx-auto w-full max-w-6xl ${
-              isWideLayout ? '' : 'min-h-0 self-center'
+              isWideLayout && !isTouchLandscapeLayout
+                ? ''
+                : 'min-h-0 self-center'
             }`}
           >
             <p className="mb-[clamp(0.65rem,1.6vh,2rem)] text-xs font-light uppercase tracking-[0.35em] text-white/45">
@@ -4654,7 +4719,11 @@ export function PortfolioBrowser({
                   {isWideLayout ? (
                     <>
                       <span className="flex min-w-0 items-center">
-                        <span className="-ml-12 w-12 shrink-0 text-sm font-light text-current sm:text-base">
+                        <span
+                          className={`shrink-0 text-sm font-light text-current sm:text-base ${
+                            isTouchLandscapeLayout ? 'w-9' : '-ml-12 w-12'
+                          }`}
+                        >
                           {pendingNavigation?.kind === 'project' &&
                           pendingNavigation.projectIndex === index ? (
                             <FontAwesomeIcon
@@ -4807,7 +4876,7 @@ export function PortfolioBrowser({
       {isWideLayout ? (
         <>
           {renderSectionNavRail('left')}
-          {renderSectionNavRail('right')}
+          {renderSectionNavRail('right', isTouchLandscapeLayout)}
         </>
       ) : null}
 
@@ -4818,6 +4887,10 @@ export function PortfolioBrowser({
               ? 'pointer-events-none opacity-0'
               : 'opacity-100'
           }`}
+          style={{
+            right: 'max(1.25rem, env(safe-area-inset-right, 0px))',
+            bottom: 'max(1.25rem, env(safe-area-inset-bottom, 0px))',
+          }}
         >
           <CircularIconButton
             icon={faArrowUp}
@@ -4853,6 +4926,7 @@ export function PortfolioBrowser({
             '--project-color': activeProjectColor ?? getProjectColor(0),
             '--portfolio-modal-indicator-translate-x':
               'calc(var(--portfolio-control-gutter-width) + (var(--portfolio-screenshot-size) / 2) - 50vw)',
+            bottom: 'max(1.25rem, env(safe-area-inset-bottom, 0px))',
           } as ProjectColorStyle &
             WideLayoutStyle & {
               '--portfolio-modal-indicator-translate-x': string;
@@ -4922,6 +4996,8 @@ export function PortfolioBrowser({
         style={
           {
             '--project-color': activeProjectColor ?? PROJECT_COLORS[0],
+            top: 'max(1.25rem, env(safe-area-inset-top, 0px))',
+            right: 'max(1.25rem, env(safe-area-inset-right, 0px))',
           } as ProjectColorStyle
         }
         aria-label="Reset image zoom"
@@ -4947,7 +5023,9 @@ export function PortfolioBrowser({
         />
       ) : null}
 
-      <PortfolioHelperMessage kind={isWideLayout ? helperMessageKind : null} />
+      <PortfolioHelperMessage
+        kind={isWideLayout && !isTouchInput ? helperMessageKind : null}
+      />
 
       <div
         ref={curtainRef}
@@ -5120,6 +5198,10 @@ function PortfolioHelperMessage({
       aria-live="polite"
       aria-hidden={isVisible ? undefined : true}
       className="pointer-events-none fixed bottom-5 right-5 z-[110] max-w-[calc(100vw-2.5rem)] translate-y-16 rounded-full bg-white/10 px-4 py-2 text-sm font-normal leading-tight text-white opacity-0 backdrop-blur-md motion-reduce:translate-y-0"
+      style={{
+        right: 'max(1.25rem, env(safe-area-inset-right, 0px))',
+        bottom: 'max(1.25rem, env(safe-area-inset-bottom, 0px))',
+      }}
     >
       {renderedKind === 'navigation' ? (
         <span className="leading-6">
@@ -6406,7 +6488,9 @@ function ProjectPanel({
       data-portfolio-carousel-panel={carouselEntryKind}
       data-portfolio-carousel-index={carouselIndex}
       className={`grid h-dvh w-screen shrink-0 snap-start snap-always grid-rows-[1fr] bg-black ${
-        isWideLayout ? 'px-0 py-0' : 'px-6 pb-24 pt-8 sm:px-10'
+        isWideLayout
+          ? 'px-0 py-0'
+          : 'portfolio-safe-inline pb-24 pt-8'
       }`}
       aria-hidden={!isActive}
       style={
@@ -7250,6 +7334,8 @@ function ImageModal({
         style={
           {
             '--project-color': projectColor ?? PROJECT_COLORS[0],
+            top: 'max(1.25rem, env(safe-area-inset-top, 0px))',
+            right: 'max(1.25rem, env(safe-area-inset-right, 0px))',
           } as ProjectColorStyle
         }
         aria-label="Close enlarged image"
