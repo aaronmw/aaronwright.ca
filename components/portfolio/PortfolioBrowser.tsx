@@ -4536,7 +4536,7 @@ export function PortfolioBrowser({
                   paddingBottom:
                     'max(0.75rem, env(safe-area-inset-bottom, 0px))',
                   paddingLeft:
-                    'max(4.5rem, calc(env(safe-area-inset-left, 0px) + 4.25rem))',
+                    'max(5.5rem, calc(env(safe-area-inset-left, 0px) + 5.25rem))',
                 }
               : undefined
           }
@@ -4564,24 +4564,26 @@ export function PortfolioBrowser({
                   className={`shrink-0 text-white ${
                     isTouchLandscapeLayout ? 'size-9' : 'size-12'
                   }`}
+                  width={isTouchLandscapeLayout ? 36 : 48}
+                  height={isTouchLandscapeLayout ? 36 : 48}
                   viewBox="0 0 7 7"
                   aria-hidden="true"
                 >
-                  <rect x="1" y="1" width="1" height="1" fill="currentColor" />
-                  <rect x="5" y="1" width="1" height="1" fill="currentColor" />
-                  <rect x="1" y="2" width="1" height="1" fill="currentColor" />
-                  <rect x="3" y="2" width="1" height="1" fill="currentColor" />
-                  <rect x="5" y="2" width="1" height="1" fill="currentColor" />
-                  <rect x="1" y="3" width="1" height="1" fill="currentColor" />
-                  <rect x="5" y="3" width="1" height="1" fill="currentColor" />
-                  <rect x="1" y="4" width="1" height="1" fill="currentColor" />
-                  <rect x="3" y="4" width="1" height="1" fill="currentColor" />
-                  <rect x="5" y="4" width="1" height="1" fill="currentColor" />
-                  <rect x="1" y="5" width="1" height="1" fill="currentColor" />
-                  <rect x="2" y="5" width="1" height="1" fill="currentColor" />
-                  <rect x="3" y="5" width="1" height="1" fill="currentColor" />
-                  <rect x="4" y="5" width="1" height="1" fill="currentColor" />
-                  <rect x="5" y="5" width="1" height="1" fill="currentColor" />
+                  <rect x="1" y="1" width="1" height="1" fill="#fff" />
+                  <rect x="5" y="1" width="1" height="1" fill="#fff" />
+                  <rect x="1" y="2" width="1" height="1" fill="#fff" />
+                  <rect x="3" y="2" width="1" height="1" fill="#fff" />
+                  <rect x="5" y="2" width="1" height="1" fill="#fff" />
+                  <rect x="1" y="3" width="1" height="1" fill="#fff" />
+                  <rect x="5" y="3" width="1" height="1" fill="#fff" />
+                  <rect x="1" y="4" width="1" height="1" fill="#fff" />
+                  <rect x="3" y="4" width="1" height="1" fill="#fff" />
+                  <rect x="5" y="4" width="1" height="1" fill="#fff" />
+                  <rect x="1" y="5" width="1" height="1" fill="#fff" />
+                  <rect x="2" y="5" width="1" height="1" fill="#fff" />
+                  <rect x="3" y="5" width="1" height="1" fill="#fff" />
+                  <rect x="4" y="5" width="1" height="1" fill="#fff" />
+                  <rect x="5" y="5" width="1" height="1" fill="#fff" />
                 </svg>
                 <p
                   className={`font-light text-white/70 ${
@@ -4718,11 +4720,9 @@ export function PortfolioBrowser({
                 >
                   {isWideLayout ? (
                     <>
-                      <span className="flex min-w-0 items-center">
+                      <span className="relative flex min-w-0 items-center">
                         <span
-                          className={`shrink-0 text-sm font-light text-current sm:text-base ${
-                            isTouchLandscapeLayout ? 'w-9' : '-ml-12 w-12'
-                          }`}
+                          className="absolute right-full mr-3 w-8 shrink-0 text-right text-sm font-light text-current sm:text-base"
                         >
                           {pendingNavigation?.kind === 'project' &&
                           pendingNavigation.projectIndex === index ? (
@@ -6141,7 +6141,7 @@ function SideNavButton({
           <FontAwesomeIcon
             ref={dotRef}
             icon={faCircle}
-            className="absolute size-2.5 text-current opacity-0 drop-shadow-[1px_1px_0_black]"
+            className="absolute inset-0 m-auto size-2.5 text-current opacity-0 drop-shadow-[1px_1px_0_black]"
             style={{ width: '0.625rem', height: '0.625rem' }}
             aria-hidden="true"
           />
@@ -6200,7 +6200,7 @@ function CircularIconButton({
           <FontAwesomeIcon
             ref={iconRef}
             icon={icon}
-            className={`absolute ${iconClassName} drop-shadow-[1px_1px_0_black]`}
+            className={`absolute inset-0 m-auto ${iconClassName} drop-shadow-[1px_1px_0_black]`}
             aria-hidden="true"
           />
           {secondaryVisual}
