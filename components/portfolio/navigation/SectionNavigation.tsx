@@ -55,9 +55,21 @@ type SectionNavigationView = {
   tooltipText: HTMLSpanElement | null;
 };
 
+type AffordanceOpacityMotion = {
+  element: SVGElement;
+  setter: ReturnType<typeof gsap.quickTo>;
+  target: number;
+};
+
+type AffordanceOpacityMotions = {
+  arrows: Array<AffordanceOpacityMotion | null>;
+  dots: Array<AffordanceOpacityMotion | null>;
+};
+
 const SVG_WIDTH = 52;
 const SVG_CENTER_X = SVG_WIDTH / 2;
-const ARROW_SIZE = 28;
+const ARROW_SIZE = 16;
+const AFFORDANCE_CROSSFADE_DURATION = 0.3;
 const TOOLTIP_DURATION = 0.15;
 
 function getIconPaths(icon: IconDefinition) {
@@ -224,6 +236,13 @@ export function SectionNavigation({
   const navigationControllerRef = useRef<TrackedNavigationController | null>(
     null,
   );
+  const affordanceOpacityMotionsRef = useRef<
+    Record<SectionNavigationSide, AffordanceOpacityMotions>
+  >({
+    left: { arrows: [], dots: [] },
+    right: { arrows: [], dots: [] },
+  });
+  const reducedMotionRef = useRef(false);
   const sourcePositionRef = useRef(activeIndex);
   const pointerOwnerRef = useRef<SectionNavigationSide | null>(null);
   const previewIndexRef = useRef<number | null>(null);
@@ -247,6 +266,51 @@ export function SectionNavigation({
   hoveredRef.current = hovered;
   modalPresentationActiveRef.current = modalPresentationActive;
   itemsRef.current = items;
+
+  const setAffordanceOpacity = (
+    side: SectionNavigationSide,
+    kind: keyof AffordanceOpacityMotions,
+    itemIndex: number,
+    target: number,
+  ) => {
+    const view = viewsRef.current[side];
+    const element =
+      kind === 'arrows' ? view.arrowGroups[itemIndex] : view.dots[itemIndex];
+
+    if (!element) {
+      return;
+    }
+
+    const motions = affordanceOpacityMotionsRef.current[side][kind];
+    let motion = motions[itemIndex];
+
+    if (!motion || motion.element !== element) {
+      if (motion) {
+        gsap.killTweensOf(motion.element);
+      }
+
+      gsap.set(element, { opacity: target });
+      motion = {
+        element,
+        setter: gsap.quickTo(element, 'opacity', {
+          duration: reducedMotionRef.current
+            ? 0
+            : AFFORDANCE_CROSSFADE_DURATION,
+          ease: 'power1.out',
+        }),
+        target,
+      };
+      motions[itemIndex] = motion;
+      return;
+    }
+
+    if (Math.abs(motion.target - target) < 0.001) {
+      return;
+    }
+
+    motion.target = target;
+    motion.setter(target);
+  };
 
   const setTooltipVisibility = (
     side: SectionNavigationSide,
@@ -392,12 +456,12 @@ export function SectionNavigation({
           'transform',
           `translate(${SVG_CENTER_X} ${centerY}) rotate(${rotation}) scale(${visualScale}) translate(${-SVG_CENTER_X} ${-centerY})`,
         );
-        arrowGroup?.setAttribute('opacity', String(arrowOpacity));
+        setAffordanceOpacity(side, 'arrows', itemIndex, arrowOpacity);
 
         if (dot) {
           dot.setAttribute('cy', String(centerY));
           dot.setAttribute('r', String(NAVIGATION_DOT_RADIUS * visualScale));
-          dot.setAttribute('opacity', String(dotOpacity));
+          setAffordanceOpacity(side, 'dots', itemIndex, dotOpacity);
         }
       });
 
@@ -444,6 +508,9 @@ export function SectionNavigation({
   }, [menuTitleRefs, sourceRef]);
 
   useLayoutEffect(() => {
+    reducedMotionRef.current = window.matchMedia(
+      '(prefers-reduced-motion: reduce)',
+    ).matches;
     const controller = new TrackedNavigationController({
       geometry: {
         centers: geometry.centers,
@@ -451,8 +518,7 @@ export function SectionNavigation({
       },
       activeIndex,
       sourcePosition: activeIndex,
-      reducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)')
-        .matches,
+      reducedMotion: reducedMotionRef.current,
       onRender: renderNavigation,
     });
     navigationControllerRef.current = controller;
@@ -460,6 +526,17 @@ export function SectionNavigation({
     return () => {
       controller.destroy();
       navigationControllerRef.current = null;
+      (['left', 'right'] as const).forEach((side) => {
+        const motions = affordanceOpacityMotionsRef.current[side];
+
+        [...motions.arrows, ...motions.dots].forEach((motion) => {
+          if (motion) {
+            gsap.killTweensOf(motion.element);
+          }
+        });
+        motions.arrows = [];
+        motions.dots = [];
+      });
     };
   }, []);
 

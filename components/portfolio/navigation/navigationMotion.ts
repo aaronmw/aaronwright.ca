@@ -114,12 +114,58 @@ export function getColorForPosition(colors: string[], position: number) {
   const boundedPosition = clamp(position, 0, colors.length - 1);
   const lowerIndex = Math.floor(boundedPosition);
   const upperIndex = Math.min(colors.length - 1, Math.ceil(boundedPosition));
+  const progress = boundedPosition - lowerIndex;
+  const lowerColor = parseHslColor(colors[lowerIndex]);
+  const upperColor = parseHslColor(colors[upperIndex]);
+
+  if (lowerColor && upperColor) {
+    const hueDelta =
+      ((((upperColor.hue - lowerColor.hue) % 360) + 540) % 360) - 180;
+    const hue =
+      (((lowerColor.hue + hueDelta * progress) % 360) + 360) % 360;
+
+    return `hsla(${hue},${gsap.utils.interpolate(
+      lowerColor.saturation,
+      upperColor.saturation,
+      progress,
+    )}%,${gsap.utils.interpolate(
+      lowerColor.lightness,
+      upperColor.lightness,
+      progress,
+    )}%,${gsap.utils.interpolate(
+      lowerColor.alpha,
+      upperColor.alpha,
+      progress,
+    )})`;
+  }
 
   return gsap.utils.interpolate(
     colors[lowerIndex],
     colors[upperIndex],
-    boundedPosition - lowerIndex,
+    progress,
   );
+}
+
+function parseHslColor(color: string) {
+  const match = color.match(
+    /^hsla?\(\s*(-?(?:\d+(?:\.\d+)?|\.\d+))(?:deg)?[\s,]+(-?(?:\d+(?:\.\d+)?|\.\d+))%[\s,]+(-?(?:\d+(?:\.\d+)?|\.\d+))%(?:\s*(?:\/|,)\s*((?:-?(?:\d+(?:\.\d+)?|\.\d+))%?))?\s*\)$/i,
+  );
+
+  if (!match) {
+    return null;
+  }
+
+  return {
+    hue: Number(match[1]),
+    saturation: Number(match[2]),
+    lightness: Number(match[3]),
+    alpha:
+      match[4] === undefined
+        ? 1
+        : match[4].endsWith('%')
+          ? Number(match[4].slice(0, -1)) / 100
+          : Number(match[4]),
+  };
 }
 
 export function getNavigationScale(position: number, activeIndex: number) {
@@ -157,7 +203,7 @@ export class TrackedNavigationController {
   private strokeTween: gsap.core.Tween | null = null;
   private pressTimeline: gsap.core.Timeline | null = null;
   private pressReleaseQueued = false;
-  private readonly motion: { coordinate: number; color: string };
+  private readonly motion: { coordinate: number };
 
   constructor(options: TrackedNavigationOptions) {
     this.geometry = options.geometry;
@@ -174,7 +220,6 @@ export class TrackedNavigationController {
         this.geometry.centers,
         this.sourcePosition,
       ),
-      color: getColorForPosition(this.geometry.colors, this.sourcePosition),
     };
     this.render();
   }
@@ -517,11 +562,6 @@ export class TrackedNavigationController {
   }
 
   private moveToCoordinate(coordinate: number, options: MoveOptions = {}) {
-    const position = getPositionForCoordinate(
-      this.geometry.centers,
-      coordinate,
-    );
-    const color = getColorForPosition(this.geometry.colors, position);
     const immediate =
       options.immediate || this.reducedMotion || !options.duration;
 
@@ -529,7 +569,6 @@ export class TrackedNavigationController {
 
     if (immediate) {
       this.motion.coordinate = coordinate;
-      this.motion.color = color;
       this.render();
       options.onComplete?.();
       return;
@@ -537,7 +576,6 @@ export class TrackedNavigationController {
 
     const tween = gsap.to(this.motion, {
       coordinate,
-      color,
       duration: options.duration,
       ease: options.ease ?? 'power3.out',
       overwrite: 'auto',
@@ -581,7 +619,7 @@ export class TrackedNavigationController {
 
     this.onRender({
       activeIndex: this.activeIndex,
-      color: this.motion.color,
+      color: getColorForPosition(this.geometry.colors, position),
       coordinate: this.motion.coordinate,
       mode: this.mode,
       position,
