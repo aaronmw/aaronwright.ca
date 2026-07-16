@@ -282,7 +282,7 @@ It's still getting regular updates and polish as I find opportunities.
   {
     id: 'nextphrase',
     slug: 'nextphrase',
-    title: 'NextPhrase',
+    title: 'Next\u00adPhrase',
     blurb:
       'My own version of my favourite party game.',
     url: 'https://nextphrase.app',
