@@ -3039,17 +3039,24 @@ export function PortfolioBrowser({
       ) : null}
 
       <nav
-        className={`pointer-events-none absolute inset-x-0 bottom-8 isolate overflow-visible ${
+        className={`pointer-events-none isolate ${
           isWideLayout
             ? 'grid grid-cols-[minmax(var(--portfolio-description-rail-width),1fr)_var(--portfolio-screenshot-size)_var(--portfolio-control-gutter-width)]'
             : 'flex justify-center px-6'
-        } ${isModalLayerActive ? 'z-[60]' : 'z-40'}`}
+        }`}
         aria-label={
           activeProject ? `${activeProject.title} screens` : 'Portfolio screens'
         }
         style={
           {
             ...WIDE_LAYOUT_STYLE,
+            position: 'absolute',
+            right: 0,
+            bottom: '2rem',
+            left: 0,
+            height: '52px',
+            overflow: 'visible',
+            zIndex: isModalLayerActive ? 60 : 40,
             '--project-color': activeProjectColor ?? getProjectColor(0),
             '--portfolio-modal-indicator-translate-x':
               'calc(var(--portfolio-control-gutter-width) + (var(--portfolio-screenshot-size) / 2) - 50vw)',
@@ -3530,6 +3537,12 @@ function ProjectDescription({
       style={
         {
           '--project-color': projectColor,
+          ...(isWideLayout
+            ? {
+                paddingLeft:
+                  'max(var(--portfolio-control-gutter-width), calc(env(safe-area-inset-left, 0px) + 5.5rem))',
+              }
+            : {}),
         } as ProjectColorStyle
       }
     >
@@ -3884,6 +3897,12 @@ function BuildingWithAiTextPanel({
       style={
         {
           '--project-color': projectColor,
+          ...(isWideLayout
+            ? {
+                paddingLeft:
+                  'max(var(--portfolio-control-gutter-width), calc(env(safe-area-inset-left, 0px) + 5.5rem))',
+              }
+            : {}),
         } as ProjectColorStyle
       }
     >

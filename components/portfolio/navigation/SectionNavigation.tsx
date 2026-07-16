@@ -666,7 +666,6 @@ export function SectionNavigation({
       side === 'left'
         ? { marginLeft: 'env(safe-area-inset-left)' }
         : { marginRight: 'env(safe-area-inset-right)' };
-    const horizontalPositionClass = side === 'left' ? 'left-6' : 'right-6';
     const svgPosition = side === 'left' ? { left: 0 } : { right: 0 };
 
     return (
@@ -674,10 +673,19 @@ export function SectionNavigation({
         key={side}
         data-portfolio-section-nav-zone={side}
         data-interactive-pop="off"
-        className={`absolute top-0 isolate w-[4.5rem] overflow-visible ${horizontalPositionClass} ${
+        className={`isolate ${
           isHidden ? 'invisible pointer-events-none' : ''
-        } ${modalLayerActive ? 'z-[60]' : 'z-40'}`}
-        style={{ ...safeAreaMargin, height: geometry.height }}
+        }`}
+        style={{
+          ...safeAreaMargin,
+          position: 'absolute',
+          top: 0,
+          [side === 'left' ? 'left' : 'right']: '1.5rem',
+          width: '4.5rem',
+          height: geometry.height,
+          overflow: 'visible',
+          zIndex: modalLayerActive ? 60 : 40,
+        }}
         aria-hidden={isHidden ? true : undefined}
         inert={isHidden ? true : undefined}
         onPointerMove={(event) => {
