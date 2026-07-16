@@ -3021,37 +3021,6 @@ export function PortfolioBrowser({
         />
       ) : null}
 
-      {!isWideLayout ? (
-        <div
-          className={`fixed bottom-5 right-5 z-30 grid h-12 w-11 place-items-center transition-opacity duration-300 ease-out ${
-            activeProjectIndex === START_SCREEN_INDEX
-              ? 'pointer-events-none opacity-0'
-              : 'opacity-100'
-          }`}
-          style={{
-            right: 'max(1.25rem, env(safe-area-inset-right, 0px))',
-            bottom: 'max(1.25rem, env(safe-area-inset-bottom, 0px))',
-          }}
-        >
-          <CircularIconButton
-            icon={faArrowUp}
-            iconClassName="size-7"
-            ring
-            className="relative size-11 bg-transparent text-[var(--project-color)]"
-            style={
-              {
-                '--project-color': activeProjectColor ?? getProjectColor(0),
-              } as ProjectColorStyle
-            }
-            aria-label="Back to work"
-            onClick={() => {
-              focusKeyboardSurface();
-              setActiveProject(START_SCREEN_INDEX, 'push');
-            }}
-          />
-        </div>
-      ) : null}
-
       <nav
         className={`pointer-events-none isolate ${
           isWideLayout
@@ -3066,7 +3035,7 @@ export function PortfolioBrowser({
             ...WIDE_LAYOUT_STYLE,
             position: 'absolute',
             right: 0,
-            bottom: '2rem',
+            bottom: 'max(2rem, env(safe-area-inset-bottom, 0px))',
             left: 0,
             height: '52px',
             overflow: 'visible',
@@ -3137,6 +3106,28 @@ export function PortfolioBrowser({
               }
 
               setActiveSlide(activeProjectIndex, slideIndex, 'push', 'smooth');
+            }}
+          />
+        </div>
+        <div
+          className={`pointer-events-auto absolute right-5 top-0 grid h-[52px] w-11 place-items-center transition-opacity duration-300 ease-out ${
+            activeProjectIndex === START_SCREEN_INDEX
+              ? 'pointer-events-none opacity-0'
+              : 'opacity-100'
+          }`}
+          style={{
+            right: 'max(1.25rem, env(safe-area-inset-right, 0px))',
+          }}
+        >
+          <CircularIconButton
+            icon={faArrowUp}
+            iconClassName="size-7"
+            ring
+            className="relative size-11 bg-transparent text-[var(--project-color)]"
+            aria-label="Back to top"
+            onClick={() => {
+              focusKeyboardSurface();
+              setActiveProject(START_SCREEN_INDEX, 'push');
             }}
           />
         </div>
