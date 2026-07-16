@@ -695,10 +695,10 @@ function getLongestIndicatorDelay(
   );
 }
 
-function getCenteredIndicatorSlotTransform(slotId: number) {
+function getCenteredIndicatorSlotLeft(slotId: number) {
   const offsetRem = slotId * NAVIGATION_INDICATOR_STEP_REM;
 
-  return `translate3d(-50%, -50%, 0) translateX(${offsetRem}rem)`;
+  return `calc(50% - ${NAVIGATION_INDICATOR_STEP_REM / 2}rem + ${offsetRem}rem)`;
 }
 
 function getCenteredIndicatorTrackTransform(count: number) {
@@ -5843,17 +5843,16 @@ function AnimatedSlideIndicators({
       }}
       onPointerLeave={() => returnRingToIdle(true)}
     >
-      <NavigationActiveRing
-        color={color}
-        elementRef={(node) => {
-          ringRef.current = node;
-        }}
-        className="absolute left-0 z-10"
-        style={{
-          top: `calc(50% - ${NAVIGATION_RING_SIZE_REM / 2}rem)`,
-        }}
-        dataAttributes={{ 'data-portfolio-slide-indicator-marker': 'true' }}
-      />
+      <div className="pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center">
+        <NavigationActiveRing
+          color={color}
+          elementRef={(node) => {
+            ringRef.current = node;
+          }}
+          className="relative shrink-0"
+          dataAttributes={{ 'data-portfolio-slide-indicator-marker': 'true' }}
+        />
+      </div>
       <div
         className="absolute inset-0 transition-transform duration-500 [transition-timing-function:cubic-bezier(0.19,1,0.22,1)] motion-reduce:transition-none"
         style={{
@@ -5894,11 +5893,11 @@ function AnimatedSlideIndicators({
               data-indicator-presence={
                 isEntering ? 'entering' : isExiting ? 'exiting' : 'retained'
               }
-              className="absolute left-1/2 top-1/2 grid size-9 place-items-center transition-opacity duration-500 [transition-timing-function:cubic-bezier(0.19,1,0.22,1)] motion-reduce:transition-none"
+              className="absolute inset-y-0 flex w-9 items-center justify-center transition-opacity duration-500 [transition-timing-function:cubic-bezier(0.19,1,0.22,1)] motion-reduce:transition-none"
               style={{
+                left: getCenteredIndicatorSlotLeft(slotId),
                 opacity: isVisible ? 1 : 0,
                 pointerEvents: slide && isVisible ? 'auto' : 'none',
-                transform: getCenteredIndicatorSlotTransform(slotId),
                 transitionDuration:
                   transitionState.phase === 'preparing'
                     ? '0ms'
@@ -5909,7 +5908,7 @@ function AnimatedSlideIndicators({
               {slide ? (
                 <button
                   type="button"
-                  className="pointer-events-auto grid size-9 cursor-pointer place-items-center outline-none"
+                  className="pointer-events-auto flex size-9 cursor-pointer items-center justify-center outline-none"
                   aria-label={
                     slide.kind === 'description'
                       ? `Show ${projectTitle} description`
@@ -5935,7 +5934,7 @@ function AnimatedSlideIndicators({
                 >
                   <span
                     data-portfolio-slide-indicator-visual={targetIndex}
-                    className="grid size-3 place-items-center"
+                    className="flex size-3 items-center justify-center"
                     aria-hidden="true"
                   >
                     {pendingIndex === targetIndex ? (
@@ -6141,7 +6140,7 @@ function SideNavButton({
           <FontAwesomeIcon
             ref={dotRef}
             icon={faCircle}
-            className="col-start-1 row-start-1 size-2.5 text-current opacity-0 drop-shadow-[1px_1px_0_black]"
+            className="size-2.5 text-current opacity-0 drop-shadow-[1px_1px_0_black]"
             style={{ width: '0.625rem', height: '0.625rem' }}
             aria-hidden="true"
           />
@@ -6182,7 +6181,7 @@ function CircularIconButton({
     <button
       ref={buttonRef}
       type="button"
-      className={`group/icon-button grid place-items-center rounded-full outline-none ${className ?? ''}`}
+      className={`group/icon-button relative flex items-center justify-center rounded-full outline-none ${className ?? ''}`}
       {...buttonProps}
     >
       {ring ? (
@@ -6195,15 +6194,21 @@ function CircularIconButton({
       {visualRef || secondaryVisual ? (
         <span
           ref={visualRef}
-          className="relative z-10 grid h-full w-full place-items-center"
+          className="relative z-10 block h-full w-full"
         >
-          <FontAwesomeIcon
-            ref={iconRef}
-            icon={icon}
-            className={`col-start-1 row-start-1 ${iconClassName} drop-shadow-[1px_1px_0_black]`}
-            aria-hidden="true"
-          />
-          {secondaryVisual}
+          <span className="absolute inset-0 flex items-center justify-center">
+            <FontAwesomeIcon
+              ref={iconRef}
+              icon={icon}
+              className={`${iconClassName} drop-shadow-[1px_1px_0_black]`}
+              aria-hidden="true"
+            />
+          </span>
+          {secondaryVisual ? (
+            <span className="absolute inset-0 flex items-center justify-center">
+              {secondaryVisual}
+            </span>
+          ) : null}
         </span>
       ) : (
         <FontAwesomeIcon
