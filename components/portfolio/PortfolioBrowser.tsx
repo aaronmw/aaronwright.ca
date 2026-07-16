@@ -62,6 +62,7 @@ import {
   SectionNavigation,
   SectionNavigationHandle,
 } from '@/components/portfolio/navigation/SectionNavigation';
+import type { SectionNavigationGeometryMode } from '@/components/portfolio/navigation/SectionNavigation';
 import { OverscrollIndicator } from '@/components/OverscrollIndicator';
 import type { Components } from 'react-markdown';
 
@@ -745,6 +746,7 @@ export function PortfolioBrowser({
   const initialRevealStartedRef = useRef(false);
   const initialRevealCompleteRef = useRef(false);
   const navigationIntentRef = useRef(0);
+  const sectionMenuLabelRef = useRef<HTMLParagraphElement | null>(null);
   const sectionMenuTitleRefs = useRef<Array<HTMLSpanElement | null>>([]);
   const [sectionNavHovered, setSectionNavHovered] = useState(false);
   const [introPhase, setIntroPhase] = useState<PortfolioIntroPhase>('loading');
@@ -905,6 +907,12 @@ export function PortfolioBrowser({
     getTouchInputServerSnapshot,
   );
   const isTouchLandscapeLayout = isWideLayout && isTouchInput;
+  const sectionNavigationGeometryMode: SectionNavigationGeometryMode =
+    !isTouchInput
+      ? 'title-linked'
+      : isTouchLandscapeLayout || activeProjectIndex !== START_SCREEN_INDEX
+        ? 'centered'
+        : 'menu-linked';
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isModalClosing, setIsModalClosing] = useState(false);
   const [inlineZoomedScreenshotId, setInlineZoomedScreenshotId] = useState<
@@ -2760,8 +2768,19 @@ export function PortfolioBrowser({
                 ? ''
                 : 'min-h-0 self-center'
             }`}
+            style={
+              isTouchInput && !isWideLayout
+                ? {
+                    paddingLeft:
+                      'max(5.5rem, calc(env(safe-area-inset-left, 0px) + 5.25rem))',
+                  }
+                : undefined
+            }
           >
-            <p className="mb-[clamp(0.65rem,1.6vh,2rem)] text-xs font-light uppercase tracking-[0.35em] text-white/45">
+            <p
+              ref={sectionMenuLabelRef}
+              className="mb-[clamp(0.65rem,1.6vh,2rem)] text-xs font-light uppercase tracking-[0.35em] text-white/45"
+            >
               Sections
             </p>
             <div
@@ -2932,6 +2951,9 @@ export function PortfolioBrowser({
                     carouselIndex={realIndex}
                     carouselEntryKind={kind}
                     isWideLayout={isWideLayout}
+                    reserveSectionNavigationGutter={
+                      isTouchInput && !isWideLayout
+                    }
                     isActive={
                       activeProjectIndex === projectIndex &&
                       activeCarouselIndex === realIndex
@@ -2964,10 +2986,11 @@ export function PortfolioBrowser({
         })}
       </div>
 
-      {isWideLayout ? (
+      {isWideLayout || isTouchInput ? (
         <SectionNavigation
           controllerRef={sectionNavigationControllerRef}
           sourceRef={verticalRef}
+          menuLabelRef={sectionMenuLabelRef}
           menuTitleRefs={sectionMenuTitleRefs}
           items={sectionNavItems.map((item, itemIndex) => ({
             id: item.id,
@@ -2984,7 +3007,8 @@ export function PortfolioBrowser({
           }))}
           activeIndex={activeProjectIndex + 1}
           hovered={sectionNavHovered}
-          hideRightRail={isTouchLandscapeLayout}
+          geometryMode={sectionNavigationGeometryMode}
+          hideRightRail={isTouchInput}
           modalLayerActive={isModalLayerActive}
           modalPresentationActive={isModalPresentationActive}
           canMoveHorizontally={canMoveHorizontally}
@@ -3744,6 +3768,7 @@ function ProjectPanel({
   carouselIndex,
   carouselEntryKind,
   isWideLayout,
+  reserveSectionNavigationGutter,
   isActive,
   inlineZoomPresentationActive,
   shouldBlurMedia,
@@ -3759,6 +3784,7 @@ function ProjectPanel({
   carouselIndex: number;
   carouselEntryKind: LoopingCarouselEntry<ProjectSlide>['kind'];
   isWideLayout: boolean;
+  reserveSectionNavigationGutter: boolean;
   isActive: boolean;
   inlineZoomPresentationActive: boolean;
   shouldBlurMedia: boolean;
@@ -3799,6 +3825,12 @@ function ProjectPanel({
       style={
         {
           '--project-color': projectColor,
+          ...(reserveSectionNavigationGutter
+            ? {
+                paddingLeft:
+                  'max(5.5rem, calc(env(safe-area-inset-left, 0px) + 5.25rem))',
+              }
+            : {}),
         } as ProjectColorStyle
       }
     >

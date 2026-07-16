@@ -22,6 +22,10 @@ import {
 
 type SectionNavigationSide = 'left' | 'right';
 type SectionNavigationAxis = 'horizontal' | 'vertical';
+export type SectionNavigationGeometryMode =
+  | 'title-linked'
+  | 'menu-linked'
+  | 'centered';
 
 export type SectionNavigationItem = {
   id: string;
@@ -70,6 +74,7 @@ const SVG_WIDTH = 52;
 const SVG_CENTER_X = SVG_WIDTH / 2;
 const ARROW_SIZE = 16;
 const AFFORDANCE_CROSSFADE_DURATION = 0.3;
+const CENTERED_ITEM_STEP = 60;
 const TOOLTIP_DURATION = 0.15;
 
 function getIconPaths(icon: IconDefinition) {
@@ -177,10 +182,12 @@ function getItemBounds(centers: number[], height: number, index: number) {
 export function SectionNavigation({
   controllerRef,
   sourceRef,
+  menuLabelRef,
   menuTitleRefs,
   items,
   activeIndex,
   hovered,
+  geometryMode,
   hideRightRail,
   modalLayerActive,
   modalPresentationActive,
@@ -193,10 +200,12 @@ export function SectionNavigation({
 }: {
   controllerRef: MutableRefObject<SectionNavigationHandle | null>;
   sourceRef: MutableRefObject<HTMLDivElement | null>;
+  menuLabelRef: MutableRefObject<HTMLParagraphElement | null>;
   menuTitleRefs: MutableRefObject<Array<HTMLSpanElement | null>>;
   items: SectionNavigationItem[];
   activeIndex: number;
   hovered: boolean;
+  geometryMode: SectionNavigationGeometryMode;
   hideRightRail: boolean;
   modalLayerActive: boolean;
   modalPresentationActive: boolean;
@@ -474,15 +483,35 @@ export function SectionNavigation({
 
   useLayoutEffect(() => {
     const source = sourceRef.current;
+    const menuLabel = menuLabelRef.current;
     const titles = menuTitleRefs.current.filter(
       (title): title is HTMLSpanElement => Boolean(title),
     );
 
-    if (!source || titles.length === 0) {
+    if (
+      !source ||
+      (geometryMode !== 'centered' && titles.length === 0) ||
+      (geometryMode === 'menu-linked' && !menuLabel)
+    ) {
       return;
     }
 
     const measure = () => {
+      const height = source.clientHeight;
+
+      if (geometryMode === 'centered') {
+        const totalSpan = CENTERED_ITEM_STEP * (items.length - 1);
+        const firstCenter = (height - totalSpan) / 2;
+
+        setGeometry({
+          centers: items.map(
+            (_, itemIndex) => firstCenter + itemIndex * CENTERED_ITEM_STEP,
+          ),
+          height,
+        });
+        return;
+      }
+
       const titleCenters = titles.map((title) => {
         const rect = title.getBoundingClientRect();
 
@@ -494,18 +523,33 @@ export function SectionNavigation({
           ? (titleCenters[titleCenters.length - 1] - titleCenters[0]) /
             (titleCenters.length - 1)
           : fallbackStep;
-      const centers = [titleCenters[0] - step, ...titleCenters];
+      const menuLabelCenter = menuLabel
+        ? (() => {
+            const rect = menuLabel.getBoundingClientRect();
 
-      setGeometry({ centers, height: source.clientHeight });
+            return rect.top + source.scrollTop + rect.height / 2;
+          })()
+        : titleCenters[0] - step;
+      const centers = [
+        geometryMode === 'menu-linked'
+          ? menuLabelCenter
+          : titleCenters[0] - step,
+        ...titleCenters,
+      ];
+
+      setGeometry({ centers, height });
     };
 
     measure();
     const observer = new ResizeObserver(measure);
     observer.observe(source);
+    if (menuLabel) {
+      observer.observe(menuLabel);
+    }
     titles.forEach((title) => observer.observe(title));
 
     return () => observer.disconnect();
-  }, [menuTitleRefs, sourceRef]);
+  }, [geometryMode, items.length, menuLabelRef, menuTitleRefs, sourceRef]);
 
   useLayoutEffect(() => {
     reducedMotionRef.current = window.matchMedia(
