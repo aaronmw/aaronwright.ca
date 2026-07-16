@@ -126,8 +126,9 @@ const WIDE_LAYOUT_STYLE: WideLayoutStyle = {
     'min(100dvh, calc(100vw - var(--portfolio-description-rail-width) - var(--portfolio-control-gutter-width)))',
 };
 const NAVIGATION_DOT_CLASS = 'size-2.5 text-white';
-const NAVIGATION_INDICATOR_STEP_REM = 2.5;
-const NAVIGATION_RING_SIZE_REM = 3;
+const NAVIGATION_INDICATOR_STEP_REM = 2.25;
+const NAVIGATION_RING_SIZE_REM = 2.75;
+const MOBILE_SLIDE_NAV_CONTROL_CLEARANCE_REM = 6.25;
 const NAVIGATION_INDICATOR_PAIR_STAGGER_MS = 90;
 const NAVIGATION_INDICATOR_SIDE_LEAD_MS = 30;
 const NAVIGATION_INDICATOR_TRANSITION_MS = 500;
@@ -4386,7 +4387,7 @@ export function PortfolioBrowser({
     return (
       <div
         data-portfolio-section-nav-zone={side}
-        className={`fixed top-1/2 w-12 -translate-y-1/2 ${positionClass} ${
+        className={`fixed top-1/2 w-11 -translate-y-1/2 ${positionClass} ${
           isModalLayerActive ? 'z-[60]' : 'z-20'
         }`}
         style={sideNavInteractiveZoneStyle}
@@ -4440,7 +4441,7 @@ export function PortfolioBrowser({
               }}
               className="absolute left-0 z-0"
               style={{
-                top: 'calc((var(--section-nav-item-step) - 3rem) / 2)',
+                top: `calc((var(--section-nav-item-step) - ${NAVIGATION_RING_SIZE_REM}rem) / 2)`,
                 transform: `translate3d(0, ${initialSectionNavIndicatorOffset}, 0)`,
               }}
               dataAttributes={{
@@ -4812,7 +4813,7 @@ export function PortfolioBrowser({
 
       {!isWideLayout ? (
         <div
-          className={`fixed bottom-5 right-5 z-30 grid h-[3.25rem] w-12 place-items-center transition-opacity duration-300 ease-out ${
+          className={`fixed bottom-5 right-5 z-30 grid h-12 w-11 place-items-center transition-opacity duration-300 ease-out ${
             activeProjectIndex === START_SCREEN_INDEX
               ? 'pointer-events-none opacity-0'
               : 'opacity-100'
@@ -4822,7 +4823,7 @@ export function PortfolioBrowser({
             icon={faArrowUp}
             iconClassName="size-7"
             ring
-            className="relative size-12 bg-transparent text-[var(--project-color)]"
+            className="relative size-11 bg-transparent text-[var(--project-color)]"
             style={
               {
                 '--project-color': activeProjectColor ?? getProjectColor(0),
@@ -4872,7 +4873,7 @@ export function PortfolioBrowser({
                   transform: `translateX(calc(-1 * max(0px, calc(${
                     Math.max(activeNavigationSlides.length - 1, 0) *
                       (NAVIGATION_INDICATOR_STEP_REM / 2) +
-                    6.5
+                    MOBILE_SLIDE_NAV_CONTROL_CLEARANCE_REM
                   }rem - 50vw))))`,
                 }
               : undefined
@@ -4913,7 +4914,7 @@ export function PortfolioBrowser({
         icon={faXmark}
         iconClassName="size-7"
         ring
-        className={`fixed right-5 top-5 z-[70] isolate size-12 bg-black text-[var(--project-color)] transition-[transform,opacity] duration-300 motion-reduce:transition-none ${
+        className={`fixed right-5 top-5 z-[70] isolate size-11 bg-black text-[var(--project-color)] transition-[transform,opacity] duration-300 motion-reduce:transition-none ${
           isInlineZoomPresentationActive
             ? 'translate-y-0 rotate-0 opacity-100'
             : 'pointer-events-none -translate-y-16 rotate-90 opacity-0'
@@ -4972,7 +4973,7 @@ export function PortfolioBrowser({
             icon={faRotateRight}
             iconClassName="size-6"
             ring
-            className="relative size-12 bg-black text-white"
+            className="relative size-11 bg-black text-white"
             aria-label="Reload page"
             title="Reload page"
             onClick={() => window.location.reload()}
@@ -5751,7 +5752,7 @@ function AnimatedSlideIndicators({
     <div
       ref={containerRef}
       data-portfolio-slide-indicators
-      className="pointer-events-auto relative h-[3.25rem] transition-[width] duration-500 ease-out motion-reduce:transition-none"
+      className="pointer-events-auto relative h-12 transition-[width] duration-500 ease-out motion-reduce:transition-none"
       style={{
         width: `${Math.max(targetCount, 1) * NAVIGATION_INDICATOR_STEP_REM}rem`,
       }}
@@ -5811,7 +5812,7 @@ function AnimatedSlideIndicators({
               data-indicator-presence={
                 isEntering ? 'entering' : isExiting ? 'exiting' : 'retained'
               }
-              className="absolute left-1/2 top-1/2 grid size-10 place-items-center transition-opacity duration-500 [transition-timing-function:cubic-bezier(0.19,1,0.22,1)] motion-reduce:transition-none"
+              className="absolute left-1/2 top-1/2 grid size-9 place-items-center transition-opacity duration-500 [transition-timing-function:cubic-bezier(0.19,1,0.22,1)] motion-reduce:transition-none"
               style={{
                 opacity: isVisible ? 1 : 0,
                 pointerEvents: slide && isVisible ? 'auto' : 'none',
@@ -5826,7 +5827,7 @@ function AnimatedSlideIndicators({
               {slide ? (
                 <button
                   type="button"
-                  className="pointer-events-auto grid size-10 cursor-pointer place-items-center outline-none"
+                  className="pointer-events-auto grid size-9 cursor-pointer place-items-center outline-none"
                   aria-label={
                     slide.kind === 'description'
                       ? `Show ${projectTitle} description`
@@ -5915,7 +5916,7 @@ function NavigationActiveRing({
     <div
       ref={elementRef}
       {...dataAttributes}
-      className={`pointer-events-none size-12 overflow-visible ${className}`}
+      className={`pointer-events-none size-11 overflow-visible ${className}`}
       style={{
         color,
         ...style,
@@ -5926,11 +5927,11 @@ function NavigationActiveRing({
         ref={previewElementRef}
         {...previewDataAttributes}
         data-navigation-ring-pop-layer="true"
-        className="relative size-12"
+        className="relative size-11"
       >
         <svg
-          className="absolute inset-0 size-12 overflow-visible"
-          viewBox="0 0 48 48"
+          className="absolute inset-0 size-11 overflow-visible"
+          viewBox="0 0 44 44"
           style={
             visualScale === 1
               ? undefined
@@ -5943,9 +5944,9 @@ function NavigationActiveRing({
           aria-hidden="true"
         >
           <circle
-            cx="24"
-            cy="24"
-            r="22"
+            cx="22"
+            cy="22"
+            r="20"
             fill="none"
             stroke="currentColor"
             strokeWidth="4"
@@ -6020,7 +6021,7 @@ function SideNavButton({
     <div
       ref={elementRef}
       data-portfolio-section-nav-tooltip-title={tooltipTitle}
-      className={`relative z-10 grid h-[var(--section-nav-item-step)] w-12 place-items-center transition-[opacity,transform] duration-300 ease-out motion-reduce:transition-none ${
+      className={`relative z-10 grid h-[var(--section-nav-item-step)] w-11 place-items-center transition-[opacity,transform] duration-300 ease-out motion-reduce:transition-none ${
         concealed
           ? 'pointer-events-none scale-90 opacity-0'
           : `scale-100 ${dimmed ? 'opacity-50' : 'opacity-100'}`
@@ -6063,7 +6064,7 @@ function SideNavButton({
             aria-hidden="true"
           />
         }
-        className={`relative h-full w-12 cursor-pointer border-0 bg-transparent p-0 text-[var(--project-color)] ${gutterHitAreaClass}`}
+        className={`relative h-full w-11 cursor-pointer border-0 bg-transparent p-0 text-[var(--project-color)] ${gutterHitAreaClass}`}
         aria-label={label}
         aria-describedby={tooltipId}
         aria-current={activeButton ? 'page' : undefined}
@@ -7243,7 +7244,7 @@ function ImageModal({
         iconClassName="size-7"
         ring
         data-portfolio-modal-close
-        className={`fixed right-5 top-5 z-[70] isolate size-12 bg-black text-[var(--project-color)] ${
+        className={`fixed right-5 top-5 z-[70] isolate size-11 bg-black text-[var(--project-color)] ${
           isClosing ? 'pointer-events-none' : ''
         }`}
         style={
