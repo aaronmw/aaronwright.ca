@@ -150,6 +150,7 @@ const TOP_SCREEN_COLOR = 'hsl(0 0% 100%)';
 const PROJECT_COLOR_START_HUE = 342;
 const PROJECT_COLOR_SATURATION = 78;
 const PROJECT_COLOR_LIGHTNESS = 54;
+const PROJECT_COLOR_MIN_CONTRAST = 4.5;
 const PROJECT_COLORS = buildProjectColors(portfolioSlides.length);
 const SECTION_NAV_COLORS = [TOP_SCREEN_COLOR, ...PROJECT_COLORS];
 const SECTION_NAV_HAS_SLIDES = [
@@ -179,14 +180,72 @@ const PORTFOLIO_MARKDOWN_COMPONENTS = {
 function buildProjectColors(projectCount: number) {
   const safeProjectCount = Math.max(1, projectCount);
   const hueStep = 360 / safeProjectCount;
+  const evenlySpacedColors = Array.from(
+    { length: safeProjectCount },
+    (_, index) => ({
+      hue: Math.round(
+        (PROJECT_COLOR_START_HUE + hueStep * index) % 360
+      ),
+      saturation: PROJECT_COLOR_SATURATION,
+      lightness: PROJECT_COLOR_LIGHTNESS,
+    })
+  );
 
-  return Array.from({ length: safeProjectCount }, (_, index) => {
-    const hue = Math.round(
-      (PROJECT_COLOR_START_HUE + hueStep * index) % 360
+  return evenlySpacedColors.map(({ hue, saturation, lightness }) => {
+    const correctedLightness = ensureContrastAgainstBlack(
+      hue,
+      saturation,
+      lightness,
+      PROJECT_COLOR_MIN_CONTRAST
     );
 
-    return `hsl(${hue} ${PROJECT_COLOR_SATURATION}% ${PROJECT_COLOR_LIGHTNESS}%)`;
+    return `hsl(${hue} ${saturation}% ${correctedLightness}%)`;
   });
+}
+
+function ensureContrastAgainstBlack(
+  hue: number,
+  saturation: number,
+  lightness: number,
+  minimumContrast: number
+) {
+  const getContrast = (candidateLightness: number) => {
+    const [red, green, blue] = gsap.utils.splitColor(
+      `hsl(${hue} ${saturation}% ${candidateLightness}%)`
+    );
+    const toLinearChannel = (channel: number) => {
+      const value = channel / 255;
+
+      return value <= 0.04045
+        ? value / 12.92
+        : ((value + 0.055) / 1.055) ** 2.4;
+    };
+    const relativeLuminance =
+      0.2126 * toLinearChannel(red) +
+      0.7152 * toLinearChannel(green) +
+      0.0722 * toLinearChannel(blue);
+
+    return (relativeLuminance + 0.05) / 0.05;
+  };
+
+  if (getContrast(lightness) >= minimumContrast) {
+    return lightness;
+  }
+
+  let failingLightness = lightness;
+  let passingLightness = 100;
+
+  for (let iteration = 0; iteration < 20; iteration += 1) {
+    const candidateLightness = (failingLightness + passingLightness) / 2;
+
+    if (getContrast(candidateLightness) >= minimumContrast) {
+      passingLightness = candidateLightness;
+    } else {
+      failingLightness = candidateLightness;
+    }
+  }
+
+  return Math.ceil(passingLightness * 100) / 100;
 }
 
 function getWideLayoutSnapshot() {
