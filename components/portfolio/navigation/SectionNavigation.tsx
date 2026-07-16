@@ -22,10 +22,7 @@ import {
 
 type SectionNavigationSide = 'left' | 'right';
 type SectionNavigationAxis = 'horizontal' | 'vertical';
-export type SectionNavigationGeometryMode =
-  | 'title-linked'
-  | 'menu-linked'
-  | 'centered';
+export type SectionNavigationGeometryMode = 'title-linked' | 'centered';
 
 export type SectionNavigationItem = {
   id: string;
@@ -182,7 +179,6 @@ function getItemBounds(centers: number[], height: number, index: number) {
 export function SectionNavigation({
   controllerRef,
   sourceRef,
-  menuLabelRef,
   menuTitleRefs,
   items,
   activeIndex,
@@ -200,7 +196,6 @@ export function SectionNavigation({
 }: {
   controllerRef: MutableRefObject<SectionNavigationHandle | null>;
   sourceRef: MutableRefObject<HTMLDivElement | null>;
-  menuLabelRef: MutableRefObject<HTMLParagraphElement | null>;
   menuTitleRefs: MutableRefObject<Array<HTMLSpanElement | null>>;
   items: SectionNavigationItem[];
   activeIndex: number;
@@ -483,16 +478,11 @@ export function SectionNavigation({
 
   useLayoutEffect(() => {
     const source = sourceRef.current;
-    const menuLabel = menuLabelRef.current;
     const titles = menuTitleRefs.current.filter(
       (title): title is HTMLSpanElement => Boolean(title),
     );
 
-    if (
-      !source ||
-      (geometryMode !== 'centered' && titles.length === 0) ||
-      (geometryMode === 'menu-linked' && !menuLabel)
-    ) {
+    if (!source || (geometryMode !== 'centered' && titles.length === 0)) {
       return;
     }
 
@@ -523,19 +513,7 @@ export function SectionNavigation({
           ? (titleCenters[titleCenters.length - 1] - titleCenters[0]) /
             (titleCenters.length - 1)
           : fallbackStep;
-      const menuLabelCenter = menuLabel
-        ? (() => {
-            const rect = menuLabel.getBoundingClientRect();
-
-            return rect.top + source.scrollTop + rect.height / 2;
-          })()
-        : titleCenters[0] - step;
-      const centers = [
-        geometryMode === 'menu-linked'
-          ? menuLabelCenter
-          : titleCenters[0] - step,
-        ...titleCenters,
-      ];
+      const centers = [titleCenters[0] - step, ...titleCenters];
 
       setGeometry({ centers, height });
     };
@@ -543,13 +521,10 @@ export function SectionNavigation({
     measure();
     const observer = new ResizeObserver(measure);
     observer.observe(source);
-    if (menuLabel) {
-      observer.observe(menuLabel);
-    }
     titles.forEach((title) => observer.observe(title));
 
     return () => observer.disconnect();
-  }, [geometryMode, items.length, menuLabelRef, menuTitleRefs, sourceRef]);
+  }, [geometryMode, items.length, menuTitleRefs, sourceRef]);
 
   useLayoutEffect(() => {
     reducedMotionRef.current = window.matchMedia(

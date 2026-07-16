@@ -62,7 +62,6 @@ import {
   SectionNavigation,
   SectionNavigationHandle,
 } from '@/components/portfolio/navigation/SectionNavigation';
-import type { SectionNavigationGeometryMode } from '@/components/portfolio/navigation/SectionNavigation';
 import { OverscrollIndicator } from '@/components/OverscrollIndicator';
 import type { Components } from 'react-markdown';
 
@@ -89,6 +88,12 @@ const START_SCREEN_INDEX = -1;
 const WIDE_LAYOUT_MEDIA_QUERY =
   '(min-aspect-ratio: 5/4) and (min-width: 43rem)';
 const TOUCH_INPUT_MEDIA_QUERY = '(hover: none) and (pointer: coarse)';
+const MOBILE_SECTION_CONTENT_INSETS: CSSProperties = {
+  paddingLeft:
+    'max(6rem, calc(env(safe-area-inset-left, 0px) + 5.75rem))',
+  paddingRight:
+    'max(2rem, calc(env(safe-area-inset-right, 0px) + 1.5rem))',
+};
 type WideLayoutStyle = CSSProperties & {
   '--portfolio-description-rail-width': string;
   '--portfolio-control-gutter-width': string;
@@ -746,7 +751,6 @@ export function PortfolioBrowser({
   const initialRevealStartedRef = useRef(false);
   const initialRevealCompleteRef = useRef(false);
   const navigationIntentRef = useRef(0);
-  const sectionMenuLabelRef = useRef<HTMLParagraphElement | null>(null);
   const sectionMenuTitleRefs = useRef<Array<HTMLSpanElement | null>>([]);
   const [sectionNavHovered, setSectionNavHovered] = useState(false);
   const [introPhase, setIntroPhase] = useState<PortfolioIntroPhase>('loading');
@@ -907,12 +911,6 @@ export function PortfolioBrowser({
     getTouchInputServerSnapshot,
   );
   const isTouchLandscapeLayout = isWideLayout && isTouchInput;
-  const sectionNavigationGeometryMode: SectionNavigationGeometryMode =
-    !isTouchInput
-      ? 'title-linked'
-      : isTouchLandscapeLayout || activeProjectIndex !== START_SCREEN_INDEX
-        ? 'centered'
-        : 'menu-linked';
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isModalClosing, setIsModalClosing] = useState(false);
   const [inlineZoomedScreenshotId, setInlineZoomedScreenshotId] = useState<
@@ -2659,7 +2657,9 @@ export function PortfolioBrowser({
                   paddingRight:
                     'max(4rem, calc(env(safe-area-inset-right, 0px) + 2.5rem))',
                 }
-              : undefined
+              : isTouchInput
+                ? MOBILE_SECTION_CONTENT_INSETS
+                : undefined
           }
         >
           <div
@@ -2684,6 +2684,8 @@ export function PortfolioBrowser({
                 <svg
                   className={`shrink-0 text-white ${
                     isTouchLandscapeLayout ? 'size-9' : 'size-12'
+                  } ${
+                    isTouchInput && !isWideLayout ? '-ml-2 mr-2' : ''
                   }`}
                   width={isTouchLandscapeLayout ? 36 : 48}
                   height={isTouchLandscapeLayout ? 36 : 48}
@@ -2768,19 +2770,8 @@ export function PortfolioBrowser({
                 ? ''
                 : 'min-h-0 self-center'
             }`}
-            style={
-              isTouchInput && !isWideLayout
-                ? {
-                    paddingLeft:
-                      'max(5.5rem, calc(env(safe-area-inset-left, 0px) + 5.25rem))',
-                  }
-                : undefined
-            }
           >
-            <p
-              ref={sectionMenuLabelRef}
-              className="mb-[clamp(0.65rem,1.6vh,2rem)] text-xs font-light uppercase tracking-[0.35em] text-white/45"
-            >
+            <p className="mb-[clamp(0.65rem,1.6vh,2rem)] text-xs font-light uppercase tracking-[0.35em] text-white/45">
               Sections
             </p>
             <div
@@ -2990,7 +2981,6 @@ export function PortfolioBrowser({
         <SectionNavigation
           controllerRef={sectionNavigationControllerRef}
           sourceRef={verticalRef}
-          menuLabelRef={sectionMenuLabelRef}
           menuTitleRefs={sectionMenuTitleRefs}
           items={sectionNavItems.map((item, itemIndex) => ({
             id: item.id,
@@ -3007,7 +2997,7 @@ export function PortfolioBrowser({
           }))}
           activeIndex={activeProjectIndex + 1}
           hovered={sectionNavHovered}
-          geometryMode={sectionNavigationGeometryMode}
+          geometryMode={isTouchInput ? 'centered' : 'title-linked'}
           hideRightRail={isTouchInput}
           modalLayerActive={isModalLayerActive}
           modalPresentationActive={isModalPresentationActive}
@@ -3826,10 +3816,7 @@ function ProjectPanel({
         {
           '--project-color': projectColor,
           ...(reserveSectionNavigationGutter
-            ? {
-                paddingLeft:
-                  'max(5.5rem, calc(env(safe-area-inset-left, 0px) + 5.25rem))',
-              }
+            ? MOBILE_SECTION_CONTENT_INSETS
             : {}),
         } as ProjectColorStyle
       }
