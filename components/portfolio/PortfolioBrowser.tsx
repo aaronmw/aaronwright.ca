@@ -4537,6 +4537,8 @@ export function PortfolioBrowser({
                     'max(0.75rem, env(safe-area-inset-bottom, 0px))',
                   paddingLeft:
                     'max(5.5rem, calc(env(safe-area-inset-left, 0px) + 5.25rem))',
+                  paddingRight:
+                    'max(4rem, calc(env(safe-area-inset-right, 0px) + 2.5rem))',
                 }
               : undefined
           }
@@ -6141,7 +6143,7 @@ function SideNavButton({
           <FontAwesomeIcon
             ref={dotRef}
             icon={faCircle}
-            className="absolute inset-0 m-auto size-2.5 text-current opacity-0 drop-shadow-[1px_1px_0_black]"
+            className="col-start-1 row-start-1 size-2.5 text-current opacity-0 drop-shadow-[1px_1px_0_black]"
             style={{ width: '0.625rem', height: '0.625rem' }}
             aria-hidden="true"
           />
@@ -6200,7 +6202,7 @@ function CircularIconButton({
           <FontAwesomeIcon
             ref={iconRef}
             icon={icon}
-            className={`absolute inset-0 m-auto ${iconClassName} drop-shadow-[1px_1px_0_black]`}
+            className={`col-start-1 row-start-1 ${iconClassName} drop-shadow-[1px_1px_0_black]`}
             aria-hidden="true"
           />
           {secondaryVisual}
