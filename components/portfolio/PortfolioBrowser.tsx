@@ -32,7 +32,6 @@ import {
   faArrowLeft,
   faArrowRight,
   faArrowUp,
-  faCircle,
   faFilePdf,
   faRotateRight,
   faSpinner,
@@ -55,6 +54,14 @@ import {
   INLINE_MEDIA_ZOOM_IN_EVENT,
   useInlineMediaZoom,
 } from '@/components/portfolio/useInlineMediaZoom';
+import {
+  SlideIndicatorMotionController,
+  SlideNavigation,
+} from '@/components/portfolio/navigation/SlideNavigation';
+import {
+  SectionNavigation,
+  SectionNavigationHandle,
+} from '@/components/portfolio/navigation/SectionNavigation';
 import { OverscrollIndicator } from '@/components/OverscrollIndicator';
 import type { Components } from 'react-markdown';
 
@@ -89,15 +96,8 @@ type WideLayoutStyle = CSSProperties & {
 type ProjectColorStyle = CSSProperties & {
   '--project-color': string;
 };
-type SectionNavStackStyle = CSSProperties & {
-  '--section-nav-item-step': string;
-};
 type InlineMediaSurfaceStyle = CSSProperties & {
   '--portfolio-media-padding': string;
-};
-type SectionNavMenuAlignment = {
-  itemStepPx: number;
-  stackOffsetPx: number;
 };
 type MarkdownLinkProps = AnchorHTMLAttributes<HTMLAnchorElement> & {
   node?: unknown;
@@ -126,26 +126,14 @@ const WIDE_LAYOUT_STYLE: WideLayoutStyle = {
   '--portfolio-screenshot-size':
     'min(100dvh, calc(100vw - var(--portfolio-description-rail-width) - var(--portfolio-control-gutter-width)))',
 };
-const NAVIGATION_DOT_CLASS = 'size-2.5 text-white';
 const NAVIGATION_INDICATOR_STEP_REM = 2.25;
 const NAVIGATION_RING_SIZE_REM = 2.75;
 const MOBILE_SLIDE_NAV_CONTROL_CLEARANCE_REM = 6.25;
-const NAVIGATION_INDICATOR_PAIR_STAGGER_MS = 90;
-const NAVIGATION_INDICATOR_SIDE_LEAD_MS = 30;
-const NAVIGATION_INDICATOR_TRANSITION_MS = 500;
 const NAVIGATION_TRAVEL_BASE_SECONDS = 0.48;
 const NAVIGATION_TRAVEL_SECONDS_PER_SCREEN = 0.08;
 const NAVIGATION_TRAVEL_MAX_SECONDS = 0.85;
 const NAVIGATION_TRAVEL_EASE = 'power2.inOut';
-const SECTION_NAV_ITEM_STEP_REM = 3.75;
-const SECTION_NAV_PREVIEW_RETURN_DELAY_MS = 140;
-const SECTION_NAV_SNAP_DISTANCE_PX = 10;
-const SECTION_NAV_BREAKAWAY_DISTANCE_PX = 50;
-const SECTION_NAV_BREAKAWAY_EDGE_BUFFER_PX = 8;
-const SECTION_NAV_AUTO_CENTER_ACTIVE_ITEM = false;
 const NAVIGATION_ACTIVE_SCALE = 1.1;
-// 0 is sequential; 1 keeps both affordances in a full crossfade.
-const SECTION_NAV_AFFORDANCE_OVERLAP = 1;
 const CAROUSEL_MEDIA_CLASS =
   'object-contain transition-[filter,padding] [transition-duration:1000ms,500ms] [transition-timing-function:ease-in-out,var(--ease-out)] motion-reduce:transition-none';
 const TOP_SCREEN_COLOR = 'hsl(0 0% 100%)';
@@ -154,16 +142,12 @@ const PROJECT_COLOR_SATURATION = 78;
 const PROJECT_COLOR_LIGHTNESS = 54;
 const PROJECT_COLOR_MIN_CONTRAST = 4.5;
 const PROJECT_COLORS = buildProjectColors(portfolioSlides.length);
-const SECTION_NAV_COLORS = [TOP_SCREEN_COLOR, ...PROJECT_COLORS];
 const SECTION_NAV_HAS_SLIDES = [
   false,
   ...portfolioSlides.map((project) => project.screenshots.length > 1),
 ];
 const CAROUSEL_MEDIA_BLUR_PX = 20;
 const MODAL_CAROUSEL_GAP_PX = CAROUSEL_MEDIA_BLUR_PX * 2;
-const SECTION_NAV_RGB_COLORS = SECTION_NAV_COLORS.map(
-  (color) => gsap.utils.splitColor(color).slice(0, 3) as [number, number, number]
-);
 const INLINE_MARKDOWN_COMPONENTS = {
   p({ children }) {
     return <>{children}</>;
@@ -185,12 +169,10 @@ function buildProjectColors(projectCount: number) {
   const evenlySpacedColors = Array.from(
     { length: safeProjectCount },
     (_, index) => ({
-      hue: Math.round(
-        (PROJECT_COLOR_START_HUE + hueStep * index) % 360
-      ),
+      hue: Math.round((PROJECT_COLOR_START_HUE + hueStep * index) % 360),
       saturation: PROJECT_COLOR_SATURATION,
       lightness: PROJECT_COLOR_LIGHTNESS,
-    })
+    }),
   );
 
   return evenlySpacedColors.map(({ hue, saturation, lightness }) => {
@@ -198,7 +180,7 @@ function buildProjectColors(projectCount: number) {
       hue,
       saturation,
       lightness,
-      PROJECT_COLOR_MIN_CONTRAST
+      PROJECT_COLOR_MIN_CONTRAST,
     );
 
     return `hsl(${hue} ${saturation}% ${correctedLightness}%)`;
@@ -209,11 +191,11 @@ function ensureContrastAgainstBlack(
   hue: number,
   saturation: number,
   lightness: number,
-  minimumContrast: number
+  minimumContrast: number,
 ) {
   const getContrast = (candidateLightness: number) => {
     const [red, green, blue] = gsap.utils.splitColor(
-      `hsl(${hue} ${saturation}% ${candidateLightness}%)`
+      `hsl(${hue} ${saturation}% ${candidateLightness}%)`,
     );
     const toLinearChannel = (channel: number) => {
       const value = channel / 255;
@@ -291,13 +273,6 @@ type LoopingCarouselEntry<T> = {
   kind: 'canonical' | 'clone-before' | 'clone-after';
 };
 
-type SlideIndicatorMotionController = {
-  begin: (targetIndex: number) => void;
-  update: (position: number) => void;
-  complete: (targetIndex: number) => void;
-  cancel: () => void;
-};
-
 type HorizontalScrollOptions = {
   syncIndicator?: boolean;
   boundarySourceIndex?: number;
@@ -307,7 +282,7 @@ function getNavigationTravelDuration(distanceInScreens: number) {
   return Math.min(
     NAVIGATION_TRAVEL_MAX_SECONDS,
     NAVIGATION_TRAVEL_BASE_SECONDS +
-      Math.abs(distanceInScreens) * NAVIGATION_TRAVEL_SECONDS_PER_SCREEN
+      Math.abs(distanceInScreens) * NAVIGATION_TRAVEL_SECONDS_PER_SCREEN,
   );
 }
 
@@ -322,7 +297,7 @@ function getCanonicalCarouselEntries<T extends { id: string }>(items: T[]) {
 
 function getLoopingCarouselEntries<T extends { id: string }>(
   items: T[],
-  cloneSingleton = false
+  cloneSingleton = false,
 ): LoopingCarouselEntry<T>[] {
   if (items.length === 0) {
     return [];
@@ -355,7 +330,7 @@ function getLoopingCarouselEntries<T extends { id: string }>(
 
 function getCarouselPosition(carousel: HTMLDivElement) {
   const firstCanonicalPanel = carousel.querySelector<HTMLElement>(
-    '[data-portfolio-carousel-panel="canonical"][data-portfolio-carousel-index="0"]'
+    '[data-portfolio-carousel-panel="canonical"][data-portfolio-carousel-index="0"]',
   );
 
   return (
@@ -366,23 +341,26 @@ function getCarouselPosition(carousel: HTMLDivElement) {
 
 function getCarouselTargetScrollLeft(
   carousel: HTMLDivElement,
-  carouselIndex: number
+  carouselIndex: number,
 ) {
   const targetPanel = carousel.querySelector<HTMLElement>(
-    `[data-portfolio-carousel-panel="canonical"][data-portfolio-carousel-index="${carouselIndex}"]`
+    `[data-portfolio-carousel-panel="canonical"][data-portfolio-carousel-index="${carouselIndex}"]`,
   );
 
   return targetPanel?.offsetLeft ?? carousel.clientWidth * carouselIndex;
 }
 
-function getCanonicalRenderedCarouselIndex(realIndex: number, itemCount: number) {
+function getCanonicalRenderedCarouselIndex(
+  realIndex: number,
+  itemCount: number,
+) {
   return itemCount > 1 ? realIndex + 1 : realIndex;
 }
 
 function isCarouselBoundaryJump(
   previousIndex: number,
   nextIndex: number,
-  itemCount: number
+  itemCount: number,
 ) {
   return (
     itemCount > 1 &&
@@ -392,9 +370,7 @@ function isCarouselBoundaryJump(
 }
 
 function getCarouselMediaClass(shouldBlur: boolean) {
-  return `${CAROUSEL_MEDIA_CLASS} ${
-    shouldBlur ? 'blur-[20px]' : 'blur-0'
-  }`;
+  return `${CAROUSEL_MEDIA_CLASS} ${shouldBlur ? 'blur-[20px]' : 'blur-0'}`;
 }
 
 function getTouchDistance(event: ReactTouchEvent<HTMLDialogElement>) {
@@ -402,318 +378,7 @@ function getTouchDistance(event: ReactTouchEvent<HTMLDialogElement>) {
 
   return Math.hypot(
     first.clientX - second.clientX,
-    first.clientY - second.clientY
-  );
-}
-
-function getSectionNavArrowRotation(
-  itemIndex: number,
-  activeSectionIndex: number,
-  side: 'left' | 'right'
-) {
-  const direction = side === 'left' ? 1 : -1;
-
-  if (itemIndex < activeSectionIndex) {
-    return 180 * direction;
-  }
-
-  if (itemIndex > activeSectionIndex) {
-    return 0;
-  }
-
-  const activeProject = portfolioSlides[activeSectionIndex - 1];
-  return activeProject?.screenshots.length > 1 ? 90 * direction : 0;
-}
-
-function getSectionNavPreviewOffset(
-  preview: HTMLDivElement,
-  target: HTMLElement
-) {
-  const targetRect = target.getBoundingClientRect();
-
-  return getSectionNavPreviewOffsetFromClientY(
-    preview,
-    targetRect.top + targetRect.height / 2
-  );
-}
-
-function getSectionNavPreviewOffsetFromClientY(
-  preview: HTMLDivElement,
-  targetCenterY: number
-) {
-  const ring = preview.querySelector('circle');
-
-  if (!ring) {
-    return 0;
-  }
-
-  const currentPreviewY = Number(gsap.getProperty(preview, 'y')) || 0;
-  const ringRect = ring.getBoundingClientRect();
-  const unshiftedRingCenterY =
-    ringRect.top + ringRect.height / 2 - currentPreviewY;
-
-  return targetCenterY - unshiftedRingCenterY;
-}
-
-type SectionNavLayout = {
-  items: Array<{
-    index: number;
-    centerY: number;
-    color: string;
-    rgb: [number, number, number];
-  }>;
-  top: number;
-  bottom: number;
-  trackingTop: number;
-  trackingBottom: number;
-};
-
-function getSectionNavLayout(
-  buttons: Array<HTMLDivElement | null>
-): SectionNavLayout | null {
-  const items: SectionNavLayout['items'] = [];
-  let top = Number.POSITIVE_INFINITY;
-  let bottom = Number.NEGATIVE_INFINITY;
-  const firstButton = buttons.find(
-    (button): button is HTMLDivElement => button !== null
-  );
-  const trackingRect = firstButton
-    ?.closest<HTMLElement>('[data-portfolio-section-nav-zone]')
-    ?.getBoundingClientRect();
-
-  buttons.forEach((button, index) => {
-    if (!button || button.getAttribute('aria-hidden') === 'true') {
-      return;
-    }
-
-    const rect = button.getBoundingClientRect();
-    top = Math.min(top, rect.top);
-    bottom = Math.max(bottom, rect.bottom);
-    items.push({
-      index,
-      centerY: rect.top + rect.height / 2,
-      color: SECTION_NAV_COLORS[index],
-      rgb: SECTION_NAV_RGB_COLORS[index],
-    });
-  });
-
-  return items.length > 0
-    ? {
-        items,
-        top,
-        bottom,
-        trackingTop: trackingRect?.top ?? Number.NEGATIVE_INFINITY,
-        trackingBottom: trackingRect?.bottom ?? Number.POSITIVE_INFINITY,
-      }
-    : null;
-}
-
-function getSectionNavPosition(
-  layout: SectionNavLayout | null,
-  targetY: number
-) {
-  const items = layout?.items ?? [];
-
-  if (items.length === 0) {
-    return 0;
-  }
-
-  if (targetY <= items[0].centerY) {
-    return items[0].index;
-  }
-
-  const lastItem = items[items.length - 1];
-
-  if (targetY >= lastItem.centerY) {
-    return lastItem.index;
-  }
-
-  for (let index = 1; index < items.length; index += 1) {
-    const nextItem = items[index];
-
-    if (targetY > nextItem.centerY) {
-      continue;
-    }
-
-    const previousItem = items[index - 1];
-    const progress =
-      (targetY - previousItem.centerY) /
-      (nextItem.centerY - previousItem.centerY);
-
-    return previousItem.index + progress;
-  }
-
-  return lastItem.index;
-}
-
-function getNavigationActiveScale(position: number, activeIndex: number) {
-  const proximity = Math.max(0, 1 - Math.abs(position - activeIndex));
-
-  return 1 + (NAVIGATION_ACTIVE_SCALE - 1) * proximity;
-}
-
-function getSectionNavAffordanceOpacity(activation: number) {
-  const clampedActivation = Math.max(0, Math.min(1, activation));
-  const arrowEnd = 0.5 * (1 + SECTION_NAV_AFFORDANCE_OVERLAP);
-  const arrowOpacity = Math.max(0, 1 - clampedActivation / arrowEnd);
-  const dotStart = 0.5 * (1 - SECTION_NAV_AFFORDANCE_OVERLAP);
-  const dotOpacity = Math.max(
-    0,
-    Math.min(1, (clampedActivation - dotStart) / (1 - dotStart))
-  );
-
-  return { arrowOpacity, dotOpacity };
-}
-
-function getSectionNavSnapTarget(
-  layout: SectionNavLayout | null,
-  pointerY: number,
-  snapDistance = SECTION_NAV_SNAP_DISTANCE_PX
-): { index: number; centerY: number; distance: number } | null {
-  let closest: { index: number; centerY: number; distance: number } | null = null;
-
-  if (!layout) {
-    return null;
-  }
-
-  for (const item of layout.items) {
-    const distance = Math.abs(pointerY - item.centerY);
-
-    if (distance <= snapDistance && (!closest || distance < closest.distance)) {
-      closest = { index: item.index, centerY: item.centerY, distance };
-    }
-  }
-
-  return closest;
-}
-
-function getSectionNavPointerColor(
-  layout: SectionNavLayout | null,
-  pointerY: number
-) {
-  const stops = layout?.items ?? [];
-
-  if (stops.length === 0) {
-    return null;
-  }
-
-  if (pointerY <= stops[0].centerY) {
-    return stops[0].color;
-  }
-
-  const lastStop = stops[stops.length - 1];
-
-  if (pointerY >= lastStop.centerY) {
-    return lastStop.color;
-  }
-
-  for (let index = 1; index < stops.length; index += 1) {
-    const nextStop = stops[index];
-
-    if (pointerY > nextStop.centerY) {
-      continue;
-    }
-
-    const previousStop = stops[index - 1];
-    const progress =
-      (pointerY - previousStop.centerY) /
-      (nextStop.centerY - previousStop.centerY);
-    const channels = previousStop.rgb.map((channel, channelIndex) =>
-      Math.round(channel + (nextStop.rgb[channelIndex] - channel) * progress)
-    );
-
-    return `rgb(${channels.join(', ')})`;
-  }
-
-  return lastStop.color;
-}
-
-function isSectionNavBeyondBreakawayDistance(
-  layout: SectionNavLayout | null,
-  pointerY: number,
-  indicatorY: number,
-  breakawayDistance = SECTION_NAV_BREAKAWAY_DISTANCE_PX
-) {
-  if (!layout) {
-    return true;
-  }
-
-  const topBreakawayY = Math.max(
-    layout.top - breakawayDistance,
-    layout.trackingTop + SECTION_NAV_BREAKAWAY_EDGE_BUFFER_PX
-  );
-  const bottomBreakawayY = Math.min(
-    layout.bottom + breakawayDistance,
-    layout.trackingBottom - SECTION_NAV_BREAKAWAY_EDGE_BUFFER_PX
-  );
-  const isAbove =
-    pointerY < topBreakawayY && indicatorY < topBreakawayY;
-  const isBelow =
-    pointerY > bottomBreakawayY && indicatorY > bottomBreakawayY;
-
-  return isAbove || isBelow;
-}
-
-function getIndicatorSlotIds(count: number) {
-  return Array.from({ length: count }, (_, index) => {
-    if (index === 0) {
-      return 0;
-    }
-
-    return index % 2 === 1 ? Math.ceil(index / 2) : -(index / 2);
-  }).sort((a, b) => a - b);
-}
-
-function getOutsideInDelay(index: number, count: number) {
-  const distanceFromLeft = index;
-  const distanceFromRight = count - index - 1;
-  const pairIndex = Math.min(distanceFromLeft, distanceFromRight);
-  const leftSideDelay =
-    distanceFromLeft < distanceFromRight
-      ? NAVIGATION_INDICATOR_SIDE_LEAD_MS
-      : 0;
-
-  return pairIndex * NAVIGATION_INDICATOR_PAIR_STAGGER_MS + leftSideDelay;
-}
-
-function getInsideOutDelay(index: number, count: number) {
-  const centerIndex = (count - 1) / 2;
-  const pairIndex = Math.floor(Math.abs(index - centerIndex));
-  const leftSideDelay =
-    index < centerIndex ? NAVIGATION_INDICATOR_SIDE_LEAD_MS : 0;
-
-  return pairIndex * NAVIGATION_INDICATOR_PAIR_STAGGER_MS + leftSideDelay;
-}
-
-function getLongestIndicatorDelay(
-  count: number,
-  getDelay: (index: number, count: number) => number
-) {
-  return Math.max(
-    0,
-    ...Array.from({ length: count }, (_, index) => getDelay(index, count))
-  );
-}
-
-function getCenteredIndicatorSlotLeft(slotId: number) {
-  const offsetRem = slotId * NAVIGATION_INDICATOR_STEP_REM;
-
-  return `calc(50% - ${NAVIGATION_INDICATOR_STEP_REM / 2}rem + ${offsetRem}rem)`;
-}
-
-function getCenteredIndicatorTrackTransform(count: number) {
-  const offsetRem =
-    count > 0 && count % 2 === 0
-      ? -NAVIGATION_INDICATOR_STEP_REM / 2
-      : 0;
-
-  return `translate3d(${offsetRem}rem, 0, 0)`;
-}
-
-function getHorizontalIndicatorRingX(index: number) {
-  return (
-    index * NAVIGATION_INDICATOR_STEP_REM +
-    (NAVIGATION_INDICATOR_STEP_REM - NAVIGATION_RING_SIZE_REM) / 2
+    first.clientY - second.clientY,
   );
 }
 
@@ -769,13 +434,13 @@ function createMarkdownHeading(Tag: MarkdownHeadingTag) {
 
 function getVerticalTargetProjectIndex(
   currentProjectIndex: number,
-  direction: -1 | 1
+  direction: -1 | 1,
 ) {
   const screenCount = portfolioSlides.length + 1;
   const currentScreenIndex = currentProjectIndex + 1;
   const nextScreenIndex = positiveModulo(
     currentScreenIndex + direction,
-    screenCount
+    screenCount,
   );
 
   return nextScreenIndex - 1;
@@ -806,7 +471,7 @@ function titleCaseLabel(value: string) {
     word
       .split('-')
       .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-      .join('-')
+      .join('-'),
   );
 }
 
@@ -824,9 +489,13 @@ function slideNavigationTitle(project: PortfolioProject, slide: ProjectSlide) {
     altMatch?.[1] ??
     `${project.screenshots.findIndex((screenshot) => screenshot.id === slide.screenshot.id) + 1} of ${project.screenshots.length}`;
   const rawSlideLabel = altMatch?.[2] ?? slide.screenshot.slug;
-  const projectPrefixPattern = new RegExp(`^${escapeRegExp(project.title)}\\s*`, 'i');
+  const projectPrefixPattern = new RegExp(
+    `^${escapeRegExp(project.title)}\\s*`,
+    'i',
+  );
   const slideLabel =
-    rawSlideLabel.replace(projectPrefixPattern, '').trim() || slide.screenshot.slug;
+    rawSlideLabel.replace(projectPrefixPattern, '').trim() ||
+    slide.screenshot.slug;
 
   return `${positionLabel} • ${project.title} • ${titleCaseLabel(slideLabel)}`;
 }
@@ -837,7 +506,9 @@ function isEditableTarget(target: EventTarget | null) {
   }
 
   return Boolean(
-    target.closest('input, textarea, select, button, a, [contenteditable="true"]')
+    target.closest(
+      'input, textarea, select, button, a, [contenteditable="true"]',
+    ),
   );
 }
 
@@ -848,8 +519,8 @@ function isTextEntryTarget(target: EventTarget | null) {
 
   return Boolean(
     target.closest(
-      'input, textarea, select, [contenteditable="true"], [role="textbox"]'
-    )
+      'input, textarea, select, [contenteditable="true"], [role="textbox"]',
+    ),
   );
 }
 
@@ -863,10 +534,10 @@ function snapshotClientRect(rect: DOMRectReadOnly): ModalTransitionRect {
 }
 
 function getVisibleScreenshotButtonRect(
-  screenshotId: string
+  screenshotId: string,
 ): ModalTransitionRect | null {
   const nodes = Array.from(
-    document.querySelectorAll<HTMLElement>('[data-portfolio-screenshot-id]')
+    document.querySelectorAll<HTMLElement>('[data-portfolio-screenshot-id]'),
   ).filter((node) => node.dataset.portfolioScreenshotId === screenshotId);
   let bestRect: DOMRect | undefined;
   let bestVisibleArea = 0;
@@ -898,7 +569,7 @@ function resetInlineMediaZoom() {
 
 function zoomVisibleInlineMediaIn() {
   const surfaces = Array.from(
-    document.querySelectorAll<HTMLElement>('[data-portfolio-inline-zoomed]')
+    document.querySelectorAll<HTMLElement>('[data-portfolio-inline-zoomed]'),
   );
   let visibleSurface: HTMLElement | null = null;
   let largestVisibleArea = 0;
@@ -940,7 +611,11 @@ function getModalFrameRect(): ModalTransitionRect {
 
 function getProjectSlides(project: PortfolioProject): ProjectSlide[] {
   return [
-    { id: `${project.id}-description`, kind: 'description', slug: 'description' },
+    {
+      id: `${project.id}-description`,
+      kind: 'description',
+      slug: 'description',
+    },
     ...project.screenshots.map((screenshot) => ({
       id: screenshot.id,
       kind: 'screenshot' as const,
@@ -960,7 +635,7 @@ function hasProjectScreenshots(project: PortfolioProject) {
 
 function isBuildingWithAiTextScreenshot(
   project: PortfolioProject,
-  screenshot: PortfolioScreenshot
+  screenshot: PortfolioScreenshot,
 ) {
   return (
     project.id === 'building-with-ai' &&
@@ -970,7 +645,7 @@ function isBuildingWithAiTextScreenshot(
 
 function isBuildingWithAiTextSlide(
   project: PortfolioProject,
-  slide: ProjectSlide
+  slide: ProjectSlide,
 ) {
   return (
     slide.kind === 'screenshot' &&
@@ -980,14 +655,16 @@ function isBuildingWithAiTextSlide(
 
 function isModalScreenshotSlide(
   project: PortfolioProject,
-  slide: ProjectSlide
+  slide: ProjectSlide,
 ): slide is Extract<ProjectSlide, { kind: 'screenshot' }> {
-  return slide.kind === 'screenshot' && !isBuildingWithAiTextSlide(project, slide);
+  return (
+    slide.kind === 'screenshot' && !isBuildingWithAiTextSlide(project, slide)
+  );
 }
 
 function hasBuildingWithAiTextSlide(project: PortfolioProject) {
   return project.screenshots.some((screenshot) =>
-    isBuildingWithAiTextScreenshot(project, screenshot)
+    isBuildingWithAiTextScreenshot(project, screenshot),
   );
 }
 
@@ -1001,14 +678,14 @@ function modalMediaKey(screenshot: PortfolioScreenshot) {
 
 function getProjectMediaScreenshots(project: PortfolioProject) {
   return project.screenshots.filter(
-    (screenshot) => !isBuildingWithAiTextScreenshot(project, screenshot)
+    (screenshot) => !isBuildingWithAiTextScreenshot(project, screenshot),
   );
 }
 
 function getSlideMediaKey(
   project: PortfolioProject,
   slide: ProjectSlide,
-  useDesktopVisual: boolean
+  useDesktopVisual: boolean,
 ) {
   if (
     slide.kind === 'screenshot' &&
@@ -1039,6 +716,9 @@ export function PortfolioBrowser({
   const verticalScrollTweenRef = useRef<gsap.core.Tween | null>(null);
   const slideIndicatorMotionControllerRef =
     useRef<SlideIndicatorMotionController | null>(null);
+  const sectionNavigationControllerRef = useRef<SectionNavigationHandle | null>(
+    null,
+  );
   const horizontalRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const horizontalScrollTweenRefs = useRef<
     Record<string, gsap.core.Tween | null>
@@ -1065,103 +745,7 @@ export function PortfolioBrowser({
   const initialRevealStartedRef = useRef(false);
   const initialRevealCompleteRef = useRef(false);
   const navigationIntentRef = useRef(0);
-  const sectionNavIndicatorRefs = useRef<Array<HTMLDivElement | null>>([]);
   const sectionMenuTitleRefs = useRef<Array<HTMLSpanElement | null>>([]);
-  const sectionNavPreviewRefs = useRef<Array<HTMLDivElement | null>>([]);
-  const sectionNavPreviewIndexesRef = useRef<Array<number | null>>([
-    null,
-    null,
-  ]);
-  const sectionNavButtonRefs = useRef<
-    Record<'left' | 'right', Array<HTMLDivElement | null>>
-  >({ left: [], right: [] });
-  const sectionNavPreviewReturnTimeoutRefs = useRef<
-    Record<'left' | 'right', ReturnType<typeof setTimeout> | null>
-  >({ left: null, right: null });
-  const sectionNavPointerYRefs = useRef<Record<'left' | 'right', number | null>>({
-    left: null,
-    right: null,
-  });
-  const sectionNavPointerOwnerRef = useRef<'left' | 'right' | null>(null);
-  const sectionNavPointerFrameRef = useRef<number | null>(null);
-  const sectionNavPendingPointerYRef = useRef<number | null>(null);
-  const sectionNavPointerArmedRefs = useRef<Record<'left' | 'right', boolean>>({
-    left: false,
-    right: false,
-  });
-  const sectionNavPointerAcquiringRefs = useRef<
-    Record<'left' | 'right', boolean>
-  >({ left: false, right: false });
-  const sectionNavSnapIndexesRef = useRef<
-    Record<'left' | 'right', number | null>
-  >({ left: null, right: null });
-  const sectionNavSnapTransitioningRefs = useRef<
-    Record<'left' | 'right', boolean>
-  >({ left: false, right: false });
-  const sectionNavClickTargetIndexesRef = useRef<
-    Record<'left' | 'right', number | null>
-  >({ left: null, right: null });
-  const sectionNavClickPhaseRefs = useRef<
-    Record<'left' | 'right', 'attaching' | 'recentering' | null>
-  >({ left: null, right: null });
-  const sectionNavClickAxisRefs = useRef<
-    Record<'left' | 'right', 'horizontal' | 'vertical' | null>
-  >({ left: null, right: null });
-  const sectionNavClickMotionRefs = useRef<
-    Record<'left' | 'right', 'target-pinned' | 'scroll-linked'>
-  >({ left: 'target-pinned', right: 'target-pinned' });
-  const sectionNavClickTargetPinnedRefs = useRef<
-    Record<'left' | 'right', boolean>
-  >({ left: false, right: false });
-  const sectionNavAttachmentCallbacksRef = useRef<
-    Record<'left' | 'right', (() => void) | null>
-  >({ left: null, right: null });
-  const sectionNavStrokeWidthRefs = useRef<Record<'left' | 'right', 2 | 4>>({
-    left: 4,
-    right: 4,
-  });
-  const sectionNavReducedMotionRef = useRef(false);
-  const sectionNavColorSetterRefs = useRef<
-    Record<
-      'left' | 'right',
-      {
-        preview: HTMLDivElement;
-        setColor: (value: string) => void;
-      } | null
-    >
-  >({ left: null, right: null });
-  const sectionNavIsMovingRef = useRef(false);
-  const sectionNavStackRefs = useRef<Array<HTMLDivElement | null>>([]);
-  const sectionNavIconRefs = useRef<
-    Record<'left' | 'right', Array<SVGSVGElement | null>>
-  >({ left: [], right: [] });
-  const sectionNavDotRefs = useRef<
-    Record<'left' | 'right', Array<SVGSVGElement | null>>
-  >({ left: [], right: [] });
-  const sectionNavVisualRefs = useRef<
-    Record<'left' | 'right', Array<HTMLSpanElement | null>>
-  >({ left: [], right: [] });
-  const sectionNavScrollPositionRef = useRef(0);
-  const sectionNavActiveIndexRef = useRef(0);
-  const sectionNavAffordancePreviewIndexRef = useRef<number | null>(null);
-  const sectionNavAffordanceSyncRef = useRef<
-    (position: number, immediate?: boolean) => void
-  >(() => {});
-  const sectionNavTooltipRefs = useRef<
-    Record<'left' | 'right', HTMLDivElement | null>
-  >({ left: null, right: null });
-  const sectionNavTooltipTextRefs = useRef<
-    Record<'left' | 'right', HTMLSpanElement | null>
-  >({ left: null, right: null });
-  const sectionNavTooltipIndexesRef = useRef<
-    Record<'left' | 'right', number | null>
-  >({ left: null, right: null });
-  const sectionNavTooltipsSuppressedRef = useRef(false);
-  const [sectionNavMenuAlignment, setSectionNavMenuAlignment] =
-    useState<SectionNavMenuAlignment>({
-      itemStepPx: SECTION_NAV_ITEM_STEP_REM * 16,
-      stackOffsetPx: 0,
-    });
   const [sectionNavHovered, setSectionNavHovered] = useState(false);
   const [introPhase, setIntroPhase] = useState<PortfolioIntroPhase>('loading');
   const [pendingNavigation, setPendingNavigation] =
@@ -1176,731 +760,37 @@ export function PortfolioBrowser({
   const renderedIntroPhase: PortfolioIntroPhase = mediaFailure
     ? 'error'
     : introPhase;
-  const setSectionNavTooltipText = useCallback(
-    (side: 'left' | 'right', itemIndex: number, title?: string) => {
-      const tooltipText = sectionNavTooltipTextRefs.current[side];
-      const item = sectionNavButtonRefs.current[side][itemIndex];
-      const nextTitle =
-        title ?? item?.dataset.portfolioSectionNavTooltipTitle;
-
-      if (tooltipText && nextTitle) {
-        tooltipText.textContent = nextTitle;
-      }
-    },
-    []
-  );
-  const setSectionNavTooltipVisibility = useCallback(
-    (side: 'left' | 'right', visible: boolean) => {
-      const tooltip = sectionNavTooltipRefs.current[side];
-
-      if (!tooltip) {
-        return;
-      }
-
-      gsap.to(tooltip, {
-        autoAlpha: visible ? 1 : 0,
-        x: visible ? 0 : side === 'left' ? -4 : 4,
-        duration: sectionNavReducedMotionRef.current ? 0 : 0.15,
-        ease: 'power2.out',
-        overwrite: 'auto',
-      });
-    },
-    []
-  );
-  const hideSectionNavTooltips = useCallback(() => {
-    setSectionNavTooltipVisibility('left', false);
-    setSectionNavTooltipVisibility('right', false);
-  }, [setSectionNavTooltipVisibility]);
-  const animateSectionNavRingStroke = useCallback(
-    (side: 'left' | 'right', strokeWidth: 2 | 4) => {
-      if (sectionNavStrokeWidthRefs.current[side] === strokeWidth) {
-        return;
-      }
-
-      const sideIndex = side === 'left' ? 0 : 1;
-      const ring = sectionNavPreviewRefs.current[sideIndex]?.querySelector(
-        'circle'
-      );
-
-      sectionNavStrokeWidthRefs.current[side] = strokeWidth;
-
-      if (!ring) {
-        return;
-      }
-
-      const reducedMotion = window.matchMedia(
-        '(prefers-reduced-motion: reduce)'
-      ).matches;
-
-      gsap.to(ring, {
-        strokeWidth,
-        duration: reducedMotion ? 0 : 0.2,
-        ease: 'power2.out',
-        autoRound: false,
-        overwrite: 'auto',
-      });
-    },
-    []
-  );
-  const applySectionNavActiveScale = useCallback((position: number, activeIndex: number, duration = 0) => {
-    const scale = getNavigationActiveScale(position, activeIndex);
-    const visualTargets = (['left', 'right'] as const).flatMap((side) =>
-      sectionNavVisualRefs.current[side].filter(
-        (visual): visual is HTMLSpanElement => Boolean(visual)
-      )
-    );
-    const activeVisualTargets = (['left', 'right'] as const)
-      .map((side) => sectionNavVisualRefs.current[side][activeIndex])
-      .filter((visual): visual is HTMLSpanElement => Boolean(visual));
-    const ringTargets = sectionNavPreviewRefs.current
-      .map((preview) => preview?.querySelector('svg'))
-      .filter((ring): ring is SVGSVGElement => Boolean(ring));
-
-    const setScale = (targets: Element[], value: number) => {
-      if (duration > 0 && !sectionNavReducedMotionRef.current) {
-        gsap.to(targets, {
-          scale: value,
-          transformOrigin: '50% 50%',
-          duration,
-          ease: 'power3.out',
-          overwrite: 'auto',
-        });
-        return;
-      }
-
-      gsap.set(targets, { scale: value, transformOrigin: '50% 50%' });
-    };
-
-    setScale(visualTargets, 1);
-    setScale(activeVisualTargets, scale);
-    setScale(ringTargets, scale);
-  }, []);
-  const applySectionNavScrollScale = useCallback((position: number, duration = 0) => {
-    const reducedMotion = sectionNavReducedMotionRef.current;
-    const setScale = (target: Element, scale: number) => {
-      if (duration > 0 && !reducedMotion) {
-        gsap.to(target, {
-          scale,
-          transformOrigin: '50% 50%',
-          duration,
-          ease: 'power3.out',
-          overwrite: 'auto',
-        });
-        return;
-      }
-
-      gsap.set(target, {
-        scale,
-        transformOrigin: '50% 50%',
-      });
-    };
-
-    (['left', 'right'] as const).forEach((side) => {
-      sectionNavVisualRefs.current[side].forEach((visual, itemIndex) => {
-        if (visual) {
-          setScale(visual, getNavigationActiveScale(position, itemIndex));
-        }
-      });
-    });
-
-    const nearestItemDistance = Math.abs(position - Math.round(position));
-    const ringProximity = Math.max(0, 1 - nearestItemDistance * 2);
-    const ringScale = 1 + (NAVIGATION_ACTIVE_SCALE - 1) * ringProximity;
-
-    sectionNavPreviewRefs.current.forEach((preview) => {
-      const ring = preview?.querySelector('svg');
-
-      if (ring) {
-        setScale(ring, ringScale);
-      }
-    });
-  }, []);
-  const returnSectionNavPointerToIdle = useCallback(
-    (side: 'left' | 'right', delayed: boolean) => {
-      const sideIndex = side === 'left' ? 0 : 1;
-      const indicator = sectionNavIndicatorRefs.current[sideIndex];
-      const preview = sectionNavPreviewRefs.current[sideIndex];
-      const returnTimeout = sectionNavPreviewReturnTimeoutRefs.current[side];
-
-      if (returnTimeout) {
-        clearTimeout(returnTimeout);
-        sectionNavPreviewReturnTimeoutRefs.current[side] = null;
-      }
-
-      sectionNavPointerYRefs.current[side] = null;
-      sectionNavPointerArmedRefs.current[side] = false;
-      sectionNavPointerAcquiringRefs.current[side] = false;
-      sectionNavSnapIndexesRef.current[side] = null;
-      sectionNavSnapTransitioningRefs.current[side] = false;
-      animateSectionNavRingStroke(side, 4);
-
-      if (sectionNavClickTargetIndexesRef.current[side] !== null) {
-        return;
-      }
-
-      sectionNavPreviewIndexesRef.current[sideIndex] = null;
-
-      if (!indicator || !preview) {
-        return;
-      }
-
-      const animateToIdle = () => {
-        sectionNavPreviewReturnTimeoutRefs.current[side] = null;
-        const reducedMotion = window.matchMedia(
-          '(prefers-reduced-motion: reduce)'
-        ).matches;
-
-        if (side === 'left') {
-          const scrollPosition = sectionNavScrollPositionRef.current;
-          applySectionNavScrollScale(
-            scrollPosition,
-            reducedMotion ? 0 : 0.3
-          );
-        }
-
-        gsap.to(preview, {
-          y: 0,
-          color: getComputedStyle(indicator).color,
-          duration: reducedMotion ? 0 : 0.3,
-          ease: 'power3.out',
-          overwrite: 'auto',
-          onComplete: () => {
-            if (!sectionNavPointerArmedRefs.current[side]) {
-              gsap.set(preview, { clearProps: 'color' });
-            }
-          },
-        });
-      };
-
-      if (!delayed) {
-        animateToIdle();
-        return;
-      }
-
-      sectionNavPreviewReturnTimeoutRefs.current[side] = setTimeout(
-        animateToIdle,
-        SECTION_NAV_PREVIEW_RETURN_DELAY_MS
-      );
-    },
-    [animateSectionNavRingStroke, applySectionNavScrollScale]
-  );
-  const updateSectionNavPointer = useCallback(
-    (
-      side: 'left' | 'right',
-      pointerY: number,
-      layout: SectionNavLayout | null,
-      animatePosition = false,
-      onPositionSettled?: () => void
-    ) => {
-      if (!sectionNavPointerArmedRefs.current[side]) {
-        return;
-      }
-
-      const sideIndex = side === 'left' ? 0 : 1;
-      const indicator = sectionNavIndicatorRefs.current[sideIndex];
-      const preview = sectionNavPreviewRefs.current[sideIndex];
-      const returnTimeout = sectionNavPreviewReturnTimeoutRefs.current[side];
-
-      sectionNavPointerYRefs.current[side] = pointerY;
-
-      if (returnTimeout) {
-        clearTimeout(returnTimeout);
-        sectionNavPreviewReturnTimeoutRefs.current[side] = null;
-      }
-
-      if (!indicator || !preview) {
-        return;
-      }
-
-      if (sectionNavClickTargetIndexesRef.current[side] !== null) {
-        return;
-      }
-
-      animateSectionNavRingStroke(side, 2);
-
-      const snapTarget = sectionNavIsMovingRef.current
-        ? null
-        : getSectionNavSnapTarget(layout, pointerY);
-      const snapIndex = snapTarget?.index ?? null;
-      const previousSnapIndex = sectionNavSnapIndexesRef.current[side];
-      const snapChanged = previousSnapIndex !== snapIndex;
-      const targetY = snapTarget?.centerY ?? pointerY;
-
-      if (snapChanged) {
-        sectionNavSnapIndexesRef.current[side] = snapIndex;
-        sectionNavSnapTransitioningRefs.current[side] = true;
-      }
-
-      if (
-        !sectionNavIsMovingRef.current &&
-        isSectionNavBeyondBreakawayDistance(
-          layout,
-          pointerY,
-          targetY
-        )
-      ) {
-        returnSectionNavPointerToIdle(side, false);
-        return;
-      }
-
-      sectionNavPreviewIndexesRef.current[sideIndex] = snapIndex;
-      const reducedMotion = sectionNavReducedMotionRef.current;
-      const targetOffset = getSectionNavPreviewOffsetFromClientY(
-        preview,
-        targetY
-      );
-      const shouldAnimatePosition =
-        animatePosition ||
-        snapChanged ||
-        (sectionNavSnapTransitioningRefs.current[side] && snapIndex === null);
-
-      if (side === 'left') {
-        applySectionNavActiveScale(
-          getSectionNavPosition(layout, targetY),
-          sectionNavActiveIndexRef.current,
-          shouldAnimatePosition && !reducedMotion
-            ? animatePosition
-              ? 0.3
-              : 0.2
-            : 0
-        );
-      }
-
-      if (shouldAnimatePosition && !reducedMotion) {
-        gsap.to(preview, {
-          y: targetOffset,
-          duration: animatePosition ? 0.3 : 0.2,
-          ease: 'power3.out',
-          overwrite: 'auto',
-          onComplete: () => {
-            if (sectionNavSnapIndexesRef.current[side] === snapIndex) {
-              sectionNavSnapTransitioningRefs.current[side] = false;
-            }
-            onPositionSettled?.();
-          },
-        });
-      } else if (snapIndex === null || snapChanged || reducedMotion) {
-        gsap.set(preview, { y: targetOffset });
-        sectionNavSnapTransitioningRefs.current[side] = false;
-        onPositionSettled?.();
-      }
-
-      const targetColor =
-        getSectionNavPointerColor(layout, targetY) ??
-        getComputedStyle(indicator).color;
-
-      if (reducedMotion) {
-        gsap.set(preview, { color: targetColor });
-        return;
-      }
-
-      let colorSetter = sectionNavColorSetterRefs.current[side];
-
-      if (!colorSetter || colorSetter.preview !== preview) {
-        colorSetter = {
-          preview,
-          setColor: gsap.quickSetter(preview, 'color') as (
-            value: string
-          ) => void,
-        };
-        sectionNavColorSetterRefs.current[side] = colorSetter;
-      }
-
-      colorSetter.setColor(targetColor);
-    },
-    [
-      animateSectionNavRingStroke,
-      applySectionNavActiveScale,
-      returnSectionNavPointerToIdle,
-    ]
-  );
-  const trackSectionNavPointer = useCallback(
-    (
-      side: 'left' | 'right',
-      pointerY: number,
-      layout?: SectionNavLayout | null
-    ) => {
-      const acquiring = sectionNavPointerAcquiringRefs.current[side];
-      const resolvedLayout =
-        layout ?? getSectionNavLayout(sectionNavButtonRefs.current[side]);
-
-      updateSectionNavPointer(
-        side,
-        pointerY,
-        resolvedLayout,
-        acquiring,
-        acquiring
-          ? () => {
-              sectionNavPointerAcquiringRefs.current[side] = false;
-            }
-          : undefined
-      );
-    },
-    [updateSectionNavPointer]
-  );
-  const trackSectionNavPointers = useCallback(
-    (pointerY: number) => {
-      const layoutSide = sectionNavPointerOwnerRef.current ?? 'left';
-      const layout = getSectionNavLayout(
-        sectionNavButtonRefs.current[layoutSide]
-      );
-
-      (['left', 'right'] as const).forEach((side) => {
-        trackSectionNavPointer(side, pointerY, layout);
-      });
-    },
-    [trackSectionNavPointer]
-  );
-  const scheduleSectionNavPointerTracking = useCallback(
-    (pointerY: number) => {
-      sectionNavPendingPointerYRef.current = pointerY;
-
-      if (sectionNavPointerFrameRef.current !== null) {
-        return;
-      }
-
-      sectionNavPointerFrameRef.current = requestAnimationFrame(() => {
-        sectionNavPointerFrameRef.current = null;
-        const pendingPointerY = sectionNavPendingPointerYRef.current;
-
-        if (pendingPointerY === null) {
-          return;
-        }
-
-        trackSectionNavPointers(pendingPointerY);
-      });
-    },
-    [trackSectionNavPointers]
-  );
-  const engageSectionNavPointers = useCallback(
-    (pointerOwner: 'left' | 'right', pointerY: number) => {
-      sectionNavPointerOwnerRef.current = pointerOwner;
-      setSectionNavTooltipVisibility(
-        pointerOwner === 'left' ? 'right' : 'left',
-        false
-      );
-
-      (['left', 'right'] as const).forEach((side) => {
-        if (!sectionNavPointerArmedRefs.current[side]) {
-          sectionNavPointerAcquiringRefs.current[side] = true;
-        }
-
-        sectionNavPointerArmedRefs.current[side] = true;
-      });
-
-      trackSectionNavPointers(pointerY);
-    },
-    [setSectionNavTooltipVisibility, trackSectionNavPointers]
-  );
-  const returnSectionNavPointersToIdle = useCallback(
-    (pointerOwner: 'left' | 'right', delayed: boolean) => {
-      if (sectionNavPointerOwnerRef.current !== pointerOwner) {
-        return;
-      }
-
-      sectionNavPointerOwnerRef.current = null;
-      sectionNavPendingPointerYRef.current = null;
-      hideSectionNavTooltips();
-
-      if (sectionNavPointerFrameRef.current !== null) {
-        cancelAnimationFrame(sectionNavPointerFrameRef.current);
-        sectionNavPointerFrameRef.current = null;
-      }
-
-      (['left', 'right'] as const).forEach((side) => {
-        returnSectionNavPointerToIdle(side, delayed);
-      });
-    },
-    [hideSectionNavTooltips, returnSectionNavPointerToIdle]
-  );
-  const positionSectionNavClickTarget = useCallback(
-    (
-      side: 'left' | 'right',
-      itemIndex: number,
-      duration: number,
-      onComplete?: () => void
-    ) => {
-      const sideIndex = side === 'left' ? 0 : 1;
-      const preview = sectionNavPreviewRefs.current[sideIndex];
-      const target = sectionNavButtonRefs.current[side][itemIndex];
-
-      if (!preview || !target) {
-        onComplete?.();
-        return;
-      }
-
-      sectionNavPreviewIndexesRef.current[sideIndex] = itemIndex;
-      animateSectionNavRingStroke(side, 4);
-
-      const reducedMotion = window.matchMedia(
-        '(prefers-reduced-motion: reduce)'
-      ).matches;
-
-      gsap.to(preview, {
-        y: getSectionNavPreviewOffset(preview, target),
-        color: SECTION_NAV_COLORS[itemIndex],
-        duration: reducedMotion ? 0 : duration,
-        ease: 'power3.out',
-        overwrite: 'auto',
-        onComplete,
-      });
-
-      if (side === 'left') {
-        applySectionNavActiveScale(itemIndex, itemIndex, duration);
-      }
-    },
-    [animateSectionNavRingStroke, applySectionNavActiveScale]
-  );
-  const lockSectionNavIndicatorToItem = useCallback(
-    (
-      side: 'left' | 'right',
-      itemIndex: number,
-      axis: 'horizontal' | 'vertical',
-      onAttached?: () => void,
-      motion: 'target-pinned' | 'scroll-linked' = 'target-pinned'
-    ) => {
-      const sideIndex = side === 'left' ? 0 : 1;
-      const preview = sectionNavPreviewRefs.current[sideIndex];
-      const target = sectionNavButtonRefs.current[side][itemIndex];
-      const currentPreviewY = preview
-        ? Number(gsap.getProperty(preview, 'y')) || 0
-        : 0;
-      const targetPreviewY =
-        preview && target
-          ? getSectionNavPreviewOffset(preview, target)
-          : currentPreviewY;
-      const alreadyPinned =
-        Boolean(preview && target) &&
-        Math.abs(currentPreviewY - targetPreviewY) <= 1;
-
-      sectionNavPointerAcquiringRefs.current[side] = false;
-      sectionNavClickTargetIndexesRef.current[side] = itemIndex;
-      sectionNavClickAxisRefs.current[side] = axis;
-      sectionNavClickMotionRefs.current[side] = motion;
-      sectionNavClickTargetPinnedRefs.current[side] = alreadyPinned;
-      if (axis === 'vertical') {
-        sectionNavAffordancePreviewIndexRef.current = null;
-        sectionNavAffordanceSyncRef.current(
-          sectionNavScrollPositionRef.current
-        );
-      }
-      sectionNavTooltipsSuppressedRef.current = true;
-      hideSectionNavTooltips();
-      if (motion === 'scroll-linked') {
-        sectionNavClickPhaseRefs.current[side] = 'recentering';
-        sectionNavAttachmentCallbacksRef.current[side] = null;
-        sectionNavPreviewIndexesRef.current[sideIndex] = null;
-        animateSectionNavRingStroke(side, 4);
-        if (preview) {
-          gsap.killTweensOf(preview);
-          gsap.set(preview, { y: 0, clearProps: 'color' });
-        }
-        return;
-      }
-
-      sectionNavClickPhaseRefs.current[side] = onAttached
-        ? 'attaching'
-        : 'recentering';
-      const finishAttachment = onAttached
-        ? () => {
-            if (
-              sectionNavClickTargetIndexesRef.current[side] !== itemIndex ||
-              sectionNavClickPhaseRefs.current[side] !== 'attaching'
-            ) {
-              return;
-            }
-
-            sectionNavAttachmentCallbacksRef.current[side] = null;
-            sectionNavClickPhaseRefs.current[side] = 'recentering';
-            onAttached();
-          }
-        : undefined;
-      const finishPositioning = () => {
-        if (sectionNavClickTargetIndexesRef.current[side] !== itemIndex) {
-          return;
-        }
-
-        sectionNavClickTargetPinnedRefs.current[side] = true;
-        finishAttachment?.();
-      };
-
-      sectionNavAttachmentCallbacksRef.current[side] =
-        onAttached ? finishPositioning : null;
-      positionSectionNavClickTarget(
-        side,
-        itemIndex,
-        alreadyPinned ? 0 : 0.3,
-        finishPositioning
-      );
-    },
-    [hideSectionNavTooltips, positionSectionNavClickTarget]
-  );
-  const lockSectionNavIndicatorsToItem = useCallback(
-    (
-      sourceSide: 'left' | 'right',
-      itemIndex: number,
-      axis: 'horizontal' | 'vertical',
-      onAttached?: () => void,
-      motion: 'target-pinned' | 'scroll-linked' = 'target-pinned'
-    ) => {
-      (['left', 'right'] as const).forEach((side) => {
-        lockSectionNavIndicatorToItem(
-          side,
-          itemIndex,
-          axis,
-          side === sourceSide ? onAttached : undefined,
-          motion
-        );
-      });
-    },
-    [lockSectionNavIndicatorToItem]
-  );
-  const settleSectionNavClickTarget = useCallback(
-    (side: 'left' | 'right', axis: 'horizontal' | 'vertical') => {
-      const itemIndex = sectionNavClickTargetIndexesRef.current[side];
-
-      if (
-        itemIndex === null ||
-        sectionNavClickAxisRefs.current[side] !== axis ||
-        sectionNavClickPhaseRefs.current[side] !== 'recentering'
-      ) {
-        return;
-      }
-
-      const finishSettlement = () => {
-        if (sectionNavClickTargetIndexesRef.current[side] !== itemIndex) {
-          return;
-        }
-
-        sectionNavClickTargetIndexesRef.current[side] = null;
-        sectionNavClickPhaseRefs.current[side] = null;
-        sectionNavClickAxisRefs.current[side] = null;
-        sectionNavClickMotionRefs.current[side] = 'target-pinned';
-        sectionNavClickTargetPinnedRefs.current[side] = false;
-        sectionNavAttachmentCallbacksRef.current[side] = null;
-        const tooltipsSuppressed = Object.values(
-          sectionNavClickTargetIndexesRef.current
-        ).some((targetIndex) => targetIndex !== null);
-        sectionNavTooltipsSuppressedRef.current = tooltipsSuppressed;
-        sectionNavAffordanceSyncRef.current(
-          sectionNavScrollPositionRef.current
-        );
-
-        if (!tooltipsSuppressed) {
-          const pointerOwner = sectionNavPointerOwnerRef.current;
-
-          if (
-            pointerOwner &&
-            sectionNavTooltipIndexesRef.current[pointerOwner] !== null
-          ) {
-            setSectionNavTooltipText(
-              pointerOwner,
-              sectionNavTooltipIndexesRef.current[pointerOwner]
-            );
-            setSectionNavTooltipVisibility(pointerOwner, true);
-          }
-        }
-        const pointerY = sectionNavPointerYRefs.current[side];
-
-        if (pointerY !== null && sectionNavPointerArmedRefs.current[side]) {
-          sectionNavPointerAcquiringRefs.current[side] = true;
-          trackSectionNavPointer(side, pointerY);
-          return;
-        }
-
-        returnSectionNavPointerToIdle(side, false);
-      };
-
-      if (sectionNavClickMotionRefs.current[side] === 'scroll-linked') {
-        finishSettlement();
-        return;
-      }
-
-      positionSectionNavClickTarget(
-        side,
-        itemIndex,
-        sectionNavClickTargetPinnedRefs.current[side] ? 0 : 0.2,
-        finishSettlement
-      );
-    },
-    [
-      positionSectionNavClickTarget,
-      returnSectionNavPointerToIdle,
-      setSectionNavTooltipText,
-      setSectionNavTooltipVisibility,
-      trackSectionNavPointer,
-    ]
-  );
   const settleSectionNavClickTargets = useCallback(
     (axis: 'horizontal' | 'vertical') => {
-      settleSectionNavClickTarget('left', axis);
-      settleSectionNavClickTarget('right', axis);
+      sectionNavigationControllerRef.current?.settle(axis);
     },
-    [settleSectionNavClickTarget]
+    [],
   );
-  const settleVerticalSectionNavClickTargets = useCallback(
-    (vertical: HTMLDivElement) => {
-      (['left', 'right'] as const).forEach((side) => {
-        const itemIndex = sectionNavClickTargetIndexesRef.current[side];
-
-        if (
-          itemIndex === null ||
-          sectionNavClickAxisRefs.current[side] !== 'vertical' ||
-          Math.abs(vertical.scrollTop - vertical.clientHeight * itemIndex) > 1
-        ) {
-          return;
-        }
-
-        settleSectionNavClickTarget(side, 'vertical');
-      });
-    },
-    [settleSectionNavClickTarget]
-  );
+  const settleVerticalSectionNavClickTargets = useCallback(() => {
+    sectionNavigationControllerRef.current?.settle('vertical');
+  }, []);
   const cancelScrollLinkedSectionNavigation = useCallback(() => {
-    (['left', 'right'] as const).forEach((side, sideIndex) => {
-      if (
-        sectionNavClickTargetIndexesRef.current[side] === null ||
-        sectionNavClickMotionRefs.current[side] !== 'scroll-linked'
-      ) {
-        return;
-      }
-
-      sectionNavClickTargetIndexesRef.current[side] = null;
-      sectionNavClickPhaseRefs.current[side] = null;
-      sectionNavClickAxisRefs.current[side] = null;
-      sectionNavClickMotionRefs.current[side] = 'target-pinned';
-      sectionNavClickTargetPinnedRefs.current[side] = false;
-      sectionNavAttachmentCallbacksRef.current[side] = null;
-      sectionNavPreviewIndexesRef.current[sideIndex] = null;
-      const preview = sectionNavPreviewRefs.current[sideIndex];
-
-      if (preview) {
-        gsap.killTweensOf(preview);
-        gsap.set(preview, { y: 0, clearProps: 'color' });
-      }
-    });
-
-    sectionNavTooltipsSuppressedRef.current = false;
-    sectionNavAffordanceSyncRef.current(sectionNavScrollPositionRef.current);
+    sectionNavigationControllerRef.current?.cancel();
   }, []);
 
   const projectSlides = useMemo(
     () =>
       Object.fromEntries(
-        portfolioSlides.map((project) => [project.slug, getProjectSlides(project)])
+        portfolioSlides.map((project) => [
+          project.slug,
+          getProjectSlides(project),
+        ]),
       ) as Record<string, ProjectSlide[]>,
-    []
+    [],
   );
 
   const initialProjectIndex = initialProjectSlug
-    ? portfolioSlides.findIndex((project) => project.slug === initialProjectSlug)
+    ? portfolioSlides.findIndex(
+        (project) => project.slug === initialProjectSlug,
+      )
     : START_SCREEN_INDEX;
   const normalizedInitialProjectIndex =
     initialProjectIndex >= 0 ? initialProjectIndex : START_SCREEN_INDEX;
-  const initialSectionNavIndex = normalizedInitialProjectIndex + 1;
-  const initialSectionNavColor =
-    SECTION_NAV_COLORS[initialSectionNavIndex] ?? TOP_SCREEN_COLOR;
-
   const initialSlideIndexes = useMemo(
     () =>
       portfolioSlides.map((project) => {
@@ -1909,25 +799,25 @@ export function PortfolioBrowser({
         }
 
         const screenshotIndex = project.screenshots.findIndex(
-          (screenshot) => screenshot.slug === initialScreenshotSlug
+          (screenshot) => screenshot.slug === initialScreenshotSlug,
         );
 
         return screenshotIndex >= 0 ? screenshotIndex + 1 : 0;
       }),
-    [initialProjectSlug, initialScreenshotSlug]
+    [initialProjectSlug, initialScreenshotSlug],
   );
   const projectMediaKeys = useMemo(
     () =>
       portfolioSlides.map((project) =>
         getProjectMediaScreenshots(project).map((screenshot) =>
-          carouselMediaKey(screenshot)
-        )
+          carouselMediaKey(screenshot),
+        ),
       ),
-    []
+    [],
   );
   const sectionEntryMediaKeys = useMemo(
     () => projectMediaKeys.flatMap((keys) => (keys[0] ? [keys[0]] : [])),
-    [projectMediaKeys]
+    [projectMediaKeys],
   );
   const initialTargetScreenshot = useMemo(() => {
     if (normalizedInitialProjectIndex < 0) {
@@ -1935,9 +825,10 @@ export function PortfolioBrowser({
     }
 
     const project = portfolioSlides[normalizedInitialProjectIndex];
-    const initialSlide = projectSlides[project.slug][
-      initialSlideIndexes[normalizedInitialProjectIndex] ?? 0
-    ];
+    const initialSlide =
+      projectSlides[project.slug][
+        initialSlideIndexes[normalizedInitialProjectIndex] ?? 0
+      ];
 
     return initialSlide?.kind === 'screenshot' &&
       !isBuildingWithAiTextSlide(project, initialSlide)
@@ -1955,22 +846,28 @@ export function PortfolioBrowser({
     }
 
     return Array.from(new Set(journeyKeys));
-  }, [initialTargetScreenshot, normalizedInitialProjectIndex, projectMediaKeys]);
+  }, [
+    initialTargetScreenshot,
+    normalizedInitialProjectIndex,
+    projectMediaKeys,
+  ]);
   const backgroundMediaQueue = useMemo(() => {
     const activeProjectMedia =
       normalizedInitialProjectIndex >= 0
         ? getProjectMediaScreenshots(
-            portfolioSlides[normalizedInitialProjectIndex]
+            portfolioSlides[normalizedInitialProjectIndex],
           )
         : [];
     const activeScreenshotIndex = initialTargetScreenshot
       ? activeProjectMedia.findIndex(
-          (screenshot) => screenshot.id === initialTargetScreenshot.id
+          (screenshot) => screenshot.id === initialTargetScreenshot.id,
         )
       : 0;
     const adjacentKeys = [-1, 1]
       .map((offset) => activeProjectMedia[activeScreenshotIndex + offset])
-      .filter((screenshot): screenshot is PortfolioScreenshot => Boolean(screenshot))
+      .filter((screenshot): screenshot is PortfolioScreenshot =>
+        Boolean(screenshot),
+      )
       .map(carouselMediaKey);
 
     return Array.from(
@@ -1978,7 +875,7 @@ export function PortfolioBrowser({
         ...adjacentKeys,
         ...sectionEntryMediaKeys,
         ...projectMediaKeys.flat(),
-      ])
+      ]),
     );
   }, [
     initialTargetScreenshot,
@@ -1988,30 +885,24 @@ export function PortfolioBrowser({
   ]);
   const sectionEntryMediaReady = sectionEntryMediaKeys.every(isMediaReady);
   const projectCarouselsReady = projectMediaKeys.map((keys) =>
-    keys.every(isMediaReady)
+    keys.every(isMediaReady),
   );
 
   const [activeProjectIndex, setActiveProjectIndex] = useState(
-    normalizedInitialProjectIndex
+    normalizedInitialProjectIndex,
   );
-  const [activeSlideIndexes, setActiveSlideIndexes] = useState(initialSlideIndexes);
-  useLayoutEffect(() => {
-    sectionNavActiveIndexRef.current = activeProjectIndex + 1;
-
-    if (!initialRevealCompleteRef.current) {
-      sectionNavScrollPositionRef.current = activeProjectIndex + 1;
-    }
-  }, [activeProjectIndex]);
+  const [activeSlideIndexes, setActiveSlideIndexes] =
+    useState(initialSlideIndexes);
 
   const isWideLayout = useSyncExternalStore(
     subscribeToWideLayout,
     getWideLayoutSnapshot,
-    getWideLayoutServerSnapshot
+    getWideLayoutServerSnapshot,
   );
   const isTouchInput = useSyncExternalStore(
     subscribeToTouchInput,
     getTouchInputSnapshot,
-    getTouchInputServerSnapshot
+    getTouchInputServerSnapshot,
   );
   const isTouchLandscapeLayout = isWideLayout && isTouchInput;
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -2053,7 +944,7 @@ export function PortfolioBrowser({
 
   const handleInlinePresentationChange = (
     screenshotId: string,
-    presented: boolean
+    presented: boolean,
   ) => {
     setInlineZoomedScreenshotId((currentId) =>
       presented
@@ -2062,7 +953,7 @@ export function PortfolioBrowser({
           ? currentId
           : currentId === screenshotId
             ? null
-            : currentId
+            : currentId,
     );
   };
 
@@ -2128,21 +1019,21 @@ export function PortfolioBrowser({
         return nextSlugs;
       });
     },
-    []
+    [],
   );
 
   const setHorizontalRef = useCallback(
     (slideSlug: string) => (node: HTMLDivElement | null) => {
       horizontalRefs.current[slideSlug] = node;
     },
-    []
+    [],
   );
 
   const setDescriptionRef = useCallback(
     (slideSlug: string) => (node: HTMLDivElement | null) => {
       descriptionRefs.current[slideSlug] = node;
     },
-    []
+    [],
   );
 
   const getCarouselSlides = useCallback(
@@ -2153,11 +1044,13 @@ export function PortfolioBrowser({
         return slides;
       }
 
-      const screenshotSlides = slides.filter((slide) => slide.kind === 'screenshot');
+      const screenshotSlides = slides.filter(
+        (slide) => slide.kind === 'screenshot',
+      );
 
       return screenshotSlides.length > 0 ? screenshotSlides : slides;
     },
-    [isWideLayout, projectSlides]
+    [isWideLayout, projectSlides],
   );
 
   const getCarouselIndexFromSlideIndex = useCallback(
@@ -2175,11 +1068,11 @@ export function PortfolioBrowser({
       return Math.max(
         0,
         getCarouselSlides(project).findIndex(
-          (carouselSlide) => carouselSlide.id === slide.id
-        )
+          (carouselSlide) => carouselSlide.id === slide.id,
+        ),
       );
     },
-    [getCarouselSlides, isWideLayout, projectSlides]
+    [getCarouselSlides, isWideLayout, projectSlides],
   );
 
   const getSlideIndexFromCarouselIndex = useCallback(
@@ -2190,10 +1083,12 @@ export function PortfolioBrowser({
 
       return Math.max(
         0,
-        projectSlides[project.slug].findIndex((slide) => slide.id === carouselSlide.id)
+        projectSlides[project.slug].findIndex(
+          (slide) => slide.id === carouselSlide.id,
+        ),
       );
     },
-    [getCarouselSlides, projectSlides]
+    [getCarouselSlides, projectSlides],
   );
 
   const scrollHorizontalToRealIndex = useCallback(
@@ -2202,7 +1097,7 @@ export function PortfolioBrowser({
       slideIndex: number,
       behavior: ScrollBehavior,
       onComplete?: () => void,
-      options: HorizontalScrollOptions = {}
+      options: HorizontalScrollOptions = {},
     ) => {
       const { syncIndicator = false, boundarySourceIndex } = options;
       const carousel = horizontalRefs.current[project.slug];
@@ -2215,17 +1110,17 @@ export function PortfolioBrowser({
       const slides = getCarouselSlides(project);
       const nextCarouselIndex = getCarouselIndexFromSlideIndex(
         project,
-        slideIndex
+        slideIndex,
       );
       const targetScrollLeft = getCarouselTargetScrollLeft(
         carousel,
-        nextCarouselIndex
+        nextCarouselIndex,
       );
       const initialScrollLeft = carousel.scrollLeft;
       const currentTween = horizontalScrollTweenRefs.current[project.slug];
       const currentCarouselIndex = Math.max(
         0,
-        Math.min(slides.length - 1, Math.round(getCarouselPosition(carousel)))
+        Math.min(slides.length - 1, Math.round(getCarouselPosition(carousel))),
       );
       const isBoundaryTravel =
         boundarySourceIndex !== undefined &&
@@ -2236,9 +1131,8 @@ export function PortfolioBrowser({
           isCarouselBoundaryJump(
             currentCarouselIndex,
             nextCarouselIndex,
-            slides.length
-          )
-        );
+            slides.length,
+          ));
 
       if (
         behavior !== 'smooth' ||
@@ -2252,7 +1146,7 @@ export function PortfolioBrowser({
         if (syncIndicator) {
           slideIndicatorMotionControllerRef.current?.update(nextCarouselIndex);
           slideIndicatorMotionControllerRef.current?.complete(
-            nextCarouselIndex
+            nextCarouselIndex,
           );
         }
         onComplete?.();
@@ -2275,7 +1169,7 @@ export function PortfolioBrowser({
 
           if (boundarySourceIndex === undefined) {
             slideIndicatorMotionControllerRef.current?.update(
-              getCarouselPosition(carousel)
+              getCarouselPosition(carousel),
             );
             return;
           }
@@ -2287,14 +1181,14 @@ export function PortfolioBrowser({
               : gsap.utils.clamp(
                   0,
                   1,
-                  (carousel.scrollLeft - initialScrollLeft) / scrollDistance
+                  (carousel.scrollLeft - initialScrollLeft) / scrollDistance,
                 );
           slideIndicatorMotionControllerRef.current?.update(
             gsap.utils.interpolate(
               boundarySourceIndex,
               nextCarouselIndex,
-              progress
-            )
+              progress,
+            ),
           );
         },
         onComplete: () => {
@@ -2305,10 +1199,10 @@ export function PortfolioBrowser({
             setProjectBoundaryBlur(project.slug, false);
             if (syncIndicator) {
               slideIndicatorMotionControllerRef.current?.update(
-                nextCarouselIndex
+                nextCarouselIndex,
               );
               slideIndicatorMotionControllerRef.current?.complete(
-                nextCarouselIndex
+                nextCarouselIndex,
               );
             }
             onComplete?.();
@@ -2325,33 +1219,26 @@ export function PortfolioBrowser({
       horizontalScrollTweenRefs.current[project.slug] = tween;
       setProjectBoundaryBlur(project.slug, shouldBlurBoundary);
     },
-    [
-      getCarouselIndexFromSlideIndex,
-      getCarouselSlides,
-      setProjectBoundaryBlur,
-    ]
+    [getCarouselIndexFromSlideIndex, getCarouselSlides, setProjectBoundaryBlur],
   );
 
   const syncHorizontalViewports = useCallback(
-    (
-      slideIndexes: number[],
-      behavior: ScrollBehavior
-    ) => {
+    (slideIndexes: number[], behavior: ScrollBehavior) => {
       portfolioSlides.forEach((project, currentProjectIndex) => {
         scrollHorizontalToRealIndex(
           project,
           slideIndexes[currentProjectIndex] ?? 0,
-          behavior
+          behavior,
         );
       });
     },
-    [scrollHorizontalToRealIndex]
+    [scrollHorizontalToRealIndex],
   );
   const syncViewport = useCallback(
     (
       projectIndex: number,
       slideIndexes: number[],
-      behavior: ScrollBehavior
+      behavior: ScrollBehavior,
     ) => {
       const vertical = verticalRef.current;
 
@@ -2364,7 +1251,7 @@ export function PortfolioBrowser({
 
       syncHorizontalViewports(slideIndexes, behavior);
     },
-    [syncHorizontalViewports]
+    [syncHorizontalViewports],
   );
 
   const readLocationState = useCallback(() => {
@@ -2384,7 +1271,7 @@ export function PortfolioBrowser({
     }
 
     const projectIndex = portfolioSlides.findIndex(
-      (project) => project.slug === segments[1]
+      (project) => project.slug === segments[1],
     );
 
     if (projectIndex < 0) {
@@ -2396,7 +1283,8 @@ export function PortfolioBrowser({
     const screenshotSlug = segments[2];
     const slideIndex = screenshotSlug
       ? slides.findIndex(
-          (slide) => slide.kind === 'screenshot' && slide.slug === screenshotSlug
+          (slide) =>
+            slide.kind === 'screenshot' && slide.slug === screenshotSlug,
         )
       : 0;
 
@@ -2425,7 +1313,7 @@ export function PortfolioBrowser({
       const nextSlideIndexes = portfolioSlides.map((_, projectIndex) =>
         projectIndex === locationState.projectIndex
           ? locationState.slideIndex
-          : activeSlideIndexes[projectIndex] ?? 0
+          : (activeSlideIndexes[projectIndex] ?? 0),
       );
 
       if (locationState.projectIndex >= 0) {
@@ -2448,7 +1336,7 @@ export function PortfolioBrowser({
                   kind: 'slide',
                   projectIndex: locationState.projectIndex,
                   slideIndex: locationState.slideIndex,
-                }
+                },
           );
 
           try {
@@ -2494,14 +1382,14 @@ export function PortfolioBrowser({
       readLocationState,
       resetDescriptionScroll,
       syncViewport,
-    ]
+    ],
   );
 
   const updateUrl = useCallback(
     (
       project: PortfolioProject | undefined,
       slide: ProjectSlide | undefined,
-      mode: 'push' | 'replace'
+      mode: 'push' | 'replace',
     ) => {
       const nextPath = project && slide ? projectUrl(project, slide) : '/work';
       const currentPath = `${window.location.pathname}${window.location.search}`;
@@ -2515,45 +1403,55 @@ export function PortfolioBrowser({
       modalHistoryEntryRef.current = false;
       setIsModalOpen(false);
     },
-    []
+    [],
   );
 
-  const replaceModalUrl = useCallback((project: PortfolioProject, slide: ProjectSlide) => {
-    if (!isModalScreenshotSlide(project, slide)) {
-      return;
-    }
+  const replaceModalUrl = useCallback(
+    (project: PortfolioProject, slide: ProjectSlide) => {
+      if (!isModalScreenshotSlide(project, slide)) {
+        return;
+      }
 
-    window.history.replaceState({}, '', `${projectUrl(project, slide)}?modal=image`);
-    document.title = pageTitle(project, slide);
-  }, []);
+      window.history.replaceState(
+        {},
+        '',
+        `${projectUrl(project, slide)}?modal=image`,
+      );
+      document.title = pageTitle(project, slide);
+    },
+    [],
+  );
 
-  const clearHorizontalScrollSync = useCallback((project?: PortfolioProject) => {
-    if (
-      project &&
-      horizontalScrollSyncProjectRef.current &&
-      horizontalScrollSyncProjectRef.current !== project.slug
-    ) {
-      return;
-    }
+  const clearHorizontalScrollSync = useCallback(
+    (project?: PortfolioProject) => {
+      if (
+        project &&
+        horizontalScrollSyncProjectRef.current &&
+        horizontalScrollSyncProjectRef.current !== project.slug
+      ) {
+        return;
+      }
 
-    const syncedProjectSlug = horizontalScrollSyncProjectRef.current;
-    horizontalScrollSyncProjectRef.current = null;
+      const syncedProjectSlug = horizontalScrollSyncProjectRef.current;
+      horizontalScrollSyncProjectRef.current = null;
 
-    if (project) {
-      delete horizontalTargetSlideIndexesRef.current[project.slug];
-      delete horizontalKeyboardIndicatorIndexesRef.current[project.slug];
-      delete horizontalPendingNavigationIntentRefs.current[project.slug];
-    } else if (syncedProjectSlug) {
-      delete horizontalTargetSlideIndexesRef.current[syncedProjectSlug];
-      delete horizontalKeyboardIndicatorIndexesRef.current[syncedProjectSlug];
-      delete horizontalPendingNavigationIntentRefs.current[syncedProjectSlug];
-    }
+      if (project) {
+        delete horizontalTargetSlideIndexesRef.current[project.slug];
+        delete horizontalKeyboardIndicatorIndexesRef.current[project.slug];
+        delete horizontalPendingNavigationIntentRefs.current[project.slug];
+      } else if (syncedProjectSlug) {
+        delete horizontalTargetSlideIndexesRef.current[syncedProjectSlug];
+        delete horizontalKeyboardIndicatorIndexesRef.current[syncedProjectSlug];
+        delete horizontalPendingNavigationIntentRefs.current[syncedProjectSlug];
+      }
 
-    if (horizontalScrollSyncTimeoutRef.current) {
-      clearTimeout(horizontalScrollSyncTimeoutRef.current);
-      horizontalScrollSyncTimeoutRef.current = null;
-    }
-  }, []);
+      if (horizontalScrollSyncTimeoutRef.current) {
+        clearTimeout(horizontalScrollSyncTimeoutRef.current);
+        horizontalScrollSyncTimeoutRef.current = null;
+      }
+    },
+    [],
+  );
 
   const beginHorizontalScrollSync = useCallback(
     (project: PortfolioProject) => {
@@ -2568,19 +1466,19 @@ export function PortfolioBrowser({
         horizontalScrollSyncTimeoutRef.current = null;
       }, 1000);
     },
-    [clearHorizontalScrollSync]
+    [clearHorizontalScrollSync],
   );
 
   const prepareMediaNavigation = useCallback(
     async (
       pending: Exclude<PendingNavigation, null>,
-      mediaKeys?: string | string[]
+      mediaKeys?: string | string[],
     ) => {
       const intent = navigationIntentRef.current + 1;
       navigationIntentRef.current = intent;
-      const requiredKeys = (Array.isArray(mediaKeys) ? mediaKeys : [mediaKeys]).filter(
-        (key): key is string => Boolean(key)
-      );
+      const requiredKeys = (
+        Array.isArray(mediaKeys) ? mediaKeys : [mediaKeys]
+      ).filter((key): key is string => Boolean(key));
 
       if (requiredKeys.every(isMediaReady)) {
         setPendingNavigation(null);
@@ -2602,7 +1500,7 @@ export function PortfolioBrowser({
       setPendingNavigation(null);
       return true;
     },
-    [ensureMediaReady, isMediaReady]
+    [ensureMediaReady, isMediaReady],
   );
 
   const setActiveSlide = useCallback(
@@ -2611,7 +1509,7 @@ export function PortfolioBrowser({
       realIndex: number,
       mode: 'push' | 'replace',
       scrollBehavior: ScrollBehavior,
-      boundarySourceIndex?: number
+      boundarySourceIndex?: number,
     ) => {
       const project = portfolioSlides[projectIndex];
       const slides = projectSlides[project.slug];
@@ -2628,7 +1526,7 @@ export function PortfolioBrowser({
         getCarouselIndexFromSlideIndex(project, nextIndex);
       const canNavigate = await prepareMediaNavigation(
         { kind: 'slide', projectIndex, slideIndex: nextIndex },
-        getSlideMediaKey(project, nextSlide, isWideLayout)
+        getSlideMediaKey(project, nextSlide, isWideLayout),
       );
 
       if (!canNavigate) {
@@ -2671,7 +1569,7 @@ export function PortfolioBrowser({
         getCarouselIndexFromSlideIndex(project, nextIndex);
       const nextCarouselIndex = getCarouselIndexFromSlideIndex(
         project,
-        nextIndex
+        nextIndex,
       );
       slideIndicatorMotionControllerRef.current?.begin(nextCarouselIndex);
       scrollHorizontalToRealIndex(
@@ -2683,12 +1581,12 @@ export function PortfolioBrowser({
           startTransition(() => {
             setActiveSlideIndexes((indexes) =>
               indexes.map((index, currentProjectIndex) =>
-                currentProjectIndex === projectIndex ? nextIndex : index
-              )
+                currentProjectIndex === projectIndex ? nextIndex : index,
+              ),
             );
           });
         },
-        { syncIndicator: true, boundarySourceIndex }
+        { syncIndicator: true, boundarySourceIndex },
       );
     },
     [
@@ -2700,7 +1598,7 @@ export function PortfolioBrowser({
       resetDescriptionScroll,
       scrollHorizontalToRealIndex,
       updateUrl,
-    ]
+    ],
   );
 
   const setActiveProject = useCallback(
@@ -2708,11 +1606,11 @@ export function PortfolioBrowser({
       nextProjectIndex: number,
       mode: 'push' | 'replace',
       behavior: ScrollBehavior = 'smooth',
-      targetSlideIndex?: number
+      targetSlideIndex?: number,
     ) => {
       const boundedIndex = Math.max(
         START_SCREEN_INDEX,
-        Math.min(portfolioSlides.length - 1, nextProjectIndex)
+        Math.min(portfolioSlides.length - 1, nextProjectIndex),
       );
       const vertical = verticalRef.current;
 
@@ -2723,7 +1621,7 @@ export function PortfolioBrowser({
         const slide = projectSlides[project.slug][slideIndex];
         const canNavigate = await prepareMediaNavigation(
           { kind: 'project', projectIndex: boundedIndex },
-          getSlideMediaKey(project, slide, isWideLayout)
+          getSlideMediaKey(project, slide, isWideLayout),
         );
 
         if (!canNavigate) {
@@ -2757,6 +1655,7 @@ export function PortfolioBrowser({
             ease: NAVIGATION_TRAVEL_EASE,
             overwrite: 'auto',
             onUpdate: () => {
+              sectionNavigationControllerRef.current?.syncSourcePosition();
               ScrollTrigger.update();
             },
             onComplete: () => {
@@ -2782,14 +1681,15 @@ export function PortfolioBrowser({
       }
 
       const project = portfolioSlides[boundedIndex];
-      const slideIndex = targetSlideIndex ?? activeSlideIndexes[boundedIndex] ?? 0;
+      const slideIndex =
+        targetSlideIndex ?? activeSlideIndexes[boundedIndex] ?? 0;
       const slide = projectSlides[project.slug][slideIndex];
 
       if (targetSlideIndex !== undefined) {
         setActiveSlideIndexes((indexes) =>
           indexes.map((index, currentProjectIndex) =>
-            currentProjectIndex === boundedIndex ? slideIndex : index
-          )
+            currentProjectIndex === boundedIndex ? slideIndex : index,
+          ),
         );
       }
 
@@ -2810,7 +1710,7 @@ export function PortfolioBrowser({
       restoreVerticalScrollSnap,
       scrollHorizontalToRealIndex,
       updateUrl,
-    ]
+    ],
   );
 
   const moveHorizontal = useCallback(
@@ -2827,15 +1727,15 @@ export function PortfolioBrowser({
         0;
       const currentCarouselIndex = getCarouselIndexFromSlideIndex(
         currentProject,
-        currentSlideIndex
+        currentSlideIndex,
       );
       const nextCarouselIndex = positiveModulo(
         currentCarouselIndex + direction,
-        slides.length
+        slides.length,
       );
       const nextIndex = getSlideIndexFromCarouselIndex(
         currentProject,
-        nextCarouselIndex
+        nextCarouselIndex,
       );
 
       setActiveSlide(activeProjectIndex, nextIndex, 'push', 'smooth');
@@ -2847,7 +1747,7 @@ export function PortfolioBrowser({
       getCarouselSlides,
       getSlideIndexFromCarouselIndex,
       setActiveSlide,
-    ]
+    ],
   );
 
   const setActiveModalSlide = useCallback(
@@ -2864,11 +1764,11 @@ export function PortfolioBrowser({
 
       const nextSlideIndex = Math.max(
         0,
-        slides.findIndex((projectSlide) => projectSlide.id === slide.id)
+        slides.findIndex((projectSlide) => projectSlide.id === slide.id),
       );
       const canNavigate = await prepareMediaNavigation(
         { kind: 'modal', screenshotId: slide.screenshot.id },
-        modalMediaKey(slide.screenshot)
+        modalMediaKey(slide.screenshot),
       );
 
       if (!canNavigate) {
@@ -2877,24 +1777,28 @@ export function PortfolioBrowser({
 
       const modalCarouselIndex = projectSlides[activeProject.slug]
         .filter((projectSlide) =>
-          isModalScreenshotSlide(activeProject, projectSlide)
+          isModalScreenshotSlide(activeProject, projectSlide),
         )
         .findIndex((projectSlide) => projectSlide.id === slide.id);
       slideIndicatorMotionControllerRef.current?.begin(
-        Math.max(0, modalCarouselIndex)
+        Math.max(0, modalCarouselIndex),
       );
 
       setActiveSlideIndexes((indexes) =>
         indexes.map((index, currentProjectIndex) =>
-          currentProjectIndex === activeProjectIndex ? nextSlideIndex : index
-        )
+          currentProjectIndex === activeProjectIndex ? nextSlideIndex : index,
+        ),
       );
 
       if (scrollBehavior === 'smooth') {
         beginHorizontalScrollSync(activeProject);
       }
 
-      scrollHorizontalToRealIndex(activeProject, nextSlideIndex, scrollBehavior);
+      scrollHorizontalToRealIndex(
+        activeProject,
+        nextSlideIndex,
+        scrollBehavior,
+      );
       replaceModalUrl(activeProject, slide);
       // After modal-only navigation, Close should land on the current slide.
       modalHistoryEntryRef.current = false;
@@ -2907,7 +1811,7 @@ export function PortfolioBrowser({
       projectSlides,
       replaceModalUrl,
       scrollHorizontalToRealIndex,
-    ]
+    ],
   );
 
   const moveModalHorizontal = useCallback(
@@ -2917,7 +1821,7 @@ export function PortfolioBrowser({
       }
 
       const modalSlides = projectSlides[activeProject.slug].filter((slide) =>
-        isModalScreenshotSlide(activeProject, slide)
+        isModalScreenshotSlide(activeProject, slide),
       );
 
       if (modalSlides.length < 2) {
@@ -2926,10 +1830,12 @@ export function PortfolioBrowser({
 
       const currentModalIndex = Math.max(
         0,
-        modalSlides.findIndex((slide) => slide.id === activeSlide?.id)
+        modalSlides.findIndex((slide) => slide.id === activeSlide?.id),
       );
       const nextSlide =
-        modalSlides[positiveModulo(currentModalIndex + direction, modalSlides.length)];
+        modalSlides[
+          positiveModulo(currentModalIndex + direction, modalSlides.length)
+        ];
 
       setActiveModalSlide(nextSlide);
     },
@@ -2939,17 +1845,17 @@ export function PortfolioBrowser({
       activeSlide,
       projectSlides,
       setActiveModalSlide,
-    ]
+    ],
   );
 
   const moveVertical = useCallback(
     (direction: -1 | 1) => {
       setActiveProject(
         getVerticalTargetProjectIndex(activeProjectIndex, direction),
-        'push'
+        'push',
       );
     },
-    [activeProjectIndex, setActiveProject]
+    [activeProjectIndex, setActiveProject],
   );
 
   const finishCloseModal = useCallback(() => {
@@ -2964,7 +1870,11 @@ export function PortfolioBrowser({
     }
 
     if (activeProject && activeSlide) {
-      window.history.replaceState({}, '', projectUrl(activeProject, activeSlide));
+      window.history.replaceState(
+        {},
+        '',
+        projectUrl(activeProject, activeSlide),
+      );
     }
   }, [activeProject, activeSlide]);
 
@@ -2997,7 +1907,7 @@ export function PortfolioBrowser({
       activeProject,
       activeSlideIndex,
       'auto',
-      beginClose
+      beginClose,
     );
   }, [
     activeProject,
@@ -3038,9 +1948,9 @@ export function PortfolioBrowser({
       : undefined;
     const shouldOpenInitialModal = Boolean(
       initialModalRequestedRef.current &&
-        initialProject &&
-        initialSlide?.kind === 'screenshot' &&
-        !isBuildingWithAiTextSlide(initialProject, initialSlide)
+      initialProject &&
+      initialSlide?.kind === 'screenshot' &&
+      !isBuildingWithAiTextSlide(initialProject, initialSlide),
     );
 
     window.history.scrollRestoration = 'manual';
@@ -3080,7 +1990,7 @@ export function PortfolioBrowser({
     const targetScrollTop =
       vertical.clientHeight * (normalizedInitialProjectIndex + 1);
     const reducedMotion = window.matchMedia(
-      '(prefers-reduced-motion: reduce)'
+      '(prefers-reduced-motion: reduce)',
     ).matches;
     const revealDuration = reducedMotion
       ? 0.2
@@ -3105,16 +2015,17 @@ export function PortfolioBrowser({
       if (!reducedMotion && targetScrollTop !== 0) {
         timeline.to(
           vertical,
-          { scrollTop: targetScrollTop, duration: revealDuration },
-          0
+          {
+            scrollTop: targetScrollTop,
+            duration: revealDuration,
+            onUpdate: () =>
+              sectionNavigationControllerRef.current?.syncSourcePosition(),
+          },
+          0,
         );
       }
 
-      timeline.to(
-        curtain,
-        { autoAlpha: 0, duration: revealDuration },
-        0
-      );
+      timeline.to(curtain, { autoAlpha: 0, duration: revealDuration }, 0);
     });
 
     introTimelineRef.current = null;
@@ -3138,40 +2049,43 @@ export function PortfolioBrowser({
     syncViewport(activeProjectIndex, activeSlideIndexes, 'auto');
   });
 
-  const handleVerticalScrollEndEvent = useEffectEvent((vertical: HTMLDivElement) => {
-    if (scrollSyncRef.current || verticalScrollTweenRef.current) {
-      return;
-    }
+  const handleVerticalScrollEndEvent = useEffectEvent(
+    (vertical: HTMLDivElement) => {
+      if (scrollSyncRef.current || verticalScrollTweenRef.current) {
+        return;
+      }
 
-    const screenIndex = Math.round(vertical.scrollTop / vertical.clientHeight) - 1;
-    const nextProjectIndex = Math.max(
-      START_SCREEN_INDEX,
-      Math.min(portfolioSlides.length - 1, screenIndex)
-    );
+      const screenIndex =
+        Math.round(vertical.scrollTop / vertical.clientHeight) - 1;
+      const nextProjectIndex = Math.max(
+        START_SCREEN_INDEX,
+        Math.min(portfolioSlides.length - 1, screenIndex),
+      );
 
-    setActiveProjectIndex(nextProjectIndex);
+      setActiveProjectIndex(nextProjectIndex);
 
-    if (nextProjectIndex === START_SCREEN_INDEX) {
-      updateUrl(undefined, undefined, 'replace');
-      return;
-    }
+      if (nextProjectIndex === START_SCREEN_INDEX) {
+        updateUrl(undefined, undefined, 'replace');
+        return;
+      }
 
-    const project = portfolioSlides[nextProjectIndex];
-    const slideIndex = activeSlideIndexes[nextProjectIndex] ?? 0;
-    const slide = projectSlides[project.slug][slideIndex];
+      const project = portfolioSlides[nextProjectIndex];
+      const slideIndex = activeSlideIndexes[nextProjectIndex] ?? 0;
+      const slide = projectSlides[project.slug][slideIndex];
 
-    if (slide.kind === 'description') {
-      resetDescriptionScroll(project);
-    }
+      if (slide.kind === 'description') {
+        resetDescriptionScroll(project);
+      }
 
-    updateUrl(project, slide, 'replace');
-  });
+      updateUrl(project, slide, 'replace');
+    },
+  );
 
   const updateActiveSlideFromScrollEvent = useEffectEvent(
     (
       project: PortfolioProject,
       projectIndex: number,
-      carousel: HTMLDivElement
+      carousel: HTMLDivElement,
     ) => {
       if (!initialRevealCompleteRef.current && scrollSyncRef.current) {
         return;
@@ -3190,7 +2104,7 @@ export function PortfolioBrowser({
       setProjectBoundaryBlur(project.slug, false);
       const realIndex = Math.max(
         0,
-        Math.min(slides.length - 1, Math.round(carouselPosition))
+        Math.min(slides.length - 1, Math.round(carouselPosition)),
       );
       const nextSlideIndex = getSlideIndexFromCarouselIndex(project, realIndex);
 
@@ -3204,17 +2118,17 @@ export function PortfolioBrowser({
         }
 
         return indexes.map((index, currentProjectIndex) =>
-          currentProjectIndex === projectIndex ? nextSlideIndex : index
+          currentProjectIndex === projectIndex ? nextSlideIndex : index,
         );
       });
-    }
+    },
   );
 
   const handleHorizontalScrollEndEvent = useEffectEvent(
     (
       project: PortfolioProject,
       projectIndex: number,
-      carousel: HTMLDivElement
+      carousel: HTMLDivElement,
     ) => {
       if (!initialRevealCompleteRef.current && scrollSyncRef.current) {
         return;
@@ -3230,8 +2144,7 @@ export function PortfolioBrowser({
 
       const slides = getCarouselSlides(project);
       const carouselPosition = getCarouselPosition(carousel);
-      const isBeforeFirstSlide =
-        slides.length > 1 && carouselPosition < -0.01;
+      const isBeforeFirstSlide = slides.length > 1 && carouselPosition < -0.01;
       const isAfterLastSlide =
         slides.length > 1 && carouselPosition > slides.length - 1 + 0.01;
 
@@ -3240,7 +2153,7 @@ export function PortfolioBrowser({
         const targetIndex = isBeforeFirstSlide ? slides.length - 1 : 0;
         const targetSlideIndex = getSlideIndexFromCarouselIndex(
           project,
-          targetIndex
+          targetIndex,
         );
 
         void setActiveSlide(
@@ -3248,18 +2161,18 @@ export function PortfolioBrowser({
           targetSlideIndex,
           'replace',
           'smooth',
-          sourceIndex
+          sourceIndex,
         );
         return;
       }
 
       const nextIndex = Math.max(
         0,
-        Math.min(slides.length - 1, Math.round(carouselPosition))
+        Math.min(slides.length - 1, Math.round(carouselPosition)),
       );
       const settledScrollLeft = getCarouselTargetScrollLeft(
         carousel,
-        nextIndex
+        nextIndex,
       );
 
       if (Math.abs(carousel.scrollLeft - settledScrollLeft) > 0.5) {
@@ -3271,8 +2184,8 @@ export function PortfolioBrowser({
 
       setActiveSlideIndexes((indexes) =>
         indexes.map((index, currentProjectIndex) =>
-          currentProjectIndex === projectIndex ? nextSlideIndex : index
-        )
+          currentProjectIndex === projectIndex ? nextSlideIndex : index,
+        ),
       );
 
       if (nextSlide.kind === 'description') {
@@ -3291,85 +2204,85 @@ export function PortfolioBrowser({
 
       setProjectBoundaryBlur(project.slug, false);
       clearHorizontalScrollSync(project);
-    }
+    },
   );
   const clickVerticalSectionNavButton = useCallback(
     (direction: -1 | 1) => {
       const pendingItemIndex =
-        sectionNavClickTargetIndexesRef.current.left;
+        sectionNavigationControllerRef.current?.getPinnedIndex() ?? null;
       const navigationBaseProjectIndex =
-        pendingItemIndex === null
-          ? activeProjectIndex
-          : pendingItemIndex - 1;
+        pendingItemIndex === null ? activeProjectIndex : pendingItemIndex - 1;
       const targetProjectIndex = getVerticalTargetProjectIndex(
         navigationBaseProjectIndex,
-        direction
+        direction,
       );
       const targetItemIndex = targetProjectIndex + 1;
-      const button = sectionNavButtonRefs.current.left[
-        targetItemIndex
-      ]?.querySelector<HTMLButtonElement>('button');
+      return (
+        sectionNavigationControllerRef.current?.click(
+          targetItemIndex,
+          'left',
+        ) ?? false
+      );
+    },
+    [activeProjectIndex],
+  );
+  const clickHorizontalSlideIndicator = useCallback(
+    (direction: -1 | 1, preserveInlineZoom = false) => {
+      const navigation = document.querySelector(
+        '[data-portfolio-slide-indicators]',
+      );
+      const activeButton = navigation?.querySelector<HTMLButtonElement>(
+        'button[data-portfolio-slide-indicator-index][aria-current="true"]',
+      );
 
-      if (!button) {
+      if (!navigation || !activeButton) {
         return false;
       }
 
-      button.click();
-      return true;
-    },
-    [activeProjectIndex]
-  );
-  const clickHorizontalSlideIndicator = useCallback((
-    direction: -1 | 1,
-    preserveInlineZoom = false
-  ) => {
-    const navigation = document.querySelector(
-      '[data-portfolio-slide-indicators]'
-    );
-    const activeButton = navigation?.querySelector<HTMLButtonElement>(
-      'button[data-portfolio-slide-indicator-index][aria-current="true"]'
-    );
+      const buttons = Array.from(
+        navigation.querySelectorAll<HTMLButtonElement>(
+          'button[data-portfolio-slide-indicator-index]',
+        ),
+      ).filter(
+        (button) => button.parentElement?.style.pointerEvents !== 'none',
+      );
+      const activeIndex =
+        !shouldShowModal && activeProject
+          ? (horizontalKeyboardIndicatorIndexesRef.current[
+              activeProject.slug
+            ] ?? Number(activeButton.dataset.portfolioSlideIndicatorIndex))
+          : Number(activeButton.dataset.portfolioSlideIndicatorIndex);
+      const targetIndex = positiveModulo(
+        activeIndex + direction,
+        buttons.length,
+      );
+      const targetButton = buttons.find(
+        (button) =>
+          Number(button.dataset.portfolioSlideIndicatorIndex) === targetIndex,
+      );
 
-    if (!navigation || !activeButton) {
-      return false;
-    }
+      if (!targetButton) {
+        return false;
+      }
 
-    const buttons = Array.from(
-      navigation.querySelectorAll<HTMLButtonElement>(
-        'button[data-portfolio-slide-indicator-index]'
-      )
-    ).filter((button) => button.parentElement?.style.pointerEvents !== 'none');
-    const activeIndex =
-      !shouldShowModal && activeProject
-        ? horizontalKeyboardIndicatorIndexesRef.current[activeProject.slug] ??
-          Number(activeButton.dataset.portfolioSlideIndicatorIndex)
-        : Number(activeButton.dataset.portfolioSlideIndicatorIndex);
-    const targetIndex = positiveModulo(activeIndex + direction, buttons.length);
-    const targetButton = buttons.find(
-      (button) =>
-        Number(button.dataset.portfolioSlideIndicatorIndex) === targetIndex
-    );
+      if (!shouldShowModal && activeProject) {
+        horizontalKeyboardIndicatorIndexesRef.current[activeProject.slug] =
+          targetIndex;
 
-    if (!targetButton) {
-      return false;
-    }
+        if (preserveInlineZoom && targetIndex !== activeIndex) {
+          const targetSlide = getCarouselSlides(activeProject)[targetIndex];
 
-    if (!shouldShowModal && activeProject) {
-      horizontalKeyboardIndicatorIndexesRef.current[activeProject.slug] =
-        targetIndex;
-
-      if (preserveInlineZoom && targetIndex !== activeIndex) {
-        const targetSlide = getCarouselSlides(activeProject)[targetIndex];
-
-        if (targetSlide?.kind === 'screenshot') {
-          inlineZoomHandoffScreenshotIdRef.current =
-            targetSlide.screenshot.id;
+          if (targetSlide?.kind === 'screenshot') {
+            inlineZoomHandoffScreenshotIdRef.current =
+              targetSlide.screenshot.id;
+          }
         }
       }
-    }
-    targetButton.click();
-    return true;
-  }, [activeProject, getCarouselSlides, shouldShowModal]);
+      targetButton.click();
+      return true;
+    },
+    [activeProject, getCarouselSlides, shouldShowModal],
+  );
 
   const handleKeyDownEvent = useEffectEvent((event: KeyboardEvent) => {
     if (shouldShowModal) {
@@ -3445,13 +2358,7 @@ export function PortfolioBrowser({
         event.preventDefault();
         exitInlineZoomPresentation();
         focusKeyboardSurface();
-        lockSectionNavIndicatorsToItem(
-          'left',
-          0,
-          'vertical',
-          undefined,
-          'scroll-linked'
-        );
+        sectionNavigationControllerRef.current?.pin(0, 'vertical', true);
         setActiveProject(START_SCREEN_INDEX, 'push');
         return;
       }
@@ -3463,12 +2370,10 @@ export function PortfolioBrowser({
           event.preventDefault();
           exitInlineZoomPresentation();
           focusKeyboardSurface();
-          lockSectionNavIndicatorsToItem(
-            'left',
+          sectionNavigationControllerRef.current?.pin(
             projectIndex + 1,
             'vertical',
-            undefined,
-            'scroll-linked'
+            true,
           );
           setActiveProject(projectIndex, 'push', 'smooth', 0);
           return;
@@ -3494,12 +2399,7 @@ export function PortfolioBrowser({
 
     if (event.key === 'ArrowRight') {
       event.preventDefault();
-      if (
-        !clickHorizontalSlideIndicator(
-          1,
-          isInlineZoomPresentationActive
-        )
-      ) {
+      if (!clickHorizontalSlideIndicator(1, isInlineZoomPresentationActive)) {
         focusKeyboardSurface();
         moveHorizontal(1);
       }
@@ -3507,12 +2407,7 @@ export function PortfolioBrowser({
 
     if (event.key === 'ArrowLeft') {
       event.preventDefault();
-      if (
-        !clickHorizontalSlideIndicator(
-          -1,
-          isInlineZoomPresentationActive
-        )
-      ) {
+      if (!clickHorizontalSlideIndicator(-1, isInlineZoomPresentationActive)) {
         focusKeyboardSurface();
         moveHorizontal(-1);
       }
@@ -3556,391 +2451,6 @@ export function PortfolioBrowser({
     });
   }, [mediaFailure]);
 
-  useLayoutEffect(() => {
-    const vertical = verticalRef.current;
-    const titles = sectionMenuTitleRefs.current.filter(
-      (title): title is HTMLSpanElement => Boolean(title)
-    );
-
-    if (!vertical || titles.length < 2) {
-      return;
-    }
-
-    const syncAlignment = () => {
-      const titleCenters = titles.map((title) => {
-        const rect = title.getBoundingClientRect();
-        return rect.top + vertical.scrollTop + rect.height / 2;
-      });
-      const firstCenter = titleCenters[0];
-      const lastCenter = titleCenters[titleCenters.length - 1];
-      const itemStepPx =
-        (lastCenter - firstCenter) / (titleCenters.length - 1);
-      const stackCenterY =
-        firstCenter +
-        ((SECTION_NAV_COLORS.length - 1) / 2 - 1) * itemStepPx;
-      const stackOffsetPx = stackCenterY - vertical.clientHeight / 2;
-
-      if (!Number.isFinite(itemStepPx) || itemStepPx <= 0) {
-        return;
-      }
-
-      setSectionNavMenuAlignment((current) => {
-        if (
-          Math.abs(current.itemStepPx - itemStepPx) < 0.1 &&
-          Math.abs(current.stackOffsetPx - stackOffsetPx) < 0.1
-        ) {
-          return current;
-        }
-
-        return { itemStepPx, stackOffsetPx };
-      });
-    };
-
-    syncAlignment();
-    const resizeObserver = new ResizeObserver(syncAlignment);
-    resizeObserver.observe(vertical);
-    titles.forEach((title) => resizeObserver.observe(title));
-
-    return () => resizeObserver.disconnect();
-  }, [isWideLayout]);
-
-  useLayoutEffect(() => {
-    const vertical = verticalRef.current;
-    const indicators = sectionNavIndicatorRefs.current.filter(
-      (indicator): indicator is HTMLDivElement => Boolean(indicator)
-    );
-    const rings = indicators
-      .map((indicator) => indicator.querySelector('circle'))
-      .filter((ring): ring is SVGCircleElement => Boolean(ring));
-    const previews = sectionNavPreviewRefs.current.filter(
-      (preview): preview is HTMLDivElement => Boolean(preview)
-    );
-    const leftIcons = sectionNavIconRefs.current.left.filter(
-      (icon): icon is SVGSVGElement => Boolean(icon)
-    );
-    const rightIcons = sectionNavIconRefs.current.right.filter(
-      (icon): icon is SVGSVGElement => Boolean(icon)
-    );
-    const leftDots = sectionNavDotRefs.current.left.filter(
-      (dot): dot is SVGSVGElement => Boolean(dot)
-    );
-    const rightDots = sectionNavDotRefs.current.right.filter(
-      (dot): dot is SVGSVGElement => Boolean(dot)
-    );
-    const leftVisuals = sectionNavVisualRefs.current.left.filter(
-      (visual): visual is HTMLSpanElement => Boolean(visual)
-    );
-    const rightVisuals = sectionNavVisualRefs.current.right.filter(
-      (visual): visual is HTMLSpanElement => Boolean(visual)
-    );
-    const stacks = sectionNavStackRefs.current.filter(
-      (stack): stack is HTMLDivElement => Boolean(stack)
-    );
-
-    if (
-      !vertical ||
-      indicators.length === 0 ||
-      rings.length !== indicators.length ||
-      previews.length !== indicators.length ||
-      stacks.length !== indicators.length ||
-      leftIcons.length !== SECTION_NAV_COLORS.length ||
-      rightIcons.length !== SECTION_NAV_COLORS.length ||
-      leftDots.length !== SECTION_NAV_COLORS.length ||
-      rightDots.length !== SECTION_NAV_COLORS.length ||
-      leftVisuals.length !== SECTION_NAV_COLORS.length ||
-      rightVisuals.length !== SECTION_NAV_COLORS.length
-    ) {
-      return;
-    }
-
-    gsap.registerPlugin(ScrollTrigger);
-
-    const context = gsap.context(() => {
-      const timelineColors = SECTION_NAV_COLORS.map((color) => {
-        const [red, green, blue] = gsap.utils.splitColor(color);
-
-        return `rgb(${red}, ${green}, ${blue})`;
-      });
-      const iconGroups = [leftIcons, rightIcons];
-      const dotGroups = [leftDots, rightDots];
-      const reducedMotion = window.matchMedia(
-        '(prefers-reduced-motion: reduce)'
-      ).matches;
-      const iconOpacitySetters = iconGroups.map((icons) =>
-        icons.map((icon) =>
-          gsap.quickTo(icon, 'opacity', {
-            duration: 0.3,
-            ease: 'power1.out',
-          })
-        )
-      );
-      const dotOpacitySetters = dotGroups.map((dots) =>
-        dots.map((dot) =>
-          gsap.quickTo(dot, 'opacity', {
-            duration: 0.3,
-            ease: 'power1.out',
-          })
-        )
-      );
-      const setAffordanceLayers = (position: number, immediate = false) => {
-        const previewIndex = sectionNavAffordancePreviewIndexRef.current;
-        const verticalClickTarget = (['left', 'right'] as const)
-          .map((side) =>
-            sectionNavClickAxisRefs.current[side] === 'vertical'
-              ? sectionNavClickTargetIndexesRef.current[side]
-              : null
-          )
-          .find((itemIndex): itemIndex is number => itemIndex !== null);
-        const lowerIndex = Math.max(0, Math.floor(position));
-        const upperIndex = Math.min(
-          SECTION_NAV_HAS_SLIDES.length - 1,
-          Math.ceil(position)
-        );
-        const progress = position - lowerIndex;
-        const directDotTransition =
-          lowerIndex !== upperIndex &&
-          !SECTION_NAV_HAS_SLIDES[lowerIndex] &&
-          !SECTION_NAV_HAS_SLIDES[upperIndex];
-
-        SECTION_NAV_HAS_SLIDES.forEach((hasSlides, itemIndex) => {
-          let arrowOpacity = 1;
-          let dotOpacity = 0;
-          const pending = (['left', 'right'] as const).some(
-            (side) =>
-              sectionNavButtonRefs.current[side][itemIndex]?.querySelector(
-                '[aria-busy="true"]'
-              )
-          );
-
-          if (pending) {
-            arrowOpacity = 1;
-          } else if (
-            itemIndex === verticalClickTarget ||
-            (itemIndex === previewIndex &&
-              itemIndex !== sectionNavActiveIndexRef.current)
-          ) {
-            arrowOpacity = 0;
-            dotOpacity = 1;
-          } else if (verticalClickTarget !== undefined) {
-            arrowOpacity = 1;
-            dotOpacity = 0;
-          } else if (!hasSlides) {
-            if (
-              directDotTransition &&
-              (itemIndex === lowerIndex || itemIndex === upperIndex)
-            ) {
-              arrowOpacity = 0;
-              dotOpacity =
-                itemIndex === lowerIndex ? 1 - progress : progress;
-            } else {
-              const activation = Math.max(
-                0,
-                1 - Math.abs(position - itemIndex)
-              );
-              ({ arrowOpacity, dotOpacity } =
-                getSectionNavAffordanceOpacity(activation));
-            }
-          }
-
-          iconGroups.forEach((icons, groupIndex) => {
-            if (immediate || reducedMotion) {
-              gsap.set(icons[itemIndex], { opacity: arrowOpacity });
-              return;
-            }
-
-            iconOpacitySetters[groupIndex][itemIndex](arrowOpacity);
-          });
-          dotGroups.forEach((dots, groupIndex) => {
-            if (immediate || reducedMotion) {
-              gsap.set(dots[itemIndex], { opacity: dotOpacity });
-              return;
-            }
-
-            dotOpacitySetters[groupIndex][itemIndex](dotOpacity);
-          });
-        });
-      };
-      sectionNavAffordanceSyncRef.current = setAffordanceLayers;
-      const timeline = gsap.timeline({
-        defaults: { ease: 'none' },
-        scrollTrigger: {
-          scroller: vertical,
-          start: 0,
-          end: 'max',
-          scrub: true,
-          onUpdate: (scrollTrigger) => {
-            const scrollPosition =
-              scrollTrigger.progress * (SECTION_NAV_COLORS.length - 1);
-            sectionNavScrollPositionRef.current = scrollPosition;
-            setAffordanceLayers(scrollPosition);
-
-            const hasPointer = Object.values(
-              sectionNavPointerArmedRefs.current
-            ).some(Boolean);
-            const hasPinnedClickTarget = (['left', 'right'] as const).some(
-              (side) =>
-                sectionNavClickTargetIndexesRef.current[side] !== null &&
-                sectionNavClickMotionRefs.current[side] === 'target-pinned'
-            );
-
-            if (!hasPointer && !hasPinnedClickTarget) {
-              applySectionNavScrollScale(scrollPosition);
-            }
-
-            previews.forEach((preview, sideIndex) => {
-              const previewIndex =
-                sectionNavPreviewIndexesRef.current[sideIndex];
-              const side = sideIndex === 0 ? 'left' : 'right';
-              const clickTargetIndex =
-                sectionNavClickTargetIndexesRef.current[side];
-              const pointerY = sectionNavPointerYRefs.current[side];
-
-              if (clickTargetIndex !== null) {
-                if (
-                  sectionNavClickMotionRefs.current[side] === 'scroll-linked'
-                ) {
-                  gsap.set(preview, { y: 0, clearProps: 'color' });
-                  return;
-                }
-
-                positionSectionNavClickTarget(
-                  side,
-                  clickTargetIndex,
-                  sectionNavClickTargetPinnedRefs.current[side] ? 0 : 0.12,
-                  sectionNavClickPhaseRefs.current[side] === 'attaching'
-                    ? sectionNavAttachmentCallbacksRef.current[side] ?? undefined
-                    : undefined
-                );
-                return;
-              }
-
-              if (pointerY !== null) {
-                trackSectionNavPointer(side, pointerY);
-                return;
-              }
-
-              const target =
-                previewIndex === null || previewIndex === undefined
-                  ? null
-                  : sectionNavButtonRefs.current[side][previewIndex];
-
-              if (!target) {
-                return;
-              }
-
-              gsap.set(preview, {
-                y: getSectionNavPreviewOffset(preview, target),
-              });
-            });
-          },
-        },
-      });
-      const centeredStackOffsetRem =
-        SECTION_NAV_AUTO_CENTER_ACTIVE_ITEM
-          ? ((SECTION_NAV_COLORS.length - 1) / 2) * SECTION_NAV_ITEM_STEP_REM
-          : 0;
-      const stackStartY = SECTION_NAV_AUTO_CENTER_ACTIVE_ITEM
-        ? `${centeredStackOffsetRem}rem`
-        : sectionNavMenuAlignment.stackOffsetPx;
-      const getIndicatorOffset = (itemIndex: number) =>
-        SECTION_NAV_AUTO_CENTER_ACTIVE_ITEM
-          ? `${itemIndex * SECTION_NAV_ITEM_STEP_REM}rem`
-          : itemIndex * sectionNavMenuAlignment.itemStepPx;
-
-      timeline.set(indicators, {
-        y: 0,
-        color: timelineColors[0],
-      });
-      timeline.set(stacks, { y: stackStartY });
-      timeline.set(previews, { y: 0 });
-      timeline.set(rings, {
-        stroke: 'currentColor',
-        strokeWidth: 4,
-      });
-      timeline.set([...leftVisuals, ...rightVisuals, ...rings], {
-        transformOrigin: '50% 50%',
-      });
-      timeline.set(leftIcons, {
-        rotation: (itemIndex) =>
-          getSectionNavArrowRotation(itemIndex, 0, 'left'),
-        transformOrigin: '50% 50%',
-      });
-      timeline.set(rightIcons, {
-        rotation: (itemIndex) =>
-          getSectionNavArrowRotation(itemIndex, 0, 'right'),
-        transformOrigin: '50% 50%',
-      });
-      setAffordanceLayers(initialSectionNavIndex, true);
-      applySectionNavScrollScale(initialSectionNavIndex);
-
-      timelineColors.slice(1).forEach((color, index) => {
-        const activeSectionIndex = index + 1;
-
-        timeline.to(
-          indicators,
-          {
-            y: getIndicatorOffset(index + 1),
-            color,
-            duration: 1,
-          },
-          index
-        );
-        if (SECTION_NAV_AUTO_CENTER_ACTIVE_ITEM) {
-          timeline.to(
-            stacks,
-            {
-              y: `${
-                centeredStackOffsetRem -
-                activeSectionIndex * SECTION_NAV_ITEM_STEP_REM
-              }rem`,
-              duration: 1,
-            },
-            index
-          );
-        }
-        timeline.to(
-          leftIcons,
-          {
-            rotation: (itemIndex) =>
-              getSectionNavArrowRotation(
-                itemIndex,
-                activeSectionIndex,
-                'left'
-              ),
-            duration: 1,
-          },
-          index
-        );
-        timeline.to(
-          rightIcons,
-          {
-            rotation: (itemIndex) =>
-              getSectionNavArrowRotation(
-                itemIndex,
-                activeSectionIndex,
-                'right'
-              ),
-            duration: 1,
-          },
-          index
-        );
-      });
-    }, keyboardSurfaceRef);
-
-    return () => {
-      sectionNavAffordanceSyncRef.current = () => {};
-      context.revert();
-    };
-  }, [
-    applySectionNavScrollScale,
-    initialSectionNavIndex,
-    isWideLayout,
-    positionSectionNavClickTarget,
-    sectionNavMenuAlignment.itemStepPx,
-    sectionNavMenuAlignment.stackOffsetPx,
-    trackSectionNavPointer,
-  ]);
-
   useEffect(() => {
     window.history.scrollRestoration = 'manual';
 
@@ -3958,71 +2468,20 @@ export function PortfolioBrowser({
   }, [isWideLayout]);
 
   useEffect(() => {
-    const reducedMotion = window.matchMedia(
-      '(prefers-reduced-motion: reduce)'
-    );
-    const syncReducedMotion = () => {
-      sectionNavReducedMotionRef.current = reducedMotion.matches;
-    };
-
-    syncReducedMotion();
-    reducedMotion.addEventListener('change', syncReducedMotion);
-
-    return () => {
-      reducedMotion.removeEventListener('change', syncReducedMotion);
-
-      if (sectionNavPointerFrameRef.current !== null) {
-        cancelAnimationFrame(sectionNavPointerFrameRef.current);
-        sectionNavPointerFrameRef.current = null;
-      }
-    };
-  }, []);
-
-  const reevaluateSectionNavPointersEvent = useEffectEvent(() => {
-    const pointerY =
-      sectionNavPointerYRefs.current.left ??
-      sectionNavPointerYRefs.current.right;
-
-    if (pointerY !== null) {
-      trackSectionNavPointers(pointerY);
-    }
-  });
-  const settleVerticalSectionNavClickTargetsEvent = useEffectEvent(
-    (vertical: HTMLDivElement) => {
-      settleVerticalSectionNavClickTargets(vertical);
-    }
-  );
-
-  useEffect(() => {
     const vertical = verticalRef.current;
 
     if (!vertical) {
       return;
     }
 
-    const handleVerticalScroll = () => {
-      if (sectionNavIsMovingRef.current) {
-        return;
-      }
-
-      sectionNavIsMovingRef.current = true;
-      reevaluateSectionNavPointersEvent();
-    };
     const handleVerticalScrollEnd = () => {
-      sectionNavIsMovingRef.current = false;
       handleVerticalScrollEndEvent(vertical);
-      requestAnimationFrame(() => {
-        settleVerticalSectionNavClickTargetsEvent(vertical);
-        reevaluateSectionNavPointersEvent();
-      });
+      settleVerticalSectionNavClickTargets();
     };
 
-    vertical.addEventListener('scroll', handleVerticalScroll, { passive: true });
     vertical.addEventListener('scrollend', handleVerticalScrollEnd);
-    return () => {
-      vertical.removeEventListener('scroll', handleVerticalScroll);
+    return () =>
       vertical.removeEventListener('scrollend', handleVerticalScrollEnd);
-    };
   }, []);
 
   useEffect(() => {
@@ -4068,35 +2527,26 @@ export function PortfolioBrowser({
         carousel?.style.removeProperty('scroll-snap-type');
       });
     },
-    [clearHorizontalScrollSync, restoreVerticalScrollSnap]
+    [clearHorizontalScrollSync, restoreVerticalScrollSnap],
   );
 
-  useEffect(
-    () => () => {
-      Object.values(sectionNavPreviewReturnTimeoutRefs.current).forEach(
-        (timeout) => {
-          if (timeout) {
-            clearTimeout(timeout);
-          }
-        }
-      );
-    },
-    []
-  );
-
-  const activeCarouselSlides = activeProject ? getCarouselSlides(activeProject) : [];
+  const activeCarouselSlides = activeProject
+    ? getCarouselSlides(activeProject)
+    : [];
   const activeModalSlides = activeProject
     ? projectSlides[activeProject.slug].filter((slide) =>
-        isModalScreenshotSlide(activeProject, slide)
+        isModalScreenshotSlide(activeProject, slide),
       )
     : [];
-  const activeModalScreenshots = activeModalSlides.map((slide) => slide.screenshot);
+  const activeModalScreenshots = activeModalSlides.map(
+    (slide) => slide.screenshot,
+  );
   const activeCarouselIndex = activeProject
     ? getCarouselIndexFromSlideIndex(activeProject, activeSlideIndex)
     : 0;
   const activeModalScreenshotIndex = Math.max(
     0,
-    activeModalSlides.findIndex((slide) => slide.id === activeSlide?.id)
+    activeModalSlides.findIndex((slide) => slide.id === activeSlide?.id),
   );
   const activeNavigationSlides = isModalPresentationActive
     ? activeModalSlides
@@ -4113,12 +2563,12 @@ export function PortfolioBrowser({
         ? activeNavigationSlides.find(
             (slide) =>
               slide.kind === 'screenshot' &&
-              slide.screenshot.id === pendingNavigation.screenshotId
+              slide.screenshot.id === pendingNavigation.screenshotId,
           )
         : undefined;
   const pendingNavigationIndex = pendingNavigationSlide
     ? activeNavigationSlides.findIndex(
-        (slide) => slide.id === pendingNavigationSlide.id
+        (slide) => slide.id === pendingNavigationSlide.id,
       )
     : null;
   const helperMessageKind: PortfolioHelperMessageKind =
@@ -4145,7 +2595,9 @@ export function PortfolioBrowser({
       ? slideNavigationTitle(activeProject, previousSlide)
       : '';
   const nextSlideTitle =
-    activeProject && nextSlide ? slideNavigationTitle(activeProject, nextSlide) : '';
+    activeProject && nextSlide
+      ? slideNavigationTitle(activeProject, nextSlide)
+      : '';
   const sectionNavItems = [
     {
       id: 'work',
@@ -4160,355 +2612,15 @@ export function PortfolioBrowser({
       color: getProjectColor(projectIndex),
     })),
   ];
-  const previewSectionNavItem = useCallback(
-    (
-      side: 'left' | 'right',
-      itemIndex: number,
-      color: string,
-      previewed: boolean
-    ) => {
-      const sideIndex = side === 'left' ? 0 : 1;
-      const returnTimeout = sectionNavPreviewReturnTimeoutRefs.current[side];
-
-      if (returnTimeout) {
-        clearTimeout(returnTimeout);
-        sectionNavPreviewReturnTimeoutRefs.current[side] = null;
-      }
-
-      const indicatorsLocked = Object.values(
-        sectionNavClickTargetIndexesRef.current
-      ).some((targetIndex) => targetIndex !== null);
-
-      if (sectionNavIsMovingRef.current || indicatorsLocked) {
-        return;
-      }
-
-      if (previewed) {
-        sectionNavAffordancePreviewIndexRef.current = itemIndex;
-      } else if (
-        sectionNavAffordancePreviewIndexRef.current === itemIndex
-      ) {
-        sectionNavAffordancePreviewIndexRef.current = null;
-      }
-      sectionNavAffordanceSyncRef.current(
-        sectionNavScrollPositionRef.current
-      );
-
-      if (sectionNavPointerYRefs.current[side] !== null) {
-        return;
-      }
-
-      const animatePreview = (active: boolean) => {
-        const indicator = sectionNavIndicatorRefs.current[sideIndex];
-        const preview = sectionNavPreviewRefs.current[sideIndex];
-        const target = sectionNavButtonRefs.current[side][itemIndex];
-
-        if (!indicator || !preview || !target) {
-          return;
-        }
-
-        animateSectionNavRingStroke(side, active ? 2 : 4);
-        sectionNavPreviewIndexesRef.current[sideIndex] = active
-          ? itemIndex
-          : null;
-        const inheritedColor = getComputedStyle(indicator).color;
-        const reducedMotion = window.matchMedia(
-          '(prefers-reduced-motion: reduce)'
-        ).matches;
-        const pointerY = sectionNavPointerYRefs.current[side];
-
-        gsap.to(preview, {
-          y: active
-            ? pointerY === null
-              ? getSectionNavPreviewOffset(preview, target)
-              : getSectionNavPreviewOffsetFromClientY(preview, pointerY)
-            : 0,
-          color: active ? color : inheritedColor,
-          duration: reducedMotion ? 0 : 0.3,
-          ease: 'power3.out',
-          overwrite: 'auto',
-          onComplete: () => {
-            if (
-              !active &&
-              sectionNavPreviewIndexesRef.current[sideIndex] === null
-            ) {
-              gsap.set(preview, { clearProps: 'color' });
-            }
-          },
-        });
-      };
-
-      if (previewed) {
-        animatePreview(true);
-        return;
-      }
-
-      sectionNavPreviewReturnTimeoutRefs.current[side] = setTimeout(() => {
-        sectionNavPreviewReturnTimeoutRefs.current[side] = null;
-        animatePreview(false);
-      }, SECTION_NAV_PREVIEW_RETURN_DELAY_MS);
-    },
-    [animateSectionNavRingStroke]
-  );
-  const sectionNavItemStep = SECTION_NAV_AUTO_CENTER_ACTIVE_ITEM
-    ? `${SECTION_NAV_ITEM_STEP_REM}rem`
-    : `${sectionNavMenuAlignment.itemStepPx}px`;
-  const initialSectionNavIndicatorOffset = SECTION_NAV_AUTO_CENTER_ACTIVE_ITEM
-    ? `${initialSectionNavIndex * SECTION_NAV_ITEM_STEP_REM}rem`
-    : `${initialSectionNavIndex * sectionNavMenuAlignment.itemStepPx}px`;
-  const sideNavStackStyle: SectionNavStackStyle = {
-    '--section-nav-item-step': sectionNavItemStep,
-    transform: SECTION_NAV_AUTO_CENTER_ACTIVE_ITEM
-      ? `translateY(${((sectionNavItems.length - 1) / 2 - initialSectionNavIndex) * SECTION_NAV_ITEM_STEP_REM}rem)`
-      : `translateY(${sectionNavMenuAlignment.stackOffsetPx}px)`,
-  };
-  const sideNavInteractiveZoneStyle: CSSProperties = {
-    height: '100dvh',
-  };
-  const getSectionNavItemPresentation = (
-    item: (typeof sectionNavItems)[number],
-    side: 'left' | 'right'
-  ) => {
-    const isActiveSection = item.projectIndex === activeProjectIndex;
-    const isActiveProjectSection =
-      isActiveSection && item.projectIndex !== START_SCREEN_INDEX;
-    const isLeftSide = side === 'left';
-    const hasHorizontalAction =
-      isActiveProjectSection && canMoveHorizontally;
-    const label = hasHorizontalAction
-      ? isLeftSide
-        ? 'Previous screen'
-        : 'Next screen'
-      : isActiveSection
-        ? `Current section: ${item.title}`
-        : `Show ${item.title}`;
-    const tooltipTitle = hasHorizontalAction
-      ? isLeftSide
-        ? previousSlideTitle
-        : nextSlideTitle
-      : item.title;
-
-    return {
-      hasHorizontalAction,
-      isActiveSection,
-      isLeftSide,
-      label,
-      tooltipTitle,
-    };
-  };
-  const renderSectionNavButton = (
-    item: (typeof sectionNavItems)[number],
-    side: 'left' | 'right',
-    itemIndex: number
-  ) => {
-    const {
-      hasHorizontalAction,
-      isActiveSection,
-      isLeftSide,
-      label,
-      tooltipTitle,
-    } = getSectionNavItemPresentation(item, side);
-    const tooltipId = `portfolio-${side}-section-nav-tooltip`;
-    const isPending = Boolean(
-      (pendingNavigation?.kind === 'project' &&
-        pendingNavigation.projectIndex === item.projectIndex) ||
-        ((pendingNavigation?.kind === 'slide' ||
-          pendingNavigation?.kind === 'modal') &&
-          isActiveSection)
-    );
-
-    return (
-      <SideNavButton
-        key={`${side}-${item.id}`}
-        icon={isPending ? faSpinner : faArrowDown}
-        iconRef={(node) => {
-          sectionNavIconRefs.current[side][itemIndex] = node;
-        }}
-        dotRef={(node) => {
-          sectionNavDotRefs.current[side][itemIndex] = node;
-        }}
-        visualRef={(node) => {
-          sectionNavVisualRefs.current[side][itemIndex] = node;
-        }}
-        elementRef={(node) => {
-          sectionNavButtonRefs.current[side][itemIndex] = node;
-        }}
-        label={label}
-        tooltipTitle={tooltipTitle}
-        tooltipId={tooltipId}
-        side={side}
-        color={item.color}
-        activeButton={isActiveSection}
-        dimmed={!isActiveSection && !sectionNavHovered}
-        pending={isPending}
-        concealed={isModalPresentationActive && !isActiveSection}
-        onPreviewChange={(previewed) => {
-          previewSectionNavItem(side, itemIndex, item.color, previewed);
-          const currentTooltipIndex =
-            sectionNavTooltipIndexesRef.current[side];
-
-          if (previewed) {
-            sectionNavTooltipIndexesRef.current[side] = itemIndex;
-            setSectionNavTooltipText(side, itemIndex, tooltipTitle);
-          } else if (currentTooltipIndex === itemIndex) {
-            sectionNavTooltipIndexesRef.current[side] = null;
-          }
-
-          const pointerOwner = sectionNavPointerOwnerRef.current;
-          const shouldShowTooltip =
-            sectionNavTooltipIndexesRef.current[side] === itemIndex &&
-            !sectionNavTooltipsSuppressedRef.current &&
-            (pointerOwner === null || pointerOwner === side);
-
-          setSectionNavTooltipVisibility(side, shouldShowTooltip);
-        }}
-        onPointerEngage={(pointerY) =>
-          engageSectionNavPointers(side, pointerY)
-        }
-        onClick={(event) => {
-          focusKeyboardSurface();
-
-          if (hasHorizontalAction) {
-            lockSectionNavIndicatorsToItem(side, itemIndex, 'horizontal');
-
-            if (isModalPresentationActive) {
-              moveModalHorizontal(isLeftSide ? -1 : 1);
-            } else {
-              moveHorizontal(isLeftSide ? -1 : 1);
-            }
-            return;
-          }
-
-          if (!isActiveSection) {
-            const showProject = () =>
-              setActiveProject(item.projectIndex, 'push');
-
-            if (event.detail === 0) {
-              lockSectionNavIndicatorsToItem(
-                side,
-                itemIndex,
-                'vertical',
-                undefined,
-                'scroll-linked'
-              );
-              showProject();
-            } else {
-              lockSectionNavIndicatorsToItem(side, itemIndex, 'vertical');
-              showProject();
-            }
-          }
-        }}
-      />
-    );
-  };
-  const renderSectionNavRail = (
-    side: 'left' | 'right',
-    isConcealed = false
-  ) => {
-    const sideIndex = side === 'left' ? 0 : 1;
-    const safeAreaPosition =
-      side === 'left'
-        ? { left: 'max(1.5rem, env(safe-area-inset-left, 0px))' }
-        : { right: 'max(1.5rem, env(safe-area-inset-right, 0px))' };
-
-    return (
-      <div
-        data-portfolio-section-nav-zone={side}
-        className={`fixed top-1/2 w-11 -translate-y-1/2 ${
-          isConcealed ? 'invisible pointer-events-none' : ''
-        } ${
-          isModalLayerActive ? 'z-[60]' : 'z-20'
-        }`}
-        aria-hidden={isConcealed ? true : undefined}
-        inert={isConcealed ? true : undefined}
-        style={{ ...sideNavInteractiveZoneStyle, ...safeAreaPosition }}
-        onPointerMove={(event) => {
-          if (
-            sectionNavPointerOwnerRef.current === side &&
-            sectionNavPointerArmedRefs.current[side]
-          ) {
-            scheduleSectionNavPointerTracking(event.clientY);
-          }
-        }}
-        onPointerEnter={() => setSectionNavHovered(true)}
-        onPointerLeave={() => {
-          setSectionNavHovered(false);
-          returnSectionNavPointersToIdle(side, true);
-        }}
-        onWheel={(event) => {
-          const vertical = verticalRef.current;
-
-          if (!vertical || !sectionEntryMediaReady) {
-            return;
-          }
-
-          event.preventDefault();
-          cancelVerticalUserTravel();
-          const deltaScale =
-            event.deltaMode === WheelEvent.DOM_DELTA_LINE
-              ? 16
-              : event.deltaMode === WheelEvent.DOM_DELTA_PAGE
-                ? vertical.clientHeight
-                : 1;
-
-          vertical.scrollBy({ top: event.deltaY * deltaScale });
-        }}
-      >
-        <div className="absolute left-0 top-1/2 -translate-y-1/2">
-          <div
-            ref={(node) => {
-              sectionNavStackRefs.current[sideIndex] = node;
-            }}
-            className="relative flex flex-col"
-            style={sideNavStackStyle}
-          >
-            <NavigationActiveRing
-              color={initialSectionNavColor}
-              elementRef={(node) => {
-                sectionNavIndicatorRefs.current[sideIndex] = node;
-              }}
-              previewElementRef={(node) => {
-                sectionNavPreviewRefs.current[sideIndex] = node;
-              }}
-              className="absolute left-0 z-0"
-              style={{
-                top: `calc((var(--section-nav-item-step) - ${NAVIGATION_RING_SIZE_REM}rem) / 2)`,
-                transform: `translate3d(0, ${initialSectionNavIndicatorOffset}, 0)`,
-              }}
-              dataAttributes={{
-                'data-portfolio-section-nav-fill': side,
-              }}
-              previewDataAttributes={{
-                'data-portfolio-section-nav-preview': side,
-              }}
-              tooltip={{
-                id: `portfolio-${side}-section-nav-tooltip`,
-                side,
-                elementRef: (node) => {
-                  sectionNavTooltipRefs.current[side] = node;
-                },
-                textElementRef: (node) => {
-                  sectionNavTooltipTextRefs.current[side] = node;
-                },
-              }}
-            />
-            {sectionNavItems.map((item, itemIndex) =>
-              renderSectionNavButton(item, side, itemIndex)
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   return (
     <main
       ref={keyboardSurfaceRef}
       tabIndex={-1}
-      className="h-dvh overflow-hidden bg-black text-white outline-none"
+      className="relative isolate h-dvh overflow-hidden bg-black text-white outline-none"
     >
       <div
         ref={verticalRef}
+        data-portfolio-vertical-scroll
         onPointerDownCapture={cancelVerticalUserTravel}
         onTouchStartCapture={cancelVerticalUserTravel}
         onWheelCapture={cancelVerticalUserTravel}
@@ -4525,14 +2637,13 @@ export function PortfolioBrowser({
             isTouchLandscapeLayout
               ? 'grid grid-rows-[auto_minmax(0,1fr)] gap-2'
               : isWideLayout
-              ? 'flex flex-col justify-center py-16'
-              : 'grid grid-rows-[auto_minmax(0,1fr)] py-6'
+                ? 'flex flex-col justify-center py-16'
+                : 'grid grid-rows-[auto_minmax(0,1fr)] py-6'
           }`}
           style={
             isTouchLandscapeLayout
               ? {
-                  paddingTop:
-                    'max(0.75rem, env(safe-area-inset-top, 0px))',
+                  paddingTop: 'max(0.75rem, env(safe-area-inset-top, 0px))',
                   paddingBottom:
                     'max(0.75rem, env(safe-area-inset-bottom, 0px))',
                   paddingLeft:
@@ -4549,7 +2660,7 @@ export function PortfolioBrowser({
                 ? 'min-w-0'
                 : isWideLayout
                   ? 'portfolio-safe-inline absolute inset-x-0 top-6'
-                : 'min-w-0'
+                  : 'min-w-0'
             }
           >
             <div
@@ -4557,8 +2668,8 @@ export function PortfolioBrowser({
                 isTouchLandscapeLayout
                   ? 'items-start justify-between'
                   : isWideLayout
-                  ? 'items-center justify-between'
-                  : 'flex-col items-start justify-start'
+                    ? 'items-center justify-between'
+                    : 'flex-col items-start justify-start'
               }`}
             >
               <div className="flex shrink-0 items-center gap-5">
@@ -4608,7 +2719,8 @@ export function PortfolioBrowser({
               >
                 <p>302-70 Dyrgas Gate</p>
                 <p>
-                  Canmore, Alberta <span className="whitespace-nowrap">T1W 3J6</span>
+                  Canmore, Alberta{' '}
+                  <span className="whitespace-nowrap">T1W 3J6</span>
                 </p>
                 <p
                   className={`flex flex-wrap gap-x-3 gap-y-1 ${
@@ -4679,53 +2791,33 @@ export function PortfolioBrowser({
                   }
                   onPointerEnter={() => {
                     setSectionNavHovered(true);
-                    (['left', 'right'] as const).forEach((side) => {
-                      previewSectionNavItem(
-                        side,
-                        index + 1,
-                        getProjectColor(index),
-                        true
-                      );
-                    });
+                    sectionNavigationControllerRef.current?.preview(
+                      index + 1,
+                      true,
+                    );
                   }}
                   onPointerLeave={() => {
-                    (['left', 'right'] as const).forEach((side) => {
-                      previewSectionNavItem(
-                        side,
-                        index + 1,
-                        getProjectColor(index),
-                        false
-                      );
-                    });
+                    sectionNavigationControllerRef.current?.preview(
+                      index + 1,
+                      false,
+                    );
                   }}
                   onClick={(event) => {
                     focusKeyboardSurface();
                     const showProject = () =>
                       setActiveProject(index, 'push', 'smooth', 0);
-
-                    if (event.detail === 0) {
-                      lockSectionNavIndicatorsToItem(
-                        'left',
-                        index + 1,
-                        'vertical',
-                        showProject
-                      );
-                    } else {
-                      lockSectionNavIndicatorsToItem(
-                        'left',
-                        index + 1,
-                        'vertical'
-                      );
-                      showProject();
-                    }
+                    sectionNavigationControllerRef.current?.pin(
+                      index + 1,
+                      'vertical',
+                      event.detail === 0,
+                    );
+                    showProject();
                   }}
                 >
                   {isWideLayout ? (
                     <>
                       <span className="relative flex min-w-0 items-center">
-                        <span
-                          className="absolute right-full mr-3 w-8 shrink-0 text-right text-sm font-light text-current sm:text-base"
-                        >
+                        <span className="absolute right-full mr-3 w-8 shrink-0 text-right text-sm font-light text-current sm:text-base">
                           {pendingNavigation?.kind === 'project' &&
                           pendingNavigation.projectIndex === index ? (
                             <FontAwesomeIcon
@@ -4786,12 +2878,11 @@ export function PortfolioBrowser({
           const renderedSlides = isWideLayout
             ? getLoopingCarouselEntries(slides, true)
             : getCanonicalCarouselEntries(slides);
-          const hasMobilePullBoundaries =
-            !isWideLayout && slides.length > 1;
+          const hasMobilePullBoundaries = !isWideLayout && slides.length > 1;
           const projectNumber = String(projectIndex + 1).padStart(2, '0');
           const activeCarouselIndex = getCarouselIndexFromSlideIndex(
             project,
-            activeSlideIndexes[projectIndex] ?? 0
+            activeSlideIndexes[projectIndex] ?? 0,
           );
 
           return (
@@ -4823,9 +2914,7 @@ export function PortfolioBrowser({
                   projectCarouselsReady[projectIndex]
                     ? 'overflow-x-auto'
                     : 'overflow-x-hidden'
-                } ${
-                  isWideLayout ? 'w-screen' : ''
-                }`}
+                } ${isWideLayout ? 'w-screen' : ''}`}
               >
                 {hasMobilePullBoundaries ? (
                   <CarouselPullBoundary
@@ -4876,10 +2965,46 @@ export function PortfolioBrowser({
       </div>
 
       {isWideLayout ? (
-        <>
-          {renderSectionNavRail('left')}
-          {renderSectionNavRail('right', isTouchLandscapeLayout)}
-        </>
+        <SectionNavigation
+          controllerRef={sectionNavigationControllerRef}
+          sourceRef={verticalRef}
+          menuTitleRefs={sectionMenuTitleRefs}
+          items={sectionNavItems.map((item, itemIndex) => ({
+            id: item.id,
+            title: item.title,
+            color: item.color,
+            hasSlides: SECTION_NAV_HAS_SLIDES[itemIndex] ?? false,
+            pending: Boolean(
+              (pendingNavigation?.kind === 'project' &&
+                pendingNavigation.projectIndex === item.projectIndex) ||
+              ((pendingNavigation?.kind === 'slide' ||
+                pendingNavigation?.kind === 'modal') &&
+                item.projectIndex === activeProjectIndex),
+            ),
+          }))}
+          activeIndex={activeProjectIndex + 1}
+          hovered={sectionNavHovered}
+          hideRightRail={isTouchLandscapeLayout}
+          modalLayerActive={isModalLayerActive}
+          modalPresentationActive={isModalPresentationActive}
+          canMoveHorizontally={canMoveHorizontally}
+          previousSlideTitle={previousSlideTitle}
+          nextSlideTitle={nextSlideTitle}
+          onHoveredChange={setSectionNavHovered}
+          onHorizontalNavigate={(side) => {
+            focusKeyboardSurface();
+
+            if (isModalPresentationActive) {
+              moveModalHorizontal(side === 'left' ? -1 : 1);
+            } else {
+              moveHorizontal(side === 'left' ? -1 : 1);
+            }
+          }}
+          onVerticalNavigate={(itemIndex) => {
+            focusKeyboardSurface();
+            setActiveProject(itemIndex - 1, 'push');
+          }}
+        />
       ) : null}
 
       {!isWideLayout ? (
@@ -4914,11 +3039,11 @@ export function PortfolioBrowser({
       ) : null}
 
       <nav
-        className={`pointer-events-none fixed inset-x-0 bottom-5 ${
+        className={`pointer-events-none absolute inset-x-0 bottom-8 isolate overflow-visible ${
           isWideLayout
             ? 'grid grid-cols-[minmax(var(--portfolio-description-rail-width),1fr)_var(--portfolio-screenshot-size)_var(--portfolio-control-gutter-width)]'
             : 'flex justify-center px-6'
-        } ${isModalLayerActive ? 'z-[60]' : 'z-20'}`}
+        } ${isModalLayerActive ? 'z-[60]' : 'z-40'}`}
         aria-label={
           activeProject ? `${activeProject.title} screens` : 'Portfolio screens'
         }
@@ -4928,7 +3053,6 @@ export function PortfolioBrowser({
             '--project-color': activeProjectColor ?? getProjectColor(0),
             '--portfolio-modal-indicator-translate-x':
               'calc(var(--portfolio-control-gutter-width) + (var(--portfolio-screenshot-size) / 2) - 50vw)',
-            bottom: 'max(1.25rem, env(safe-area-inset-bottom, 0px))',
           } as ProjectColorStyle &
             WideLayoutStyle & {
               '--portfolio-modal-indicator-translate-x': string;
@@ -4955,15 +3079,26 @@ export function PortfolioBrowser({
               : undefined
           }
         >
-          <AnimatedSlideIndicators
+          <SlideNavigation
             controllerRef={slideIndicatorMotionControllerRef}
-            projectTitle={activeProject?.title ?? 'Portfolio'}
-            slides={activeNavigationSlides}
+            items={activeNavigationSlides.map((slide) => ({
+              id: slide.id,
+              label:
+                slide.kind === 'description'
+                  ? `Show ${activeProject?.title ?? 'Portfolio'} description`
+                  : `Show ${slide.screenshot.alt}`,
+            }))}
             activeIndex={activeNavigationIndex}
             pendingIndex={pendingNavigationIndex}
             color={activeProjectColor ?? getProjectColor(0)}
-            onSelect={(slide) => {
+            onSelect={(navigationIndex) => {
               if (!activeProject) {
+                return;
+              }
+
+              const slide = activeNavigationSlides[navigationIndex];
+
+              if (!slide) {
                 return;
               }
 
@@ -4971,8 +3106,8 @@ export function PortfolioBrowser({
               const slideIndex = Math.max(
                 0,
                 projectSlides[activeProject.slug].findIndex(
-                  (projectSlide) => projectSlide.id === slide.id
-                )
+                  (projectSlide) => projectSlide.id === slide.id,
+                ),
               );
 
               if (isModalPresentationActive) {
@@ -5170,7 +3305,7 @@ function PortfolioHelperMessage({
     }
 
     const reducedMotion = window.matchMedia(
-      '(prefers-reduced-motion: reduce)'
+      '(prefers-reduced-motion: reduce)',
     ).matches;
     const y = isVisible || reducedMotion ? 0 : 64;
 
@@ -5207,12 +3342,11 @@ function PortfolioHelperMessage({
     >
       {renderedKind === 'navigation' ? (
         <span className="leading-6">
-          Use{' '}
-          <KeyboardKey icon={faArrowLeft} ariaLabel="left arrow" />
+          Use <KeyboardKey icon={faArrowLeft} ariaLabel="left arrow" />
           <KeyboardKey icon={faArrowRight} ariaLabel="right arrow" />
           <KeyboardKey icon={faArrowUp} ariaLabel="up arrow" />
-          <KeyboardKey icon={faArrowDown} ariaLabel="down arrow" />, or{' '}
-          <KeyboardKey label="1" />,
+          <KeyboardKey icon={faArrowDown} ariaLabel="down arrow" />
+          , or <KeyboardKey label="1" />,
           <KeyboardKey label="2" />, ... <KeyboardKey label="0" /> to navigate
           sections
         </span>
@@ -5221,748 +3355,6 @@ function PortfolioHelperMessage({
           Press <KeyboardKey label="ESC" /> to close
         </span>
       )}
-    </div>
-  );
-}
-
-type IndicatorTransitionState = {
-  previousCount: number;
-  targetCount: number;
-  phase: 'idle' | 'preparing' | 'fading' | 'settling';
-};
-
-function AnimatedSlideIndicators({
-  controllerRef,
-  projectTitle,
-  slides,
-  activeIndex,
-  pendingIndex,
-  color,
-  onSelect,
-}: {
-  controllerRef: {
-    current: SlideIndicatorMotionController | null;
-  };
-  projectTitle: string;
-  slides: ProjectSlide[];
-  activeIndex: number;
-  pendingIndex: number | null;
-  color: string;
-  onSelect: (slide: ProjectSlide) => void;
-}) {
-  const visibleSlides = slides.length > 1 ? slides : [];
-  const targetCount = visibleSlides.length;
-  const boundedActiveIndex = Math.max(
-    0,
-    Math.min(activeIndex, Math.max(targetCount - 1, 0))
-  );
-  const slidesIdentity = visibleSlides.map((slide) => slide.id).join('|');
-  const previousCountRef = useRef(targetCount);
-  const transitionFrameRef = useRef<number | null>(null);
-  const transitionStartFrameRef = useRef<number | null>(null);
-  const transitionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
-    null
-  );
-  const ringRef = useRef<HTMLDivElement | null>(null);
-  const ringTweenRef = useRef<gsap.core.Tween | null>(null);
-  const previewReturnTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
-    null
-  );
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const pointerFrameRef = useRef<number | null>(null);
-  const pendingPointerXRef = useRef<number | null>(null);
-  const pointerXRef = useRef<number | null>(null);
-  const rootFontSizeRef = useRef(16);
-  const pointerArmedRef = useRef(false);
-  const pointerAcquiringRef = useRef(false);
-  const snappedIndexRef = useRef<number | null>(null);
-  const snapTransitioningRef = useRef(false);
-  const clickTargetIndexRef = useRef<number | null>(null);
-  const pointerPinnedIndexRef = useRef<number | null>(null);
-  const focusedIndexRef = useRef<number | null>(null);
-  const ringStrokeWidthRef = useRef<2 | 4>(4);
-  const activeIndexRef = useRef(boundedActiveIndex);
-  const [transitionState, setTransitionState] =
-    useState<IndicatorTransitionState>({
-      previousCount: targetCount,
-      targetCount,
-      phase: 'idle',
-    });
-
-  const clearPreviewReturnTimeout = () => {
-    if (!previewReturnTimeoutRef.current) {
-      return;
-    }
-
-    clearTimeout(previewReturnTimeoutRef.current);
-    previewReturnTimeoutRef.current = null;
-  };
-
-  const applyActiveScale = (position: number) => {
-    const container = containerRef.current;
-    const ring = ringRef.current;
-
-    if (!container || !ring) {
-      return;
-    }
-
-    const activeMarkerIndex = activeIndexRef.current;
-    const scale = getNavigationActiveScale(position, activeMarkerIndex);
-
-    container
-      .querySelectorAll<HTMLElement>(
-        '[data-portfolio-slide-indicator-visual]'
-      )
-      .forEach((visual) => {
-        const itemIndex = Number(
-          visual.dataset.portfolioSlideIndicatorVisual
-        );
-        gsap.set(visual, {
-          scale: itemIndex === activeMarkerIndex ? scale : 1,
-          transformOrigin: '50% 50%',
-        });
-      });
-
-    const ringVisual = ring.querySelector('svg');
-
-    if (ringVisual) {
-      gsap.set(ringVisual, {
-        scale,
-        transformOrigin: '50% 50%',
-      });
-    }
-  };
-
-  const applyActiveScaleFromRing = () => {
-    const ring = ringRef.current;
-
-    if (!ring) {
-      return;
-    }
-
-    const rootFontSize = rootFontSizeRef.current;
-    const step = NAVIGATION_INDICATOR_STEP_REM * rootFontSize;
-    const ringSize = NAVIGATION_RING_SIZE_REM * rootFontSize;
-    const computedTransform = getComputedStyle(ring).transform;
-    const ringX =
-      computedTransform === 'none'
-        ? 0
-        : new DOMMatrixReadOnly(computedTransform).m41;
-    const position = (ringX + ringSize / 2) / step - 0.5;
-
-    applyActiveScale(position);
-  };
-
-  useLayoutEffect(() => {
-    activeIndexRef.current = boundedActiveIndex;
-    applyActiveScaleFromRing();
-  }, [boundedActiveIndex]);
-
-  const animateRingStroke = (strokeWidth: 2 | 4) => {
-    if (ringStrokeWidthRef.current === strokeWidth) {
-      return;
-    }
-
-    const circle = ringRef.current?.querySelector('circle');
-    ringStrokeWidthRef.current = strokeWidth;
-
-    if (!circle) {
-      return;
-    }
-
-    gsap.to(circle, {
-      strokeWidth,
-      duration: window.matchMedia('(prefers-reduced-motion: reduce)').matches
-        ? 0
-        : 0.2,
-      ease: 'power2.out',
-      autoRound: false,
-      overwrite: 'auto',
-    });
-  };
-
-  const moveRingToIndex = (
-    index: number,
-    duration = 0.3,
-    onComplete?: () => void
-  ) => {
-    const ring = ringRef.current;
-
-    if (!ring) {
-      onComplete?.();
-      return;
-    }
-
-    ringTweenRef.current?.kill();
-    const tween = gsap.to(ring, {
-      x: `${getHorizontalIndicatorRingX(index)}rem`,
-      duration: window.matchMedia('(prefers-reduced-motion: reduce)').matches
-        ? 0
-        : duration,
-      ease: 'power3.out',
-      overwrite: 'auto',
-      onUpdate: applyActiveScaleFromRing,
-      onComplete,
-    });
-    ringTweenRef.current = tween;
-  };
-
-  const trackPointer = (clientX: number, animatePosition = false) => {
-    const container = containerRef.current;
-    const ring = ringRef.current;
-
-    if (!container || !ring || clickTargetIndexRef.current !== null) {
-      return;
-    }
-
-    clearPreviewReturnTimeout();
-    pointerXRef.current = clientX;
-    animateRingStroke(2);
-
-    const containerRect = container.getBoundingClientRect();
-    const rootFontSize = rootFontSizeRef.current;
-    const step = NAVIGATION_INDICATOR_STEP_REM * rootFontSize;
-    const ringSize = NAVIGATION_RING_SIZE_REM * rootFontSize;
-    const localPointerX = clientX - containerRect.left;
-    const closestIndex = Math.max(
-      0,
-      Math.min(targetCount - 1, Math.round(localPointerX / step - 0.5))
-    );
-    const closestCenter = step / 2 + closestIndex * step;
-    const snapIndex =
-      Math.abs(localPointerX - closestCenter) <= SECTION_NAV_SNAP_DISTANCE_PX
-        ? closestIndex
-        : null;
-    const snapChanged = snappedIndexRef.current !== snapIndex;
-    const targetCenter = snapIndex === null ? localPointerX : closestCenter;
-    const targetX = targetCenter - ringSize / 2;
-
-    if (snapChanged) {
-      snappedIndexRef.current = snapIndex;
-      snapTransitioningRef.current = true;
-    }
-
-    const shouldAnimatePosition =
-      animatePosition ||
-      snapChanged ||
-      (snapTransitioningRef.current && snapIndex === null);
-    const reducedMotion = window.matchMedia(
-      '(prefers-reduced-motion: reduce)'
-    ).matches;
-
-    if (shouldAnimatePosition && !reducedMotion) {
-      ringTweenRef.current?.kill();
-      const tween = gsap.to(ring, {
-        x: targetX,
-        duration: animatePosition ? 0.3 : 0.2,
-        ease: 'power3.out',
-        overwrite: 'auto',
-        onUpdate: applyActiveScaleFromRing,
-        onComplete: () => {
-          if (ringTweenRef.current === tween) {
-            ringTweenRef.current = null;
-          }
-          pointerAcquiringRef.current = false;
-          if (snappedIndexRef.current === snapIndex) {
-            snapTransitioningRef.current = false;
-          }
-        },
-      });
-      ringTweenRef.current = tween;
-      return;
-    }
-
-    if (snapIndex === null || snapChanged || reducedMotion) {
-      ringTweenRef.current?.kill();
-      gsap.set(ring, { x: targetX });
-      applyActiveScaleFromRing();
-      pointerAcquiringRef.current = false;
-      snapTransitioningRef.current = false;
-    }
-  };
-
-  const schedulePointerTracking = (clientX: number) => {
-    pendingPointerXRef.current = clientX;
-
-    if (pointerFrameRef.current !== null) {
-      return;
-    }
-
-    pointerFrameRef.current = requestAnimationFrame(() => {
-      pointerFrameRef.current = null;
-      const pendingPointerX = pendingPointerXRef.current;
-
-      if (pendingPointerX !== null && pointerArmedRef.current) {
-        trackPointer(pendingPointerX, pointerAcquiringRef.current);
-      }
-    });
-  };
-
-  const engagePointer = (clientX: number) => {
-    clearPreviewReturnTimeout();
-    rootFontSizeRef.current = Number.parseFloat(
-      getComputedStyle(document.documentElement).fontSize
-    );
-    pointerArmedRef.current = true;
-    pointerAcquiringRef.current = true;
-    trackPointer(clientX, true);
-  };
-
-  const returnRingToIdle = (delayed: boolean) => {
-    clearPreviewReturnTimeout();
-    pointerArmedRef.current = false;
-    pointerAcquiringRef.current = false;
-    snappedIndexRef.current = null;
-    snapTransitioningRef.current = false;
-    pointerXRef.current = null;
-    pendingPointerXRef.current = null;
-
-    if (clickTargetIndexRef.current !== null || focusedIndexRef.current !== null) {
-      return;
-    }
-
-    const returnToActive = () => {
-      previewReturnTimeoutRef.current = null;
-      animateRingStroke(4);
-      moveRingToIndex(boundedActiveIndex);
-    };
-
-    if (!delayed) {
-      returnToActive();
-      return;
-    }
-
-    previewReturnTimeoutRef.current = setTimeout(
-      returnToActive,
-      SECTION_NAV_PREVIEW_RETURN_DELAY_MS
-    );
-  };
-
-  const beginSourceLinkedTravel = (index: number) => {
-    clearPreviewReturnTimeout();
-    snappedIndexRef.current = null;
-    snapTransitioningRef.current = false;
-    clickTargetIndexRef.current = index;
-    activeIndexRef.current = index;
-    animateRingStroke(4);
-
-    if (pointerPinnedIndexRef.current === null) {
-      ringTweenRef.current?.kill();
-      ringTweenRef.current = null;
-    }
-  };
-
-  const pinPointerTravel = (index: number) => {
-    clearPreviewReturnTimeout();
-    snappedIndexRef.current = index;
-    snapTransitioningRef.current = false;
-    clickTargetIndexRef.current = index;
-    pointerPinnedIndexRef.current = index;
-    activeIndexRef.current = index;
-    animateRingStroke(4);
-    moveRingToIndex(index, 0.2);
-  };
-
-  const updateSourceLinkedTravel = (position: number) => {
-    const ring = ringRef.current;
-
-    if (!ring || pointerPinnedIndexRef.current !== null) {
-      return;
-    }
-
-    ringTweenRef.current?.kill();
-    ringTweenRef.current = null;
-    gsap.set(ring, {
-      x: `${getHorizontalIndicatorRingX(position)}rem`,
-    });
-    applyActiveScale(position);
-  };
-
-  const completeSourceLinkedTravel = (index: number) => {
-    const wasPointerPinned = pointerPinnedIndexRef.current === index;
-    activeIndexRef.current = index;
-
-    if (!wasPointerPinned) {
-      updateSourceLinkedTravel(index);
-    } else {
-      applyActiveScale(index);
-    }
-
-    if (clickTargetIndexRef.current !== index) {
-      return;
-    }
-
-    pointerPinnedIndexRef.current = null;
-    clickTargetIndexRef.current = null;
-    const pointerX = pointerXRef.current;
-
-    if (pointerArmedRef.current && pointerX !== null) {
-      pointerAcquiringRef.current = true;
-      animateRingStroke(2);
-      trackPointer(pointerX, true);
-      return;
-    }
-
-    if (focusedIndexRef.current !== null) {
-      animateRingStroke(2);
-      moveRingToIndex(focusedIndexRef.current);
-    }
-  };
-
-  useLayoutEffect(() => {
-    const controller: SlideIndicatorMotionController = {
-      begin: beginSourceLinkedTravel,
-      update: updateSourceLinkedTravel,
-      complete: completeSourceLinkedTravel,
-      cancel: () => {
-        pointerPinnedIndexRef.current = null;
-        clickTargetIndexRef.current = null;
-        moveRingToIndex(boundedActiveIndex);
-      },
-    };
-    controllerRef.current = controller;
-
-    return () => {
-      if (controllerRef.current === controller) {
-        controllerRef.current = null;
-      }
-    };
-  });
-
-  const focusRingAtIndex = (index: number) => {
-    focusedIndexRef.current = index;
-
-    if (!pointerArmedRef.current && clickTargetIndexRef.current === null) {
-      clearPreviewReturnTimeout();
-      animateRingStroke(2);
-      moveRingToIndex(index);
-    }
-  };
-
-  const releaseFocusedRing = (index: number) => {
-    if (focusedIndexRef.current !== index) {
-      return;
-    }
-
-    focusedIndexRef.current = null;
-
-    if (!pointerArmedRef.current) {
-      returnRingToIdle(true);
-    }
-  };
-
-  useEffect(() => {
-    pointerArmedRef.current = false;
-    pointerXRef.current = null;
-    snappedIndexRef.current = null;
-    snapTransitioningRef.current = false;
-    pointerPinnedIndexRef.current = null;
-    focusedIndexRef.current = null;
-
-    if (previewReturnTimeoutRef.current) {
-      clearTimeout(previewReturnTimeoutRef.current);
-      previewReturnTimeoutRef.current = null;
-    }
-  }, [slidesIdentity]);
-
-  useLayoutEffect(() => {
-    const previousCount = previousCountRef.current;
-
-    if (previousCount === targetCount) {
-      return;
-    }
-
-    if (transitionFrameRef.current !== null) {
-      cancelAnimationFrame(transitionFrameRef.current);
-    }
-
-    if (transitionStartFrameRef.current !== null) {
-      cancelAnimationFrame(transitionStartFrameRef.current);
-    }
-
-    if (transitionTimeoutRef.current) {
-      clearTimeout(transitionTimeoutRef.current);
-    }
-
-    previousCountRef.current = targetCount;
-    setTransitionState({
-      previousCount,
-      targetCount,
-      phase: 'preparing',
-    });
-
-    transitionFrameRef.current = requestAnimationFrame(() => {
-      transitionStartFrameRef.current = requestAnimationFrame(() => {
-        transitionFrameRef.current = null;
-        transitionStartFrameRef.current = null;
-        setTransitionState({
-          previousCount,
-          targetCount,
-          phase: 'fading',
-        });
-
-        const longestStagger = Math.max(
-          getLongestIndicatorDelay(previousCount, getOutsideInDelay),
-          getLongestIndicatorDelay(targetCount, getInsideOutDelay)
-        );
-
-        transitionTimeoutRef.current = setTimeout(() => {
-          setTransitionState({
-            previousCount,
-            targetCount,
-            phase: 'settling',
-          });
-
-          transitionTimeoutRef.current = setTimeout(() => {
-            transitionTimeoutRef.current = null;
-            setTransitionState({
-              previousCount: targetCount,
-              targetCount,
-              phase: 'idle',
-            });
-          }, NAVIGATION_INDICATOR_TRANSITION_MS);
-        }, NAVIGATION_INDICATOR_TRANSITION_MS + longestStagger);
-      });
-    });
-
-    return () => {
-      if (transitionFrameRef.current !== null) {
-        cancelAnimationFrame(transitionFrameRef.current);
-      }
-
-      if (transitionStartFrameRef.current !== null) {
-        cancelAnimationFrame(transitionStartFrameRef.current);
-      }
-
-      if (transitionTimeoutRef.current) {
-        clearTimeout(transitionTimeoutRef.current);
-      }
-    };
-  }, [targetCount]);
-
-  useEffect(
-    () => () => {
-      clearPreviewReturnTimeout();
-      ringTweenRef.current?.kill();
-
-      if (pointerFrameRef.current !== null) {
-        cancelAnimationFrame(pointerFrameRef.current);
-      }
-    },
-    []
-  );
-
-  const previousSlotIds = getIndicatorSlotIds(
-    transitionState.phase === 'idle'
-      ? transitionState.targetCount
-      : transitionState.previousCount
-  );
-  const targetSlotIds = getIndicatorSlotIds(transitionState.targetCount);
-  const renderedSlotIds =
-    transitionState.phase === 'idle'
-      ? targetSlotIds
-      : Array.from(new Set([...previousSlotIds, ...targetSlotIds])).sort(
-          (a, b) => a - b
-        );
-  const positionCount =
-    transitionState.phase === 'preparing'
-      ? transitionState.previousCount
-      : transitionState.targetCount;
-  useLayoutEffect(() => {
-    const ring = ringRef.current;
-
-    if (!ring) {
-      return;
-    }
-
-    const reducedMotion = window.matchMedia(
-      '(prefers-reduced-motion: reduce)'
-    ).matches;
-    const targetXRem = getHorizontalIndicatorRingX(boundedActiveIndex);
-    const hasPosition = ring.dataset.positioned === 'true';
-    const shouldPosition =
-      !pointerArmedRef.current &&
-      clickTargetIndexRef.current === null &&
-      focusedIndexRef.current === null;
-
-    if (!hasPosition) {
-      gsap.set(ring, {
-        x: `${targetXRem}rem`,
-        color,
-        opacity: targetCount > 0 ? 1 : 0,
-      });
-      applyActiveScale(boundedActiveIndex);
-      ring.dataset.positioned = 'true';
-      return;
-    }
-
-    if (!shouldPosition) {
-      gsap.to(ring, {
-        color,
-        opacity: targetCount > 0 ? 1 : 0,
-        duration: reducedMotion ? 0 : 0.3,
-        ease: 'power2.out',
-        overwrite: 'auto',
-      });
-      return;
-    }
-
-    ringTweenRef.current?.kill();
-    const tween = gsap.to(ring, {
-      x: `${targetXRem}rem`,
-      color,
-      opacity: targetCount > 0 ? 1 : 0,
-      duration: reducedMotion ? 0 : 0.5,
-      ease: 'power3.out',
-      overwrite: 'auto',
-      onUpdate: applyActiveScaleFromRing,
-    });
-    ringTweenRef.current = tween;
-
-    return () => {
-      if (ringTweenRef.current === tween) {
-        ringTweenRef.current = null;
-      }
-      tween.kill();
-    };
-  }, [boundedActiveIndex, color, targetCount]);
-
-  return (
-    <div
-      ref={containerRef}
-      data-portfolio-slide-indicators
-      className="pointer-events-auto relative h-12 transition-[width] duration-500 ease-out motion-reduce:transition-none"
-      style={{
-        width: `${Math.max(targetCount, 1) * NAVIGATION_INDICATOR_STEP_REM}rem`,
-      }}
-      onPointerMove={(event) => {
-        if (pointerArmedRef.current) {
-          pointerXRef.current = event.clientX;
-          schedulePointerTracking(event.clientX);
-        }
-      }}
-      onPointerLeave={() => returnRingToIdle(true)}
-    >
-      <div className="pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center">
-        <NavigationActiveRing
-          color={color}
-          elementRef={(node) => {
-            ringRef.current = node;
-          }}
-          className="relative shrink-0"
-          dataAttributes={{ 'data-portfolio-slide-indicator-marker': 'true' }}
-        />
-      </div>
-      <div
-        className="absolute inset-0 transition-transform duration-500 [transition-timing-function:cubic-bezier(0.19,1,0.22,1)] motion-reduce:transition-none"
-        style={{
-          transform: getCenteredIndicatorTrackTransform(positionCount),
-          transitionDuration:
-            transitionState.phase === 'preparing'
-              ? '0ms'
-              : `${NAVIGATION_INDICATOR_TRANSITION_MS}ms`,
-        }}
-      >
-        {renderedSlotIds.map((slotId) => {
-          const previousIndex = previousSlotIds.indexOf(slotId);
-          const targetIndex = targetSlotIds.indexOf(slotId);
-          const isEntering = previousIndex < 0 && targetIndex >= 0;
-          const isExiting = previousIndex >= 0 && targetIndex < 0;
-          const isVisible =
-            transitionState.phase === 'idle'
-              ? targetIndex >= 0
-              : transitionState.phase === 'preparing'
-                ? previousIndex >= 0
-                : targetIndex >= 0;
-          const staggerDelay =
-            transitionState.phase === 'fading' && (isEntering || isExiting)
-              ? isEntering
-                ? getInsideOutDelay(targetIndex, transitionState.targetCount)
-                : getOutsideInDelay(
-                    previousIndex,
-                    transitionState.previousCount
-                  )
-              : 0;
-          const slide =
-            targetIndex >= 0 ? visibleSlides[targetIndex] : undefined;
-
-          return (
-            <div
-              key={slotId}
-              data-portfolio-slide-indicator-slot={slotId}
-              data-indicator-presence={
-                isEntering ? 'entering' : isExiting ? 'exiting' : 'retained'
-              }
-              className="absolute inset-y-0 flex w-9 items-center justify-center transition-opacity duration-500 [transition-timing-function:cubic-bezier(0.19,1,0.22,1)] motion-reduce:transition-none"
-              style={{
-                left: getCenteredIndicatorSlotLeft(slotId),
-                opacity: isVisible ? 1 : 0,
-                pointerEvents: slide && isVisible ? 'auto' : 'none',
-                transitionDuration:
-                  transitionState.phase === 'preparing'
-                    ? '0ms'
-                    : `${NAVIGATION_INDICATOR_TRANSITION_MS}ms`,
-                transitionDelay: `${staggerDelay}ms`,
-              }}
-            >
-              {slide ? (
-                <button
-                  type="button"
-                  className="pointer-events-auto flex size-9 cursor-pointer items-center justify-center outline-none"
-                  aria-label={
-                    slide.kind === 'description'
-                      ? `Show ${projectTitle} description`
-                      : `Show ${slide.screenshot.alt}`
-                  }
-                  aria-current={
-                    boundedActiveIndex === targetIndex ? 'true' : undefined
-                  }
-                  aria-busy={pendingIndex === targetIndex ? true : undefined}
-                  data-portfolio-slide-indicator-index={targetIndex}
-                  data-interactive-pop-companion='[data-portfolio-slide-indicator-marker="true"] [data-navigation-ring-pop-layer="true"]'
-                  onPointerEnter={(event) => {
-                    if (pointerArmedRef.current) {
-                      schedulePointerTracking(event.clientX);
-                    } else {
-                      engagePointer(event.clientX);
-                    }
-                  }}
-                  onPointerDown={() => pinPointerTravel(targetIndex)}
-                  onFocus={() => focusRingAtIndex(targetIndex)}
-                  onBlur={() => releaseFocusedRing(targetIndex)}
-                  onClick={() => onSelect(slide)}
-                >
-                  <span
-                    data-portfolio-slide-indicator-visual={targetIndex}
-                    className="flex size-3 items-center justify-center"
-                    aria-hidden="true"
-                  >
-                    {pendingIndex === targetIndex ? (
-                      <FontAwesomeIcon
-                        icon={faSpinner}
-                        className="size-3 animate-spin text-white"
-                      />
-                    ) : (
-                      <FontAwesomeIcon
-                        icon={faCircle}
-                        className={NAVIGATION_DOT_CLASS}
-                        style={{ width: '0.625rem', height: '0.625rem' }}
-                      />
-                    )}
-                  </span>
-                </button>
-              ) : (
-                <FontAwesomeIcon
-                  icon={faCircle}
-                  className={NAVIGATION_DOT_CLASS}
-                  style={{ width: '0.625rem', height: '0.625rem' }}
-                  aria-hidden="true"
-                />
-              )}
-            </div>
-          );
-        })}
-      </div>
     </div>
   );
 }
@@ -6054,110 +3446,6 @@ function NavigationActiveRing({
   );
 }
 
-function SideNavButton({
-  icon,
-  elementRef,
-  iconRef,
-  dotRef,
-  visualRef,
-  label,
-  tooltipTitle,
-  tooltipId,
-  side,
-  color,
-  activeButton = false,
-  dimmed = false,
-  pending = false,
-  concealed = false,
-  onPreviewChange,
-  onPointerEngage,
-  onClick,
-}: {
-  icon: IconProp;
-  elementRef: (node: HTMLDivElement | null) => void;
-  iconRef?: (node: SVGSVGElement | null) => void;
-  dotRef: (node: SVGSVGElement | null) => void;
-  visualRef: (node: HTMLSpanElement | null) => void;
-  label: string;
-  tooltipTitle: string;
-  tooltipId: string;
-  side: 'left' | 'right';
-  color?: string;
-  activeButton?: boolean;
-  dimmed?: boolean;
-  pending?: boolean;
-  concealed?: boolean;
-  onPreviewChange: (previewed: boolean) => void;
-  onPointerEngage: (pointerY: number) => void;
-  onClick: (event: ReactMouseEvent<HTMLButtonElement>) => void;
-}) {
-  const hoveredRef = useRef(false);
-  const focusedRef = useRef(false);
-  const projectColor = color ?? PROJECT_COLORS[0];
-  const gutterHitAreaClass =
-    side === 'left'
-      ? "before:absolute before:inset-y-0 before:right-0 before:w-[3.75rem] before:content-[''] sm:before:w-[4.5rem]"
-      : "before:absolute before:inset-y-0 before:left-0 before:w-[3.75rem] before:content-[''] sm:before:w-[4.5rem]";
-  return (
-    <div
-      ref={elementRef}
-      data-portfolio-section-nav-tooltip-title={tooltipTitle}
-      className={`relative z-10 grid h-[var(--section-nav-item-step)] w-11 place-items-center transition-[opacity,transform] duration-300 ease-out motion-reduce:transition-none ${
-        concealed
-          ? 'pointer-events-none scale-90 opacity-0'
-          : `scale-100 ${dimmed ? 'opacity-50' : 'opacity-100'}`
-      }`}
-      aria-hidden={concealed ? true : undefined}
-      onPointerEnter={(event) => onPointerEngage(event.clientY)}
-      onMouseEnter={() => {
-        hoveredRef.current = true;
-        onPreviewChange(true);
-      }}
-      onMouseLeave={() => {
-        hoveredRef.current = false;
-        onPreviewChange(focusedRef.current);
-      }}
-      onFocusCapture={() => {
-        focusedRef.current = true;
-        onPreviewChange(true);
-      }}
-      onBlurCapture={() => {
-        focusedRef.current = false;
-        onPreviewChange(hoveredRef.current);
-      }}
-      style={
-        {
-          '--project-color': projectColor,
-        } as ProjectColorStyle
-      }
-    >
-      <CircularIconButton
-        icon={icon}
-        iconRef={iconRef}
-        iconClassName={`size-7 ${pending ? 'animate-spin' : ''}`}
-        visualRef={visualRef}
-        secondaryVisual={
-          <FontAwesomeIcon
-            ref={dotRef}
-            icon={faCircle}
-            className="size-2.5 text-current opacity-0 drop-shadow-[1px_1px_0_black]"
-            style={{ width: '0.625rem', height: '0.625rem' }}
-            aria-hidden="true"
-          />
-        }
-        className={`relative h-full w-11 cursor-pointer border-0 bg-transparent p-0 text-[var(--project-color)] ${gutterHitAreaClass}`}
-        aria-label={label}
-        aria-describedby={tooltipId}
-        aria-current={activeButton ? 'page' : undefined}
-        aria-busy={pending ? true : undefined}
-        data-interactive-pop-companion={`[data-portfolio-section-nav-preview="${side}"]`}
-        tabIndex={concealed ? -1 : undefined}
-        onClick={onClick}
-      />
-    </div>
-  );
-}
-
 function CircularIconButton({
   icon,
   buttonRef,
@@ -6192,10 +3480,7 @@ function CircularIconButton({
         />
       ) : null}
       {visualRef || secondaryVisual ? (
-        <span
-          ref={visualRef}
-          className="relative z-10 block h-full w-full"
-        >
+        <span ref={visualRef} className="relative z-10 block h-full w-full">
           <span className="absolute inset-0 flex items-center justify-center">
             <FontAwesomeIcon
               ref={iconRef}
@@ -6329,7 +3614,7 @@ function ZoomableScreenshot({
     isZoomed,
     surfaceRef,
   } = useInlineMediaZoom(active, (presented) =>
-    onPresentationChange(screenshotId, presented)
+    onPresentationChange(screenshotId, presented),
   );
   const cursorClass = isZoomed
     ? isPointerDragging
@@ -6467,17 +3752,19 @@ function ProjectPanel({
   concealedScreenshotId?: string;
   registerMediaElement: (
     key: string,
-    element: PortfolioMediaElement | null
+    element: PortfolioMediaElement | null,
   ) => void;
   setDescriptionRef: (node: HTMLDivElement | null) => void;
   onInlinePresentationChange: (
     screenshotId: string,
-    presented: boolean
+    presented: boolean,
   ) => void;
 }) {
   const isTextSlide = isBuildingWithAiTextSlide(project, slide);
   const shouldShowDescriptionPlaceholder =
-    isWideLayout && slide.kind === 'description' && !hasProjectScreenshots(project);
+    isWideLayout &&
+    slide.kind === 'description' &&
+    !hasProjectScreenshots(project);
   const panelContentClass = isTextSlide
     ? isWideLayout
       ? 'px-0 py-0'
@@ -6493,9 +3780,7 @@ function ProjectPanel({
       data-portfolio-carousel-panel={carouselEntryKind}
       data-portfolio-carousel-index={carouselIndex}
       className={`grid h-dvh w-screen shrink-0 snap-start snap-always grid-rows-[1fr] bg-black ${
-        isWideLayout
-          ? 'px-0 py-0'
-          : 'portfolio-safe-inline pb-24 pt-8'
+        isWideLayout ? 'px-0 py-0' : 'portfolio-safe-inline pb-24 pt-8'
       }`}
       aria-hidden={!isActive}
       style={
@@ -6511,9 +3796,7 @@ function ProjectPanel({
         setDescriptionRef={setDescriptionRef}
         isWideLayout={isWideLayout}
         className={
-          !isWideLayout && slide.kind === 'description'
-            ? ''
-            : 'hidden'
+          !isWideLayout && slide.kind === 'description' ? '' : 'hidden'
         }
       />
 
@@ -6666,7 +3949,7 @@ function ScreenshotMedia({
   mediaKey: string;
   registerMediaElement: (
     key: string,
-    element: PortfolioMediaElement | null
+    element: PortfolioMediaElement | null,
   ) => void;
   priority?: boolean;
   sizes: string;
@@ -6738,27 +4021,30 @@ function ImageModal({
   isClosing: boolean;
   registerMediaElement: (
     key: string,
-    element: PortfolioMediaElement | null
+    element: PortfolioMediaElement | null,
   ) => void;
   onClose: () => void;
   onExited: () => void;
 }) {
-  const carouselScreenshots = screenshots.length > 0 ? screenshots : [screenshot];
+  const carouselScreenshots =
+    screenshots.length > 0 ? screenshots : [screenshot];
   const carouselCount = carouselScreenshots.length;
   const boundedActiveScreenshotIndex = Math.max(
     0,
-    Math.min(carouselCount - 1, activeScreenshotIndex)
+    Math.min(carouselCount - 1, activeScreenshotIndex),
   );
   const renderedCarouselScreenshots =
     getLoopingCarouselEntries(carouselScreenshots);
   const [isDragging, setIsDragging] = useState(false);
   const [isZoomed, setIsZoomed] = useState(false);
-  const [isTransitioning, setIsTransitioning] = useState(Boolean(transitionRect));
+  const [isTransitioning, setIsTransitioning] = useState(
+    Boolean(transitionRect),
+  );
   const [isBoundaryBlurTransition, setIsBoundaryBlurTransition] =
     useState(false);
   const renderedCarouselIndex = getCanonicalRenderedCarouselIndex(
     boundedActiveScreenshotIndex,
-    carouselCount
+    carouselCount,
   );
   const backdropRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
@@ -6790,12 +4076,12 @@ function ImageModal({
   }, []);
   const prefersReducedMotion = useCallback(
     () => window.matchMedia('(prefers-reduced-motion: reduce)').matches,
-    []
+    [],
   );
   const transformFor = useCallback(
     (nextOffset: { x: number; y: number }, nextScale: number) =>
       `translate3d(${nextOffset.x}px, ${nextOffset.y}px, 0) scale(${nextScale})`,
-    []
+    [],
   );
   const applyLiveTransform = useCallback(() => {
     const imageFrame = imageFrameRef.current;
@@ -6806,7 +4092,7 @@ function ImageModal({
 
     imageFrame.style.transform = transformFor(
       liveOffsetRef.current,
-      liveScaleRef.current
+      liveScaleRef.current,
     );
   }, [transformFor]);
   const scheduleLiveTransform = useCallback(() => {
@@ -6837,7 +4123,7 @@ function ImageModal({
         applyLiveTransform();
       }
     },
-    [applyLiveTransform, updateZoomedState]
+    [applyLiveTransform, updateZoomedState],
   );
   const setLiveScale = useCallback(
     (nextScale: number) => {
@@ -6845,7 +4131,7 @@ function ImageModal({
       updateZoomedState(liveScaleRef.current > 1);
       scheduleLiveTransform();
     },
-    [clampScale, scheduleLiveTransform, updateZoomedState]
+    [clampScale, scheduleLiveTransform, updateZoomedState],
   );
 
   useLayoutEffect(() => {
@@ -6938,7 +4224,7 @@ function ImageModal({
           ease: isClosing ? 'power2.in' : 'expo.out',
           willChange: 'left, top, width, height, transform',
         },
-        0
+        0,
       )
       .to(
         backdrop,
@@ -6947,7 +4233,7 @@ function ImageModal({
           duration: frameDuration,
           ease: isClosing ? 'power2.in' : 'power2.out',
         },
-        0
+        0,
       )
       .to(
         closeButton,
@@ -6959,7 +4245,7 @@ function ImageModal({
           duration: accessoryDuration,
           ease: isClosing ? 'power2.in' : 'expo.out',
         },
-        0
+        0,
       );
 
     return () => {
@@ -6992,7 +4278,7 @@ function ImageModal({
       ? isCarouselBoundaryJump(
           previousState.activeIndex,
           boundedActiveScreenshotIndex,
-          carouselCount
+          carouselCount,
         )
       : false;
 
@@ -7002,15 +4288,14 @@ function ImageModal({
     };
     carouselTweenRef.current?.kill();
     const targetX =
-      -renderedCarouselIndex *
-      (window.innerWidth + MODAL_CAROUSEL_GAP_PX);
+      -renderedCarouselIndex * (window.innerWidth + MODAL_CAROUSEL_GAP_PX);
     const carouselStride = window.innerWidth + MODAL_CAROUSEL_GAP_PX;
 
     if (isFirstPosition || didCarouselChange) {
       setIsBoundaryBlurTransition(false);
       gsap.set(carouselTrack, { x: targetX, xPercent: 0 });
       indicatorMotionControllerRef.current?.update(
-        boundedActiveScreenshotIndex
+        boundedActiveScreenshotIndex,
       );
       return;
     }
@@ -7030,7 +4315,7 @@ function ImageModal({
       onUpdate: () => {
         const liveX = Number(gsap.getProperty(carouselTrack, 'x')) || 0;
         indicatorMotionControllerRef.current?.update(
-          -liveX / carouselStride - 1
+          -liveX / carouselStride - 1,
         );
       },
       onComplete: () => {
@@ -7040,10 +4325,10 @@ function ImageModal({
         setIsBoundaryBlurTransition(false);
         gsap.set(carouselTrack, { clearProps: 'willChange' });
         indicatorMotionControllerRef.current?.update(
-          boundedActiveScreenshotIndex
+          boundedActiveScreenshotIndex,
         );
         indicatorMotionControllerRef.current?.complete(
-          boundedActiveScreenshotIndex
+          boundedActiveScreenshotIndex,
         );
       },
       onInterrupt: () => {
@@ -7080,9 +4365,7 @@ function ImageModal({
 
       carouselTweenRef.current?.kill();
       gsap.set(carouselTrack, {
-        x:
-          -renderedCarouselIndex *
-          (window.innerWidth + MODAL_CAROUSEL_GAP_PX),
+        x: -renderedCarouselIndex * (window.innerWidth + MODAL_CAROUSEL_GAP_PX),
         xPercent: 0,
       });
     };
@@ -7099,7 +4382,7 @@ function ImageModal({
       presentationTimelineRef.current?.kill();
       carouselTweenRef.current?.kill();
     },
-    []
+    [],
   );
 
   const handleWheel = useCallback(
@@ -7112,7 +4395,7 @@ function ImageModal({
 
       setLiveScale(liveScaleRef.current + event.deltaY * -0.002);
     },
-    [isClosing, isTransitioning, setLiveScale]
+    [isClosing, isTransitioning, setLiveScale],
   );
 
   const handleDoubleClick = useCallback(
@@ -7132,13 +4415,7 @@ function ImageModal({
       resetLiveView();
       setIsDragging(false);
     },
-    [
-      dragRef,
-      isClosing,
-      isTransitioning,
-      pinchRef,
-      resetLiveView,
-    ]
+    [dragRef, isClosing, isTransitioning, pinchRef, resetLiveView],
   );
 
   const handlePointerDown = useCallback(
@@ -7170,7 +4447,7 @@ function ImageModal({
         dragging: true,
       };
     },
-    [dragRef, isClosing, isTransitioning]
+    [dragRef, isClosing, isTransitioning],
   );
 
   const handlePointerMove = useCallback(
@@ -7187,7 +4464,7 @@ function ImageModal({
       };
       scheduleLiveTransform();
     },
-    [dragRef, scheduleLiveTransform]
+    [dragRef, scheduleLiveTransform],
   );
 
   const stopPointerDrag = useCallback(
@@ -7200,7 +4477,7 @@ function ImageModal({
         setIsDragging(false);
       }
     },
-    [dragRef]
+    [dragRef],
   );
 
   const handleTouchStart = useCallback(
@@ -7216,7 +4493,7 @@ function ImageModal({
         };
       }
     },
-    [isClosing, isTransitioning, pinchRef]
+    [isClosing, isTransitioning, pinchRef],
   );
 
   const handleTouchMove = useCallback(
@@ -7232,9 +4509,11 @@ function ImageModal({
 
       event.preventDefault();
       const nextDistance = getTouchDistance(event);
-      setLiveScale((nextDistance / pinchRef.current.distance) * pinchRef.current.scale);
+      setLiveScale(
+        (nextDistance / pinchRef.current.distance) * pinchRef.current.scale,
+      );
     },
-    [isClosing, isTransitioning, pinchRef, setLiveScale]
+    [isClosing, isTransitioning, pinchRef, setLiveScale],
   );
 
   const handleTouchEnd = useCallback(() => {
@@ -7289,10 +4568,7 @@ function ImageModal({
             >
               {renderedCarouselScreenshots.map(
                 ({ item: carouselScreenshot, key }) => (
-                  <div
-                    key={key}
-                    className="relative h-full w-screen shrink-0"
-                  >
+                  <div key={key} className="relative h-full w-screen shrink-0">
                     <ScreenshotMedia
                       screenshot={carouselScreenshot}
                       mediaKey={modalMediaKey(carouselScreenshot)}
@@ -7300,11 +4576,11 @@ function ImageModal({
                       priority={carouselScreenshot.id === screenshot.id}
                       sizes="100vw"
                       className={getCarouselMediaClass(
-                        carouselCount > 2 && isBoundaryBlurTransition
+                        carouselCount > 2 && isBoundaryBlurTransition,
                       )}
                     />
                   </div>
-                )
+                ),
               )}
             </div>
           </div>
