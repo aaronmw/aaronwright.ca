@@ -5396,7 +5396,6 @@ function AnimatedSlideIndicators({
     ringTweenRef.current?.kill();
     const tween = gsap.to(ring, {
       x: `${getHorizontalIndicatorRingX(index)}rem`,
-      yPercent: -50,
       duration: window.matchMedia('(prefers-reduced-motion: reduce)').matches
         ? 0
         : duration,
@@ -5455,7 +5454,6 @@ function AnimatedSlideIndicators({
       ringTweenRef.current?.kill();
       const tween = gsap.to(ring, {
         x: targetX,
-        yPercent: -50,
         duration: animatePosition ? 0.3 : 0.2,
         ease: 'power3.out',
         overwrite: 'auto',
@@ -5476,7 +5474,7 @@ function AnimatedSlideIndicators({
 
     if (snapIndex === null || snapChanged || reducedMotion) {
       ringTweenRef.current?.kill();
-      gsap.set(ring, { x: targetX, yPercent: -50 });
+      gsap.set(ring, { x: targetX });
       applyActiveScaleFromRing();
       pointerAcquiringRef.current = false;
       snapTransitioningRef.current = false;
@@ -5576,7 +5574,6 @@ function AnimatedSlideIndicators({
     ringTweenRef.current = null;
     gsap.set(ring, {
       x: `${getHorizontalIndicatorRingX(position)}rem`,
-      yPercent: -50,
     });
     applyActiveScale(position);
   };
@@ -5791,7 +5788,6 @@ function AnimatedSlideIndicators({
     if (!hasPosition) {
       gsap.set(ring, {
         x: `${targetXRem}rem`,
-        yPercent: -50,
         color,
         opacity: targetCount > 0 ? 1 : 0,
       });
@@ -5814,7 +5810,6 @@ function AnimatedSlideIndicators({
     ringTweenRef.current?.kill();
     const tween = gsap.to(ring, {
       x: `${targetXRem}rem`,
-      yPercent: -50,
       color,
       opacity: targetCount > 0 ? 1 : 0,
       duration: reducedMotion ? 0 : 0.5,
@@ -5853,7 +5848,10 @@ function AnimatedSlideIndicators({
         elementRef={(node) => {
           ringRef.current = node;
         }}
-        className="absolute left-0 top-1/2 z-10"
+        className="absolute left-0 z-10"
+        style={{
+          top: `calc(50% - ${NAVIGATION_RING_SIZE_REM / 2}rem)`,
+        }}
         dataAttributes={{ 'data-portfolio-slide-indicator-marker': 'true' }}
       />
       <div
@@ -6197,7 +6195,7 @@ function CircularIconButton({
       {visualRef || secondaryVisual ? (
         <span
           ref={visualRef}
-          className="relative z-10 grid size-7 place-items-center"
+          className="relative z-10 grid h-full w-full place-items-center"
         >
           <FontAwesomeIcon
             ref={iconRef}
