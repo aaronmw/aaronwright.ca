@@ -107,9 +107,8 @@ export class SectionNavigationRenderer {
         );
       }
 
-      if (view.tooltip && this.isTooltipVisible(side)) {
-        view.tooltip.style.top = `${state.coordinate}px`;
-        view.tooltip.style.backgroundColor = state.color;
+      if (this.isTooltipVisible(side)) {
+        this.syncTooltip(side);
       }
     });
 
@@ -120,6 +119,17 @@ export class SectionNavigationRenderer {
     if (this.latestState) {
       this.renderAffordances(this.latestState, scrubbed);
     }
+  }
+
+  syncTooltip(side: SectionNavigationSide) {
+    const tooltip = this.views[side].tooltip;
+
+    if (!tooltip || !this.latestState) {
+      return;
+    }
+
+    tooltip.style.top = `${this.latestState.coordinate}px`;
+    tooltip.style.backgroundColor = this.latestState.color;
   }
 
   destroy() {

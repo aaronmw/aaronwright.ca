@@ -180,7 +180,22 @@ export function SectionNavigation({
     setTooltipVisibility('right', false);
   };
 
-  const showTooltip = (side: SectionNavigationSide, title: string) => {
+  const setTooltipCoordinate = (
+    side: SectionNavigationSide,
+    coordinate: number,
+  ) => {
+    const tooltip = viewsRef.current[side].tooltip;
+
+    if (tooltip) {
+      tooltip.style.top = `${coordinate}px`;
+    }
+  };
+
+  const showTooltip = (
+    side: SectionNavigationSide,
+    title: string,
+    pointerCoordinate?: number,
+  ) => {
     const tooltipText = viewsRef.current[side].tooltipText;
 
     if (tooltipText) {
@@ -192,6 +207,10 @@ export function SectionNavigation({
     }
 
     setTooltipVisibility(side === 'left' ? 'right' : 'left', false);
+    rendererRef.current?.syncTooltip(side);
+    if (pointerCoordinate !== undefined) {
+      setTooltipCoordinate(side, pointerCoordinate);
+    }
     setTooltipVisibility(side, true);
   };
 
@@ -208,7 +227,15 @@ export function SectionNavigation({
       return;
     }
 
-    showTooltip(intent.side, intent.title);
+    const pointerCoordinate =
+      intent === pointerTooltipIntentRef.current
+        ? navigationControllerRef.current?.getPointerCoordinate()
+        : null;
+    showTooltip(
+      intent.side,
+      intent.title,
+      pointerCoordinate ?? undefined,
+    );
   };
 
   const suppressTooltips = () => {
@@ -483,6 +510,11 @@ export function SectionNavigation({
 
       if (pointerY !== null) {
         navigationControllerRef.current?.trackPointer(pointerY);
+        const side = pointerOwnerRef.current;
+
+        if (side && !tooltipsSuppressedRef.current) {
+          setTooltipCoordinate(side, pointerY);
+        }
       }
     });
   };
@@ -558,7 +590,7 @@ export function SectionNavigation({
         title: tooltipTitle,
       };
       engagePointer(side, event.clientY);
-      showTooltip(side, tooltipTitle);
+      showTooltip(side, tooltipTitle, event.clientY);
     },
     onItemPointerDown: (
       _side,

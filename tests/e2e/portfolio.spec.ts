@@ -126,6 +126,48 @@ test('focused section navigation keeps its tooltip through navigation', async ({
   await expect(tooltip).toBeVisible()
 })
 
+test('section navigation tooltip follows the pointer within an item', async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name.includes('iphone'))
+  await page.goto('/work/nextphrase')
+  await waitForPortfolio(page)
+
+  const item = page.locator(
+    'button[data-portfolio-section-nav-side="left"][data-portfolio-section-nav-index="3"]',
+  )
+  const tooltip = page.locator(
+    '[data-portfolio-section-nav-zone="left"] [role="tooltip"]',
+  )
+  const itemBox = await item.boundingBox()
+
+  expect(itemBox).not.toBeNull()
+  const pointerX = itemBox!.x + itemBox!.width / 2
+  const firstPointerY = itemBox!.y + itemBox!.height * 0.35
+  const secondPointerY = itemBox!.y + itemBox!.height * 0.65
+
+  await page.mouse.move(pointerX, firstPointerY)
+  await expect(tooltip).toBeVisible()
+  await expect
+    .poll(async () => {
+      const tooltipBox = await tooltip.boundingBox()
+      return tooltipBox
+        ? Math.abs(tooltipBox.y + tooltipBox.height / 2 - firstPointerY)
+        : Number.POSITIVE_INFINITY
+    })
+    .toBeLessThanOrEqual(1)
+
+  await page.mouse.move(pointerX, secondPointerY)
+  await expect
+    .poll(async () => {
+      const tooltipBox = await tooltip.boundingBox()
+      return tooltipBox
+        ? Math.abs(tooltipBox.y + tooltipBox.height / 2 - secondPointerY)
+        : Number.POSITIVE_INFINITY
+    })
+    .toBeLessThanOrEqual(1)
+})
+
 test('inline zoom keeps navigation available and exits with vertical intent', async ({
   page,
 }, testInfo) => {
