@@ -27,6 +27,7 @@ import type {
   SectionNavigationGeometryMode,
   SectionNavigationHandle,
   SectionNavigationItem,
+  SectionNavigationProps,
   SectionNavigationView,
 } from './sectionNavigationTypes';
 
@@ -83,24 +84,7 @@ export function SectionNavigation({
   onHoveredChange,
   onHorizontalNavigate,
   onVerticalNavigate,
-}: {
-  controllerRef: MutableRefObject<SectionNavigationHandle | null>;
-  sourceRef: MutableRefObject<HTMLDivElement | null>;
-  menuTitleRefs: MutableRefObject<Array<HTMLSpanElement | null>>;
-  items: SectionNavigationItem[];
-  activeIndex: number;
-  hovered: boolean;
-  geometryMode: SectionNavigationGeometryMode;
-  hideRightRail: boolean;
-  modalLayerActive: boolean;
-  modalPresentationActive: boolean;
-  canMoveHorizontally: boolean;
-  previousSlideTitle: string;
-  nextSlideTitle: string;
-  onHoveredChange: (hovered: boolean) => void;
-  onHorizontalNavigate: (side: SectionNavigationSide) => void;
-  onVerticalNavigate: (itemIndex: number, sourceLinked: boolean) => void;
-}) {
+}: SectionNavigationProps) {
   const [geometry, setGeometry] = useState({
     centers: items.map((_, index) => 120 + index * 60),
     height: 1,

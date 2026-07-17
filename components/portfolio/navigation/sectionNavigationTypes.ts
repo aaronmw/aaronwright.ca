@@ -1,3 +1,4 @@
+import type { MutableRefObject } from 'react';
 import type { SectionNavigationSide } from './navigationGeometry';
 
 export type SectionNavigationAxis = 'horizontal' | 'vertical';
@@ -38,4 +39,23 @@ export type SectionNavigationView = {
   buttons: Array<HTMLButtonElement | null>;
   tooltip: HTMLDivElement | null;
   tooltipText: HTMLSpanElement | null;
+};
+
+export type SectionNavigationProps = {
+  controllerRef: MutableRefObject<SectionNavigationHandle | null>;
+  sourceRef: MutableRefObject<HTMLDivElement | null>;
+  menuTitleRefs: MutableRefObject<Array<HTMLSpanElement | null>>;
+  items: SectionNavigationItem[];
+  activeIndex: number;
+  hovered: boolean;
+  geometryMode: SectionNavigationGeometryMode;
+  hideRightRail: boolean;
+  modalLayerActive: boolean;
+  modalPresentationActive: boolean;
+  canMoveHorizontally: boolean;
+  previousSlideTitle: string;
+  nextSlideTitle: string;
+  onHoveredChange: (hovered: boolean) => void;
+  onHorizontalNavigate: (side: SectionNavigationSide) => void;
+  onVerticalNavigate: (itemIndex: number, sourceLinked: boolean) => void;
 };
