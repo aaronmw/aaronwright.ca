@@ -67,6 +67,12 @@ type AffordanceOpacityMotions = {
   dots: Array<AffordanceOpacityMotion | null>;
 };
 
+type TooltipIntent = {
+  itemIndex: number;
+  side: SectionNavigationSide;
+  title: string;
+};
+
 const SVG_WIDTH = 52;
 const SVG_CENTER_X = SVG_WIDTH / 2;
 const ARROW_SIZE = 16;
@@ -253,6 +259,8 @@ export function SectionNavigation({
   const pinnedAxisRef = useRef<SectionNavigationAxis | null>(null);
   const pinnedIndexRef = useRef<number | null>(null);
   const tooltipsSuppressedRef = useRef(false);
+  const pointerTooltipIntentRef = useRef<TooltipIntent | null>(null);
+  const focusTooltipIntentRef = useRef<TooltipIntent | null>(null);
   const tooltipVisibleRef = useRef<Record<SectionNavigationSide, boolean>>({
     left: false,
     right: false,
@@ -393,9 +401,38 @@ export function SectionNavigation({
       tooltipText.textContent = title;
     }
 
-    if (!tooltipsSuppressedRef.current) {
-      setTooltipVisibility(side, true);
+    if (tooltipsSuppressedRef.current) {
+      return;
     }
+
+    setTooltipVisibility(side === 'left' ? 'right' : 'left', false);
+    setTooltipVisibility(side, true);
+  };
+
+  const restoreTooltip = () => {
+    if (tooltipsSuppressedRef.current) {
+      return;
+    }
+
+    const intent =
+      pointerTooltipIntentRef.current ?? focusTooltipIntentRef.current;
+
+    if (!intent) {
+      hideTooltips();
+      return;
+    }
+
+    showTooltip(intent.side, intent.title);
+  };
+
+  const suppressTooltips = () => {
+    tooltipsSuppressedRef.current = true;
+    hideTooltips();
+  };
+
+  const releaseTooltipSuppression = () => {
+    tooltipsSuppressedRef.current = false;
+    restoreTooltip();
   };
 
   const getAffordanceLayers = (itemIndex: number) => {
@@ -701,7 +738,7 @@ export function SectionNavigation({
         controller.completePin(pinnedIndex);
         pinnedIndexRef.current = null;
         pinnedAxisRef.current = null;
-        tooltipsSuppressedRef.current = false;
+        releaseTooltipSuppression();
       }
 
       const pointerCoordinate = controller.getPointerCoordinate();
@@ -709,6 +746,8 @@ export function SectionNavigation({
       if (controller.isPointerArmed() && pointerCoordinate !== null) {
         controller.trackPointer(pointerCoordinate, true);
       }
+
+      restoreTooltip();
     };
     const handleScroll = () => {
       controller.setSnappingEnabled(false);
@@ -741,7 +780,7 @@ export function SectionNavigation({
       cancel: () => {
         pinnedIndexRef.current = null;
         pinnedAxisRef.current = null;
-        tooltipsSuppressedRef.current = false;
+        releaseTooltipSuppression();
         navigationControllerRef.current?.cancelPin();
       },
       click: (index, side = 'left') => {
@@ -758,8 +797,7 @@ export function SectionNavigation({
       pin: (index, axis, sourceLinked = false) => {
         pinnedIndexRef.current = index;
         pinnedAxisRef.current = axis;
-        tooltipsSuppressedRef.current = true;
-        hideTooltips();
+        suppressTooltips();
         navigationControllerRef.current?.pin(index, sourceLinked);
       },
       preview: (index, previewed) => {
@@ -795,7 +833,7 @@ export function SectionNavigation({
         navigationControllerRef.current?.completePin(pinnedIndex);
         pinnedIndexRef.current = null;
         pinnedAxisRef.current = null;
-        tooltipsSuppressedRef.current = false;
+        releaseTooltipSuppression();
       },
       syncSourcePosition,
     };
@@ -840,9 +878,13 @@ export function SectionNavigation({
     pointerOwnerRef.current = null;
     pendingPointerYRef.current = null;
     previewIndexRef.current = null;
+    if (pointerTooltipIntentRef.current?.side === side) {
+      pointerTooltipIntentRef.current = null;
+    }
     onHoveredChange(false);
     hideTooltips();
     navigationControllerRef.current?.releasePointer(true);
+    restoreTooltip();
   };
 
   const handlePointerRelease = (
@@ -1027,6 +1069,11 @@ export function SectionNavigation({
                 }
 
                 previewIndexRef.current = itemIndex;
+                pointerTooltipIntentRef.current = {
+                  itemIndex,
+                  side,
+                  title: tooltipTitle,
+                };
                 engagePointer(side, event.clientY);
                 showTooltip(side, tooltipTitle);
               }}
@@ -1035,6 +1082,7 @@ export function SectionNavigation({
                   pointerOwnerRef.current = null;
                   pendingPointerYRef.current = null;
                   previewIndexRef.current = null;
+                  pointerTooltipIntentRef.current = null;
                   onHoveredChange(false);
                   hideTooltips();
                   navigationControllerRef.current?.releasePointer(false);
@@ -1046,8 +1094,7 @@ export function SectionNavigation({
                 pinnedAxisRef.current = hasHorizontalAction
                   ? 'horizontal'
                   : 'vertical';
-                tooltipsSuppressedRef.current = true;
-                hideTooltips();
+                suppressTooltips();
                 navigationControllerRef.current?.pin(itemIndex);
               }}
               onPointerUp={(event) => handlePointerRelease(event, itemIndex)}
@@ -1056,17 +1103,29 @@ export function SectionNavigation({
               }
               onFocus={() => {
                 previewIndexRef.current = itemIndex;
+                focusTooltipIntentRef.current = {
+                  itemIndex,
+                  side,
+                  title: tooltipTitle,
+                };
                 onHoveredChange(true);
                 navigationControllerRef.current?.focus(itemIndex);
                 showTooltip(side, tooltipTitle);
               }}
               onBlur={() => {
                 previewIndexRef.current = null;
+                if (
+                  focusTooltipIntentRef.current?.side === side &&
+                  focusTooltipIntentRef.current.itemIndex === itemIndex
+                ) {
+                  focusTooltipIntentRef.current = null;
+                }
                 if (pointerOwnerRef.current === null) {
                   onHoveredChange(false);
                 }
                 navigationControllerRef.current?.blur(itemIndex);
                 hideTooltips();
+                restoreTooltip();
               }}
               onClick={(event) => {
                 if (event.detail === 0) {
@@ -1090,7 +1149,7 @@ export function SectionNavigation({
                 } else {
                   pinnedIndexRef.current = null;
                   pinnedAxisRef.current = null;
-                  tooltipsSuppressedRef.current = false;
+                  releaseTooltipSuppression();
                   navigationControllerRef.current?.completePin(itemIndex);
                 }
               }}
