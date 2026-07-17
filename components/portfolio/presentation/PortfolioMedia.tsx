@@ -76,7 +76,9 @@ function ZoomableScreenshot({
       ? 'cursor-grabbing'
       : 'cursor-grab'
     : '';
-  const isPresented = isLocallyPresented || (active && presentationActive);
+  const isPresented =
+    isLocallyPresented ||
+    (presentationActive && (expandToViewport || active));
   const isFixedViewportPresentation = isPresented && !expandToViewport;
 
   return (

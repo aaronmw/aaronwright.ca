@@ -180,6 +180,13 @@ test('inline zoom keeps navigation available and exits with vertical intent', as
     page.locator('[data-portfolio-inline-zoomed="true"]'),
   ).toBeVisible()
 
+  const nextSlideSurface = page.locator(
+    '[data-portfolio-screenshot-id="normalizer"]',
+  )
+  await expect
+    .poll(async () => (await nextSlideSurface.boundingBox())?.width ?? 0)
+    .toBe(page.viewportSize()!.width)
+
   await page.keyboard.press('ArrowRight')
   await expect(page).toHaveURL(/\/work\/aarons-toolbox\/normalizer$/)
   await expect(
