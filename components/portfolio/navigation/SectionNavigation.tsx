@@ -4,6 +4,7 @@ import {
   MutableRefObject,
   PointerEvent as ReactPointerEvent,
   useEffect,
+  useEffectEvent,
   useLayoutEffect,
   useRef,
   useState,
@@ -46,6 +47,7 @@ type TooltipIntent = {
 
 const TOOLTIP_DURATION = 0.15;
 const TOOLTIP_ITEM_RADIUS = NAVIGATION_RING_DIAMETER / 2;
+const POINTER_FOCUS_WINDOW_MS = 1000;
 
 function syncNavigationSourcePosition(
   source: HTMLDivElement | null,
@@ -126,6 +128,11 @@ export function SectionNavigation({
   const tooltipsSuppressedRef = useRef(false);
   const pointerTooltipIntentRef = useRef<TooltipIntent | null>(null);
   const focusTooltipIntentRef = useRef<TooltipIntent | null>(null);
+  const pointerFocusIntentRef = useRef<{
+    createdAt: number;
+    itemIndex: number;
+    side: SectionNavigationSide;
+  } | null>(null);
   const tooltipVisibleRef = useRef<Record<SectionNavigationSide, boolean>>({
     left: false,
     right: false,
@@ -165,15 +172,25 @@ export function SectionNavigation({
     }
 
     tooltipVisibleRef.current[side] = visible;
+    gsap.killTweensOf(tooltip);
+
+    if (visible) {
+      gsap.set(tooltip, { visibility: 'visible' });
+    }
 
     gsap.to(tooltip, {
-      autoAlpha: visible ? 1 : 0,
+      opacity: visible ? 1 : 0,
       x: visible ? 0 : side === 'left' ? -4 : 4,
       duration: window.matchMedia('(prefers-reduced-motion: reduce)').matches
         ? 0
         : TOOLTIP_DURATION,
       ease: 'power2.out',
-      overwrite: 'auto',
+      overwrite: true,
+      onComplete: () => {
+        if (!tooltipVisibleRef.current[side]) {
+          gsap.set(tooltip, { visibility: 'hidden' });
+        }
+      },
     });
   };
 
@@ -361,6 +378,12 @@ export function SectionNavigation({
     );
   };
 
+  const hideTooltipsEvent = useEffectEvent(hideTooltips);
+  const releaseTooltipSuppressionEvent = useEffectEvent(
+    releaseTooltipSuppression,
+  );
+  const restoreTooltipEvent = useEffectEvent(restoreTooltip);
+
   useEffect(() => {
     const source = sourceRef.current;
     const controller = navigationControllerRef.current;
@@ -390,7 +413,7 @@ export function SectionNavigation({
         controller.completePin(pinnedIndex);
         pinnedIndexRef.current = null;
         pinnedAxisRef.current = null;
-        releaseTooltipSuppression();
+        releaseTooltipSuppressionEvent();
       }
 
       const pointerCoordinate = controller.getPointerCoordinate();
@@ -399,11 +422,11 @@ export function SectionNavigation({
         controller.trackPointer(pointerCoordinate, true);
       }
 
-      restoreTooltip();
+      restoreTooltipEvent();
     };
     const handleScroll = () => {
       controller.setSnappingEnabled(false);
-      hideTooltips();
+      hideTooltipsEvent();
       if (!source.hasAttribute('data-portfolio-programmatic-scroll')) {
         syncSource();
       }
@@ -600,6 +623,15 @@ export function SectionNavigation({
     event.currentTarget.releasePointerCapture?.(event.pointerId);
   };
 
+  const restoreKeyboardFocus = (
+    side: SectionNavigationSide,
+    itemIndex: number,
+  ) => {
+    requestAnimationFrame(() => {
+      viewsRef.current[side].buttons[itemIndex]?.focus({ preventScroll: true });
+    });
+  };
+
   const railActions: SectionNavigationRailActions = {
     onItemGroupRef: (side, itemIndex, node) => {
       viewsRef.current[side].itemGroups[itemIndex] = node;
@@ -645,11 +677,19 @@ export function SectionNavigation({
       syncPointerTooltip(side, event.clientY);
     },
     onItemPointerDown: (
-      _side,
+      side,
       itemIndex,
       hasHorizontalAction,
       event,
     ) => {
+      pointerFocusIntentRef.current = {
+        createdAt: performance.now(),
+        itemIndex,
+        side,
+      };
+      focusTooltipIntentRef.current = null;
+      pointerTooltipIntentRef.current = null;
+
       if (event.pointerType === 'touch') {
         pointerOwnerRef.current = null;
         pendingPointerYRef.current = null;
@@ -672,7 +712,30 @@ export function SectionNavigation({
     onItemPointerRelease: (itemIndex, event) => {
       handlePointerRelease(event, itemIndex);
     },
-    onFocus: (side, itemIndex, tooltipTitle) => {
+    onFocus: (side, itemIndex, tooltipTitle, event) => {
+      const pointerFocusIntent = pointerFocusIntentRef.current;
+      const isRecentPointerFocus = Boolean(
+        pointerFocusIntent &&
+          performance.now() - pointerFocusIntent.createdAt <=
+            POINTER_FOCUS_WINDOW_MS,
+      );
+
+      if (
+        pointerOwnerRef.current !== null ||
+        (isRecentPointerFocus &&
+          pointerFocusIntent?.side === side &&
+          pointerFocusIntent.itemIndex === itemIndex)
+      ) {
+        pointerFocusIntentRef.current = null;
+        focusTooltipIntentRef.current = null;
+        return;
+      }
+
+      if (!event.currentTarget.matches(':focus-visible')) {
+        focusTooltipIntentRef.current = null;
+        return;
+      }
+
       previewIndexRef.current = itemIndex;
       focusTooltipIntentRef.current = {
         itemIndex,
@@ -707,10 +770,14 @@ export function SectionNavigation({
       }
 
       if (hasHorizontalAction) {
+        const sourceLinked = event.detail === 0;
         pinnedIndexRef.current = itemIndex;
         pinnedAxisRef.current = 'horizontal';
         navigationControllerRef.current?.pin(itemIndex);
         onHorizontalNavigate(side);
+        if (sourceLinked) {
+          restoreKeyboardFocus(side, itemIndex);
+        }
         return;
       }
 
@@ -720,6 +787,9 @@ export function SectionNavigation({
         pinnedAxisRef.current = 'vertical';
         navigationControllerRef.current?.pin(itemIndex, sourceLinked);
         onVerticalNavigate(itemIndex, sourceLinked);
+        if (sourceLinked) {
+          restoreKeyboardFocus(side, itemIndex);
+        }
       } else {
         pinnedIndexRef.current = null;
         pinnedAxisRef.current = null;

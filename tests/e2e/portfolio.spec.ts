@@ -175,6 +175,29 @@ test('section navigation tooltip follows the pointer within an item', async ({
   await expect(tooltip).toBeHidden()
 })
 
+test('pointer-clicked section navigation does not retain its tooltip', async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name.includes('iphone'))
+  await page.goto('/work/mini-series-browser/descriptions-only')
+  await waitForPortfolio(page)
+
+  const activeItem = page.locator(
+    'button[data-portfolio-section-nav-side="left"][data-portfolio-section-nav-index="4"]',
+  )
+  const tooltip = page.locator(
+    '[data-portfolio-section-nav-zone="left"] [role="tooltip"]',
+  )
+
+  await activeItem.click()
+  await page.mouse.move(
+    page.viewportSize()!.width / 2,
+    page.viewportSize()!.height / 2,
+  )
+  await expect(page).toHaveURL(/\/work\/mini-series-browser\/poster-grid$/)
+  await expect(tooltip).toBeHidden()
+})
+
 test('inline zoom keeps navigation available and exits with vertical intent', async ({
   page,
 }, testInfo) => {
