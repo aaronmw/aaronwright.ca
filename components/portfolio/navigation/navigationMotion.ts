@@ -256,7 +256,10 @@ export class TrackedNavigationController {
 
     if (this.mode === 'source-linked') {
       this.moveToPosition(this.sourcePosition, { immediate });
+      return true;
     }
+
+    return false;
   }
 
   setSnappingEnabled(enabled: boolean) {

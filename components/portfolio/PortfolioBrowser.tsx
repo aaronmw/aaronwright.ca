@@ -24,7 +24,6 @@ import {
 import Image from 'next/image';
 import Link from 'next/link';
 import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import type { IconProp } from '@fortawesome/fontawesome-svg-core';
 import {
@@ -992,7 +991,10 @@ export function PortfolioBrowser({
     keyboardSurfaceRef.current?.focus({ preventScroll: true });
   }, []);
   const restoreVerticalScrollSnap = useCallback(() => {
-    verticalRef.current?.style.removeProperty('scroll-snap-type');
+    const vertical = verticalRef.current;
+
+    vertical?.style.removeProperty('scroll-snap-type');
+    vertical?.removeAttribute('data-portfolio-programmatic-scroll');
   }, []);
   const cancelVerticalScrollTween = useCallback(() => {
     verticalScrollTweenRef.current?.kill();
@@ -1655,15 +1657,14 @@ export function PortfolioBrowser({
           vertical.scrollTo({ top: targetScrollTop, behavior: 'auto' });
         } else {
           vertical.style.setProperty('scroll-snap-type', 'none');
+          vertical.setAttribute('data-portfolio-programmatic-scroll', 'true');
           const tween = gsap.to(vertical, {
             scrollTop: targetScrollTop,
             duration: getNavigationTravelDuration(distanceInScreens),
             ease: NAVIGATION_TRAVEL_EASE,
             overwrite: 'auto',
-            onUpdate: () => {
-              sectionNavigationControllerRef.current?.syncSourcePosition();
-              ScrollTrigger.update();
-            },
+            onUpdate: () =>
+              sectionNavigationControllerRef.current?.syncSourcePosition(),
             onComplete: () => {
               if (verticalScrollTweenRef.current === tween) {
                 verticalScrollTweenRef.current = null;

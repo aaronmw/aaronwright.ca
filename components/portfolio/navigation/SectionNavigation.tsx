@@ -253,12 +253,20 @@ export function SectionNavigation({
   const pinnedAxisRef = useRef<SectionNavigationAxis | null>(null);
   const pinnedIndexRef = useRef<number | null>(null);
   const tooltipsSuppressedRef = useRef(false);
+  const tooltipVisibleRef = useRef<Record<SectionNavigationSide, boolean>>({
+    left: false,
+    right: false,
+  });
   const pointerFrameRef = useRef<number | null>(null);
   const pendingPointerYRef = useRef<number | null>(null);
   const scrollEndTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
     null,
   );
   const latestRenderRef = useRef<NavigationRenderState | null>(null);
+  const sourceUpdateRef = useRef(false);
+  const attributeCacheRef = useRef(
+    new WeakMap<SVGElement, Map<string, string>>(),
+  );
   const geometryRef = useRef(geometry);
   const activeIndexRef = useRef(activeIndex);
   const hoveredRef = useRef(hovered);
@@ -276,6 +284,7 @@ export function SectionNavigation({
     kind: keyof AffordanceOpacityMotions,
     itemIndex: number,
     target: number,
+    immediate = false,
   ) => {
     const view = viewsRef.current[side];
     const element =
@@ -313,7 +322,36 @@ export function SectionNavigation({
     }
 
     motion.target = target;
-    motion.setter(target);
+    if (immediate) {
+      motion.setter.tween.pause();
+      gsap.set(element, { opacity: target });
+    } else {
+      motion.setter(target);
+    }
+  };
+
+  const setCachedAttribute = (
+    element: SVGElement | null,
+    name: string,
+    value: string,
+  ) => {
+    if (!element) {
+      return;
+    }
+
+    let cache = attributeCacheRef.current.get(element);
+
+    if (!cache) {
+      cache = new Map();
+      attributeCacheRef.current.set(element, cache);
+    }
+
+    if (cache.get(name) === value) {
+      return;
+    }
+
+    cache.set(name, value);
+    element.setAttribute(name, value);
   };
 
   const setTooltipVisibility = (
@@ -325,6 +363,12 @@ export function SectionNavigation({
     if (!tooltip) {
       return;
     }
+
+    if (tooltipVisibleRef.current[side] === visible) {
+      return;
+    }
+
+    tooltipVisibleRef.current[side] = visible;
 
     gsap.to(tooltip, {
       autoAlpha: visible ? 1 : 0,
@@ -398,34 +442,15 @@ export function SectionNavigation({
     return { arrowOpacity: 1, dotOpacity: 0 };
   };
 
-  const renderNavigation = (state: NavigationRenderState) => {
-    latestRenderRef.current = state;
+  const renderAffordances = (
+    state: NavigationRenderState,
+    scrubbed = false,
+  ) => {
     const currentItems = itemsRef.current;
     const currentGeometry = geometryRef.current;
 
     (['left', 'right'] as const).forEach((side) => {
       const view = viewsRef.current[side];
-      const ring = view.ring;
-
-      if (ring) {
-        const ringPressScale =
-          state.pressedIndex !== null ? state.pressScale : 1;
-        ring.setAttribute('cx', String(SVG_CENTER_X));
-        ring.setAttribute('cy', String(state.coordinate));
-        ring.setAttribute(
-          'r',
-          String(
-            getNavigationRingRadius(
-              state.ringScale * ringPressScale,
-              state.strokeWidth,
-            ),
-          ),
-        );
-        ring.setAttribute('stroke', state.color);
-        ring.setAttribute('stroke-width', String(state.strokeWidth));
-        ring.dataset.navigationMode = state.mode;
-        ring.dataset.navigationPosition = String(state.position);
-      }
 
       currentItems.forEach((item, itemIndex) => {
         const itemGroup = view.itemGroups[itemIndex];
@@ -452,28 +477,80 @@ export function SectionNavigation({
         const dimmed =
           !hoveredRef.current && itemIndex !== activeIndexRef.current;
 
-        itemGroup?.setAttribute(
+        setCachedAttribute(
+          itemGroup,
           'opacity',
           concealed ? '0' : dimmed ? '0.5' : '1',
         );
-        arrowGroup?.setAttribute(
+        setCachedAttribute(
+          arrowGroup,
           'transform',
           `translate(${SVG_CENTER_X} ${centerY}) rotate(${rotation}) scale(${visualScale}) translate(${-SVG_CENTER_X} ${-centerY})`,
         );
-        setAffordanceOpacity(side, 'arrows', itemIndex, arrowOpacity);
+        setAffordanceOpacity(
+          side,
+          'arrows',
+          itemIndex,
+          arrowOpacity,
+          scrubbed,
+        );
 
         if (dot) {
-          dot.setAttribute('cy', String(centerY));
-          dot.setAttribute('r', String(NAVIGATION_DOT_RADIUS * visualScale));
-          setAffordanceOpacity(side, 'dots', itemIndex, dotOpacity);
+          setCachedAttribute(dot, 'cy', String(centerY));
+          setCachedAttribute(
+            dot,
+            'r',
+            String(NAVIGATION_DOT_RADIUS * visualScale),
+          );
+          setAffordanceOpacity(
+            side,
+            'dots',
+            itemIndex,
+            dotOpacity,
+            scrubbed,
+          );
         }
       });
+    });
+  };
 
-      if (view.tooltip) {
+  const renderNavigation = (state: NavigationRenderState) => {
+    latestRenderRef.current = state;
+
+    (['left', 'right'] as const).forEach((side) => {
+      const view = viewsRef.current[side];
+      const ring = view.ring;
+
+      if (ring) {
+        const ringPressScale =
+          state.pressedIndex !== null ? state.pressScale : 1;
+        setCachedAttribute(ring, 'cx', String(SVG_CENTER_X));
+        setCachedAttribute(ring, 'cy', String(state.coordinate));
+        setCachedAttribute(
+          ring,
+          'r',
+          String(
+            getNavigationRingRadius(
+              state.ringScale * ringPressScale,
+              state.strokeWidth,
+            ),
+          ),
+        );
+        setCachedAttribute(ring, 'stroke', state.color);
+        setCachedAttribute(
+          ring,
+          'stroke-width',
+          String(state.strokeWidth),
+        );
+      }
+
+      if (view.tooltip && tooltipVisibleRef.current[side]) {
         view.tooltip.style.top = `${state.coordinate}px`;
         view.tooltip.style.backgroundColor = state.color;
       }
     });
+
+    renderAffordances(state, sourceUpdateRef.current);
   };
 
   useLayoutEffect(() => {
@@ -583,7 +660,13 @@ export function SectionNavigation({
 
     const position = source.scrollTop / Math.max(source.clientHeight, 1);
     sourcePositionRef.current = position;
-    controller.setSourcePosition(position, true);
+    sourceUpdateRef.current = true;
+    const rendered = controller.setSourcePosition(position, true);
+    sourceUpdateRef.current = false;
+
+    if (!rendered && latestRenderRef.current) {
+      renderAffordances(latestRenderRef.current, true);
+    }
   };
 
   useEffect(() => {
@@ -618,7 +701,9 @@ export function SectionNavigation({
     const handleScroll = () => {
       controller.setSnappingEnabled(false);
       hideTooltips();
-      syncSourcePosition();
+      if (!source.hasAttribute('data-portfolio-programmatic-scroll')) {
+        syncSourcePosition();
+      }
 
       if (scrollEndTimeoutRef.current) {
         clearTimeout(scrollEndTimeoutRef.current);
@@ -758,6 +843,11 @@ export function SectionNavigation({
 
   const renderRail = (side: SectionNavigationSide) => {
     const isHidden = side === 'right' && hideRightRail;
+
+    if (isHidden) {
+      return null;
+    }
+
     const safeAreaMargin =
       side === 'left'
         ? { marginLeft: 'env(safe-area-inset-left)' }
@@ -1003,6 +1093,10 @@ export function SectionNavigation({
         <div
           ref={(node) => {
             viewsRef.current[side].tooltip = node;
+
+            if (!node) {
+              tooltipVisibleRef.current[side] = false;
+            }
           }}
           id={`portfolio-${side}-section-nav-tooltip`}
           role="tooltip"
