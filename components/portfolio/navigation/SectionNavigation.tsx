@@ -22,6 +22,7 @@ import {
   type SectionNavigationRailActions,
 } from './SectionNavigationRail';
 import { SectionNavigationRenderer } from './SectionNavigationRenderer';
+import { NAVIGATION_RING_DIAMETER } from './navigationTokens';
 import type {
   SectionNavigationAxis,
   SectionNavigationGeometryMode,
@@ -44,6 +45,7 @@ type TooltipIntent = {
 };
 
 const TOOLTIP_DURATION = 0.15;
+const TOOLTIP_ITEM_RADIUS = NAVIGATION_RING_DIAMETER / 2;
 
 function syncNavigationSourcePosition(
   source: HTMLDivElement | null,
@@ -219,8 +221,9 @@ export function SectionNavigation({
       return;
     }
 
-    const intent =
-      pointerTooltipIntentRef.current ?? focusTooltipIntentRef.current;
+    const intent = pointerOwnerRef.current
+      ? pointerTooltipIntentRef.current
+      : focusTooltipIntentRef.current;
 
     if (!intent) {
       hideTooltips();
@@ -306,6 +309,11 @@ export function SectionNavigation({
         reducedMotion: reducedMotionRef.current,
         sourcePosition: sourcePositionRef.current,
       }),
+      getTooltipCoordinate: (side) =>
+        pointerOwnerRef.current === side &&
+        pointerTooltipIntentRef.current?.side === side
+          ? pendingPointerYRef.current
+          : null,
       isTooltipVisible: (side) => tooltipVisibleRef.current[side],
     });
     rendererRef.current = renderer;
@@ -519,6 +527,54 @@ export function SectionNavigation({
     });
   };
 
+  const syncPointerTooltip = (
+    side: SectionNavigationSide,
+    clientY: number,
+  ) => {
+    const centers = geometryRef.current.centers;
+    let nearestItemIndex = -1;
+    let nearestDistance = Number.POSITIVE_INFINITY;
+
+    centers.forEach((center, itemIndex) => {
+      const distance = Math.abs(center - clientY);
+
+      if (distance < nearestDistance) {
+        nearestDistance = distance;
+        nearestItemIndex = itemIndex;
+      }
+    });
+
+    if (
+      nearestItemIndex < 0 ||
+      nearestDistance > TOOLTIP_ITEM_RADIUS
+    ) {
+      pointerTooltipIntentRef.current = null;
+      hideTooltips();
+      return;
+    }
+
+    const isActive = nearestItemIndex === activeIndexRef.current;
+    const title =
+      isActive && canMoveHorizontally
+        ? side === 'left'
+          ? previousSlideTitle
+          : nextSlideTitle
+        : itemsRef.current[nearestItemIndex]?.title;
+
+    if (!title) {
+      pointerTooltipIntentRef.current = null;
+      hideTooltips();
+      return;
+    }
+
+    pointerTooltipIntentRef.current = {
+      itemIndex: nearestItemIndex,
+      side,
+      title,
+    };
+    showTooltip(side, title, clientY);
+  };
+
   const releasePointer = (side: SectionNavigationSide) => {
     if (pointerOwnerRef.current !== side) {
       return;
@@ -566,6 +622,7 @@ export function SectionNavigation({
         pointerOwnerRef.current === side
       ) {
         schedulePointer(event.clientY);
+        syncPointerTooltip(side, event.clientY);
       }
     },
     onZonePointerLeave: (side, event) => {
@@ -578,19 +635,14 @@ export function SectionNavigation({
         onHoveredChange(true);
       }
     },
-    onItemPointerEnter: (side, itemIndex, tooltipTitle, event) => {
+    onItemPointerEnter: (side, itemIndex, _tooltipTitle, event) => {
       if (event.pointerType === 'touch') {
         return;
       }
 
       previewIndexRef.current = itemIndex;
-      pointerTooltipIntentRef.current = {
-        itemIndex,
-        side,
-        title: tooltipTitle,
-      };
       engagePointer(side, event.clientY);
-      showTooltip(side, tooltipTitle, event.clientY);
+      syncPointerTooltip(side, event.clientY);
     },
     onItemPointerDown: (
       _side,

@@ -45,6 +45,9 @@ export type SectionNavigationRenderContext = {
 export class SectionNavigationRenderer {
   private readonly views: Record<SectionNavigationSide, SectionNavigationView>;
   private readonly getContext: () => SectionNavigationRenderContext;
+  private readonly getTooltipCoordinate: (
+    side: SectionNavigationSide,
+  ) => number | null;
   private readonly isTooltipVisible: (side: SectionNavigationSide) => boolean;
   private readonly attributeCache = new WeakMap<
     SVGElement,
@@ -62,14 +65,17 @@ export class SectionNavigationRenderer {
   constructor({
     views,
     getContext,
+    getTooltipCoordinate,
     isTooltipVisible,
   }: {
     views: Record<SectionNavigationSide, SectionNavigationView>;
     getContext: () => SectionNavigationRenderContext;
+    getTooltipCoordinate: (side: SectionNavigationSide) => number | null;
     isTooltipVisible: (side: SectionNavigationSide) => boolean;
   }) {
     this.views = views;
     this.getContext = getContext;
+    this.getTooltipCoordinate = getTooltipCoordinate;
     this.isTooltipVisible = isTooltipVisible;
   }
 
@@ -128,7 +134,9 @@ export class SectionNavigationRenderer {
       return;
     }
 
-    tooltip.style.top = `${this.latestState.coordinate}px`;
+    tooltip.style.top = `${
+      this.getTooltipCoordinate(side) ?? this.latestState.coordinate
+    }px`;
     tooltip.style.backgroundColor = this.latestState.color;
   }
 

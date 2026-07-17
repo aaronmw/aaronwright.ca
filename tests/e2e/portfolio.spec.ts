@@ -166,6 +166,13 @@ test('section navigation tooltip follows the pointer within an item', async ({
         : Number.POSITIVE_INFINITY
     })
     .toBeLessThanOrEqual(1)
+
+  const zone = page.locator('[data-portfolio-section-nav-zone="left"]')
+  const zoneBox = await zone.boundingBox()
+
+  expect(zoneBox).not.toBeNull()
+  await page.mouse.move(pointerX, zoneBox!.y + zoneBox!.height - 4)
+  await expect(tooltip).toBeHidden()
 })
 
 test('inline zoom keeps navigation available and exits with vertical intent', async ({
