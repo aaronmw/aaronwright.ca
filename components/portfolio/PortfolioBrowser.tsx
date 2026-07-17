@@ -45,6 +45,45 @@ import {
   portfolioSlides,
 } from '@/lib/portfolio';
 import {
+  NAVIGATION_TRAVEL_EASE,
+  getCanonicalCarouselEntries,
+  getCanonicalRenderedCarouselIndex,
+  getCarouselPosition,
+  getCarouselTargetScrollLeft,
+  getLoopingCarouselEntries,
+  getNavigationTravelDuration,
+  isCarouselBoundaryJump,
+  positiveModulo,
+  type LoopingCarouselEntry,
+} from '@/components/portfolio/domain/carousel';
+import {
+  pageTitle,
+  parsePortfolioRoute,
+  projectUrl,
+  slideNavigationTitle,
+} from '@/components/portfolio/domain/routing';
+import {
+  carouselMediaKey,
+  getInitialSlideIndexes,
+  getProjectMediaScreenshots,
+  getProjectSlidesBySlug,
+  getSlideMediaKey,
+  getVerticalTargetProjectIndex,
+  hasBuildingWithAiTextSlide,
+  hasProjectScreenshots,
+  isBuildingWithAiTextScreenshot,
+  isBuildingWithAiTextSlide,
+  isModalScreenshotSlide,
+  isVideoScreenshot,
+  modalMediaKey,
+  type ProjectSlide,
+} from '@/components/portfolio/domain/slides';
+import {
+  TOP_SCREEN_COLOR,
+  buildProjectColors,
+  getProjectColor as getThemeProjectColor,
+} from '@/components/portfolio/domain/theme';
+import {
   PortfolioMediaElement,
   usePortfolioMediaReadiness,
 } from '@/components/portfolio/usePortfolioMediaReadiness';
@@ -69,19 +108,6 @@ type PortfolioBrowserProps = {
   initialScreenshotSlug?: string;
   initialModalOpen?: boolean;
 };
-
-type ProjectSlide =
-  | {
-      id: string;
-      kind: 'description';
-      slug: 'description';
-    }
-  | {
-      id: string;
-      kind: 'screenshot';
-      slug: string;
-      screenshot: PortfolioScreenshot;
-    };
 
 const START_SCREEN_INDEX = -1;
 const WIDE_LAYOUT_MEDIA_QUERY =
@@ -134,18 +160,9 @@ const WIDE_LAYOUT_STYLE: WideLayoutStyle = {
 const NAVIGATION_INDICATOR_STEP_REM = 2.25;
 const NAVIGATION_RING_SIZE_REM = 2.75;
 const MOBILE_SLIDE_NAV_CONTROL_CLEARANCE_REM = 6.25;
-const NAVIGATION_TRAVEL_BASE_SECONDS = 0.48;
-const NAVIGATION_TRAVEL_SECONDS_PER_SCREEN = 0.08;
-const NAVIGATION_TRAVEL_MAX_SECONDS = 0.85;
-const NAVIGATION_TRAVEL_EASE = 'power2.inOut';
 const NAVIGATION_ACTIVE_SCALE = 1.1;
 const CAROUSEL_MEDIA_CLASS =
   'object-contain transition-[filter,padding] [transition-duration:1000ms,500ms] [transition-timing-function:ease-in-out,var(--ease-out)] motion-reduce:transition-none';
-const TOP_SCREEN_COLOR = 'hsl(0 0% 100%)';
-const PROJECT_COLOR_START_HUE = 342;
-const PROJECT_COLOR_SATURATION = 78;
-const PROJECT_COLOR_LIGHTNESS = 54;
-const PROJECT_COLOR_MIN_CONTRAST = 4.5;
 const PROJECT_COLORS = buildProjectColors(portfolioSlides.length);
 const SECTION_NAV_HAS_SLIDES = [
   false,
@@ -167,75 +184,6 @@ const PORTFOLIO_MARKDOWN_COMPONENTS = {
   h5: createMarkdownHeading('h6'),
   h6: createMarkdownHeading('h6'),
 } satisfies Components;
-
-function buildProjectColors(projectCount: number) {
-  const safeProjectCount = Math.max(1, projectCount);
-  const hueStep = 360 / safeProjectCount;
-  const evenlySpacedColors = Array.from(
-    { length: safeProjectCount },
-    (_, index) => ({
-      hue: Math.round((PROJECT_COLOR_START_HUE + hueStep * index) % 360),
-      saturation: PROJECT_COLOR_SATURATION,
-      lightness: PROJECT_COLOR_LIGHTNESS,
-    }),
-  );
-
-  return evenlySpacedColors.map(({ hue, saturation, lightness }) => {
-    const correctedLightness = ensureContrastAgainstBlack(
-      hue,
-      saturation,
-      lightness,
-      PROJECT_COLOR_MIN_CONTRAST,
-    );
-
-    return `hsl(${hue} ${saturation}% ${correctedLightness}%)`;
-  });
-}
-
-function ensureContrastAgainstBlack(
-  hue: number,
-  saturation: number,
-  lightness: number,
-  minimumContrast: number,
-) {
-  const getContrast = (candidateLightness: number) => {
-    const [red, green, blue] = gsap.utils.splitColor(
-      `hsl(${hue} ${saturation}% ${candidateLightness}%)`,
-    );
-    const toLinearChannel = (channel: number) => {
-      const value = channel / 255;
-
-      return value <= 0.04045
-        ? value / 12.92
-        : ((value + 0.055) / 1.055) ** 2.4;
-    };
-    const relativeLuminance =
-      0.2126 * toLinearChannel(red) +
-      0.7152 * toLinearChannel(green) +
-      0.0722 * toLinearChannel(blue);
-
-    return (relativeLuminance + 0.05) / 0.05;
-  };
-
-  if (getContrast(lightness) >= minimumContrast) {
-    return lightness;
-  }
-
-  let failingLightness = lightness;
-  let passingLightness = 100;
-
-  for (let iteration = 0; iteration < 20; iteration += 1) {
-    const candidateLightness = (failingLightness + passingLightness) / 2;
-
-    if (getContrast(candidateLightness) >= minimumContrast) {
-      passingLightness = candidateLightness;
-    } else {
-      failingLightness = candidateLightness;
-    }
-  }
-
-  return Math.ceil(passingLightness * 100) / 100;
-}
 
 function getWideLayoutSnapshot() {
   return window.matchMedia(WIDE_LAYOUT_MEDIA_QUERY).matches;
@@ -267,112 +215,10 @@ function subscribeToTouchInput(callback: () => void) {
   return () => mediaQuery.removeEventListener('change', callback);
 }
 
-function positiveModulo(value: number, length: number) {
-  return ((value % length) + length) % length;
-}
-
-type LoopingCarouselEntry<T> = {
-  item: T;
-  key: string;
-  realIndex: number;
-  kind: 'canonical' | 'clone-before' | 'clone-after';
-};
-
 type HorizontalScrollOptions = {
   syncIndicator?: boolean;
   boundarySourceIndex?: number;
 };
-
-function getNavigationTravelDuration(distanceInScreens: number) {
-  return Math.min(
-    NAVIGATION_TRAVEL_MAX_SECONDS,
-    NAVIGATION_TRAVEL_BASE_SECONDS +
-      Math.abs(distanceInScreens) * NAVIGATION_TRAVEL_SECONDS_PER_SCREEN,
-  );
-}
-
-function getCanonicalCarouselEntries<T extends { id: string }>(items: T[]) {
-  return items.map((item, realIndex) => ({
-    item,
-    key: `real:${item.id}`,
-    realIndex,
-    kind: 'canonical' as const,
-  }));
-}
-
-function getLoopingCarouselEntries<T extends { id: string }>(
-  items: T[],
-  cloneSingleton = false,
-): LoopingCarouselEntry<T>[] {
-  if (items.length === 0) {
-    return [];
-  }
-
-  const entries = getCanonicalCarouselEntries(items);
-
-  if (items.length === 1 && !cloneSingleton) {
-    return entries;
-  }
-
-  const lastIndex = items.length - 1;
-
-  return [
-    {
-      item: items[lastIndex],
-      key: `clone-before:${items[lastIndex].id}`,
-      realIndex: lastIndex,
-      kind: 'clone-before',
-    },
-    ...entries,
-    {
-      item: items[0],
-      key: `clone-after:${items[0].id}`,
-      realIndex: 0,
-      kind: 'clone-after',
-    },
-  ];
-}
-
-function getCarouselPosition(carousel: HTMLDivElement) {
-  const firstCanonicalPanel = carousel.querySelector<HTMLElement>(
-    '[data-portfolio-carousel-panel="canonical"][data-portfolio-carousel-index="0"]',
-  );
-
-  return (
-    (carousel.scrollLeft - (firstCanonicalPanel?.offsetLeft ?? 0)) /
-    Math.max(carousel.clientWidth, 1)
-  );
-}
-
-function getCarouselTargetScrollLeft(
-  carousel: HTMLDivElement,
-  carouselIndex: number,
-) {
-  const targetPanel = carousel.querySelector<HTMLElement>(
-    `[data-portfolio-carousel-panel="canonical"][data-portfolio-carousel-index="${carouselIndex}"]`,
-  );
-
-  return targetPanel?.offsetLeft ?? carousel.clientWidth * carouselIndex;
-}
-
-function getCanonicalRenderedCarouselIndex(
-  realIndex: number,
-  itemCount: number,
-) {
-  return itemCount > 1 ? realIndex + 1 : realIndex;
-}
-
-function isCarouselBoundaryJump(
-  previousIndex: number,
-  nextIndex: number,
-  itemCount: number,
-) {
-  return (
-    itemCount > 1 &&
-    ((previousIndex === itemCount - 1 && nextIndex === 0) ||
-      (previousIndex === 0 && nextIndex === itemCount - 1))
-  );
-}
 
 function getCarouselMediaClass(shouldBlur: boolean) {
   return `${CAROUSEL_MEDIA_CLASS} ${shouldBlur ? 'blur-[20px]' : 'blur-0'}`;
@@ -388,7 +234,7 @@ function getTouchDistance(event: ReactTouchEvent<HTMLDialogElement>) {
 }
 
 function getProjectColor(projectIndex: number) {
-  return PROJECT_COLORS[positiveModulo(projectIndex, PROJECT_COLORS.length)];
+  return getThemeProjectColor(PROJECT_COLORS, projectIndex);
 }
 
 function isExternalSiteHref(href?: string) {
@@ -435,74 +281,6 @@ function createMarkdownHeading(Tag: MarkdownHeadingTag) {
   }
 
   return MarkdownHeading;
-}
-
-function getVerticalTargetProjectIndex(
-  currentProjectIndex: number,
-  direction: -1 | 1,
-) {
-  const screenCount = portfolioSlides.length + 1;
-  const currentScreenIndex = currentProjectIndex + 1;
-  const nextScreenIndex = positiveModulo(
-    currentScreenIndex + direction,
-    screenCount,
-  );
-
-  return nextScreenIndex - 1;
-}
-
-function projectUrl(project: PortfolioProject, slide: ProjectSlide) {
-  if (slide.kind === 'description') {
-    return `/work/${project.slug}`;
-  }
-
-  return `/work/${project.slug}/${slide.slug}`;
-}
-
-function pageTitle(project?: PortfolioProject, slide?: ProjectSlide) {
-  if (!project || !slide) {
-    return 'Work | Aaron M. Wright';
-  }
-
-  if (slide.kind === 'description') {
-    return `${project.title} | Aaron M. Wright`;
-  }
-
-  return `${project.title}: ${slide.slug} | Aaron M. Wright`;
-}
-
-function titleCaseLabel(value: string) {
-  return value.replace(/\S+/g, (word) =>
-    word
-      .split('-')
-      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-      .join('-'),
-  );
-}
-
-function escapeRegExp(value: string) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
-function slideNavigationTitle(project: PortfolioProject, slide: ProjectSlide) {
-  if (slide.kind === 'description') {
-    return `${project.title} • Index`;
-  }
-
-  const altMatch = slide.screenshot.alt.match(/^(\d+\s+of\s+\d+):\s*(.+)$/i);
-  const positionLabel =
-    altMatch?.[1] ??
-    `${project.screenshots.findIndex((screenshot) => screenshot.id === slide.screenshot.id) + 1} of ${project.screenshots.length}`;
-  const rawSlideLabel = altMatch?.[2] ?? slide.screenshot.slug;
-  const projectPrefixPattern = new RegExp(
-    `^${escapeRegExp(project.title)}\\s*`,
-    'i',
-  );
-  const slideLabel =
-    rawSlideLabel.replace(projectPrefixPattern, '').trim() ||
-    slide.screenshot.slug;
-
-  return `${positionLabel} • ${project.title} • ${titleCaseLabel(slideLabel)}`;
 }
 
 function isEditableTarget(target: EventTarget | null) {
@@ -614,99 +392,6 @@ function getModalFrameRect(): ModalTransitionRect {
   };
 }
 
-function getProjectSlides(project: PortfolioProject): ProjectSlide[] {
-  return [
-    {
-      id: `${project.id}-description`,
-      kind: 'description',
-      slug: 'description',
-    },
-    ...project.screenshots.map((screenshot) => ({
-      id: screenshot.id,
-      kind: 'screenshot' as const,
-      slug: screenshot.slug,
-      screenshot,
-    })),
-  ];
-}
-
-function isVideoScreenshot(screenshot: PortfolioScreenshot) {
-  return /\.(webm|mp4|m4v|ogv|ogg)(?:$|\?)/i.test(screenshot.src);
-}
-
-function hasProjectScreenshots(project: PortfolioProject) {
-  return project.screenshots.length > 0;
-}
-
-function isBuildingWithAiTextScreenshot(
-  project: PortfolioProject,
-  screenshot: PortfolioScreenshot,
-) {
-  return (
-    project.id === 'building-with-ai' &&
-    screenshot.id === 'building-with-ai-home-page'
-  );
-}
-
-function isBuildingWithAiTextSlide(
-  project: PortfolioProject,
-  slide: ProjectSlide,
-) {
-  return (
-    slide.kind === 'screenshot' &&
-    isBuildingWithAiTextScreenshot(project, slide.screenshot)
-  );
-}
-
-function isModalScreenshotSlide(
-  project: PortfolioProject,
-  slide: ProjectSlide,
-): slide is Extract<ProjectSlide, { kind: 'screenshot' }> {
-  return (
-    slide.kind === 'screenshot' && !isBuildingWithAiTextSlide(project, slide)
-  );
-}
-
-function hasBuildingWithAiTextSlide(project: PortfolioProject) {
-  return project.screenshots.some((screenshot) =>
-    isBuildingWithAiTextScreenshot(project, screenshot),
-  );
-}
-
-function carouselMediaKey(screenshot: PortfolioScreenshot) {
-  return `carousel:${screenshot.id}`;
-}
-
-function modalMediaKey(screenshot: PortfolioScreenshot) {
-  return `modal:${screenshot.id}`;
-}
-
-function getProjectMediaScreenshots(project: PortfolioProject) {
-  return project.screenshots.filter(
-    (screenshot) => !isBuildingWithAiTextScreenshot(project, screenshot),
-  );
-}
-
-function getSlideMediaKey(
-  project: PortfolioProject,
-  slide: ProjectSlide,
-  useDesktopVisual: boolean,
-) {
-  if (
-    slide.kind === 'screenshot' &&
-    !isBuildingWithAiTextSlide(project, slide)
-  ) {
-    return carouselMediaKey(slide.screenshot);
-  }
-
-  if (useDesktopVisual) {
-    const firstScreenshot = getProjectMediaScreenshots(project)[0];
-    return firstScreenshot ? carouselMediaKey(firstScreenshot) : undefined;
-  }
-
-  return undefined;
-}
-
 function nextAnimationFrame() {
   return new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
 }
@@ -779,13 +464,7 @@ export function PortfolioBrowser({
   }, []);
 
   const projectSlides = useMemo(
-    () =>
-      Object.fromEntries(
-        portfolioSlides.map((project) => [
-          project.slug,
-          getProjectSlides(project),
-        ]),
-      ) as Record<string, ProjectSlide[]>,
+    () => getProjectSlidesBySlug(portfolioSlides),
     [],
   );
 
@@ -798,17 +477,11 @@ export function PortfolioBrowser({
     initialProjectIndex >= 0 ? initialProjectIndex : START_SCREEN_INDEX;
   const initialSlideIndexes = useMemo(
     () =>
-      portfolioSlides.map((project) => {
-        if (project.slug !== initialProjectSlug || !initialScreenshotSlug) {
-          return 0;
-        }
-
-        const screenshotIndex = project.screenshots.findIndex(
-          (screenshot) => screenshot.slug === initialScreenshotSlug,
-        );
-
-        return screenshotIndex >= 0 ? screenshotIndex + 1 : 0;
-      }),
+      getInitialSlideIndexes(
+        portfolioSlides,
+        initialProjectSlug,
+        initialScreenshotSlug,
+      ),
     [initialProjectSlug, initialScreenshotSlug],
   );
   const projectMediaKeys = useMemo(
@@ -1264,49 +937,12 @@ export function PortfolioBrowser({
 
   const readLocationState = useCallback(() => {
     const { pathname, search } = window.location;
-    const segments = pathname.split('/').filter(Boolean);
-
-    if (segments[0] !== 'work') {
-      return null;
-    }
-
-    if (segments.length === 1) {
-      return {
-        projectIndex: START_SCREEN_INDEX,
-        slideIndex: 0,
-        modalOpen: false,
-      };
-    }
-
-    const projectIndex = portfolioSlides.findIndex(
-      (project) => project.slug === segments[1],
+    return parsePortfolioRoute(
+      pathname,
+      search,
+      portfolioSlides,
+      projectSlides,
     );
-
-    if (projectIndex < 0) {
-      return null;
-    }
-
-    const project = portfolioSlides[projectIndex];
-    const slides = projectSlides[project.slug];
-    const screenshotSlug = segments[2];
-    const slideIndex = screenshotSlug
-      ? slides.findIndex(
-          (slide) =>
-            slide.kind === 'screenshot' && slide.slug === screenshotSlug,
-        )
-      : 0;
-
-    if (segments.length > 3 || slideIndex < 0) {
-      return null;
-    }
-
-    const slide = slides[slideIndex];
-    const modalOpen =
-      new URLSearchParams(search).get('modal') === 'image' &&
-      slide.kind === 'screenshot' &&
-      !isBuildingWithAiTextSlide(project, slide);
-
-    return { projectIndex, slideIndex, modalOpen };
   }, [projectSlides]);
 
   const applyLocationState = useCallback(
@@ -1858,7 +1494,11 @@ export function PortfolioBrowser({
   const moveVertical = useCallback(
     (direction: -1 | 1) => {
       setActiveProject(
-        getVerticalTargetProjectIndex(activeProjectIndex, direction),
+        getVerticalTargetProjectIndex(
+          activeProjectIndex,
+          direction,
+          portfolioSlides.length,
+        ),
         'push',
       );
     },
@@ -2222,6 +1862,7 @@ export function PortfolioBrowser({
       const targetProjectIndex = getVerticalTargetProjectIndex(
         navigationBaseProjectIndex,
         direction,
+        portfolioSlides.length,
       );
       const targetItemIndex = targetProjectIndex + 1;
       return (
