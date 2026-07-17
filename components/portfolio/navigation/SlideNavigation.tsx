@@ -531,15 +531,11 @@ export function SlideNavigation({
             );
           })}
         </g>
+        {/* The controller exclusively owns geometry and color during travel. */}
         <circle
           ref={ringRef}
           data-portfolio-slide-indicator-marker="true"
-          cx={centers[boundedActiveIndex] ?? surfaceWidth / 2}
-          cy={SVG_CENTER_Y}
-          r={getNavigationRingRadius(1, NAVIGATION_RING_STROKE)}
           fill="none"
-          stroke={color}
-          strokeWidth={NAVIGATION_RING_STROKE}
           vectorEffect="non-scaling-stroke"
         />
       </svg>

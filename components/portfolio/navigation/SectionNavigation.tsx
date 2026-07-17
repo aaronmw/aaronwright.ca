@@ -959,17 +959,13 @@ export function SectionNavigation({
               </g>
             );
           })}
+          {/* The controller exclusively owns geometry and color during travel. */}
           <circle
             ref={(node) => {
               viewsRef.current[side].ring = node;
             }}
             data-portfolio-section-nav-ring={side}
-            cx={SVG_CENTER_X}
-            cy={geometry.centers[activeIndex] ?? 0}
-            r={getNavigationRingRadius(1, NAVIGATION_RING_STROKE)}
             fill="none"
-            stroke={items[activeIndex]?.color ?? 'white'}
-            strokeWidth={NAVIGATION_RING_STROKE}
             vectorEffect="non-scaling-stroke"
           />
         </svg>
