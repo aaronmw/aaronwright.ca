@@ -386,6 +386,18 @@ export function SectionNavigation({
     setTooltipVisibility('right', false);
   };
 
+  const showTooltip = (side: SectionNavigationSide, title: string) => {
+    const tooltipText = viewsRef.current[side].tooltipText;
+
+    if (tooltipText) {
+      tooltipText.textContent = title;
+    }
+
+    if (!tooltipsSuppressedRef.current) {
+      setTooltipVisibility(side, true);
+    }
+  };
+
   const getAffordanceLayers = (itemIndex: number) => {
     const sourcePosition = sourcePositionRef.current;
     const currentItems = itemsRef.current;
@@ -910,6 +922,7 @@ export function SectionNavigation({
                 ref={(node) => {
                   viewsRef.current[side].itemGroups[itemIndex] = node;
                 }}
+                className="transition-opacity duration-200 ease-out motion-reduce:transition-none"
                 color={item.color}
               >
                 <g
@@ -1015,14 +1028,7 @@ export function SectionNavigation({
 
                 previewIndexRef.current = itemIndex;
                 engagePointer(side, event.clientY);
-                const tooltipText = viewsRef.current[side].tooltipText;
-
-                if (tooltipText) {
-                  tooltipText.textContent = tooltipTitle;
-                }
-                if (!tooltipsSuppressedRef.current) {
-                  setTooltipVisibility(side, true);
-                }
+                showTooltip(side, tooltipTitle);
               }}
               onPointerDown={(event) => {
                 if (event.pointerType === 'touch') {
@@ -1050,10 +1056,15 @@ export function SectionNavigation({
               }
               onFocus={() => {
                 previewIndexRef.current = itemIndex;
+                onHoveredChange(true);
                 navigationControllerRef.current?.focus(itemIndex);
+                showTooltip(side, tooltipTitle);
               }}
               onBlur={() => {
                 previewIndexRef.current = null;
+                if (pointerOwnerRef.current === null) {
+                  onHoveredChange(false);
+                }
                 navigationControllerRef.current?.blur(itemIndex);
                 hideTooltips();
               }}

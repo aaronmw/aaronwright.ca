@@ -460,7 +460,7 @@ export function SlideNavigation({
     <div
       data-portfolio-slide-indicators
       data-interactive-pop="off"
-      className="pointer-events-auto relative h-[52px] overflow-visible"
+      className="group/slide-nav pointer-events-auto relative h-[52px] overflow-visible"
       style={{ width: `${targetWidth}px` }}
       onPointerMove={(event) => {
         if (event.pointerType !== 'touch') {
@@ -514,6 +514,11 @@ export function SlideNavigation({
                   cy={SVG_CENTER_Y}
                   r={NAVIGATION_DOT_RADIUS}
                   fill="white"
+                  className={`transition-opacity duration-200 ease-out motion-reduce:transition-none ${
+                    targetIndex < 0 || targetIndex === boundedActiveIndex
+                      ? 'opacity-100'
+                      : 'opacity-50 group-hover/slide-nav:opacity-100 group-focus-within/slide-nav:opacity-100'
+                  }`}
                 />
                 {targetIndex >= 0 && pendingIndex === targetIndex ? (
                   <circle
