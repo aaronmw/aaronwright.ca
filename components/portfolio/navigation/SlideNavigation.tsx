@@ -45,6 +45,12 @@ type IndicatorTransitionState = {
   phase: 'idle' | 'preparing' | 'fading' | 'settling';
 };
 
+type MotionTargetState = {
+  index: number;
+  itemsIdentity: string;
+  sourceIndex: number;
+};
+
 function getIndicatorSlotIds(count: number) {
   return Array.from({ length: count }, (_, index) => {
     if (index === 0) {
@@ -138,6 +144,11 @@ export function SlideNavigation({
     null,
   );
   const targetCountRef = useRef(targetCount);
+  const boundedActiveIndexRef = useRef(boundedActiveIndex);
+  const itemsIdentityRef = useRef(itemsIdentity);
+  const [motionTarget, setMotionTarget] = useState<MotionTargetState | null>(
+    null,
+  );
   const [transitionState, setTransitionState] =
     useState<IndicatorTransitionState>({
       previousCount: targetCount,
@@ -171,7 +182,17 @@ export function SlideNavigation({
     () => getCenters(geometryCount, surfaceWidth),
     [geometryCount, surfaceWidth],
   );
+  const visualActiveIndex =
+    motionTarget?.itemsIdentity === itemsIdentity &&
+    motionTarget.sourceIndex === boundedActiveIndex
+      ? motionTarget.index
+      : boundedActiveIndex;
   targetCountRef.current = targetCount;
+
+  useLayoutEffect(() => {
+    boundedActiveIndexRef.current = boundedActiveIndex;
+    itemsIdentityRef.current = itemsIdentity;
+  }, [boundedActiveIndex, itemsIdentity]);
 
   const renderNavigation = (state: NavigationRenderState) => {
     const ring = ringRef.current;
@@ -225,6 +246,11 @@ export function SlideNavigation({
 
     const motionController: SlideIndicatorMotionController = {
       begin: (targetIndex) => {
+        setMotionTarget({
+          index: targetIndex,
+          itemsIdentity: itemsIdentityRef.current,
+          sourceIndex: boundedActiveIndexRef.current,
+        });
         if (pointerPinnedIndexRef.current !== targetIndex) {
           controller.pin(targetIndex, true);
         }
@@ -235,6 +261,7 @@ export function SlideNavigation({
         controller.completePin(targetIndex);
       },
       cancel: () => {
+        setMotionTarget(null);
         pointerPinnedIndexRef.current = null;
         controller.cancelPin();
       },
@@ -515,7 +542,7 @@ export function SlideNavigation({
                   r={NAVIGATION_DOT_RADIUS}
                   fill="white"
                   className={`transition-opacity duration-200 ease-out motion-reduce:transition-none ${
-                    targetIndex < 0 || targetIndex === boundedActiveIndex
+                    targetIndex < 0 || targetIndex === visualActiveIndex
                       ? 'opacity-100'
                       : 'opacity-50 group-hover/slide-nav:opacity-100 group-focus-within/slide-nav:opacity-100'
                   }`}
