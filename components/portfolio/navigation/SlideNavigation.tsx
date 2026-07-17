@@ -462,8 +462,16 @@ export function SlideNavigation({
       data-interactive-pop="off"
       className="pointer-events-auto relative h-[52px] overflow-visible"
       style={{ width: `${targetWidth}px` }}
-      onPointerMove={(event) => schedulePointerTracking(event.clientX)}
-      onPointerLeave={() => controllerInstanceRef.current?.releasePointer(true)}
+      onPointerMove={(event) => {
+        if (event.pointerType !== 'touch') {
+          schedulePointerTracking(event.clientX);
+        }
+      }}
+      onPointerLeave={(event) => {
+        if (event.pointerType !== 'touch') {
+          controllerInstanceRef.current?.releasePointer(true);
+        }
+      }}
     >
       <svg
         ref={svgRef}
@@ -549,6 +557,10 @@ export function SlideNavigation({
           aria-busy={pendingIndex === index ? true : undefined}
           data-portfolio-slide-indicator-index={index}
           onPointerEnter={(event) => {
+            if (event.pointerType === 'touch') {
+              return;
+            }
+
             const localX = getLocalPointerX(event.clientX);
             const controller = controllerInstanceRef.current;
 
@@ -559,6 +571,10 @@ export function SlideNavigation({
             }
           }}
           onPointerDown={(event) => {
+            if (event.pointerType === 'touch') {
+              controllerInstanceRef.current?.releasePointer(false);
+            }
+
             event.currentTarget.setPointerCapture?.(event.pointerId);
             pointerPinnedIndexRef.current = index;
             controllerInstanceRef.current?.pin(index);

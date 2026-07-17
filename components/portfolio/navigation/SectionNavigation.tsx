@@ -785,12 +785,23 @@ export function SectionNavigation({
         aria-hidden={isHidden ? true : undefined}
         inert={isHidden ? true : undefined}
         onPointerMove={(event) => {
-          if (pointerOwnerRef.current === side) {
+          if (
+            event.pointerType !== 'touch' &&
+            pointerOwnerRef.current === side
+          ) {
             schedulePointer(event.clientY);
           }
         }}
-        onPointerLeave={() => releasePointer(side)}
-        onPointerEnter={() => onHoveredChange(true)}
+        onPointerLeave={(event) => {
+          if (event.pointerType !== 'touch') {
+            releasePointer(side);
+          }
+        }}
+        onPointerEnter={(event) => {
+          if (event.pointerType !== 'touch') {
+            onHoveredChange(true);
+          }
+        }}
       >
         <svg
           className="pointer-events-none absolute top-0 overflow-visible"
@@ -912,6 +923,10 @@ export function SectionNavigation({
               data-portfolio-section-nav-index={itemIndex}
               data-portfolio-section-nav-side={side}
               onPointerEnter={(event) => {
+                if (event.pointerType === 'touch') {
+                  return;
+                }
+
                 previewIndexRef.current = itemIndex;
                 engagePointer(side, event.clientY);
                 const tooltipText = viewsRef.current[side].tooltipText;
@@ -924,6 +939,15 @@ export function SectionNavigation({
                 }
               }}
               onPointerDown={(event) => {
+                if (event.pointerType === 'touch') {
+                  pointerOwnerRef.current = null;
+                  pendingPointerYRef.current = null;
+                  previewIndexRef.current = null;
+                  onHoveredChange(false);
+                  hideTooltips();
+                  navigationControllerRef.current?.releasePointer(false);
+                }
+
                 event.currentTarget.setPointerCapture?.(event.pointerId);
                 navigationControllerRef.current?.press(itemIndex);
                 pinnedIndexRef.current = itemIndex;

@@ -942,7 +942,7 @@ export function PortfolioBrowser({
   const isModalPresentationActive = shouldShowModal && !isModalClosing;
   const isModalLayerActive = shouldShowModal;
   const isInlineZoomPresentationActive =
-    isWideLayout && !isTouchInput && inlineZoomedScreenshotId !== null;
+    inlineZoomedScreenshotId !== null;
   const shouldCenterSlideNavigation =
     isModalPresentationActive || isInlineZoomPresentationActive;
   const activeProjectColor =
@@ -3145,6 +3145,7 @@ export function PortfolioBrowser({
         style={
           {
             '--project-color': activeProjectColor ?? PROJECT_COLORS[0],
+            position: 'fixed',
             top: 'max(1.25rem, env(safe-area-inset-top, 0px))',
             right: 'max(1.25rem, env(safe-area-inset-right, 0px))',
           } as ProjectColorStyle
@@ -3639,39 +3640,62 @@ function ZoomableScreenshot({
       ? 'cursor-grabbing'
       : 'cursor-grab'
     : '';
-  const isPresented = isLocallyPresented || presentationActive;
+  const isPresented = isLocallyPresented || (active && presentationActive);
+  const isFixedViewportPresentation = isPresented && !expandToViewport;
 
   return (
     <div
       ref={surfaceRef}
       data-portfolio-screenshot-id={screenshotId}
       data-portfolio-inline-zoomed={isLocallyPresented ? 'true' : 'false'}
-      className={`relative overflow-hidden border border-transparent transition-[width,height,right] duration-500 ease-out motion-reduce:transition-none ${className} ${cursorClass} ${
+      className={`relative overflow-hidden border border-transparent bg-black transition-[width,height,right,top,left] duration-500 ease-out motion-reduce:transition-none ${className} ${cursorClass} ${
         concealed ? 'invisible' : ''
       }`}
       style={
         {
           '--portfolio-media-padding': isPresented ? '6rem' : '1.5rem',
           touchAction: isZoomed ? 'none' : 'pan-x pan-y',
-          position: expandToViewport ? 'absolute' : undefined,
-          right: expandToViewport
-            ? isPresented
-              ? '0px'
-              : 'var(--portfolio-control-gutter-width)'
+          position: isFixedViewportPresentation
+            ? 'fixed'
+            : expandToViewport
+              ? 'absolute'
+              : undefined,
+          inset: isFixedViewportPresentation ? '0px' : undefined,
+          right: isFixedViewportPresentation
+            ? '0px'
+            : expandToViewport
+              ? isPresented
+                ? '0px'
+                : 'var(--portfolio-control-gutter-width)'
+              : undefined,
+          top: isFixedViewportPresentation
+            ? '0px'
+            : expandToViewport
+              ? '50%'
+              : undefined,
+          width: isFixedViewportPresentation
+            ? '100vw'
+            : expandToViewport
+              ? isPresented
+                ? '100vw'
+                : 'var(--portfolio-screenshot-size)'
+              : undefined,
+          height: isFixedViewportPresentation
+            ? '100dvh'
+            : expandToViewport
+              ? isPresented
+                ? '100dvh'
+                : 'var(--portfolio-screenshot-size)'
+              : undefined,
+          transform: isFixedViewportPresentation
+            ? 'none'
+            : expandToViewport
+              ? 'translate3d(0, -50%, 0)'
+              : undefined,
+          zIndex: isFixedViewportPresentation ? 30 : undefined,
+          willChange: isPresented
+            ? 'width, height, right, top, left'
             : undefined,
-          top: expandToViewport ? '50%' : undefined,
-          width: expandToViewport
-            ? isPresented
-              ? '100vw'
-              : 'var(--portfolio-screenshot-size)'
-            : undefined,
-          height: expandToViewport
-            ? isPresented
-              ? '100dvh'
-              : 'var(--portfolio-screenshot-size)'
-            : undefined,
-          transform: expandToViewport ? 'translate3d(0, -50%, 0)' : undefined,
-          willChange: isPresented ? 'width, height, right' : undefined,
         } as InlineMediaSurfaceStyle
       }
     >
