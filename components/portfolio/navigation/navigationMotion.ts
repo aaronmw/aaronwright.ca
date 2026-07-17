@@ -1,16 +1,39 @@
 import { gsap } from 'gsap';
+import {
+  clamp,
+  getColorForPosition,
+  getCoordinateForPosition,
+  getNavigationScale,
+  getPositionForCoordinate,
+} from './navigationGeometry';
+import {
+  NAVIGATION_BREAKAWAY_DISTANCE,
+  NAVIGATION_RETURN_DELAY,
+  NAVIGATION_RING_HOVER_STROKE,
+  NAVIGATION_RING_STROKE,
+  NAVIGATION_SNAP_DISTANCE,
+} from './navigationTokens';
 
-export const NAVIGATION_RING_DIAMETER = 44;
-export const NAVIGATION_RING_RADIUS = 20;
-export const NAVIGATION_RING_STROKE = 4;
-export const NAVIGATION_RING_HOVER_STROKE = 2;
-export const NAVIGATION_DOT_DIAMETER = 10;
-export const NAVIGATION_DOT_RADIUS = NAVIGATION_DOT_DIAMETER / 2;
-export const NAVIGATION_SLIDE_STEP = 36;
-export const NAVIGATION_ACTIVE_SCALE = 1.1;
-export const NAVIGATION_SNAP_DISTANCE = 10;
-export const NAVIGATION_BREAKAWAY_DISTANCE = 50;
-export const NAVIGATION_RETURN_DELAY = 140;
+export {
+  getColorForPosition,
+  getCoordinateForPosition,
+  getNavigationRingRadius,
+  getNavigationScale,
+  getPositionForCoordinate,
+} from './navigationGeometry';
+export {
+  NAVIGATION_ACTIVE_SCALE,
+  NAVIGATION_BREAKAWAY_DISTANCE,
+  NAVIGATION_DOT_DIAMETER,
+  NAVIGATION_DOT_RADIUS,
+  NAVIGATION_RETURN_DELAY,
+  NAVIGATION_RING_DIAMETER,
+  NAVIGATION_RING_HOVER_STROKE,
+  NAVIGATION_RING_RADIUS,
+  NAVIGATION_RING_STROKE,
+  NAVIGATION_SLIDE_STEP,
+  NAVIGATION_SNAP_DISTANCE,
+} from './navigationTokens';
 
 export type NavigationMode =
   | 'source-linked'
@@ -31,12 +54,12 @@ export type NavigationRenderState = {
   strokeWidth: number;
 };
 
-type NavigationGeometry = {
+export type NavigationGeometry = {
   centers: number[];
   colors: string[];
 };
 
-type TrackedNavigationOptions = {
+export type TrackedNavigationOptions = {
   geometry: NavigationGeometry;
   activeIndex: number;
   sourcePosition?: number;
@@ -53,130 +76,6 @@ type MoveOptions = {
   immediate?: boolean;
   onComplete?: () => void;
 };
-
-function clamp(value: number, minimum: number, maximum: number) {
-  return Math.min(maximum, Math.max(minimum, value));
-}
-
-export function getCoordinateForPosition(centers: number[], position: number) {
-  if (centers.length === 0) {
-    return 0;
-  }
-
-  const boundedPosition = clamp(position, 0, centers.length - 1);
-  const lowerIndex = Math.floor(boundedPosition);
-  const upperIndex = Math.min(centers.length - 1, Math.ceil(boundedPosition));
-  const progress = boundedPosition - lowerIndex;
-
-  return gsap.utils.interpolate(
-    centers[lowerIndex],
-    centers[upperIndex],
-    progress,
-  );
-}
-
-export function getPositionForCoordinate(
-  centers: number[],
-  coordinate: number,
-) {
-  if (centers.length === 0 || coordinate <= centers[0]) {
-    return 0;
-  }
-
-  const lastIndex = centers.length - 1;
-
-  if (coordinate >= centers[lastIndex]) {
-    return lastIndex;
-  }
-
-  for (let index = 1; index < centers.length; index += 1) {
-    const nextCenter = centers[index];
-
-    if (coordinate > nextCenter) {
-      continue;
-    }
-
-    const previousCenter = centers[index - 1];
-    const progress =
-      (coordinate - previousCenter) / (nextCenter - previousCenter);
-
-    return index - 1 + progress;
-  }
-
-  return lastIndex;
-}
-
-export function getColorForPosition(colors: string[], position: number) {
-  if (colors.length === 0) {
-    return 'white';
-  }
-
-  const boundedPosition = clamp(position, 0, colors.length - 1);
-  const lowerIndex = Math.floor(boundedPosition);
-  const upperIndex = Math.min(colors.length - 1, Math.ceil(boundedPosition));
-  const progress = boundedPosition - lowerIndex;
-  const lowerColor = parseHslColor(colors[lowerIndex]);
-  const upperColor = parseHslColor(colors[upperIndex]);
-
-  if (lowerColor && upperColor) {
-    const hueDelta =
-      ((((upperColor.hue - lowerColor.hue) % 360) + 540) % 360) - 180;
-    const hue =
-      (((lowerColor.hue + hueDelta * progress) % 360) + 360) % 360;
-
-    return `hsla(${hue},${gsap.utils.interpolate(
-      lowerColor.saturation,
-      upperColor.saturation,
-      progress,
-    )}%,${gsap.utils.interpolate(
-      lowerColor.lightness,
-      upperColor.lightness,
-      progress,
-    )}%,${gsap.utils.interpolate(
-      lowerColor.alpha,
-      upperColor.alpha,
-      progress,
-    )})`;
-  }
-
-  return gsap.utils.interpolate(
-    colors[lowerIndex],
-    colors[upperIndex],
-    progress,
-  );
-}
-
-function parseHslColor(color: string) {
-  const match = color.match(
-    /^hsla?\(\s*(-?(?:\d+(?:\.\d+)?|\.\d+))(?:deg)?[\s,]+(-?(?:\d+(?:\.\d+)?|\.\d+))%[\s,]+(-?(?:\d+(?:\.\d+)?|\.\d+))%(?:\s*(?:\/|,)\s*((?:-?(?:\d+(?:\.\d+)?|\.\d+))%?))?\s*\)$/i,
-  );
-
-  if (!match) {
-    return null;
-  }
-
-  return {
-    hue: Number(match[1]),
-    saturation: Number(match[2]),
-    lightness: Number(match[3]),
-    alpha:
-      match[4] === undefined
-        ? 1
-        : match[4].endsWith('%')
-          ? Number(match[4].slice(0, -1)) / 100
-          : Number(match[4]),
-  };
-}
-
-export function getNavigationScale(position: number, activeIndex: number) {
-  const proximity = Math.max(0, 1 - Math.abs(position - activeIndex));
-
-  return 1 + (NAVIGATION_ACTIVE_SCALE - 1) * proximity;
-}
-
-export function getNavigationRingRadius(scale: number, strokeWidth: number) {
-  return (NAVIGATION_RING_DIAMETER * scale - strokeWidth) / 2;
-}
 
 export class TrackedNavigationController {
   private geometry: NavigationGeometry;

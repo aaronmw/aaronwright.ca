@@ -3,6 +3,7 @@
 import {
   MutableRefObject,
   PointerEvent as ReactPointerEvent,
+  useCallback,
   useEffect,
   useLayoutEffect,
   useMemo,
@@ -11,33 +12,43 @@ import {
 } from 'react';
 import { gsap } from 'gsap';
 import {
+  NavigationRenderState,
+  TrackedNavigationController,
+} from './navigationMotion';
+import {
+  getLongestDelay,
+  getNavigationRingRadius,
+  getNavigationScale,
+  getOutsideInDelay,
+  getSlideCenters,
+  getSlideLatticeCoordinate,
+  getSlideSlotIds,
+} from './navigationGeometry';
+import {
   NAVIGATION_DOT_RADIUS,
   NAVIGATION_RETURN_DELAY,
   NAVIGATION_RING_STROKE,
   NAVIGATION_SLIDE_STEP,
-  NavigationRenderState,
-  TrackedNavigationController,
-  getNavigationRingRadius,
-  getNavigationScale,
-} from './navigationMotion';
+  NAVIGATION_SVG_CENTER,
+  NAVIGATION_SVG_SIZE,
+} from './navigationTokens';
+import {
+  SlideNavigationView,
+  type SlideNavigationViewActions,
+} from './SlideNavigationView';
+import type {
+  SlideIndicatorMotionController,
+  SlideNavigationItem,
+} from './slideNavigationTypes';
 
-const INDICATOR_PAIR_STAGGER_MS = 90;
-const INDICATOR_SIDE_LEAD_MS = 30;
+export type {
+  SlideIndicatorMotionController,
+  SlideNavigationItem,
+} from './slideNavigationTypes';
+
 const INDICATOR_TRANSITION_MS = 500;
-const SVG_HEIGHT = 52;
-const SVG_CENTER_Y = SVG_HEIGHT / 2;
-
-export type SlideIndicatorMotionController = {
-  begin: (targetIndex: number) => void;
-  update: (position: number) => void;
-  complete: (targetIndex: number) => void;
-  cancel: () => void;
-};
-
-export type SlideNavigationItem = {
-  id: string;
-  label: string;
-};
+const SVG_HEIGHT = NAVIGATION_SVG_SIZE;
+const SVG_CENTER_Y = NAVIGATION_SVG_CENTER;
 
 type IndicatorTransitionState = {
   previousCount: number;
@@ -50,59 +61,6 @@ type MotionTargetState = {
   itemsIdentity: string;
   sourceIndex: number;
 };
-
-function getIndicatorSlotIds(count: number) {
-  return Array.from({ length: count }, (_, index) => {
-    if (index === 0) {
-      return 0;
-    }
-
-    return index % 2 === 1 ? Math.ceil(index / 2) : -(index / 2);
-  }).sort((a, b) => a - b);
-}
-
-function getOutsideInDelay(index: number, count: number) {
-  const distanceFromLeft = index;
-  const distanceFromRight = count - index - 1;
-  const pairIndex = Math.min(distanceFromLeft, distanceFromRight);
-  const leftSideDelay =
-    distanceFromLeft < distanceFromRight ? INDICATOR_SIDE_LEAD_MS : 0;
-
-  return pairIndex * INDICATOR_PAIR_STAGGER_MS + leftSideDelay;
-}
-
-function getLongestDelay(
-  count: number,
-  getDelay: (index: number, count: number) => number,
-) {
-  return Math.max(
-    0,
-    ...Array.from({ length: count }, (_, index) => getDelay(index, count)),
-  );
-}
-
-function getSlotCoordinate(
-  slotId: number,
-  count: number,
-  surfaceWidth: number,
-) {
-  return (
-    getLatticeCoordinate(count, surfaceWidth) + slotId * NAVIGATION_SLIDE_STEP
-  );
-}
-
-function getLatticeCoordinate(count: number, surfaceWidth: number) {
-  const parityOffset =
-    count > 0 && count % 2 === 0 ? -NAVIGATION_SLIDE_STEP / 2 : 0;
-
-  return surfaceWidth / 2 + parityOffset;
-}
-
-function getCenters(count: number, surfaceWidth: number) {
-  return getIndicatorSlotIds(count).map((slotId) =>
-    getSlotCoordinate(slotId, count, surfaceWidth),
-  );
-}
 
 export function SlideNavigation({
   controllerRef,
@@ -162,12 +120,12 @@ export function SlideNavigation({
   const surfaceWidth = Math.max(surfaceCount, 1) * NAVIGATION_SLIDE_STEP;
   const targetWidth = Math.max(targetCount, 1) * NAVIGATION_SLIDE_STEP;
   const surfaceLeft = (targetWidth - surfaceWidth) / 2;
-  const previousSlotIds = getIndicatorSlotIds(
+  const previousSlotIds = getSlideSlotIds(
     transitionState.phase === 'idle'
       ? transitionState.targetCount
       : transitionState.previousCount,
   );
-  const targetSlotIds = getIndicatorSlotIds(transitionState.targetCount);
+  const targetSlotIds = getSlideSlotIds(transitionState.targetCount);
   const renderedSlotIds =
     transitionState.phase === 'idle'
       ? targetSlotIds
@@ -179,22 +137,23 @@ export function SlideNavigation({
       ? transitionState.previousCount
       : transitionState.targetCount;
   const centers = useMemo(
-    () => getCenters(geometryCount, surfaceWidth),
+    () => getSlideCenters(geometryCount, surfaceWidth),
     [geometryCount, surfaceWidth],
   );
+  const initialCentersRef = useRef(centers);
+  const initialColorRef = useRef(color);
   const visualActiveIndex =
     motionTarget?.itemsIdentity === itemsIdentity &&
     motionTarget.sourceIndex === boundedActiveIndex
       ? motionTarget.index
       : boundedActiveIndex;
-  targetCountRef.current = targetCount;
-
   useLayoutEffect(() => {
+    targetCountRef.current = targetCount;
     boundedActiveIndexRef.current = boundedActiveIndex;
     itemsIdentityRef.current = itemsIdentity;
-  }, [boundedActiveIndex, itemsIdentity]);
+  }, [boundedActiveIndex, itemsIdentity, targetCount]);
 
-  const renderNavigation = (state: NavigationRenderState) => {
+  const renderNavigation = useCallback((state: NavigationRenderState) => {
     const ring = ringRef.current;
 
     if (ring) {
@@ -230,13 +189,16 @@ export function SlideNavigation({
         String(NAVIGATION_DOT_RADIUS * activeScale * pressScale),
       );
     });
-  };
+  }, []);
 
   useLayoutEffect(() => {
     const controller = new TrackedNavigationController({
-      geometry: { centers, colors: Array(targetCount).fill(color) },
-      activeIndex: boundedActiveIndex,
-      sourcePosition: boundedActiveIndex,
+      geometry: {
+        centers: initialCentersRef.current,
+        colors: Array(targetCountRef.current).fill(initialColorRef.current),
+      },
+      activeIndex: boundedActiveIndexRef.current,
+      sourcePosition: boundedActiveIndexRef.current,
       reducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)')
         .matches,
       returnDelay: NAVIGATION_RETURN_DELAY,
@@ -275,7 +237,7 @@ export function SlideNavigation({
       controller.destroy();
       controllerInstanceRef.current = null;
     };
-  }, []);
+  }, [controllerRef, renderNavigation]);
 
   useLayoutEffect(() => {
     const controller = controllerInstanceRef.current;
@@ -354,11 +316,11 @@ export function SlideNavigation({
       '(prefers-reduced-motion: reduce)',
     ).matches;
     const lattice = latticeRef.current;
-    const previousLatticeCoordinate = getLatticeCoordinate(
+    const previousLatticeCoordinate = getSlideLatticeCoordinate(
       transitionState.previousCount,
       surfaceWidth,
     );
-    const targetLatticeCoordinate = getLatticeCoordinate(
+    const targetLatticeCoordinate = getSlideLatticeCoordinate(
       transitionState.targetCount,
       surfaceWidth,
     );
@@ -483,156 +445,85 @@ export function SlideNavigation({
     event.currentTarget.releasePointerCapture?.(event.pointerId);
   };
 
+  const viewActions: SlideNavigationViewActions = {
+    onPointerMove: (event) => {
+      if (event.pointerType !== 'touch') {
+        schedulePointerTracking(event.clientX);
+      }
+    },
+    onPointerLeave: (event) => {
+      if (event.pointerType !== 'touch') {
+        controllerInstanceRef.current?.releasePointer(true);
+      }
+    },
+    onPointerEnter: (_index, event) => {
+      if (event.pointerType === 'touch') {
+        return;
+      }
+
+      const localX = getLocalPointerX(event.clientX);
+      const controller = controllerInstanceRef.current;
+
+      if (controller?.isPointerArmed()) {
+        controller.trackPointer(localX);
+      } else {
+        controller?.engagePointer(localX);
+      }
+    },
+    onPointerDown: (index, event) => {
+      if (event.pointerType === 'touch') {
+        controllerInstanceRef.current?.releasePointer(false);
+      }
+
+      event.currentTarget.setPointerCapture?.(event.pointerId);
+      pointerPinnedIndexRef.current = index;
+      controllerInstanceRef.current?.pin(index);
+      controllerInstanceRef.current?.press(index);
+    },
+    onPointerRelease: (index, event) => {
+      handlePointerRelease(event, index);
+    },
+    onKeyDown: (index, key, code, repeat) => {
+      if (!repeat && (key === 'Enter' || code === 'Space')) {
+        controllerInstanceRef.current?.press(index);
+      }
+    },
+    onKeyUp: (index, key, code) => {
+      if (key === 'Enter' || code === 'Space') {
+        controllerInstanceRef.current?.release(index);
+      }
+    },
+    onFocus: (index) => controllerInstanceRef.current?.focus(index),
+    onBlur: (index) => controllerInstanceRef.current?.blur(index),
+    onClick: (index, detail) => {
+      if (detail === 0) {
+        controllerInstanceRef.current?.triggerPress(index);
+      }
+      onSelect(index);
+    },
+  };
+
   return (
-    <div
-      data-portfolio-slide-indicators
-      data-interactive-pop="off"
-      className="group/slide-nav pointer-events-auto relative h-[52px] overflow-visible"
-      style={{ width: `${targetWidth}px` }}
-      onPointerMove={(event) => {
-        if (event.pointerType !== 'touch') {
-          schedulePointerTracking(event.clientX);
-        }
+    <SlideNavigationView
+      actions={viewActions}
+      model={{
+        activeIndex: boundedActiveIndex,
+        items: visibleItems,
+        pendingIndex,
+        renderedSlotIds,
+        surfaceLeft,
+        surfaceWidth,
+        targetSlotIds,
+        targetWidth,
+        visualActiveIndex,
       }}
-      onPointerLeave={(event) => {
-        if (event.pointerType !== 'touch') {
-          controllerInstanceRef.current?.releasePointer(true);
-        }
+      refs={{
+        dotRefs,
+        latticeRef,
+        ringRef,
+        slotRefs,
+        svgRef,
       }}
-    >
-      <svg
-        ref={svgRef}
-        className="pointer-events-none absolute top-0 overflow-visible"
-        width={surfaceWidth}
-        height={SVG_HEIGHT}
-        viewBox={`0 0 ${surfaceWidth} ${SVG_HEIGHT}`}
-        style={{ left: `${surfaceLeft}px` }}
-        aria-hidden="true"
-      >
-        <g ref={latticeRef}>
-          {renderedSlotIds.map((slotId) => {
-            const targetIndex = targetSlotIds.indexOf(slotId);
-
-            return (
-              <g
-                key={slotId}
-                ref={(node) => {
-                  if (node) {
-                    slotRefs.current.set(slotId, node);
-                  } else {
-                    slotRefs.current.delete(slotId);
-                  }
-                }}
-                data-portfolio-slide-indicator-slot={slotId}
-                transform={`translate(${slotId * NAVIGATION_SLIDE_STEP} 0)`}
-              >
-                <circle
-                  ref={(node) => {
-                    if (node && targetIndex >= 0) {
-                      dotRefs.current.set(targetIndex, node);
-                    } else if (targetIndex >= 0) {
-                      dotRefs.current.delete(targetIndex);
-                    }
-                  }}
-                  data-portfolio-slide-indicator-visual={
-                    targetIndex >= 0 ? targetIndex : undefined
-                  }
-                  cx={0}
-                  cy={SVG_CENTER_Y}
-                  r={NAVIGATION_DOT_RADIUS}
-                  fill="white"
-                  className={`transition-opacity duration-200 ease-out motion-reduce:transition-none ${
-                    targetIndex < 0 || targetIndex === visualActiveIndex
-                      ? 'opacity-100'
-                      : 'opacity-50 group-hover/slide-nav:opacity-100 group-focus-within/slide-nav:opacity-100'
-                  }`}
-                />
-                {targetIndex >= 0 && pendingIndex === targetIndex ? (
-                  <circle
-                    cx={0}
-                    cy={SVG_CENTER_Y}
-                    r={7}
-                    fill="none"
-                    stroke="white"
-                    strokeWidth={2}
-                    strokeDasharray="20 24"
-                    className="origin-center animate-spin"
-                  />
-                ) : null}
-              </g>
-            );
-          })}
-        </g>
-        {/* The controller exclusively owns geometry and color during travel. */}
-        <circle
-          ref={ringRef}
-          data-portfolio-slide-indicator-marker="true"
-          fill="none"
-          vectorEffect="non-scaling-stroke"
-        />
-      </svg>
-      {visibleItems.map((item, index) => (
-        <button
-          key={item.id}
-          type="button"
-          className="pointer-events-auto absolute inset-y-0 cursor-pointer outline-none"
-          style={{
-            left: `${index * NAVIGATION_SLIDE_STEP}px`,
-            width: `${NAVIGATION_SLIDE_STEP}px`,
-          }}
-          aria-label={item.label}
-          aria-current={boundedActiveIndex === index ? 'true' : undefined}
-          aria-busy={pendingIndex === index ? true : undefined}
-          data-portfolio-slide-indicator-index={index}
-          onPointerEnter={(event) => {
-            if (event.pointerType === 'touch') {
-              return;
-            }
-
-            const localX = getLocalPointerX(event.clientX);
-            const controller = controllerInstanceRef.current;
-
-            if (controller?.isPointerArmed()) {
-              controller.trackPointer(localX);
-            } else {
-              controller?.engagePointer(localX);
-            }
-          }}
-          onPointerDown={(event) => {
-            if (event.pointerType === 'touch') {
-              controllerInstanceRef.current?.releasePointer(false);
-            }
-
-            event.currentTarget.setPointerCapture?.(event.pointerId);
-            pointerPinnedIndexRef.current = index;
-            controllerInstanceRef.current?.pin(index);
-            controllerInstanceRef.current?.press(index);
-          }}
-          onPointerUp={(event) => handlePointerRelease(event, index)}
-          onPointerCancel={(event) => handlePointerRelease(event, index)}
-          onKeyDown={(event) => {
-            if (
-              !event.repeat &&
-              (event.key === 'Enter' || event.code === 'Space')
-            ) {
-              controllerInstanceRef.current?.press(index);
-            }
-          }}
-          onKeyUp={(event) => {
-            if (event.key === 'Enter' || event.code === 'Space') {
-              controllerInstanceRef.current?.release(index);
-            }
-          }}
-          onFocus={() => controllerInstanceRef.current?.focus(index)}
-          onBlur={() => controllerInstanceRef.current?.blur(index)}
-          onClick={(event) => {
-            if (event.detail === 0) {
-              controllerInstanceRef.current?.triggerPress(index);
-            }
-            onSelect(index);
-          }}
-        />
-      ))}
-    </div>
+    />
   );
 }

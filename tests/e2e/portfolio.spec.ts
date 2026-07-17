@@ -34,6 +34,39 @@ async function expectRingCenteredOnActiveDot(page: Page) {
   ).toBeLessThanOrEqual(0.5)
 }
 
+async function expectSectionRingCenteredOnActiveItem(page: Page) {
+  const activeButton = page.locator(
+    'button[data-portfolio-section-nav-side="left"][aria-current="page"]',
+  )
+  const activeIndex = await activeButton.getAttribute(
+    'data-portfolio-section-nav-index',
+  )
+  const ring = page.locator('[data-portfolio-section-nav-ring="left"]')
+  const visual = page.locator(
+    `[data-portfolio-section-nav-zone="left"] [data-portfolio-section-nav-visual-index="${activeIndex}"]`,
+  )
+
+  await expect.poll(async () => {
+    const [ringBox, visualBox] = await Promise.all([
+      ring.boundingBox(),
+      visual.boundingBox(),
+    ])
+
+    if (!ringBox || !visualBox) {
+      return Number.POSITIVE_INFINITY
+    }
+
+    return Math.max(
+      Math.abs(
+        ringBox.x + ringBox.width / 2 - (visualBox.x + visualBox.width / 2),
+      ),
+      Math.abs(
+        ringBox.y + ringBox.height / 2 - (visualBox.y + visualBox.height / 2),
+      ),
+    )
+  }).toBeLessThanOrEqual(0.5)
+}
+
 test('deep links reveal the requested section and preserve route state', async ({
   page,
 }) => {
@@ -47,6 +80,7 @@ test('deep links reveal the requested section and preserve route state', async (
     ),
   ).toHaveAttribute('aria-label', /Aaron's Toolbox|Previous screen/)
   await expectRingCenteredOnActiveDot(page)
+  await expectSectionRingCenteredOnActiveItem(page)
 })
 
 test('keyboard navigation retargets sections and slides', async ({
@@ -155,6 +189,7 @@ test('mobile carousels retain pull boundaries and one vertical rail', async ({
     page.locator('[data-portfolio-section-nav-zone="right"]'),
   ).toHaveCount(0)
   await expectRingCenteredOnActiveDot(page)
+  await expectSectionRingCenteredOnActiveItem(page)
 })
 
 test('reduced motion still completes the loading curtain', async ({ page }) => {

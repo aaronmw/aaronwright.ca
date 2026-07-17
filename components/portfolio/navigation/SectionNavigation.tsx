@@ -9,63 +9,32 @@ import {
   useState,
 } from 'react';
 import { gsap } from 'gsap';
-import { faArrowDown } from '@fortawesome/free-solid-svg-icons';
-import type { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import {
-  NAVIGATION_DOT_RADIUS,
-  NAVIGATION_RING_STROKE,
-  NavigationRenderState,
   TrackedNavigationController,
-  getNavigationRingRadius,
-  getNavigationScale,
 } from './navigationMotion';
+import {
+  getCenteredSectionCenters,
+  getTitleLinkedSectionCenters,
+  type SectionNavigationSide,
+} from './navigationGeometry';
+import {
+  SectionNavigationRail,
+  type SectionNavigationRailActions,
+} from './SectionNavigationRail';
+import { SectionNavigationRenderer } from './SectionNavigationRenderer';
+import type {
+  SectionNavigationAxis,
+  SectionNavigationGeometryMode,
+  SectionNavigationHandle,
+  SectionNavigationItem,
+  SectionNavigationView,
+} from './sectionNavigationTypes';
 
-type SectionNavigationSide = 'left' | 'right';
-type SectionNavigationAxis = 'horizontal' | 'vertical';
-export type SectionNavigationGeometryMode = 'title-linked' | 'centered';
-
-export type SectionNavigationItem = {
-  id: string;
-  title: string;
-  color: string;
-  hasSlides: boolean;
-  pending: boolean;
-};
-
-export type SectionNavigationHandle = {
-  cancel: () => void;
-  click: (index: number, side?: SectionNavigationSide) => boolean;
-  getPinnedIndex: () => number | null;
-  pin: (
-    index: number,
-    axis: SectionNavigationAxis,
-    sourceLinked?: boolean,
-  ) => void;
-  preview: (index: number, previewed: boolean) => void;
-  settle: (axis: SectionNavigationAxis) => void;
-  syncSourcePosition: () => void;
-};
-
-type SectionNavigationView = {
-  ring: SVGCircleElement | null;
-  itemGroups: Array<SVGGElement | null>;
-  arrowGroups: Array<SVGGElement | null>;
-  dots: Array<SVGCircleElement | null>;
-  buttons: Array<HTMLButtonElement | null>;
-  tooltip: HTMLDivElement | null;
-  tooltipText: HTMLSpanElement | null;
-};
-
-type AffordanceOpacityMotion = {
-  element: SVGElement;
-  setter: ReturnType<typeof gsap.quickTo>;
-  target: number;
-};
-
-type AffordanceOpacityMotions = {
-  arrows: Array<AffordanceOpacityMotion | null>;
-  dots: Array<AffordanceOpacityMotion | null>;
-};
+export type {
+  SectionNavigationGeometryMode,
+  SectionNavigationHandle,
+  SectionNavigationItem,
+} from './sectionNavigationTypes';
 
 type TooltipIntent = {
   itemIndex: number;
@@ -73,113 +42,28 @@ type TooltipIntent = {
   title: string;
 };
 
-const SVG_WIDTH = 52;
-const SVG_CENTER_X = SVG_WIDTH / 2;
-const ARROW_SIZE = 16;
-const AFFORDANCE_CROSSFADE_DURATION = 0.3;
-const CENTERED_ITEM_STEP = 60;
 const TOOLTIP_DURATION = 0.15;
 
-function getIconPaths(icon: IconDefinition) {
-  const [width, height, , , pathData] = icon.icon;
-
-  return {
-    height,
-    paths: Array.isArray(pathData) ? pathData : [pathData],
-    width,
-  };
-}
-
-function SvgIcon({
-  icon,
-  centerX,
-  centerY,
-  size,
-}: {
-  icon: IconDefinition;
-  centerX: number;
-  centerY: number;
-  size: number;
-}) {
-  const { width, height, paths } = getIconPaths(icon);
-  const scale = size / Math.max(width, height);
-  const renderedWidth = width * scale;
-  const renderedHeight = height * scale;
-
-  return (
-    <g
-      transform={`translate(${centerX - renderedWidth / 2} ${
-        centerY - renderedHeight / 2
-      }) scale(${scale})`}
-    >
-      {paths.map((path, index) => (
-        <path key={index} d={path} fill="currentColor" />
-      ))}
-    </g>
-  );
-}
-
-function getArrowRotationAtIndex(
-  itemIndex: number,
-  activeIndex: number,
-  side: SectionNavigationSide,
-  hasSlides: boolean,
+function syncNavigationSourcePosition(
+  source: HTMLDivElement | null,
+  controller: TrackedNavigationController | null,
+  renderer: SectionNavigationRenderer | null,
+  sourcePositionRef: MutableRefObject<number>,
+  sourceUpdateRef: MutableRefObject<boolean>,
 ) {
-  const direction = side === 'left' ? 1 : -1;
-
-  if (itemIndex < activeIndex) {
-    return 180 * direction;
+  if (!source || !controller) {
+    return;
   }
 
-  if (itemIndex > activeIndex) {
-    return 0;
+  const position = source.scrollTop / Math.max(source.clientHeight, 1);
+  sourcePositionRef.current = position;
+  sourceUpdateRef.current = true;
+  const rendered = controller.setSourcePosition(position, true);
+  sourceUpdateRef.current = false;
+
+  if (!rendered) {
+    renderer?.renderLatest(true);
   }
-
-  return hasSlides ? 90 * direction : 0;
-}
-
-function getArrowRotation(
-  itemIndex: number,
-  sourcePosition: number,
-  side: SectionNavigationSide,
-  items: SectionNavigationItem[],
-) {
-  const lowerIndex = Math.max(0, Math.floor(sourcePosition));
-  const upperIndex = Math.min(items.length - 1, Math.ceil(sourcePosition));
-  const progress = sourcePosition - lowerIndex;
-  const lowerRotation = getArrowRotationAtIndex(
-    itemIndex,
-    lowerIndex,
-    side,
-    items[lowerIndex]?.hasSlides ?? false,
-  );
-  const upperRotation = getArrowRotationAtIndex(
-    itemIndex,
-    upperIndex,
-    side,
-    items[upperIndex]?.hasSlides ?? false,
-  );
-
-  return gsap.utils.interpolate(lowerRotation, upperRotation, progress);
-}
-
-function getAffordanceOpacity(activation: number) {
-  const clampedActivation = Math.max(0, Math.min(1, activation));
-
-  return {
-    arrowOpacity: 1 - clampedActivation,
-    dotOpacity: clampedActivation,
-  };
-}
-
-function getItemBounds(centers: number[], height: number, index: number) {
-  const top = index === 0 ? 0 : (centers[index - 1] + centers[index]) / 2;
-  const bottom =
-    index === centers.length - 1
-      ? height
-      : (centers[index] + centers[index + 1]) / 2;
-
-  return { top, height: Math.max(0, bottom - top) };
 }
 
 export function SectionNavigation({
@@ -246,12 +130,7 @@ export function SectionNavigation({
   const navigationControllerRef = useRef<TrackedNavigationController | null>(
     null,
   );
-  const affordanceOpacityMotionsRef = useRef<
-    Record<SectionNavigationSide, AffordanceOpacityMotions>
-  >({
-    left: { arrows: [], dots: [] },
-    right: { arrows: [], dots: [] },
-  });
+  const rendererRef = useRef<SectionNavigationRenderer | null>(null);
   const reducedMotionRef = useRef(false);
   const sourcePositionRef = useRef(activeIndex);
   const pointerOwnerRef = useRef<SectionNavigationSide | null>(null);
@@ -270,97 +149,20 @@ export function SectionNavigation({
   const scrollEndTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
     null,
   );
-  const latestRenderRef = useRef<NavigationRenderState | null>(null);
   const sourceUpdateRef = useRef(false);
-  const attributeCacheRef = useRef(
-    new WeakMap<SVGElement, Map<string, string>>(),
-  );
   const geometryRef = useRef(geometry);
   const activeIndexRef = useRef(activeIndex);
   const hoveredRef = useRef(hovered);
   const modalPresentationActiveRef = useRef(modalPresentationActive);
   const itemsRef = useRef(items);
 
-  activeIndexRef.current = activeIndex;
-  geometryRef.current = geometry;
-  hoveredRef.current = hovered;
-  modalPresentationActiveRef.current = modalPresentationActive;
-  itemsRef.current = items;
-
-  const setAffordanceOpacity = (
-    side: SectionNavigationSide,
-    kind: keyof AffordanceOpacityMotions,
-    itemIndex: number,
-    target: number,
-    immediate = false,
-  ) => {
-    const view = viewsRef.current[side];
-    const element =
-      kind === 'arrows' ? view.arrowGroups[itemIndex] : view.dots[itemIndex];
-
-    if (!element) {
-      return;
-    }
-
-    const motions = affordanceOpacityMotionsRef.current[side][kind];
-    let motion = motions[itemIndex];
-
-    if (!motion || motion.element !== element) {
-      if (motion) {
-        gsap.killTweensOf(motion.element);
-      }
-
-      gsap.set(element, { opacity: target });
-      motion = {
-        element,
-        setter: gsap.quickTo(element, 'opacity', {
-          duration: reducedMotionRef.current
-            ? 0
-            : AFFORDANCE_CROSSFADE_DURATION,
-          ease: 'power1.out',
-        }),
-        target,
-      };
-      motions[itemIndex] = motion;
-      return;
-    }
-
-    if (Math.abs(motion.target - target) < 0.001) {
-      return;
-    }
-
-    motion.target = target;
-    if (immediate) {
-      motion.setter.tween.pause();
-      gsap.set(element, { opacity: target });
-    } else {
-      motion.setter(target);
-    }
-  };
-
-  const setCachedAttribute = (
-    element: SVGElement | null,
-    name: string,
-    value: string,
-  ) => {
-    if (!element) {
-      return;
-    }
-
-    let cache = attributeCacheRef.current.get(element);
-
-    if (!cache) {
-      cache = new Map();
-      attributeCacheRef.current.set(element, cache);
-    }
-
-    if (cache.get(name) === value) {
-      return;
-    }
-
-    cache.set(name, value);
-    element.setAttribute(name, value);
-  };
+  useLayoutEffect(() => {
+    activeIndexRef.current = activeIndex;
+    geometryRef.current = geometry;
+    hoveredRef.current = hovered;
+    modalPresentationActiveRef.current = modalPresentationActive;
+    itemsRef.current = items;
+  }, [activeIndex, geometry, hovered, items, modalPresentationActive]);
 
   const setTooltipVisibility = (
     side: SectionNavigationSide,
@@ -435,173 +237,6 @@ export function SectionNavigation({
     restoreTooltip();
   };
 
-  const getAffordanceLayers = (itemIndex: number) => {
-    const sourcePosition = sourcePositionRef.current;
-    const currentItems = itemsRef.current;
-    const item = currentItems[itemIndex];
-    const lowerIndex = Math.max(0, Math.floor(sourcePosition));
-    const upperIndex = Math.min(
-      currentItems.length - 1,
-      Math.ceil(sourcePosition),
-    );
-    const progress = sourcePosition - lowerIndex;
-    const directDotTransition =
-      lowerIndex !== upperIndex &&
-      !currentItems[lowerIndex]?.hasSlides &&
-      !currentItems[upperIndex]?.hasSlides;
-
-    if (item?.pending) {
-      return { arrowOpacity: 1, dotOpacity: 0 };
-    }
-
-    if (
-      itemIndex === pinnedIndexRef.current &&
-      pinnedAxisRef.current === 'vertical'
-    ) {
-      return { arrowOpacity: 0, dotOpacity: 1 };
-    }
-
-    if (
-      itemIndex === previewIndexRef.current &&
-      itemIndex !== activeIndexRef.current
-    ) {
-      return { arrowOpacity: 0, dotOpacity: 1 };
-    }
-
-    if (pinnedAxisRef.current === 'vertical') {
-      return { arrowOpacity: 1, dotOpacity: 0 };
-    }
-
-    if (!item?.hasSlides) {
-      if (
-        directDotTransition &&
-        (itemIndex === lowerIndex || itemIndex === upperIndex)
-      ) {
-        return {
-          arrowOpacity: 0,
-          dotOpacity: itemIndex === lowerIndex ? 1 - progress : progress,
-        };
-      }
-
-      return getAffordanceOpacity(
-        Math.max(0, 1 - Math.abs(sourcePosition - itemIndex)),
-      );
-    }
-
-    return { arrowOpacity: 1, dotOpacity: 0 };
-  };
-
-  const renderAffordances = (
-    state: NavigationRenderState,
-    scrubbed = false,
-  ) => {
-    const currentItems = itemsRef.current;
-    const currentGeometry = geometryRef.current;
-
-    (['left', 'right'] as const).forEach((side) => {
-      const view = viewsRef.current[side];
-
-      currentItems.forEach((item, itemIndex) => {
-        const itemGroup = view.itemGroups[itemIndex];
-        const arrowGroup = view.arrowGroups[itemIndex];
-        const dot = view.dots[itemIndex];
-        const centerY = currentGeometry.centers[itemIndex] ?? 0;
-        const activeScale =
-          itemIndex === state.activeIndex
-            ? getNavigationScale(state.position, state.activeIndex)
-            : 1;
-        const pressScale =
-          state.pressedIndex === itemIndex ? state.pressScale : 1;
-        const visualScale = activeScale * pressScale;
-        const { arrowOpacity, dotOpacity } = getAffordanceLayers(itemIndex);
-        const rotation = getArrowRotation(
-          itemIndex,
-          sourcePositionRef.current,
-          side,
-          currentItems,
-        );
-        const concealed =
-          modalPresentationActiveRef.current &&
-          itemIndex !== activeIndexRef.current;
-        const dimmed =
-          !hoveredRef.current && itemIndex !== activeIndexRef.current;
-
-        setCachedAttribute(
-          itemGroup,
-          'opacity',
-          concealed ? '0' : dimmed ? '0.5' : '1',
-        );
-        setCachedAttribute(
-          arrowGroup,
-          'transform',
-          `translate(${SVG_CENTER_X} ${centerY}) rotate(${rotation}) scale(${visualScale}) translate(${-SVG_CENTER_X} ${-centerY})`,
-        );
-        setAffordanceOpacity(
-          side,
-          'arrows',
-          itemIndex,
-          arrowOpacity,
-          scrubbed,
-        );
-
-        if (dot) {
-          setCachedAttribute(dot, 'cy', String(centerY));
-          setCachedAttribute(
-            dot,
-            'r',
-            String(NAVIGATION_DOT_RADIUS * visualScale),
-          );
-          setAffordanceOpacity(
-            side,
-            'dots',
-            itemIndex,
-            dotOpacity,
-            scrubbed,
-          );
-        }
-      });
-    });
-  };
-
-  const renderNavigation = (state: NavigationRenderState) => {
-    latestRenderRef.current = state;
-
-    (['left', 'right'] as const).forEach((side) => {
-      const view = viewsRef.current[side];
-      const ring = view.ring;
-
-      if (ring) {
-        const ringPressScale =
-          state.pressedIndex !== null ? state.pressScale : 1;
-        setCachedAttribute(ring, 'cx', String(SVG_CENTER_X));
-        setCachedAttribute(ring, 'cy', String(state.coordinate));
-        setCachedAttribute(
-          ring,
-          'r',
-          String(
-            getNavigationRingRadius(
-              state.ringScale * ringPressScale,
-              state.strokeWidth,
-            ),
-          ),
-        );
-        setCachedAttribute(ring, 'stroke', state.color);
-        setCachedAttribute(
-          ring,
-          'stroke-width',
-          String(state.strokeWidth),
-        );
-      }
-
-      if (view.tooltip && tooltipVisibleRef.current[side]) {
-        view.tooltip.style.top = `${state.coordinate}px`;
-        view.tooltip.style.backgroundColor = state.color;
-      }
-    });
-
-    renderAffordances(state, sourceUpdateRef.current);
-  };
-
   useLayoutEffect(() => {
     const source = sourceRef.current;
     const titles = menuTitleRefs.current.filter(
@@ -616,13 +251,8 @@ export function SectionNavigation({
       const height = source.clientHeight;
 
       if (geometryMode === 'centered') {
-        const totalSpan = CENTERED_ITEM_STEP * (items.length - 1);
-        const firstCenter = (height - totalSpan) / 2;
-
         setGeometry({
-          centers: items.map(
-            (_, itemIndex) => firstCenter + itemIndex * CENTERED_ITEM_STEP,
-          ),
+          centers: getCenteredSectionCenters(items.length, height),
           height,
         });
         return;
@@ -633,15 +263,10 @@ export function SectionNavigation({
 
         return rect.top + source.scrollTop + rect.height / 2;
       });
-      const fallbackStep = 60;
-      const step =
-        titleCenters.length > 1
-          ? (titleCenters[titleCenters.length - 1] - titleCenters[0]) /
-            (titleCenters.length - 1)
-          : fallbackStep;
-      const centers = [titleCenters[0] - step, ...titleCenters];
-
-      setGeometry({ centers, height });
+      setGeometry({
+        centers: getTitleLinkedSectionCenters(titleCenters),
+        height,
+      });
     };
 
     measure();
@@ -656,32 +281,40 @@ export function SectionNavigation({
     reducedMotionRef.current = window.matchMedia(
       '(prefers-reduced-motion: reduce)',
     ).matches;
+    const renderer = new SectionNavigationRenderer({
+      views: viewsRef.current,
+      getContext: () => ({
+        activeIndex: activeIndexRef.current,
+        geometry: geometryRef.current,
+        hovered: hoveredRef.current,
+        items: itemsRef.current,
+        modalPresentationActive: modalPresentationActiveRef.current,
+        pinnedAxis: pinnedAxisRef.current,
+        pinnedIndex: pinnedIndexRef.current,
+        previewIndex: previewIndexRef.current,
+        reducedMotion: reducedMotionRef.current,
+        sourcePosition: sourcePositionRef.current,
+      }),
+      isTooltipVisible: (side) => tooltipVisibleRef.current[side],
+    });
+    rendererRef.current = renderer;
     const controller = new TrackedNavigationController({
       geometry: {
-        centers: geometry.centers,
-        colors: items.map((item) => item.color),
+        centers: geometryRef.current.centers,
+        colors: itemsRef.current.map((item) => item.color),
       },
-      activeIndex,
-      sourcePosition: activeIndex,
+      activeIndex: activeIndexRef.current,
+      sourcePosition: sourcePositionRef.current,
       reducedMotion: reducedMotionRef.current,
-      onRender: renderNavigation,
+      onRender: (state) => renderer.render(state, sourceUpdateRef.current),
     });
     navigationControllerRef.current = controller;
 
     return () => {
       controller.destroy();
+      renderer.destroy();
       navigationControllerRef.current = null;
-      (['left', 'right'] as const).forEach((side) => {
-        const motions = affordanceOpacityMotionsRef.current[side];
-
-        [...motions.arrows, ...motions.dots].forEach((motion) => {
-          if (motion) {
-            gsap.killTweensOf(motion.element);
-          }
-        });
-        motions.arrows = [];
-        motions.dots = [];
-      });
+      rendererRef.current = null;
     };
   }, []);
 
@@ -700,22 +333,13 @@ export function SectionNavigation({
   }, [activeIndex, geometry, hovered, items, modalPresentationActive]);
 
   const syncSourcePosition = () => {
-    const source = sourceRef.current;
-    const controller = navigationControllerRef.current;
-
-    if (!source || !controller) {
-      return;
-    }
-
-    const position = source.scrollTop / Math.max(source.clientHeight, 1);
-    sourcePositionRef.current = position;
-    sourceUpdateRef.current = true;
-    const rendered = controller.setSourcePosition(position, true);
-    sourceUpdateRef.current = false;
-
-    if (!rendered && latestRenderRef.current) {
-      renderAffordances(latestRenderRef.current, true);
-    }
+    syncNavigationSourcePosition(
+      sourceRef.current,
+      navigationControllerRef.current,
+      rendererRef.current,
+      sourcePositionRef,
+      sourceUpdateRef,
+    );
   };
 
   useEffect(() => {
@@ -725,6 +349,15 @@ export function SectionNavigation({
     if (!source || !controller) {
       return;
     }
+
+    const syncSource = () =>
+      syncNavigationSourcePosition(
+        source,
+        controller,
+        rendererRef.current,
+        sourcePositionRef,
+        sourceUpdateRef,
+      );
 
     const settle = () => {
       controller.setSnappingEnabled(true);
@@ -753,7 +386,7 @@ export function SectionNavigation({
       controller.setSnappingEnabled(false);
       hideTooltips();
       if (!source.hasAttribute('data-portfolio-programmatic-scroll')) {
-        syncSourcePosition();
+        syncSource();
       }
 
       if (scrollEndTimeoutRef.current) {
@@ -762,7 +395,7 @@ export function SectionNavigation({
       scrollEndTimeoutRef.current = setTimeout(settle, 120);
     };
 
-    syncSourcePosition();
+    syncSource();
     source.addEventListener('scroll', handleScroll, { passive: true });
     source.addEventListener('scrollend', settle);
 
@@ -895,294 +528,171 @@ export function SectionNavigation({
     event.currentTarget.releasePointerCapture?.(event.pointerId);
   };
 
-  const renderRail = (side: SectionNavigationSide) => {
-    const isHidden = side === 'right' && hideRightRail;
+  const railActions: SectionNavigationRailActions = {
+    onItemGroupRef: (side, itemIndex, node) => {
+      viewsRef.current[side].itemGroups[itemIndex] = node;
+    },
+    onArrowGroupRef: (side, itemIndex, node) => {
+      viewsRef.current[side].arrowGroups[itemIndex] = node;
+    },
+    onDotRef: (side, itemIndex, node) => {
+      viewsRef.current[side].dots[itemIndex] = node;
+    },
+    onRingRef: (side, node) => {
+      viewsRef.current[side].ring = node;
+    },
+    onButtonRef: (side, itemIndex, node) => {
+      viewsRef.current[side].buttons[itemIndex] = node;
+    },
+    onZonePointerMove: (side, event) => {
+      if (
+        event.pointerType !== 'touch' &&
+        pointerOwnerRef.current === side
+      ) {
+        schedulePointer(event.clientY);
+      }
+    },
+    onZonePointerLeave: (side, event) => {
+      if (event.pointerType !== 'touch') {
+        releasePointer(side);
+      }
+    },
+    onZonePointerEnter: (_side, event) => {
+      if (event.pointerType !== 'touch') {
+        onHoveredChange(true);
+      }
+    },
+    onItemPointerEnter: (side, itemIndex, tooltipTitle, event) => {
+      if (event.pointerType === 'touch') {
+        return;
+      }
 
-    if (isHidden) {
+      previewIndexRef.current = itemIndex;
+      pointerTooltipIntentRef.current = {
+        itemIndex,
+        side,
+        title: tooltipTitle,
+      };
+      engagePointer(side, event.clientY);
+      showTooltip(side, tooltipTitle);
+    },
+    onItemPointerDown: (
+      _side,
+      itemIndex,
+      hasHorizontalAction,
+      event,
+    ) => {
+      if (event.pointerType === 'touch') {
+        pointerOwnerRef.current = null;
+        pendingPointerYRef.current = null;
+        previewIndexRef.current = null;
+        pointerTooltipIntentRef.current = null;
+        onHoveredChange(false);
+        hideTooltips();
+        navigationControllerRef.current?.releasePointer(false);
+      }
+
+      event.currentTarget.setPointerCapture?.(event.pointerId);
+      navigationControllerRef.current?.press(itemIndex);
+      pinnedIndexRef.current = itemIndex;
+      pinnedAxisRef.current = hasHorizontalAction
+        ? 'horizontal'
+        : 'vertical';
+      suppressTooltips();
+      navigationControllerRef.current?.pin(itemIndex);
+    },
+    onItemPointerRelease: (itemIndex, event) => {
+      handlePointerRelease(event, itemIndex);
+    },
+    onFocus: (side, itemIndex, tooltipTitle) => {
+      previewIndexRef.current = itemIndex;
+      focusTooltipIntentRef.current = {
+        itemIndex,
+        side,
+        title: tooltipTitle,
+      };
+      onHoveredChange(true);
+      navigationControllerRef.current?.focus(itemIndex);
+      showTooltip(side, tooltipTitle);
+    },
+    onBlur: (side, itemIndex) => {
+      previewIndexRef.current = null;
+      if (
+        focusTooltipIntentRef.current?.side === side &&
+        focusTooltipIntentRef.current.itemIndex === itemIndex
+      ) {
+        focusTooltipIntentRef.current = null;
+      }
+      if (pointerOwnerRef.current === null) {
+        onHoveredChange(false);
+      }
+      navigationControllerRef.current?.blur(itemIndex);
+      hideTooltips();
+      restoreTooltip();
+    },
+    onClick: (side, itemIndex, event) => {
+      const isActive = itemIndex === activeIndex;
+      const hasHorizontalAction = isActive && canMoveHorizontally;
+
+      if (event.detail === 0) {
+        navigationControllerRef.current?.triggerPress(itemIndex);
+      }
+
+      if (hasHorizontalAction) {
+        pinnedIndexRef.current = itemIndex;
+        pinnedAxisRef.current = 'horizontal';
+        navigationControllerRef.current?.pin(itemIndex);
+        onHorizontalNavigate(side);
+        return;
+      }
+
+      if (!isActive) {
+        const sourceLinked = event.detail === 0;
+        pinnedIndexRef.current = itemIndex;
+        pinnedAxisRef.current = 'vertical';
+        navigationControllerRef.current?.pin(itemIndex, sourceLinked);
+        onVerticalNavigate(itemIndex, sourceLinked);
+      } else {
+        pinnedIndexRef.current = null;
+        pinnedAxisRef.current = null;
+        releaseTooltipSuppression();
+        navigationControllerRef.current?.completePin(itemIndex);
+      }
+    },
+    onTooltipRef: (side, node) => {
+      viewsRef.current[side].tooltip = node;
+
+      if (!node) {
+        tooltipVisibleRef.current[side] = false;
+      }
+    },
+    onTooltipTextRef: (side, node) => {
+      viewsRef.current[side].tooltipText = node;
+    },
+  };
+
+  const renderRail = (side: SectionNavigationSide) => {
+    if (side === 'right' && hideRightRail) {
       return null;
     }
 
-    const safeAreaMargin =
-      side === 'left'
-        ? { marginLeft: 'env(safe-area-inset-left)' }
-        : { marginRight: 'env(safe-area-inset-right)' };
-    const svgPosition = side === 'left' ? { left: 0 } : { right: 0 };
-
     return (
-      <div
+      <SectionNavigationRail
         key={side}
-        data-portfolio-section-nav-zone={side}
-        data-interactive-pop="off"
-        className={`isolate ${
-          isHidden ? 'invisible pointer-events-none' : ''
-        }`}
-        style={{
-          ...safeAreaMargin,
-          position: 'absolute',
-          top: 0,
-          [side === 'left' ? 'left' : 'right']: '1.5rem',
-          width: '4.5rem',
-          height: geometry.height,
-          overflow: 'visible',
-          zIndex: modalLayerActive ? 60 : 40,
+        actions={railActions}
+        model={{
+          activeIndex,
+          canMoveHorizontally,
+          geometry,
+          items,
+          latestColor: items[activeIndex]?.color,
+          modalLayerActive,
+          modalPresentationActive,
+          nextSlideTitle,
+          previousSlideTitle,
+          side,
         }}
-        aria-hidden={isHidden ? true : undefined}
-        inert={isHidden ? true : undefined}
-        onPointerMove={(event) => {
-          if (
-            event.pointerType !== 'touch' &&
-            pointerOwnerRef.current === side
-          ) {
-            schedulePointer(event.clientY);
-          }
-        }}
-        onPointerLeave={(event) => {
-          if (event.pointerType !== 'touch') {
-            releasePointer(side);
-          }
-        }}
-        onPointerEnter={(event) => {
-          if (event.pointerType !== 'touch') {
-            onHoveredChange(true);
-          }
-        }}
-      >
-        <svg
-          className="pointer-events-none absolute top-0 overflow-visible"
-          width={SVG_WIDTH}
-          height={geometry.height}
-          viewBox={`0 0 ${SVG_WIDTH} ${geometry.height}`}
-          style={svgPosition}
-          aria-hidden="true"
-        >
-          {items.map((item, itemIndex) => {
-            const centerY = geometry.centers[itemIndex] ?? 0;
-            return (
-              <g
-                key={item.id}
-                data-portfolio-section-nav-visual-index={itemIndex}
-                ref={(node) => {
-                  viewsRef.current[side].itemGroups[itemIndex] = node;
-                }}
-                className="transition-opacity duration-200 ease-out motion-reduce:transition-none"
-                color={item.color}
-              >
-                <g
-                  ref={(node) => {
-                    viewsRef.current[side].arrowGroups[itemIndex] = node;
-                  }}
-                  style={{ filter: 'drop-shadow(1px 1px 0 black)' }}
-                >
-                  {item.pending ? (
-                    <circle
-                      cx={SVG_CENTER_X}
-                      cy={centerY}
-                      r={9}
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth={3}
-                      strokeDasharray="30 27"
-                    >
-                      <animateTransform
-                        attributeName="transform"
-                        type="rotate"
-                        from={`0 ${SVG_CENTER_X} ${centerY}`}
-                        to={`360 ${SVG_CENTER_X} ${centerY}`}
-                        dur="0.8s"
-                        repeatCount="indefinite"
-                      />
-                    </circle>
-                  ) : (
-                    <SvgIcon
-                      icon={faArrowDown}
-                      centerX={SVG_CENTER_X}
-                      centerY={centerY}
-                      size={ARROW_SIZE}
-                    />
-                  )}
-                </g>
-                <circle
-                  ref={(node) => {
-                    viewsRef.current[side].dots[itemIndex] = node;
-                  }}
-                  cx={SVG_CENTER_X}
-                  cy={centerY}
-                  r={NAVIGATION_DOT_RADIUS}
-                  fill="currentColor"
-                  opacity={0}
-                />
-              </g>
-            );
-          })}
-          {/* The controller exclusively owns geometry and color during travel. */}
-          <circle
-            ref={(node) => {
-              viewsRef.current[side].ring = node;
-            }}
-            data-portfolio-section-nav-ring={side}
-            fill="none"
-            vectorEffect="non-scaling-stroke"
-          />
-        </svg>
-        {items.map((item, itemIndex) => {
-          const bounds = getItemBounds(
-            geometry.centers,
-            geometry.height,
-            itemIndex,
-          );
-          const isActive = itemIndex === activeIndex;
-          const hasHorizontalAction = isActive && canMoveHorizontally;
-          const tooltipTitle = hasHorizontalAction
-            ? side === 'left'
-              ? previousSlideTitle
-              : nextSlideTitle
-            : item.title;
-          const label = hasHorizontalAction
-            ? side === 'left'
-              ? 'Previous screen'
-              : 'Next screen'
-            : isActive
-              ? `Current section: ${item.title}`
-              : `Show ${item.title}`;
-          const concealed = modalPresentationActive && !isActive;
-
-          return (
-            <button
-              key={item.id}
-              ref={(node) => {
-                viewsRef.current[side].buttons[itemIndex] = node;
-              }}
-              type="button"
-              className="absolute inset-x-0 cursor-pointer outline-none"
-              style={{ top: bounds.top, height: bounds.height }}
-              aria-label={label}
-              aria-describedby={`portfolio-${side}-section-nav-tooltip`}
-              aria-current={isActive ? 'page' : undefined}
-              aria-busy={item.pending ? true : undefined}
-              aria-hidden={concealed ? true : undefined}
-              tabIndex={concealed ? -1 : undefined}
-              data-portfolio-section-nav-index={itemIndex}
-              data-portfolio-section-nav-side={side}
-              onPointerEnter={(event) => {
-                if (event.pointerType === 'touch') {
-                  return;
-                }
-
-                previewIndexRef.current = itemIndex;
-                pointerTooltipIntentRef.current = {
-                  itemIndex,
-                  side,
-                  title: tooltipTitle,
-                };
-                engagePointer(side, event.clientY);
-                showTooltip(side, tooltipTitle);
-              }}
-              onPointerDown={(event) => {
-                if (event.pointerType === 'touch') {
-                  pointerOwnerRef.current = null;
-                  pendingPointerYRef.current = null;
-                  previewIndexRef.current = null;
-                  pointerTooltipIntentRef.current = null;
-                  onHoveredChange(false);
-                  hideTooltips();
-                  navigationControllerRef.current?.releasePointer(false);
-                }
-
-                event.currentTarget.setPointerCapture?.(event.pointerId);
-                navigationControllerRef.current?.press(itemIndex);
-                pinnedIndexRef.current = itemIndex;
-                pinnedAxisRef.current = hasHorizontalAction
-                  ? 'horizontal'
-                  : 'vertical';
-                suppressTooltips();
-                navigationControllerRef.current?.pin(itemIndex);
-              }}
-              onPointerUp={(event) => handlePointerRelease(event, itemIndex)}
-              onPointerCancel={(event) =>
-                handlePointerRelease(event, itemIndex)
-              }
-              onFocus={() => {
-                previewIndexRef.current = itemIndex;
-                focusTooltipIntentRef.current = {
-                  itemIndex,
-                  side,
-                  title: tooltipTitle,
-                };
-                onHoveredChange(true);
-                navigationControllerRef.current?.focus(itemIndex);
-                showTooltip(side, tooltipTitle);
-              }}
-              onBlur={() => {
-                previewIndexRef.current = null;
-                if (
-                  focusTooltipIntentRef.current?.side === side &&
-                  focusTooltipIntentRef.current.itemIndex === itemIndex
-                ) {
-                  focusTooltipIntentRef.current = null;
-                }
-                if (pointerOwnerRef.current === null) {
-                  onHoveredChange(false);
-                }
-                navigationControllerRef.current?.blur(itemIndex);
-                hideTooltips();
-                restoreTooltip();
-              }}
-              onClick={(event) => {
-                if (event.detail === 0) {
-                  navigationControllerRef.current?.triggerPress(itemIndex);
-                }
-
-                if (hasHorizontalAction) {
-                  pinnedIndexRef.current = itemIndex;
-                  pinnedAxisRef.current = 'horizontal';
-                  navigationControllerRef.current?.pin(itemIndex);
-                  onHorizontalNavigate(side);
-                  return;
-                }
-
-                if (!isActive) {
-                  const sourceLinked = event.detail === 0;
-                  pinnedIndexRef.current = itemIndex;
-                  pinnedAxisRef.current = 'vertical';
-                  navigationControllerRef.current?.pin(itemIndex, sourceLinked);
-                  onVerticalNavigate(itemIndex, sourceLinked);
-                } else {
-                  pinnedIndexRef.current = null;
-                  pinnedAxisRef.current = null;
-                  releaseTooltipSuppression();
-                  navigationControllerRef.current?.completePin(itemIndex);
-                }
-              }}
-            />
-          );
-        })}
-        <div
-          ref={(node) => {
-            viewsRef.current[side].tooltip = node;
-
-            if (!node) {
-              tooltipVisibleRef.current[side] = false;
-            }
-          }}
-          id={`portfolio-${side}-section-nav-tooltip`}
-          role="tooltip"
-          className={`invisible pointer-events-none absolute z-30 -translate-y-1/2 whitespace-nowrap px-3 py-2 text-[0.6875rem] font-black uppercase leading-none tracking-[0.24em] opacity-0 ${
-            side === 'left' ? 'left-[4rem]' : 'right-[4rem]'
-          }`}
-          style={{
-            top: geometry.centers[activeIndex] ?? 0,
-            backgroundColor:
-              latestRenderRef.current?.color ?? items[activeIndex]?.color,
-          }}
-        >
-          <span
-            ref={(node) => {
-              viewsRef.current[side].tooltipText = node;
-            }}
-            className="text-black"
-          />
-        </div>
-      </div>
+      />
     );
   };
 
