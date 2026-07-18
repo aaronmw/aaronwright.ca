@@ -410,9 +410,9 @@ export function SectionNavigation({
         pinnedAxisRef.current === 'vertical' &&
         Math.abs(source.scrollTop - source.clientHeight * pinnedIndex) <= 1
       ) {
-        controller.completePin(pinnedIndex);
         pinnedIndexRef.current = null;
         pinnedAxisRef.current = null;
+        controller.completePin(pinnedIndex);
         releaseTooltipSuppressionEvent();
       }
 
@@ -505,9 +505,9 @@ export function SectionNavigation({
           }
         }
 
-        navigationControllerRef.current?.completePin(pinnedIndex);
         pinnedIndexRef.current = null;
         pinnedAxisRef.current = null;
+        navigationControllerRef.current?.completePin(pinnedIndex);
         releaseTooltipSuppression();
       },
       syncSourcePosition,

@@ -191,6 +191,7 @@ export function SectionNavigationRail({
             >
               <g
                 ref={(node) => actions.onArrowGroupRef(side, itemIndex, node)}
+                data-portfolio-section-nav-arrow={itemIndex}
                 style={{ filter: 'drop-shadow(1px 1px 0 black)' }}
               >
                 {item.pending ? (
@@ -223,6 +224,7 @@ export function SectionNavigationRail({
               </g>
               <NavigationDot
                 ref={(node) => actions.onDotRef(side, itemIndex, node)}
+                data-portfolio-section-nav-dot={itemIndex}
                 cx={NAVIGATION_SVG_CENTER}
                 cy={centerY}
                 opacity={0}

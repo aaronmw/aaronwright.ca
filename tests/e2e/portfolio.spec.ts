@@ -292,6 +292,53 @@ test('homepage section preview remains pinned throughout pointer press', async (
   await expect(page).toHaveURL(/\/work\/aarons-toolbox$/)
 })
 
+test('settled section navigation cross-fades its dot back to an arrow', async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name.includes('iphone'))
+  await page.goto('/work')
+  await waitForPortfolio(page)
+
+  const opacitySamples = page.evaluate(async () => {
+    const arrow = document.querySelector<SVGGraphicsElement>(
+      '[data-portfolio-section-nav-zone="left"] [data-portfolio-section-nav-arrow="2"]',
+    )
+    const dot = document.querySelector<SVGGraphicsElement>(
+      '[data-portfolio-section-nav-zone="left"] [data-portfolio-section-nav-dot="2"]',
+    )
+    const samples: Array<{ arrow: number; dot: number }> = []
+
+    if (!arrow || !dot) {
+      return samples
+    }
+
+    for (let frame = 0; frame < 90; frame += 1) {
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()))
+      samples.push({
+        arrow: Number.parseFloat(getComputedStyle(arrow).opacity),
+        dot: Number.parseFloat(getComputedStyle(dot).opacity),
+      })
+    }
+
+    return samples
+  })
+
+  await page
+    .locator('button[data-portfolio-start-section-index="2"]')
+    .click()
+  await expect(page).toHaveURL(/\/work\/aarons-toolbox$/)
+
+  const samples = await opacitySamples
+  expect(
+    samples.some(
+      ({ arrow, dot }) =>
+        arrow > 0.1 && arrow < 0.9 && dot > 0.1 && dot < 0.9,
+    ),
+  ).toBe(true)
+  expect(samples.at(-1)?.arrow).toBeGreaterThanOrEqual(0.99)
+  expect(samples.at(-1)?.dot).toBeLessThanOrEqual(0.01)
+})
+
 test('inline zoom keeps navigation available and exits with vertical intent', async ({
   page,
 }, testInfo) => {
