@@ -67,6 +67,39 @@ async function expectSectionRingCenteredOnActiveItem(page: Page) {
   }).toBeLessThanOrEqual(0.5)
 }
 
+async function getSectionRingDistance(page: Page, index: number) {
+  return page.evaluate((targetIndex) => {
+    const distances = (['left', 'right'] as const).map((side) => {
+      const ring = document.querySelector<SVGGraphicsElement>(
+        `[data-portfolio-section-nav-ring="${side}"]`,
+      )
+      const visual = document.querySelector<SVGGraphicsElement>(
+        `[data-portfolio-section-nav-zone="${side}"] [data-portfolio-section-nav-visual-index="${targetIndex}"]`,
+      )
+
+      if (!ring || !visual) {
+        return Number.POSITIVE_INFINITY
+      }
+
+      const ringBox = ring.getBoundingClientRect()
+      const visualBox = visual.getBoundingClientRect()
+
+      return Math.max(
+        Math.abs(
+          ringBox.x + ringBox.width / 2 -
+            (visualBox.x + visualBox.width / 2),
+        ),
+        Math.abs(
+          ringBox.y + ringBox.height / 2 -
+            (visualBox.y + visualBox.height / 2),
+        ),
+      )
+    })
+
+    return Math.max(...distances)
+  }, index)
+}
+
 test('deep links reveal the requested section and preserve route state', async ({
   page,
 }) => {
@@ -196,6 +229,67 @@ test('pointer-clicked section navigation does not retain its tooltip', async ({
   )
   await expect(page).toHaveURL(/\/work\/mini-series-browser\/poster-grid$/)
   await expect(tooltip).toBeHidden()
+})
+
+test('homepage section preview remains pinned throughout pointer press', async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name.includes('iphone'))
+  await page.goto('/work')
+  await waitForPortfolio(page)
+
+  const destination = page.locator(
+    'button[data-portfolio-start-section-index="2"]',
+  )
+  const destinationBox = await destination.boundingBox()
+
+  expect(destinationBox).not.toBeNull()
+  await page.mouse.move(
+    destinationBox!.x + destinationBox!.width / 2,
+    destinationBox!.y + destinationBox!.height / 2,
+  )
+  await expect
+    .poll(() => getSectionRingDistance(page, 2))
+    .toBeLessThanOrEqual(0.5)
+
+  await page.mouse.down()
+  const maximumDistance = await page.evaluate(async () => {
+    let maximum = 0
+
+    for (let frame = 0; frame < 8; frame += 1) {
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()))
+      const ring = document.querySelector<SVGGraphicsElement>(
+        '[data-portfolio-section-nav-ring="left"]',
+      )
+      const visual = document.querySelector<SVGGraphicsElement>(
+        '[data-portfolio-section-nav-zone="left"] [data-portfolio-section-nav-visual-index="2"]',
+      )
+
+      if (!ring || !visual) {
+        return Number.POSITIVE_INFINITY
+      }
+
+      const ringBox = ring.getBoundingClientRect()
+      const visualBox = visual.getBoundingClientRect()
+      maximum = Math.max(
+        maximum,
+        Math.abs(
+          ringBox.x + ringBox.width / 2 -
+            (visualBox.x + visualBox.width / 2),
+        ),
+        Math.abs(
+          ringBox.y + ringBox.height / 2 -
+            (visualBox.y + visualBox.height / 2),
+        ),
+      )
+    }
+
+    return maximum
+  })
+
+  expect(maximumDistance).toBeLessThanOrEqual(0.5)
+  await page.mouse.up()
+  await expect(page).toHaveURL(/\/work\/aarons-toolbox$/)
 })
 
 test('inline zoom keeps navigation available and exits with vertical intent', async ({
