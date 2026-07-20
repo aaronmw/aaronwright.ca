@@ -6,6 +6,7 @@ import type {
 import { faArrowDown } from '@fortawesome/free-solid-svg-icons';
 import {
   MOBILE_SECTION_CONTENT_PADDING_LEFT,
+  MOBILE_SECTION_NAVIGATION_OPTICAL_OFFSET,
 } from '@/components/portfolio/mobileLayout';
 import {
   getSectionItemBounds,
@@ -184,7 +185,9 @@ export function SectionNavigationRail({
         viewBox={`0 0 ${NAVIGATION_SVG_SIZE} ${geometry.height}`}
         style={
           model.singleRail
-            ? { left: `calc(50% - ${NAVIGATION_SVG_CENTER}px)` }
+            ? {
+                left: `calc(50% - ${NAVIGATION_SVG_CENTER}px - ${MOBILE_SECTION_NAVIGATION_OPTICAL_OFFSET})`,
+              }
             : side === 'left'
               ? { left: 0 }
               : { right: 0 }

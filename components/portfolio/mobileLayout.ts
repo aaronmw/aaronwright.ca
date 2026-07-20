@@ -3,3 +3,5 @@ export const MOBILE_SECTION_CONTENT_PADDING_LEFT =
 
 export const MOBILE_SECTION_CONTENT_PADDING_RIGHT =
   'max(2rem, calc(env(safe-area-inset-right, 0px) + 1.5rem))';
+
+export const MOBILE_SECTION_NAVIGATION_OPTICAL_OFFSET = '0.5rem';
