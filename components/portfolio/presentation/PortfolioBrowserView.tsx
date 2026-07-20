@@ -46,8 +46,6 @@ import type {
 } from '@/components/portfolio/runtime/types'
 
 const START_SCREEN_INDEX = -1
-const NAVIGATION_INDICATOR_STEP_REM = 2.25
-const MOBILE_SLIDE_NAV_CONTROL_CLEARANCE_REM = 6.25
 const PROJECT_COLORS = buildProjectColors(portfolioSlides.length)
 const SECTION_NAV_HAS_SLIDES = [
   false,
@@ -266,6 +264,15 @@ export function PortfolioBrowserView({
   ]
   const shouldCenterSlideNavigation =
     model.isModalPresentationActive || model.isInlineZoomPresentationActive
+  const moveHorizontally = (direction: -1 | 1) => {
+    actions.focusKeyboardSurface()
+
+    if (model.isModalPresentationActive) {
+      actions.moveModalHorizontal(direction)
+    } else {
+      actions.moveHorizontal(direction)
+    }
+  }
 
   return (
     <main
@@ -446,15 +453,9 @@ export function PortfolioBrowserView({
           previousSlideTitle={previousSlideTitle}
           nextSlideTitle={nextSlideTitle}
           onHoveredChange={actions.setSectionNavHovered}
-          onHorizontalNavigate={side => {
-            actions.focusKeyboardSurface()
-
-            if (model.isModalPresentationActive) {
-              actions.moveModalHorizontal(side === 'left' ? -1 : 1)
-            } else {
-              actions.moveHorizontal(side === 'left' ? -1 : 1)
-            }
-          }}
+          onHorizontalNavigate={side =>
+            moveHorizontally(side === 'left' ? -1 : 1)
+          }
           onVerticalNavigate={itemIndex => {
             actions.focusKeyboardSurface()
             actions.setActiveProject(itemIndex - 1, 'push')
@@ -498,17 +499,6 @@ export function PortfolioBrowserView({
               ? 'translate-x-[var(--portfolio-modal-indicator-translate-x)] will-change-transform'
               : 'translate-x-0'
           }`}
-          style={
-            !model.isWideLayout
-              ? {
-                  transform: `translateX(calc(-1 * max(0px, calc(${
-                    Math.max(activeNavigationSlides.length - 1, 0) *
-                      (NAVIGATION_INDICATOR_STEP_REM / 2) +
-                    MOBILE_SLIDE_NAV_CONTROL_CLEARANCE_REM
-                  }rem - 50vw))))`,
-                }
-              : undefined
-          }
         >
           <SlideNavigation
             controllerRef={refs.slideIndicatorMotionControllerRef}
@@ -555,28 +545,30 @@ export function PortfolioBrowserView({
             }}
           />
         </div>
-        <div
-          className={`pointer-events-auto absolute right-5 top-0 grid h-[52px] w-11 place-items-center transition-opacity duration-300 ease-out ${
-            model.activeProjectIndex === START_SCREEN_INDEX
-              ? 'pointer-events-none opacity-0'
-              : 'opacity-100'
-          }`}
-          style={{
-            right: 'max(1.25rem, env(safe-area-inset-right, 0px))',
-          }}
-        >
-          <CircularIconButton
-            icon={faArrowUp}
-            iconClassName="size-7"
-            ring
-            className="relative size-11 bg-transparent text-[var(--project-color)]"
-            aria-label="Back to top"
-            onClick={() => {
-              actions.focusKeyboardSurface()
-              actions.setActiveProject(START_SCREEN_INDEX, 'push')
+        {!model.isTouchInput ? (
+          <div
+            className={`pointer-events-auto absolute right-5 top-0 grid h-[52px] w-11 place-items-center transition-opacity duration-300 ease-out ${
+              model.activeProjectIndex === START_SCREEN_INDEX
+                ? 'pointer-events-none opacity-0'
+                : 'opacity-100'
+            }`}
+            style={{
+              right: 'max(1.25rem, env(safe-area-inset-right, 0px))',
             }}
-          />
-        </div>
+          >
+            <CircularIconButton
+              icon={faArrowUp}
+              iconClassName="size-7"
+              ring
+              className="relative size-11 bg-transparent text-[var(--project-color)]"
+              aria-label="Back to top"
+              onClick={() => {
+                actions.focusKeyboardSurface()
+                actions.setActiveProject(START_SCREEN_INDEX, 'push')
+              }}
+            />
+          </div>
+        ) : null}
       </nav>
 
       <CircularIconButton

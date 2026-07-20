@@ -89,6 +89,7 @@ export function SectionNavigation({
   onHorizontalNavigate,
   onVerticalNavigate,
 }: SectionNavigationProps) {
+  const railCanMoveHorizontally = canMoveHorizontally && !hideRightRail;
   const [geometry, setGeometry] = useState({
     centers: items.map((_, index) => 120 + index * 60),
     height: 1,
@@ -147,6 +148,7 @@ export function SectionNavigation({
   const activeIndexRef = useRef(activeIndex);
   const hoveredRef = useRef(hovered);
   const modalPresentationActiveRef = useRef(modalPresentationActive);
+  const singleRailRef = useRef(hideRightRail);
   const itemsRef = useRef(items);
 
   useLayoutEffect(() => {
@@ -154,8 +156,16 @@ export function SectionNavigation({
     geometryRef.current = geometry;
     hoveredRef.current = hovered;
     modalPresentationActiveRef.current = modalPresentationActive;
+    singleRailRef.current = hideRightRail;
     itemsRef.current = items;
-  }, [activeIndex, geometry, hovered, items, modalPresentationActive]);
+  }, [
+    activeIndex,
+    geometry,
+    hideRightRail,
+    hovered,
+    items,
+    modalPresentationActive,
+  ]);
 
   const setTooltipVisibility = (
     side: SectionNavigationSide,
@@ -324,6 +334,7 @@ export function SectionNavigation({
         pinnedIndex: pinnedIndexRef.current,
         previewIndex: previewIndexRef.current,
         reducedMotion: reducedMotionRef.current,
+        singleRail: singleRailRef.current,
         sourcePosition: sourcePositionRef.current,
       }),
       getTooltipCoordinate: (side) =>
@@ -366,7 +377,14 @@ export function SectionNavigation({
       true,
     );
     controller.setActiveIndex(activeIndex);
-  }, [activeIndex, geometry, hovered, items, modalPresentationActive]);
+  }, [
+    activeIndex,
+    geometry,
+    hideRightRail,
+    hovered,
+    items,
+    modalPresentationActive,
+  ]);
 
   const syncSourcePosition = () => {
     syncNavigationSourcePosition(
@@ -578,7 +596,7 @@ export function SectionNavigation({
 
     const isActive = nearestItemIndex === activeIndexRef.current;
     const title =
-      isActive && canMoveHorizontally
+      isActive && railCanMoveHorizontally
         ? side === 'left'
           ? previousSlideTitle
           : nextSlideTitle
@@ -763,7 +781,7 @@ export function SectionNavigation({
     },
     onClick: (side, itemIndex, event) => {
       const isActive = itemIndex === activeIndex;
-      const hasHorizontalAction = isActive && canMoveHorizontally;
+      const hasHorizontalAction = isActive && railCanMoveHorizontally;
 
       if (event.detail === 0) {
         navigationControllerRef.current?.triggerPress(itemIndex);
@@ -820,7 +838,7 @@ export function SectionNavigation({
         actions={railActions}
         model={{
           activeIndex,
-          canMoveHorizontally,
+          canMoveHorizontally: railCanMoveHorizontally,
           geometry,
           items,
           latestColor: items[activeIndex]?.color,

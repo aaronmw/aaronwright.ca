@@ -39,6 +39,7 @@ export type SectionNavigationRenderContext = {
   pinnedIndex: number | null;
   previewIndex: number | null;
   reducedMotion: boolean;
+  singleRail: boolean;
   sourcePosition: number;
 };
 
@@ -168,6 +169,14 @@ export class SectionNavigationRenderer {
 
     if (item?.pending) {
       return { arrowOpacity: 1, dotOpacity: 0 };
+    }
+
+    if (
+      context.singleRail &&
+      itemIndex === context.activeIndex &&
+      context.pinnedAxis !== 'vertical'
+    ) {
+      return { arrowOpacity: 0, dotOpacity: 1 };
     }
 
     if (
