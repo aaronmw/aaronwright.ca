@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import type { CSSProperties } from 'react';
+import { useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFilePdf, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import type { PortfolioProject } from '@/lib/portfolio';
@@ -17,6 +17,65 @@ const MOBILE_SECTION_CONTENT_INSETS: CSSProperties = {
 type ProjectColorStyle = CSSProperties & {
   '--project-color': string;
 };
+
+const MOBILE_CONTENT_VERTICAL_PADDING_REM = 1.5;
+
+function useStartScreenContentAlignment(enabled: boolean) {
+  const startScreenRef = useRef<HTMLElement>(null);
+  const headerRef = useRef<HTMLDivElement>(null);
+  const contentSectionRef = useRef<HTMLDivElement>(null);
+  const [shouldBottomAlign, setShouldBottomAlign] = useState(false);
+
+  useLayoutEffect(() => {
+    if (!enabled) {
+      return;
+    }
+
+    const startScreen = startScreenRef.current;
+    const header = headerRef.current;
+    const contentSection = contentSectionRef.current;
+
+    if (!startScreen || !header || !contentSection) {
+      return;
+    }
+
+    const updateAlignment = () => {
+      const startScreenStyle = window.getComputedStyle(startScreen);
+      const rootFontSize = Number.parseFloat(
+        window.getComputedStyle(document.documentElement).fontSize,
+      );
+      const verticalPadding =
+        rootFontSize * MOBILE_CONTENT_VERTICAL_PADDING_REM;
+      const availableHeight =
+        startScreen.clientHeight -
+        Number.parseFloat(startScreenStyle.paddingTop) -
+        Number.parseFloat(startScreenStyle.paddingBottom) -
+        header.getBoundingClientRect().height -
+        Number.parseFloat(startScreenStyle.rowGap);
+      const nextShouldBottomAlign =
+        availableHeight < contentSection.scrollHeight + verticalPadding * 2;
+
+      setShouldBottomAlign((current) =>
+        current === nextShouldBottomAlign ? current : nextShouldBottomAlign,
+      );
+    };
+
+    const resizeObserver = new ResizeObserver(updateAlignment);
+    resizeObserver.observe(startScreen);
+    resizeObserver.observe(header);
+    resizeObserver.observe(contentSection);
+    updateAlignment();
+
+    return () => resizeObserver.disconnect();
+  }, [enabled]);
+
+  return {
+    startScreenRef,
+    headerRef,
+    contentSectionRef,
+    shouldBottomAlign: enabled && shouldBottomAlign,
+  };
+}
 
 export function PortfolioStartScreen({
   projects,
@@ -41,8 +100,14 @@ export function PortfolioStartScreen({
   onPreview: (index: number, previewing: boolean) => void;
   onSelect: (index: number, keyboardTriggered: boolean) => void;
 }) {
+  const { startScreenRef, headerRef, contentSectionRef, shouldBottomAlign } =
+    useStartScreenContentAlignment(
+      isTouchInput && !isWideLayout && !isTouchLandscapeLayout,
+    );
+
   return (
     <section
+      ref={startScreenRef}
       className={`portfolio-safe-inline relative h-dvh snap-start snap-always ${
         isTouchLandscapeLayout
           ? 'grid grid-rows-[auto_minmax(0,1fr)] gap-2'
@@ -69,6 +134,7 @@ export function PortfolioStartScreen({
       }
     >
       <div
+        ref={headerRef}
         className={
           isTouchLandscapeLayout
             ? 'min-w-0'
@@ -141,9 +207,11 @@ export function PortfolioStartScreen({
               <span className="whitespace-nowrap">T1W 3J6</span>
             </p>
             <p
-              className={`flex flex-wrap gap-x-3 gap-y-1 ${
-                isWideLayout ? 'justify-end' : 'justify-start'
-              }`}
+              className={
+                isWideLayout
+                  ? 'flex flex-wrap justify-end gap-x-3 gap-y-1'
+                  : 'flex flex-col gap-0.5'
+              }
             >
               <a
                 className="transition-colors hover:text-white focus-visible:text-white"
@@ -173,10 +241,11 @@ export function PortfolioStartScreen({
         </div>
       </div>
       <div
+        ref={contentSectionRef}
         className={`mx-auto w-full max-w-6xl ${
           isWideLayout && !isTouchLandscapeLayout
             ? ''
-            : 'min-h-0 self-center'
+            : `min-h-0 ${shouldBottomAlign ? 'self-end' : 'self-center'}`
         }`}
       >
         <p className="mb-[clamp(0.65rem,1.6vh,2rem)] text-xs font-light uppercase tracking-[0.35em] text-white/45">
