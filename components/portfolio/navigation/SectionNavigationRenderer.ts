@@ -1,9 +1,8 @@
 import { gsap } from 'gsap';
 import {
-  getAffordanceOpacity,
   getNavigationRingRadius,
   getNavigationScale,
-  getSectionArrowRotation,
+  getSectionAffordanceOpacity,
   type SectionNavigationSide,
 } from './navigationGeometry';
 import {
@@ -84,7 +83,7 @@ export class SectionNavigationRenderer {
     return this.latestState;
   }
 
-  render(state: NavigationRenderState, scrubbed = false) {
+  render(state: NavigationRenderState) {
     this.latestState = state;
 
     (['left', 'right'] as const).forEach((side) => {
@@ -119,12 +118,12 @@ export class SectionNavigationRenderer {
       }
     });
 
-    this.renderAffordances(state, scrubbed);
+    this.renderAffordances(state);
   }
 
-  renderLatest(scrubbed = false) {
+  renderLatest() {
     if (this.latestState) {
-      this.renderAffordances(this.latestState, scrubbed);
+      this.renderAffordances(this.latestState);
     }
   }
 
@@ -159,13 +158,6 @@ export class SectionNavigationRenderer {
     const context = this.getContext();
     const { items, sourcePosition } = context;
     const item = items[itemIndex];
-    const lowerIndex = Math.max(0, Math.floor(sourcePosition));
-    const upperIndex = Math.min(items.length - 1, Math.ceil(sourcePosition));
-    const progress = sourcePosition - lowerIndex;
-    const directDotTransition =
-      lowerIndex !== upperIndex &&
-      !items[lowerIndex]?.hasSlides &&
-      !items[upperIndex]?.hasSlides;
 
     if (item?.pending) {
       return { arrowOpacity: 1, dotOpacity: 0 };
@@ -194,29 +186,17 @@ export class SectionNavigationRenderer {
     }
 
     if (context.pinnedAxis === 'vertical') {
-      return { arrowOpacity: 1, dotOpacity: 0 };
+      return { arrowOpacity: 0, dotOpacity: 1 };
     }
 
-    if (!item?.hasSlides) {
-      if (
-        directDotTransition &&
-        (itemIndex === lowerIndex || itemIndex === upperIndex)
-      ) {
-        return {
-          arrowOpacity: 0,
-          dotOpacity: itemIndex === lowerIndex ? 1 - progress : progress,
-        };
-      }
-
-      return getAffordanceOpacity(
-        Math.max(0, 1 - Math.abs(sourcePosition - itemIndex)),
-      );
-    }
-
-    return { arrowOpacity: 1, dotOpacity: 0 };
+    return getSectionAffordanceOpacity(
+      itemIndex,
+      sourcePosition,
+      item?.hasSlides ?? false,
+    );
   }
 
-  private renderAffordances(state: NavigationRenderState, scrubbed: boolean) {
+  private renderAffordances(state: NavigationRenderState) {
     const context = this.getContext();
 
     (['left', 'right'] as const).forEach((side) => {
@@ -236,12 +216,7 @@ export class SectionNavigationRenderer {
         const visualScale = activeScale * pressScale;
         const { arrowOpacity, dotOpacity } =
           this.getAffordanceLayers(itemIndex);
-        const rotation = getSectionArrowRotation(
-          itemIndex,
-          context.sourcePosition,
-          side,
-          context.items,
-        );
+        const rotation = item.pending ? 0 : side === 'left' ? 90 : -90;
         const concealed =
           context.modalPresentationActive &&
           itemIndex !== context.activeIndex;
@@ -262,7 +237,6 @@ export class SectionNavigationRenderer {
           'arrows',
           itemIndex,
           arrowOpacity,
-          scrubbed,
         );
 
         if (dot) {
@@ -277,7 +251,6 @@ export class SectionNavigationRenderer {
             'dots',
             itemIndex,
             dotOpacity,
-            scrubbed,
           );
         }
       });
@@ -289,7 +262,6 @@ export class SectionNavigationRenderer {
     kind: keyof AffordanceOpacityMotions,
     itemIndex: number,
     target: number,
-    immediate: boolean,
   ) {
     const context = this.getContext();
     const view = this.views[side];
@@ -326,7 +298,7 @@ export class SectionNavigationRenderer {
     }
 
     motion.target = target;
-    if (immediate) {
+    if (context.reducedMotion) {
       motion.setter.tween.pause();
       gsap.set(element, { opacity: target });
     } else {

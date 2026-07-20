@@ -1,9 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
-  getAffordanceOpacity,
   getCenteredSectionCenters,
   getOutsideInDelay,
-  getSectionArrowRotation,
+  getSectionAffordanceOpacity,
   getSectionItemBounds,
   getSlideCenters,
   getSlideLatticeCoordinate,
@@ -54,14 +53,22 @@ describe('section navigation geometry', () => {
     })
   })
 
-  it('interpolates arrow rotation and arrow/dot crossfades', () => {
-    const items = [{ hasSlides: false }, { hasSlides: true }]
-
-    expect(getSectionArrowRotation(0, 0.5, 'left', items)).toBe(90)
-    expect(getSectionArrowRotation(0, 0.5, 'right', items)).toBe(-90)
-    expect(getAffordanceOpacity(0.25)).toEqual({
+  it('uses dots except while a slide-bearing section is active', () => {
+    expect(getSectionAffordanceOpacity(1, 1, false)).toEqual({
+      arrowOpacity: 0,
+      dotOpacity: 1,
+    })
+    expect(getSectionAffordanceOpacity(1, 1, true)).toEqual({
+      arrowOpacity: 1,
+      dotOpacity: 0,
+    })
+    expect(getSectionAffordanceOpacity(1, 1.25, true)).toEqual({
       arrowOpacity: 0.75,
       dotOpacity: 0.25,
+    })
+    expect(getSectionAffordanceOpacity(1, 2, true)).toEqual({
+      arrowOpacity: 0,
+      dotOpacity: 1,
     })
   })
 })

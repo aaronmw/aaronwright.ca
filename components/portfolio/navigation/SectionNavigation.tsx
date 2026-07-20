@@ -54,7 +54,6 @@ function syncNavigationSourcePosition(
   controller: TrackedNavigationController | null,
   renderer: SectionNavigationRenderer | null,
   sourcePositionRef: MutableRefObject<number>,
-  sourceUpdateRef: MutableRefObject<boolean>,
 ) {
   if (!source || !controller) {
     return;
@@ -62,12 +61,10 @@ function syncNavigationSourcePosition(
 
   const position = source.scrollTop / Math.max(source.clientHeight, 1);
   sourcePositionRef.current = position;
-  sourceUpdateRef.current = true;
   const rendered = controller.setSourcePosition(position, true);
-  sourceUpdateRef.current = false;
 
   if (!rendered) {
-    renderer?.renderLatest(true);
+    renderer?.renderLatest();
   }
 }
 
@@ -143,7 +140,6 @@ export function SectionNavigation({
   const scrollEndTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
     null,
   );
-  const sourceUpdateRef = useRef(false);
   const geometryRef = useRef(geometry);
   const activeIndexRef = useRef(activeIndex);
   const hoveredRef = useRef(hovered);
@@ -353,7 +349,7 @@ export function SectionNavigation({
       activeIndex: activeIndexRef.current,
       sourcePosition: sourcePositionRef.current,
       reducedMotion: reducedMotionRef.current,
-      onRender: (state) => renderer.render(state, sourceUpdateRef.current),
+      onRender: (state) => renderer.render(state),
     });
     navigationControllerRef.current = controller;
 
@@ -392,7 +388,6 @@ export function SectionNavigation({
       navigationControllerRef.current,
       rendererRef.current,
       sourcePositionRef,
-      sourceUpdateRef,
     );
   };
 
@@ -416,7 +411,6 @@ export function SectionNavigation({
         controller,
         rendererRef.current,
         sourcePositionRef,
-        sourceUpdateRef,
       );
 
     const settle = () => {

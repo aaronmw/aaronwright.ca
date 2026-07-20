@@ -292,43 +292,54 @@ test('homepage section preview remains pinned throughout pointer press', async (
   await expect(page).toHaveURL(/\/work\/aarons-toolbox$/)
 })
 
-test('settled section navigation cross-fades its dot back to an arrow', async ({
+test('settled section navigation cross-fades its dot to a horizontal arrow', async ({
   page,
 }, testInfo) => {
   test.skip(testInfo.project.name.includes('iphone'))
   await page.goto('/work')
   await waitForPortfolio(page)
 
-  const opacitySamples = page.evaluate(async () => {
-    const arrow = document.querySelector<SVGGraphicsElement>(
-      '[data-portfolio-section-nav-zone="left"] [data-portfolio-section-nav-arrow="2"]',
-    )
-    const dot = document.querySelector<SVGGraphicsElement>(
-      '[data-portfolio-section-nav-zone="left"] [data-portfolio-section-nav-dot="2"]',
-    )
-    const samples: Array<{ arrow: number; dot: number }> = []
-
-    if (!arrow || !dot) {
-      return samples
+  await page.evaluate(() => {
+    const samplingWindow = window as typeof window & {
+      __portfolioAffordanceFrame?: number
+      __portfolioAffordanceSamples?: Array<{ arrow: number; dot: number }>
     }
 
-    for (let frame = 0; frame < 90; frame += 1) {
-      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()))
-      samples.push({
-        arrow: Number.parseFloat(getComputedStyle(arrow).opacity),
-        dot: Number.parseFloat(getComputedStyle(dot).opacity),
-      })
+    samplingWindow.__portfolioAffordanceSamples = []
+    const sample = () => {
+      const arrow = document.querySelector<SVGGraphicsElement>(
+        '[data-portfolio-section-nav-zone="left"] [data-portfolio-section-nav-arrow="2"]',
+      )
+      const dot = document.querySelector<SVGGraphicsElement>(
+        '[data-portfolio-section-nav-zone="left"] [data-portfolio-section-nav-dot="2"]',
+      )
+      if (arrow && dot) {
+        samplingWindow.__portfolioAffordanceSamples?.push({
+          arrow: Number.parseFloat(getComputedStyle(arrow).opacity),
+          dot: Number.parseFloat(getComputedStyle(dot).opacity),
+        })
+      }
+      samplingWindow.__portfolioAffordanceFrame = requestAnimationFrame(sample)
     }
-
-    return samples
+    sample()
   })
 
   await page
     .locator('button[data-portfolio-start-section-index="2"]')
     .click()
   await expect(page).toHaveURL(/\/work\/aarons-toolbox$/)
+  await page.waitForTimeout(1_000)
 
-  const samples = await opacitySamples
+  const samples = await page.evaluate(() => {
+    const samplingWindow = window as typeof window & {
+      __portfolioAffordanceFrame?: number
+      __portfolioAffordanceSamples?: Array<{ arrow: number; dot: number }>
+    }
+    if (samplingWindow.__portfolioAffordanceFrame !== undefined) {
+      cancelAnimationFrame(samplingWindow.__portfolioAffordanceFrame)
+    }
+    return samplingWindow.__portfolioAffordanceSamples ?? []
+  })
   expect(
     samples.some(
       ({ arrow, dot }) =>
@@ -337,6 +348,16 @@ test('settled section navigation cross-fades its dot back to an arrow', async ({
   ).toBe(true)
   expect(samples.at(-1)?.arrow).toBeGreaterThanOrEqual(0.99)
   expect(samples.at(-1)?.dot).toBeLessThanOrEqual(0.01)
+  await expect(
+    page.locator(
+      '[data-portfolio-section-nav-zone="left"] [data-portfolio-section-nav-arrow="2"]',
+    ),
+  ).toHaveAttribute('transform', /rotate\(90\)/)
+  await expect(
+    page.locator(
+      '[data-portfolio-section-nav-zone="right"] [data-portfolio-section-nav-arrow="2"]',
+    ),
+  ).toHaveAttribute('transform', /rotate\(-90\)/)
 })
 
 test('inline zoom keeps navigation available and exits with vertical intent', async ({

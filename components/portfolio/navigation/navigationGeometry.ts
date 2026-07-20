@@ -7,10 +7,6 @@ import {
 
 export type SectionNavigationSide = 'left' | 'right';
 
-type SectionAffordanceItem = {
-  hasSlides: boolean;
-};
-
 type HslColor = {
   alpha: number;
   hue: number;
@@ -237,55 +233,17 @@ export function getSectionItemBounds(
   return { top, height: Math.max(0, bottom - top) };
 }
 
-export function getSectionArrowRotationAtIndex(
-  itemIndex: number,
-  activeIndex: number,
-  side: SectionNavigationSide,
-  hasSlides: boolean,
-) {
-  const direction = side === 'left' ? 1 : -1;
-
-  if (itemIndex < activeIndex) {
-    return 180 * direction;
-  }
-
-  if (itemIndex > activeIndex) {
-    return 0;
-  }
-
-  return hasSlides ? 90 * direction : 0;
-}
-
-export function getSectionArrowRotation(
+export function getSectionAffordanceOpacity(
   itemIndex: number,
   sourcePosition: number,
-  side: SectionNavigationSide,
-  items: SectionAffordanceItem[],
+  hasSlides: boolean,
 ) {
-  const lowerIndex = Math.max(0, Math.floor(sourcePosition));
-  const upperIndex = Math.min(items.length - 1, Math.ceil(sourcePosition));
-  const progress = sourcePosition - lowerIndex;
-  const lowerRotation = getSectionArrowRotationAtIndex(
-    itemIndex,
-    lowerIndex,
-    side,
-    items[lowerIndex]?.hasSlides ?? false,
-  );
-  const upperRotation = getSectionArrowRotationAtIndex(
-    itemIndex,
-    upperIndex,
-    side,
-    items[upperIndex]?.hasSlides ?? false,
-  );
-
-  return interpolate(lowerRotation, upperRotation, progress);
-}
-
-export function getAffordanceOpacity(activation: number) {
-  const clampedActivation = clamp(activation, 0, 1);
+  const arrowOpacity = hasSlides
+    ? clamp(1 - Math.abs(sourcePosition - itemIndex), 0, 1)
+    : 0;
 
   return {
-    arrowOpacity: 1 - clampedActivation,
-    dotOpacity: clampedActivation,
+    arrowOpacity,
+    dotOpacity: 1 - arrowOpacity,
   };
 }
