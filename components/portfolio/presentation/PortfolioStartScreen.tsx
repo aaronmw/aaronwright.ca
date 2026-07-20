@@ -149,7 +149,7 @@ export function PortfolioStartScreen({
             ? 'min-w-0'
             : isWideLayout
               ? 'portfolio-safe-inline absolute inset-x-0 top-6'
-              : 'min-w-0'
+              : `min-w-0 ${isMobilePortraitLayout ? 'pb-4' : ''}`
         }
       >
         <div
