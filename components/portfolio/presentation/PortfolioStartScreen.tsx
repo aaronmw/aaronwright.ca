@@ -149,7 +149,7 @@ export function PortfolioStartScreen({
             ? 'min-w-0'
             : isWideLayout
               ? 'portfolio-safe-inline absolute inset-x-0 top-6'
-              : `min-w-0 ${isMobilePortraitLayout ? 'pb-4' : ''}`
+              : 'min-w-0'
         }
       >
         <div
@@ -231,7 +231,7 @@ export function PortfolioStartScreen({
             }`}
           >
             {isMobilePortraitLayout ? (
-              <p className="font-bold text-white">Aaron M. Wright</p>
+              <p className="mb-2 font-bold text-white">Aaron M. Wright</p>
             ) : null}
             <p>302-70 Dyrgas Gate</p>
             <p>
