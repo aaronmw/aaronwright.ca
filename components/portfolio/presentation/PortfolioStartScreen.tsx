@@ -6,12 +6,21 @@ import type { PortfolioProject } from '@/lib/portfolio';
 import {
   MOBILE_SECTION_CONTENT_PADDING_LEFT,
   MOBILE_SECTION_CONTENT_PADDING_RIGHT,
+  MOBILE_SECTION_NAVIGATION_OPTICAL_OFFSET,
 } from '@/components/portfolio/mobileLayout';
 import { SectionBlurb, SectionTitle } from './PortfolioText';
 
 const MOBILE_SECTION_CONTENT_INSETS: CSSProperties = {
   paddingLeft: MOBILE_SECTION_CONTENT_PADDING_LEFT,
   paddingRight: MOBILE_SECTION_CONTENT_PADDING_RIGHT,
+};
+
+const MOBILE_HEADER_LOGO_TRACK_STYLE: CSSProperties = {
+  width: MOBILE_SECTION_CONTENT_PADDING_LEFT,
+};
+
+const MOBILE_HEADER_LOGO_STYLE: CSSProperties = {
+  transform: `translateX(calc(0px - ${MOBILE_SECTION_NAVIGATION_OPTICAL_OFFSET}))`,
 };
 
 type ProjectColorStyle = CSSProperties & {
@@ -100,10 +109,10 @@ export function PortfolioStartScreen({
   onPreview: (index: number, previewing: boolean) => void;
   onSelect: (index: number, keyboardTriggered: boolean) => void;
 }) {
+  const isMobilePortraitLayout =
+    isTouchInput && !isWideLayout && !isTouchLandscapeLayout;
   const { startScreenRef, headerRef, contentSectionRef, shouldBottomAlign } =
-    useStartScreenContentAlignment(
-      isTouchInput && !isWideLayout && !isTouchLandscapeLayout,
-    );
+    useStartScreenContentAlignment(isMobilePortraitLayout);
 
   return (
     <section
@@ -144,19 +153,37 @@ export function PortfolioStartScreen({
         }
       >
         <div
-          className={`mx-auto flex w-full max-w-6xl gap-4 ${
-            isTouchLandscapeLayout
-              ? 'items-start justify-between'
-              : isWideLayout
-                ? 'items-center justify-between'
-                : 'flex-col items-start justify-start'
+          className={`mx-auto w-full max-w-6xl ${
+            isMobilePortraitLayout
+              ? 'relative'
+              : `flex gap-4 ${
+                  isTouchLandscapeLayout
+                    ? 'items-start justify-between'
+                    : isWideLayout
+                      ? 'items-center justify-between'
+                      : 'flex-col items-start justify-start'
+                }`
           }`}
         >
-          <div className="flex shrink-0 items-center gap-5">
+          <div
+            className={
+              isMobilePortraitLayout
+                ? 'pointer-events-none absolute right-full top-0 flex justify-center'
+                : 'flex shrink-0 items-center gap-5'
+            }
+            style={
+              isMobilePortraitLayout
+                ? MOBILE_HEADER_LOGO_TRACK_STYLE
+                : undefined
+            }
+          >
             <svg
               className={`shrink-0 text-white ${
                 isTouchLandscapeLayout ? 'size-9' : 'size-12'
-              } ${isTouchInput && !isWideLayout ? '-ml-2 mr-2' : ''}`}
+              }`}
+              style={
+                isMobilePortraitLayout ? MOBILE_HEADER_LOGO_STYLE : undefined
+              }
               width={isTouchLandscapeLayout ? 36 : 48}
               height={isTouchLandscapeLayout ? 36 : 48}
               viewBox="0 0 7 7"
@@ -178,13 +205,15 @@ export function PortfolioStartScreen({
               <rect x="4" y="5" width="1" height="1" fill="#fff" />
               <rect x="5" y="5" width="1" height="1" fill="#fff" />
             </svg>
-            <p
-              className={`font-light text-white/70 ${
-                isTouchLandscapeLayout ? 'text-sm' : 'text-base'
-              }`}
-            >
-              Aaron M. Wright
-            </p>
+            {!isMobilePortraitLayout ? (
+              <p
+                className={`font-light text-white/70 ${
+                  isTouchLandscapeLayout ? 'text-sm' : 'text-base'
+                }`}
+              >
+                Aaron M. Wright
+              </p>
+            ) : null}
           </div>
           <address
             className={`flex min-w-0 flex-col font-light not-italic text-white/70 ${
@@ -201,6 +230,9 @@ export function PortfolioStartScreen({
                   }`
             }`}
           >
+            {isMobilePortraitLayout ? (
+              <p className="font-bold text-white">Aaron M. Wright</p>
+            ) : null}
             <p>302-70 Dyrgas Gate</p>
             <p>
               Canmore, Alberta{' '}
