@@ -34,6 +34,7 @@ export type SectionNavigationRailModel = {
   nextSlideTitle: string;
   previousSlideTitle: string;
   side: SectionNavigationSide;
+  singleRail: boolean;
 };
 
 export type SectionNavigationRailActions = {
@@ -160,7 +161,7 @@ export function SectionNavigationRail({
         ...safeAreaMargin,
         position: 'absolute',
         top: 0,
-        [side]: '1.5rem',
+        [side]: model.singleRail ? '1rem' : '1.5rem',
         width: '4.5rem',
         height: geometry.height,
         overflow: 'visible',

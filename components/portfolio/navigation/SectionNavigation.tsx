@@ -829,6 +829,7 @@ export function SectionNavigation({
           nextSlideTitle,
           previousSlideTitle,
           side,
+          singleRail: hideRightRail,
         }}
       />
     );
