@@ -386,6 +386,9 @@ export function PortfolioBrowserView({
                     carouselIndex={realIndex}
                     carouselEntryKind={kind}
                     isWideLayout={model.isWideLayout}
+                    restingMediaPadding={
+                      model.isTouchInput ? '0rem' : '1.5rem'
+                    }
                     reserveSectionNavigationGutter={
                       model.isTouchInput && !model.isWideLayout
                     }

@@ -51,6 +51,7 @@ function ZoomableScreenshot({
   concealed,
   className,
   expandToViewport,
+  restingMediaPadding,
   presentationActive,
   onPresentationChange,
   children,
@@ -60,6 +61,7 @@ function ZoomableScreenshot({
   concealed: boolean;
   className: string;
   expandToViewport: boolean;
+  restingMediaPadding: string;
   presentationActive: boolean;
   onPresentationChange: (screenshotId: string, presented: boolean) => void;
   children: ReactNode;
@@ -93,7 +95,9 @@ function ZoomableScreenshot({
       }`}
       style={
         {
-          '--portfolio-media-padding': isPresented ? '6rem' : '1.5rem',
+          '--portfolio-media-padding': isPresented
+            ? '6rem'
+            : restingMediaPadding,
           touchAction: isZoomed ? 'none' : 'pan-x pan-y',
           position: isFixedViewportPresentation
             ? 'fixed'
@@ -205,6 +209,7 @@ export function ProjectPanel({
   carouselIndex,
   carouselEntryKind,
   isWideLayout,
+  restingMediaPadding,
   reserveSectionNavigationGutter,
   isActive,
   inlineZoomPresentationActive,
@@ -221,6 +226,7 @@ export function ProjectPanel({
   carouselIndex: number;
   carouselEntryKind: LoopingCarouselEntry<ProjectSlide>['kind'];
   isWideLayout: boolean;
+  restingMediaPadding: string;
   reserveSectionNavigationGutter: boolean;
   isActive: boolean;
   inlineZoomPresentationActive: boolean;
@@ -312,6 +318,7 @@ export function ProjectPanel({
             screenshotId={slide.screenshot.id}
             concealed={concealedScreenshotId === slide.screenshot.id}
             expandToViewport={isWideLayout}
+            restingMediaPadding={restingMediaPadding}
             presentationActive={inlineZoomPresentationActive}
             onPresentationChange={onInlinePresentationChange}
             className={
