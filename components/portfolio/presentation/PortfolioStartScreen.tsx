@@ -124,7 +124,11 @@ export function PortfolioStartScreen({
             className={`flex min-w-0 flex-col font-light not-italic text-white/70 ${
               isTouchLandscapeLayout
                 ? 'items-end gap-0 text-right text-sm leading-snug'
-                : `gap-1 text-base leading-relaxed ${
+                : `${
+                    isTouchInput && !isWideLayout
+                      ? 'gap-0.5 leading-snug'
+                      : 'gap-1 leading-relaxed'
+                  } text-base ${
                     isWideLayout
                       ? 'items-end text-right'
                       : 'items-start text-left'
