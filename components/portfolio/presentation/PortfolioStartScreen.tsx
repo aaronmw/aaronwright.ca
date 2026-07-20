@@ -3,13 +3,15 @@ import type { CSSProperties } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFilePdf, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import type { PortfolioProject } from '@/lib/portfolio';
+import {
+  MOBILE_SECTION_CONTENT_PADDING_LEFT,
+  MOBILE_SECTION_CONTENT_PADDING_RIGHT,
+} from '@/components/portfolio/mobileLayout';
 import { SectionBlurb, SectionTitle } from './PortfolioText';
 
 const MOBILE_SECTION_CONTENT_INSETS: CSSProperties = {
-  paddingLeft:
-    'max(5.375rem, calc(env(safe-area-inset-left, 0px) + 5.125rem))',
-  paddingRight:
-    'max(2rem, calc(env(safe-area-inset-right, 0px) + 1.5rem))',
+  paddingLeft: MOBILE_SECTION_CONTENT_PADDING_LEFT,
+  paddingRight: MOBILE_SECTION_CONTENT_PADDING_RIGHT,
 };
 
 type ProjectColorStyle = CSSProperties & {

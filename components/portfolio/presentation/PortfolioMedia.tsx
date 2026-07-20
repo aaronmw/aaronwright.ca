@@ -6,6 +6,10 @@ import type {
   PortfolioProject,
   PortfolioScreenshot,
 } from '@/lib/portfolio';
+import {
+  MOBILE_SECTION_CONTENT_PADDING_LEFT,
+  MOBILE_SECTION_CONTENT_PADDING_RIGHT,
+} from '@/components/portfolio/mobileLayout';
 import type { PortfolioMediaElement } from '@/components/portfolio/usePortfolioMediaReadiness';
 import { useInlineMediaZoom } from '@/components/portfolio/useInlineMediaZoom';
 import type { LoopingCarouselEntry } from '@/components/portfolio/domain/carousel';
@@ -25,10 +29,8 @@ import {
 const CAROUSEL_MEDIA_CLASS =
   'object-contain transition-[filter,padding] [transition-duration:1000ms,500ms] [transition-timing-function:ease-in-out,var(--ease-out)] motion-reduce:transition-none';
 const MOBILE_SECTION_CONTENT_INSETS: CSSProperties = {
-  paddingLeft:
-    'max(5.375rem, calc(env(safe-area-inset-left, 0px) + 5.125rem))',
-  paddingRight:
-    'max(2rem, calc(env(safe-area-inset-right, 0px) + 1.5rem))',
+  paddingLeft: MOBILE_SECTION_CONTENT_PADDING_LEFT,
+  paddingRight: MOBILE_SECTION_CONTENT_PADDING_RIGHT,
 };
 
 type ProjectColorStyle = CSSProperties & {

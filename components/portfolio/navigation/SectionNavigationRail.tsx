@@ -5,6 +5,9 @@ import type {
 } from 'react';
 import { faArrowDown } from '@fortawesome/free-solid-svg-icons';
 import {
+  MOBILE_SECTION_CONTENT_PADDING_LEFT,
+} from '@/components/portfolio/mobileLayout';
+import {
   getSectionItemBounds,
   type SectionNavigationSide,
 } from './navigationGeometry';
@@ -147,8 +150,9 @@ export function SectionNavigationRail({
   model: SectionNavigationRailModel;
 }) {
   const { geometry, items, side } = model;
-  const safeAreaMargin =
-    side === 'left'
+  const safeAreaMargin = model.singleRail
+    ? {}
+    : side === 'left'
       ? { marginLeft: 'env(safe-area-inset-left)' }
       : { marginRight: 'env(safe-area-inset-right)' };
 
@@ -161,8 +165,10 @@ export function SectionNavigationRail({
         ...safeAreaMargin,
         position: 'absolute',
         top: 0,
-        [side]: model.singleRail ? '1rem' : '1.5rem',
-        width: '4.5rem',
+        [side]: model.singleRail ? 0 : '1.5rem',
+        width: model.singleRail
+          ? MOBILE_SECTION_CONTENT_PADDING_LEFT
+          : '4.5rem',
         height: geometry.height,
         overflow: 'visible',
         zIndex: model.modalLayerActive ? 60 : 40,
@@ -176,7 +182,13 @@ export function SectionNavigationRail({
         width={NAVIGATION_SVG_SIZE}
         height={geometry.height}
         viewBox={`0 0 ${NAVIGATION_SVG_SIZE} ${geometry.height}`}
-        style={side === 'left' ? { left: 0 } : { right: 0 }}
+        style={
+          model.singleRail
+            ? { left: `calc(50% - ${NAVIGATION_SVG_CENTER}px)` }
+            : side === 'left'
+              ? { left: 0 }
+              : { right: 0 }
+        }
         aria-hidden="true"
       >
         {items.map((item, itemIndex) => {
