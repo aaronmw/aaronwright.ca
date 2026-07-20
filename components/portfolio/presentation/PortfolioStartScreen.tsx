@@ -7,7 +7,7 @@ import { SectionBlurb, SectionTitle } from './PortfolioText';
 
 const MOBILE_SECTION_CONTENT_INSETS: CSSProperties = {
   paddingLeft:
-    'max(6rem, calc(env(safe-area-inset-left, 0px) + 5.75rem))',
+    'max(5.375rem, calc(env(safe-area-inset-left, 0px) + 5.125rem))',
   paddingRight:
     'max(2rem, calc(env(safe-area-inset-right, 0px) + 1.5rem))',
 };
@@ -46,7 +46,9 @@ export function PortfolioStartScreen({
           ? 'grid grid-rows-[auto_minmax(0,1fr)] gap-2'
           : isWideLayout
             ? 'flex flex-col justify-center py-16'
-            : 'grid grid-rows-[auto_minmax(0,1fr)] py-6'
+            : `grid grid-rows-[auto_minmax(0,1fr)] ${
+                isTouchInput ? 'gap-4 pb-6 pt-0' : 'py-6'
+              }`
       }`}
       style={
         isTouchLandscapeLayout

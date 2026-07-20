@@ -26,7 +26,7 @@ const CAROUSEL_MEDIA_CLASS =
   'object-contain transition-[filter,padding] [transition-duration:1000ms,500ms] [transition-timing-function:ease-in-out,var(--ease-out)] motion-reduce:transition-none';
 const MOBILE_SECTION_CONTENT_INSETS: CSSProperties = {
   paddingLeft:
-    'max(6rem, calc(env(safe-area-inset-left, 0px) + 5.75rem))',
+    'max(5.375rem, calc(env(safe-area-inset-left, 0px) + 5.125rem))',
   paddingRight:
     'max(2rem, calc(env(safe-area-inset-right, 0px) + 1.5rem))',
 };
