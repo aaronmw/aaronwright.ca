@@ -229,14 +229,14 @@ export function SectionNavigationRail({
                       repeatCount="indefinite"
                     />
                   </circle>
-                ) : (
+                ) : !model.singleRail ? (
                   <NavigationSvgIcon
                     icon={faArrowDown}
                     centerX={NAVIGATION_SVG_CENTER}
                     centerY={centerY}
                     size={SECTION_NAVIGATION_ARROW_SIZE}
                   />
-                )}
+                ) : null}
               </g>
               <NavigationDot
                 ref={(node) => actions.onDotRef(side, itemIndex, node)}

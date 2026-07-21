@@ -429,6 +429,11 @@ test('mobile carousels retain pull boundaries and one vertical rail', async ({
   await expect(
     page.locator('[data-portfolio-section-nav-zone="right"]'),
   ).toHaveCount(0)
+  await expect(
+    page.locator(
+      '[data-portfolio-section-nav-zone="left"] [data-portfolio-section-nav-arrow] path',
+    ),
+  ).toHaveCount(0)
   await expectRingCenteredOnActiveDot(page)
   await expectSectionRingCenteredOnActiveItem(page)
 })

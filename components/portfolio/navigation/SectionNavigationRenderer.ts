@@ -163,11 +163,7 @@ export class SectionNavigationRenderer {
       return { arrowOpacity: 1, dotOpacity: 0 };
     }
 
-    if (
-      context.singleRail &&
-      itemIndex === context.activeIndex &&
-      context.pinnedAxis !== 'vertical'
-    ) {
+    if (context.singleRail) {
       return { arrowOpacity: 0, dotOpacity: 1 };
     }
 
