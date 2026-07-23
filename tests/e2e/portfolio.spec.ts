@@ -412,6 +412,71 @@ test('inline zoom keeps navigation available and exits with vertical intent', as
   ).toHaveCount(0)
 })
 
+test('double-click enters inline presentation without scaling the image', async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name.includes('iphone'))
+  await page.goto('/work/aarons-toolbox/overview')
+  await waitForPortfolio(page)
+
+  const surface = page
+    .locator(
+      '[data-portfolio-screenshot-id="aarons-toolbox-overview"]:visible',
+    )
+    .first()
+  await surface.dblclick()
+
+  await expect(surface).toHaveAttribute('data-portfolio-inline-zoomed', 'true')
+  await expect
+    .poll(async () => (await surface.boundingBox())?.width ?? 0)
+    .toBe(page.viewportSize()!.width)
+  await expect
+    .poll(async () =>
+      surface
+        .locator('[data-portfolio-inline-zoom-content]')
+        .evaluate((element) => {
+          const transform = getComputedStyle(element).transform
+          return transform === 'none'
+            ? 1
+            : Number(transform.match(/^matrix\(([^,]+)/)?.[1] ?? 0)
+        }),
+    )
+    .toBe(1)
+})
+
+test('double-tap zooms touch media by one scale step', async ({
+  page,
+}, testInfo) => {
+  test.skip(!testInfo.project.name.includes('iphone'))
+  await page.goto('/work/aarons-toolbox/overview')
+  await waitForPortfolio(page)
+
+  const surface = page
+    .locator(
+      '[data-portfolio-screenshot-id="aarons-toolbox-overview"]:visible',
+    )
+    .first()
+  const surfaceBox = await surface.boundingBox()
+  expect(surfaceBox).not.toBeNull()
+  const tapX = surfaceBox!.x + surfaceBox!.width / 2
+  const tapY = surfaceBox!.y + surfaceBox!.height / 2
+  await page.touchscreen.tap(tapX, tapY)
+  await page.touchscreen.tap(tapX, tapY)
+
+  await expect(surface).toHaveAttribute('data-portfolio-inline-zoomed', 'true')
+  await expect
+    .poll(async () =>
+      surface
+        .locator('[data-portfolio-inline-zoom-content]')
+        .evaluate((element) => {
+          const transform = getComputedStyle(element).transform
+          const match = transform.match(/^matrix\(([^,]+)/)
+          return match ? Number(match[1]) : 1
+        }),
+    )
+    .toBeGreaterThan(1.1)
+})
+
 test('modal deep links close without losing the selected slide', async ({
   page,
 }, testInfo) => {
