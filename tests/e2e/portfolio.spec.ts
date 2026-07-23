@@ -379,6 +379,26 @@ test('inline zoom keeps navigation available and exits with vertical intent', as
     .poll(async () => (await nextSlideSurface.boundingBox())?.width ?? 0)
     .toBe(page.viewportSize()!.width)
 
+  await page
+    .locator(
+      'button[data-portfolio-section-nav-side="right"][aria-current="page"]',
+    )
+    .click()
+  await expect(page).toHaveURL(/\/work\/aarons-toolbox\/normalizer$/)
+  await expect(
+    page.locator('[data-portfolio-inline-zoomed="true"]'),
+  ).toBeVisible()
+
+  await page
+    .locator(
+      'button[data-portfolio-section-nav-side="left"][aria-current="page"]',
+    )
+    .click()
+  await expect(page).toHaveURL(/\/work\/aarons-toolbox\/overview$/)
+  await expect(
+    page.locator('[data-portfolio-inline-zoomed="true"]'),
+  ).toBeVisible()
+
   await page.keyboard.press('ArrowRight')
   await expect(page).toHaveURL(/\/work\/aarons-toolbox\/normalizer$/)
   await expect(

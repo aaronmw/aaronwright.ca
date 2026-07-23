@@ -23,6 +23,7 @@ export type PortfolioCarouselRuntimeOptions = {
   isWideLayout: boolean
   isModalOpen: boolean
   isModalVisible: boolean
+  isInlineZoomPresentationActive: boolean
   initialRevealCompleteRef: MutableRefObject<boolean>
   scrollSyncRef: MutableRefObject<boolean>
   verticalRef: RefObject<HTMLDivElement | null>

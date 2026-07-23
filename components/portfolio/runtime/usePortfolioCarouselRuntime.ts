@@ -60,6 +60,7 @@ export function usePortfolioCarouselRuntime({
   isWideLayout,
   isModalOpen,
   isModalVisible,
+  isInlineZoomPresentationActive,
   initialRevealCompleteRef,
   scrollSyncRef,
   verticalRef,
@@ -349,6 +350,17 @@ export function usePortfolioCarouselRuntime({
     const nextSlide = slides[nextIndex]
     const nextScreenshotId =
       nextSlide.kind === 'screenshot' ? nextSlide.screenshot.id : null
+    const currentSlideIndex =
+      horizontalTargetSlideIndexesRef.current[project.slug] ??
+      activeSlideIndexes[projectIndex] ??
+      0
+    if (
+      isInlineZoomPresentationActive &&
+      nextScreenshotId &&
+      nextIndex !== currentSlideIndex
+    ) {
+      inlineZoomHandoffScreenshotIdRef.current = nextScreenshotId
+    }
     const horizontalIntent =
       (horizontalPendingNavigationIntentRefs.current[project.slug] ?? 0) + 1
     horizontalPendingNavigationIntentRefs.current[project.slug] =
@@ -436,10 +448,7 @@ export function usePortfolioCarouselRuntime({
     )
   }
 
-  const clickHorizontalSlideIndicator = (
-    direction: -1 | 1,
-    preserveInlineZoom = false,
-  ) => {
+  const clickHorizontalSlideIndicator = (direction: -1 | 1) => {
     const navigation = document.querySelector(
       '[data-portfolio-slide-indicators]',
     )
@@ -470,12 +479,6 @@ export function usePortfolioCarouselRuntime({
     if (!isModalVisible && activeProject) {
       horizontalKeyboardIndicatorIndexesRef.current[activeProject.slug] =
         targetIndex
-      if (preserveInlineZoom && targetIndex !== activeIndex) {
-        const targetSlide = getCarouselSlides(activeProject)[targetIndex]
-        if (targetSlide?.kind === 'screenshot') {
-          inlineZoomHandoffScreenshotIdRef.current = targetSlide.screenshot.id
-        }
-      }
     }
     targetButton.click()
     return true

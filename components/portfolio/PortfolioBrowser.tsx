@@ -156,6 +156,7 @@ export function PortfolioBrowser({
     isWideLayout,
     isModalOpen,
     isModalVisible: shouldShowModal,
+    isInlineZoomPresentationActive,
     initialRevealCompleteRef,
     scrollSyncRef,
     verticalRef,

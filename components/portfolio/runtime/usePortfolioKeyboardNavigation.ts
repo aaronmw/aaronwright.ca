@@ -35,10 +35,7 @@ type UsePortfolioKeyboardNavigationOptions = {
   closeModal: () => void
   reopenModal: () => void
   exitInlineZoomPresentation: () => void
-  clickHorizontalSlideIndicator: (
-    direction: -1 | 1,
-    preserveInlineZoom?: boolean,
-  ) => boolean
+  clickHorizontalSlideIndicator: (direction: -1 | 1) => boolean
   clickVerticalSectionNavButton: (direction: -1 | 1) => boolean
   moveHorizontal: (direction: -1 | 1) => void
   moveModalHorizontal: (direction: -1 | 1) => void
@@ -168,14 +165,14 @@ export function usePortfolioKeyboardNavigation({
     }
     if (event.key === 'ArrowRight') {
       event.preventDefault()
-      if (!clickHorizontalSlideIndicator(1, isInlineZoomPresentationActive)) {
+      if (!clickHorizontalSlideIndicator(1)) {
         focusKeyboardSurface()
         moveHorizontal(1)
       }
     }
     if (event.key === 'ArrowLeft') {
       event.preventDefault()
-      if (!clickHorizontalSlideIndicator(-1, isInlineZoomPresentationActive)) {
+      if (!clickHorizontalSlideIndicator(-1)) {
         focusKeyboardSurface()
         moveHorizontal(-1)
       }
