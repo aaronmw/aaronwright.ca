@@ -273,10 +273,9 @@ export class TrackedNavigationController {
       return;
     }
 
-    this.previewIndex = null;
-    this.snappedIndex = null;
-
     if (this.pointerArmed || this.pinnedIndex !== null) {
+      this.previewIndex = null;
+      this.snappedIndex = null;
       return;
     }
 
