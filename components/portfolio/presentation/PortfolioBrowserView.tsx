@@ -19,6 +19,7 @@ import {
 } from '@/components/portfolio/domain/slides'
 import {
   TOP_SCREEN_COLOR,
+  buildActiveProjectColors,
   buildProjectColors,
   getProjectColor as getThemeProjectColor,
 } from '@/components/portfolio/domain/theme'
@@ -47,6 +48,7 @@ import type {
 
 const START_SCREEN_INDEX = -1
 const PROJECT_COLORS = buildProjectColors(portfolioSlides.length)
+const ACTIVE_PROJECT_COLORS = buildActiveProjectColors(portfolioSlides.length)
 const SECTION_NAV_HAS_SLIDES = [
   false,
   ...portfolioSlides.map(project => project.screenshots.length > 1),
@@ -72,6 +74,10 @@ const WIDE_LAYOUT_STYLE: WideLayoutStyle = {
 
 function getProjectColor(projectIndex: number) {
   return getThemeProjectColor(PROJECT_COLORS, projectIndex)
+}
+
+function getActiveProjectColor(projectIndex: number) {
+  return getThemeProjectColor(ACTIVE_PROJECT_COLORS, projectIndex)
 }
 
 type PortfolioBrowserViewRefs = {
@@ -338,6 +344,11 @@ export function PortfolioBrowserView({
             project,
             model.activeSlideIndexes[projectIndex] ?? 0,
           )
+          const projectColor = getProjectColor(projectIndex)
+          const projectContentColor =
+            model.activeProjectIndex === projectIndex
+              ? getActiveProjectColor(projectIndex)
+              : projectColor
 
           return (
             <section
@@ -350,7 +361,8 @@ export function PortfolioBrowserView({
                 <ProjectDescription
                   project={project}
                   projectNumber={projectNumber}
-                  projectColor={getProjectColor(projectIndex)}
+                  projectColor={projectColor}
+                  projectContentColor={projectContentColor}
                   setDescriptionRef={actions.setDescriptionRef(project.slug)}
                   isWideLayout={model.isWideLayout}
                   className={`absolute bottom-10 left-0 top-10 z-10 w-[var(--portfolio-description-rail-width)] bg-black/80 py-6 pl-[var(--portfolio-control-gutter-width)] pr-6 backdrop-blur-md transition-opacity duration-500 ease-out motion-reduce:transition-none ${
@@ -373,7 +385,7 @@ export function PortfolioBrowserView({
                 {hasMobilePullBoundaries ? (
                   <CarouselPullBoundary
                     edge="before"
-                    projectColor={getProjectColor(projectIndex)}
+                    projectColor={projectColor}
                   />
                 ) : null}
                 {renderedSlides.map(({ item: slide, key, realIndex, kind }) => (
@@ -381,7 +393,8 @@ export function PortfolioBrowserView({
                     key={`${project.id}-${key}`}
                     project={project}
                     projectNumber={projectNumber}
-                    projectColor={getProjectColor(projectIndex)}
+                    projectColor={projectColor}
+                    projectContentColor={projectContentColor}
                     slide={slide}
                     carouselIndex={realIndex}
                     carouselEntryKind={kind}
@@ -419,7 +432,7 @@ export function PortfolioBrowserView({
                 {hasMobilePullBoundaries ? (
                   <CarouselPullBoundary
                     edge="after"
-                    projectColor={getProjectColor(projectIndex)}
+                    projectColor={projectColor}
                   />
                 ) : null}
               </div>

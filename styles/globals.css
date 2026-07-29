@@ -6,6 +6,12 @@
   --color-portfolio-red: #e00000;
 }
 
+@property --project-content-color {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #e00000;
+}
+
 html,
 body {
   min-height: 100%;
@@ -15,6 +21,16 @@ body {
 
 button {
   cursor: pointer;
+}
+
+.portfolio-project-content-theme {
+  transition: --project-content-color 200ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .portfolio-project-content-theme {
+    transition: none;
+  }
 }
 
 .portfolio-safe-inline {
@@ -70,16 +86,36 @@ button {
 }
 
 .portfolio-markdown {
-  --tw-prose-body: rgb(255 255 255 / 0.82);
+  --tw-prose-body: color-mix(
+    in srgb,
+    var(--project-color, var(--color-portfolio-red)) 82%,
+    transparent
+  );
   --tw-prose-headings: var(--project-color, var(--color-portfolio-red));
   --tw-prose-links: var(--project-color, var(--color-portfolio-red));
-  --tw-prose-bold: rgb(255 255 255 / 0.9);
+  --tw-prose-bold: color-mix(
+    in srgb,
+    var(--project-color, var(--color-portfolio-red)) 90%,
+    transparent
+  );
   --tw-prose-counters: var(--project-color, var(--color-portfolio-red));
   --tw-prose-bullets: var(--project-color, var(--color-portfolio-red));
-  --tw-prose-code: rgb(255 255 255 / 0.9);
+  --tw-prose-code: color-mix(
+    in srgb,
+    var(--project-color, var(--color-portfolio-red)) 90%,
+    transparent
+  );
   --tw-prose-hr: rgb(255 255 255 / 0.2);
-  --tw-prose-quotes: rgb(255 255 255 / 0.9);
+  --tw-prose-quotes: color-mix(
+    in srgb,
+    var(--project-color, var(--color-portfolio-red)) 90%,
+    transparent
+  );
   --tw-prose-quote-borders: var(--project-color, var(--color-portfolio-red));
+}
+
+.portfolio-project-content {
+  --project-color: var(--project-content-color);
 }
 
 .portfolio-markdown p {

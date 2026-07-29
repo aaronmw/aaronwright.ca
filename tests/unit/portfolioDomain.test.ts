@@ -29,6 +29,7 @@ import {
   modalMediaKey,
 } from '../../components/portfolio/domain/slides'
 import {
+  buildActiveProjectColors,
   buildProjectColors,
   getContrastAgainstBlack,
   getProjectColor,
@@ -194,6 +195,20 @@ describe('portfolio theme colors', () => {
 
   it('still produces one color when the project collection is empty', () => {
     expect(buildProjectColors(0)).toHaveLength(1)
+  })
+
+  it('derives near-white active colors without changing hue or saturation', () => {
+    expect(buildActiveProjectColors(5)).toEqual([
+      'hsl(342 78% 95%)',
+      'hsl(54 78% 95%)',
+      'hsl(126 78% 95%)',
+      'hsl(198 78% 95%)',
+      'hsl(270 78% 95%)',
+    ])
+
+    for (const hue of [342, 54, 126, 198, 270]) {
+      expect(getContrastAgainstBlack(hue, 78, 95)).toBeGreaterThanOrEqual(4.5)
+    }
   })
 })
 

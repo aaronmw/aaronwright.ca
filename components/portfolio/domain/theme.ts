@@ -2,7 +2,17 @@ export const TOP_SCREEN_COLOR = 'hsl(0 0% 100%)'
 export const PROJECT_COLOR_START_HUE = 342
 export const PROJECT_COLOR_SATURATION = 78
 export const PROJECT_COLOR_LIGHTNESS = 54
+export const PROJECT_COLOR_ACTIVE_LIGHTNESS = 95
 export const PROJECT_COLOR_MIN_CONTRAST = 4.5
+
+function buildProjectHues(projectCount: number) {
+  const safeProjectCount = Math.max(1, projectCount)
+  const hueStep = 360 / safeProjectCount
+
+  return Array.from({ length: safeProjectCount }, (_, index) =>
+    Math.round((PROJECT_COLOR_START_HUE + hueStep * index) % 360),
+  )
+}
 
 function hslToRgb(hue: number, saturation: number, lightness: number) {
   const normalizedHue = (((hue % 360) + 360) % 360) / 360
@@ -88,11 +98,7 @@ export function ensureContrastAgainstBlack(
 }
 
 export function buildProjectColors(projectCount: number) {
-  const safeProjectCount = Math.max(1, projectCount)
-  const hueStep = 360 / safeProjectCount
-
-  return Array.from({ length: safeProjectCount }, (_, index) => {
-    const hue = Math.round((PROJECT_COLOR_START_HUE + hueStep * index) % 360)
+  return buildProjectHues(projectCount).map(hue => {
     const lightness = ensureContrastAgainstBlack(
       hue,
       PROJECT_COLOR_SATURATION,
@@ -101,6 +107,12 @@ export function buildProjectColors(projectCount: number) {
     )
 
     return `hsl(${hue} ${PROJECT_COLOR_SATURATION}% ${lightness}%)`
+  })
+}
+
+export function buildActiveProjectColors(projectCount: number) {
+  return buildProjectHues(projectCount).map(hue => {
+    return `hsl(${hue} ${PROJECT_COLOR_SATURATION}% ${PROJECT_COLOR_ACTIVE_LIGHTNESS}%)`
   })
 }
 

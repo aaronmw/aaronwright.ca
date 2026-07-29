@@ -11,6 +11,7 @@ import type { PortfolioProject } from '@/lib/portfolio';
 import { OverscrollIndicator } from '@/components/OverscrollIndicator';
 
 type ProjectColorStyle = CSSProperties & {
+  '--project-content-color': string;
   '--project-color': string;
 };
 
@@ -136,6 +137,7 @@ export function ProjectDescription({
   project,
   projectNumber,
   projectColor,
+  projectContentColor,
   setDescriptionRef,
   isWideLayout,
   className,
@@ -143,18 +145,20 @@ export function ProjectDescription({
   project: PortfolioProject;
   projectNumber: string;
   projectColor: string;
+  projectContentColor: string;
   setDescriptionRef: (node: HTMLDivElement | null) => void;
   isWideLayout: boolean;
   className?: string;
 }) {
   return (
     <div
-      className={`grid min-h-0 min-w-0 grid-rows-[auto_minmax(0,1fr)] pr-1 ${
+      className={`portfolio-project-content-theme grid min-h-0 min-w-0 grid-rows-[auto_minmax(0,1fr)] pr-1 ${
         className ?? ''
       }`}
       style={
         {
           '--project-color': projectColor,
+          '--project-content-color': projectContentColor,
           ...(isWideLayout
             ? {
                 paddingLeft:
@@ -167,7 +171,7 @@ export function ProjectDescription({
       <ProjectHeading
         project={project}
         projectNumber={projectNumber}
-        projectColor={projectColor}
+        projectColor={projectContentColor}
         isWideLayout={isWideLayout}
       />
       <div
@@ -180,7 +184,7 @@ export function ProjectDescription({
         <OverscrollIndicator
           ref={setDescriptionRef}
           className="portfolio-themed-scrollbar overflow-x-hidden pr-10"
-          contentClassName={`portfolio-markdown portfolio-markdown-scroll-body prose min-w-0 w-full max-w-[48ch] font-light leading-relaxed text-white/82 ${
+          contentClassName={`portfolio-project-content portfolio-markdown portfolio-markdown-scroll-body prose min-w-0 w-full max-w-[48ch] font-light leading-relaxed ${
             isWideLayout ? 'text-xl' : 'text-lg'
           }`}
         >
@@ -192,8 +196,8 @@ export function ProjectDescription({
               href={project.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex min-h-14 w-full items-center justify-center rounded-lg px-6 py-4 text-center text-base font-black leading-none tracking-normal text-black outline-none transition-[filter] duration-200 hover:brightness-110 focus-visible:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--project-color)] active:brightness-95 motion-reduce:transition-none"
-              style={{ backgroundColor: projectColor }}
+              className="flex min-h-14 w-full items-center justify-center rounded-lg px-6 py-4 text-center text-base font-black leading-none tracking-normal text-black outline-none transition-[background-color,filter] duration-200 hover:brightness-110 focus-visible:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--project-color)] active:brightness-95 motion-reduce:transition-none"
+              style={{ backgroundColor: projectContentColor }}
             >
               Visit Project
             </a>
@@ -208,18 +212,20 @@ export function BuildingWithAiTextPanel({
   project,
   projectNumber,
   projectColor,
+  projectContentColor,
   isWideLayout,
   setDescriptionRef,
 }: {
   project: PortfolioProject;
   projectNumber: string;
   projectColor: string;
+  projectContentColor: string;
   isWideLayout: boolean;
   setDescriptionRef: (node: HTMLDivElement | null) => void;
 }) {
   return (
     <section
-      className={`grid min-h-0 min-w-0 w-full grid-rows-[auto_minmax(0,1fr)] ${
+      className={`portfolio-project-content-theme grid min-h-0 min-w-0 w-full grid-rows-[auto_minmax(0,1fr)] ${
         isWideLayout
           ? 'h-full bg-black/80 py-16 pl-[var(--portfolio-control-gutter-width)] pr-[var(--portfolio-control-gutter-width)] backdrop-blur-md'
           : 'h-full'
@@ -228,6 +234,7 @@ export function BuildingWithAiTextPanel({
       style={
         {
           '--project-color': projectColor,
+          '--project-content-color': projectContentColor,
           ...(isWideLayout
             ? {
                 paddingLeft:
@@ -240,7 +247,7 @@ export function BuildingWithAiTextPanel({
       <ProjectHeading
         project={project}
         projectNumber={projectNumber}
-        projectColor={projectColor}
+        projectColor={projectContentColor}
         isWideLayout={isWideLayout}
       />
       <OverscrollIndicator
@@ -253,8 +260,8 @@ export function BuildingWithAiTextPanel({
         className="portfolio-themed-scrollbar overflow-x-hidden pr-10"
         contentClassName={
           isWideLayout
-            ? 'portfolio-markdown portfolio-markdown-scroll-body prose min-w-0 w-full max-w-[calc(108ch+7rem)] text-lg font-light leading-relaxed text-white/82 [column-count:3] [column-fill:balance] [column-gap:3.5rem]'
-            : 'portfolio-markdown portfolio-markdown-scroll-body prose min-w-0 w-full max-w-[48ch] text-lg font-light leading-relaxed text-white/82'
+            ? 'portfolio-project-content portfolio-markdown portfolio-markdown-scroll-body prose min-w-0 w-full max-w-[calc(108ch+7rem)] text-lg font-light leading-relaxed [column-count:3] [column-fill:balance] [column-gap:3.5rem]'
+            : 'portfolio-project-content portfolio-markdown portfolio-markdown-scroll-body prose min-w-0 w-full max-w-[48ch] text-lg font-light leading-relaxed'
         }
       >
         <PortfolioMarkdown>{project.descriptionMarkdown}</PortfolioMarkdown>
@@ -276,11 +283,14 @@ function ProjectHeading({
 }) {
   return (
     <div>
-      <p className="mb-5 text-xs font-light uppercase tracking-[0.35em] text-white/45">
+      <p
+        className="mb-5 text-xs font-light uppercase tracking-[0.35em] opacity-45 transition-colors duration-200 ease-out motion-reduce:transition-none"
+        style={{ color: projectColor }}
+      >
         SECTION {projectNumber}
       </p>
       <h1
-        className={`mb-8 w-full max-w-[12ch] font-black uppercase leading-none tracking-normal ${
+        className={`mb-8 w-full max-w-[12ch] font-black uppercase leading-none tracking-normal transition-colors duration-200 ease-out motion-reduce:transition-none ${
           isWideLayout
             ? 'text-[clamp(3.5rem,4vw,4.75rem)]'
             : 'text-[clamp(3rem,14vw,7rem)]'

@@ -296,7 +296,7 @@ export function PortfolioStartScreen({
                 key={project.id}
                 type="button"
                 data-portfolio-start-section-index={index + 1}
-                className={`group w-full items-center gap-[clamp(0.75rem,1.8vh,1.5rem)] py-[clamp(0.2rem,0.65vh,0.75rem)] text-left text-white outline-none transition-colors hover:text-[var(--project-color)] focus-visible:text-[var(--project-color)] sm:py-[clamp(0.3rem,0.85vh,1.25rem)] ${
+                className={`group w-full items-center gap-[clamp(0.75rem,1.8vh,1.5rem)] py-[clamp(0.2rem,0.65vh,0.75rem)] text-left text-white outline-none transition-colors duration-200 ease-out hover:text-[var(--project-color)] focus-visible:text-[var(--project-color)] motion-reduce:transition-none sm:py-[clamp(0.3rem,0.85vh,1.25rem)] ${
                   isWideLayout
                     ? 'grid grid-cols-[minmax(0,1fr)_36ch]'
                     : 'flex justify-between'
