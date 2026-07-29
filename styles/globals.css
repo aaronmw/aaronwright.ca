@@ -23,11 +23,25 @@ button {
   cursor: pointer;
 }
 
+@keyframes portfolio-pending-ring {
+  to {
+    stroke-dashoffset: -44px;
+  }
+}
+
+.portfolio-pending-ring {
+  animation: portfolio-pending-ring 0.8s linear infinite;
+}
+
 .portfolio-project-content-theme {
   transition: --project-content-color 200ms ease-out;
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .portfolio-pending-ring {
+    animation: none;
+  }
+
   .portfolio-project-content-theme {
     transition: none;
   }

@@ -115,7 +115,7 @@ export function SlideNavigationView({
                     stroke="white"
                     strokeWidth={2}
                     strokeDasharray="20 24"
-                    className="origin-center animate-spin"
+                    className="portfolio-pending-ring"
                   />
                 ) : null}
               </g>
