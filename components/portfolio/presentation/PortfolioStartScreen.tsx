@@ -307,27 +307,27 @@ export function PortfolioStartScreen({
                   </>
                 ) : (
                   <span className="flex w-full min-w-0 flex-col gap-[clamp(0.15rem,0.55vh,0.75rem)]">
-                    <SectionTitle
-                      color={getProjectColor(index)}
-                      elementRef={(node) => setTitleRef(index, node)}
-                    >
-                      {project.title}
-                    </SectionTitle>
+                    <span className="relative block min-w-0">
+                      <SectionTitle
+                        color={getProjectColor(index)}
+                        elementRef={(node) => setTitleRef(index, node)}
+                      >
+                        {project.title}
+                      </SectionTitle>
+                      <span className="absolute right-full top-0 mr-3 flex h-[clamp(1.1rem,3.4vh,2rem)] w-8 items-center justify-end text-right text-sm font-light text-white opacity-70 transition-opacity duration-200 ease-out group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none sm:h-[clamp(1.25rem,4.2vh,4.2rem)] sm:text-base lg:h-[clamp(1.5rem,4.8vh,4.8rem)]">
+                        {pending ? (
+                          <FontAwesomeIcon
+                            icon={faSpinner}
+                            className="size-4 animate-spin"
+                          />
+                        ) : (
+                          String(index + 1).padStart(2, '0')
+                        )}
+                      </span>
+                    </span>
                     <SectionBlurb>{project.blurb}</SectionBlurb>
                   </span>
                 )}
-                {!isWideLayout ? (
-                  <span className="absolute right-full top-[calc(clamp(1.1rem,3.4vh,2rem)/2)] mr-3 w-8 -translate-y-1/2 text-right text-sm font-light text-white opacity-70 transition-opacity duration-200 ease-out group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none sm:top-[calc(clamp(1.25rem,4.2vh,4.2rem)/2)] sm:text-base lg:top-[calc(clamp(1.5rem,4.8vh,4.8rem)/2)]">
-                    {pending ? (
-                      <FontAwesomeIcon
-                        icon={faSpinner}
-                        className="size-4 animate-spin"
-                      />
-                    ) : (
-                      String(index + 1).padStart(2, '0')
-                    )}
-                  </span>
-                ) : null}
               </button>
             );
           })}
