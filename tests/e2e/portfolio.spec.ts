@@ -901,6 +901,27 @@ test('mobile carousels retain pull boundaries and one vertical rail', async ({
   await expectSectionRingCenteredOnActiveItem(page)
 })
 
+test('mobile portrait keeps the logo fixed while sections move', async ({
+  page,
+}, testInfo) => {
+  test.skip(!testInfo.project.name.includes('iphone-portrait'))
+  await page.goto('/work')
+  await waitForPortfolio(page)
+
+  const logo = page.locator('[data-portfolio-mobile-logo]')
+  await expect(logo).toBeVisible()
+  const initialPosition = await logo.boundingBox()
+
+  await page.keyboard.press('ArrowDown')
+  await expect(page).toHaveURL(/\/work\/building-with-ai$/)
+  const projectPosition = await logo.boundingBox()
+
+  expect(initialPosition).not.toBeNull()
+  expect(projectPosition).not.toBeNull()
+  expect(Math.abs(projectPosition!.x - initialPosition!.x)).toBeLessThan(0.5)
+  expect(Math.abs(projectPosition!.y - initialPosition!.y)).toBeLessThan(0.5)
+})
+
 test('reduced motion still completes the loading curtain', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto('/work/mini-series-browser/expanded-card')

@@ -6,21 +6,13 @@ import type { PortfolioProject } from '@/lib/portfolio';
 import {
   MOBILE_SECTION_CONTENT_PADDING_LEFT,
   MOBILE_SECTION_CONTENT_PADDING_RIGHT,
-  MOBILE_SECTION_NAVIGATION_OPTICAL_OFFSET,
 } from '@/components/portfolio/mobileLayout';
+import { PortfolioLogoMark } from './PortfolioLogoMark';
 import { SectionBlurb, SectionTitle } from './PortfolioText';
 
 const MOBILE_SECTION_CONTENT_INSETS: CSSProperties = {
   paddingLeft: MOBILE_SECTION_CONTENT_PADDING_LEFT,
   paddingRight: MOBILE_SECTION_CONTENT_PADDING_RIGHT,
-};
-
-const MOBILE_HEADER_LOGO_TRACK_STYLE: CSSProperties = {
-  width: MOBILE_SECTION_CONTENT_PADDING_LEFT,
-};
-
-const MOBILE_HEADER_LOGO_STYLE: CSSProperties = {
-  transform: `translateX(calc(0px - ${MOBILE_SECTION_NAVIGATION_OPTICAL_OFFSET}))`,
 };
 
 type ProjectColorStyle = CSSProperties & {
@@ -165,47 +157,14 @@ export function PortfolioStartScreen({
                 }`
           }`}
         >
-          <div
-            className={
-              isMobilePortraitLayout
-                ? 'pointer-events-none absolute right-full top-0 flex justify-center'
-                : 'flex shrink-0 items-center gap-5'
-            }
-            style={
-              isMobilePortraitLayout
-                ? MOBILE_HEADER_LOGO_TRACK_STYLE
-                : undefined
-            }
-          >
-            <svg
-              className={`shrink-0 text-white ${
-                isTouchLandscapeLayout ? 'size-9' : 'size-12'
-              }`}
-              style={
-                isMobilePortraitLayout ? MOBILE_HEADER_LOGO_STYLE : undefined
-              }
-              width={isTouchLandscapeLayout ? 36 : 48}
-              height={isTouchLandscapeLayout ? 36 : 48}
-              viewBox="0 0 7 7"
-              aria-hidden="true"
-            >
-              <rect x="1" y="1" width="1" height="1" fill="#fff" />
-              <rect x="5" y="1" width="1" height="1" fill="#fff" />
-              <rect x="1" y="2" width="1" height="1" fill="#fff" />
-              <rect x="3" y="2" width="1" height="1" fill="#fff" />
-              <rect x="5" y="2" width="1" height="1" fill="#fff" />
-              <rect x="1" y="3" width="1" height="1" fill="#fff" />
-              <rect x="5" y="3" width="1" height="1" fill="#fff" />
-              <rect x="1" y="4" width="1" height="1" fill="#fff" />
-              <rect x="3" y="4" width="1" height="1" fill="#fff" />
-              <rect x="5" y="4" width="1" height="1" fill="#fff" />
-              <rect x="1" y="5" width="1" height="1" fill="#fff" />
-              <rect x="2" y="5" width="1" height="1" fill="#fff" />
-              <rect x="3" y="5" width="1" height="1" fill="#fff" />
-              <rect x="4" y="5" width="1" height="1" fill="#fff" />
-              <rect x="5" y="5" width="1" height="1" fill="#fff" />
-            </svg>
-            {!isMobilePortraitLayout ? (
+          {!isMobilePortraitLayout ? (
+            <div className="flex shrink-0 items-center gap-5">
+              <PortfolioLogoMark
+                className={`shrink-0 text-white ${
+                  isTouchLandscapeLayout ? 'size-9' : 'size-12'
+                }`}
+                size={isTouchLandscapeLayout ? 36 : 48}
+              />
               <p
                 className={`font-light text-white/70 ${
                   isTouchLandscapeLayout ? 'text-sm' : 'text-base'
@@ -213,8 +172,8 @@ export function PortfolioStartScreen({
               >
                 Aaron M. Wright
               </p>
-            ) : null}
-          </div>
+            </div>
+          ) : null}
           <address
             className={`flex min-w-0 flex-col font-light not-italic text-white/70 ${
               isTouchLandscapeLayout

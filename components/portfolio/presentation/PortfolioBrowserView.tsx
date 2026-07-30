@@ -41,8 +41,13 @@ import {
 } from './PortfolioControls'
 import { CarouselPullBoundary, ProjectPanel } from './PortfolioMedia'
 import { ImageModal, type ModalTransitionRect } from './ImageModal'
+import { PortfolioLogoMark } from './PortfolioLogoMark'
 import { PortfolioStartScreen } from './PortfolioStartScreen'
 import { ProjectDescription } from './PortfolioText'
+import {
+  MOBILE_SECTION_CONTENT_PADDING_LEFT,
+  MOBILE_SECTION_NAVIGATION_OPTICAL_OFFSET,
+} from '@/components/portfolio/mobileLayout'
 import type {
   PendingNavigation,
   PortfolioIntroPhase,
@@ -474,6 +479,23 @@ export function PortfolioBrowserView({
           )
         })}
       </div>
+
+      {model.isTouchInput &&
+      !model.isWideLayout &&
+      !model.isTouchLandscapeLayout ? (
+        <div
+          data-portfolio-mobile-logo
+          className="pointer-events-none fixed left-0 top-0 z-[35] flex justify-center"
+          style={{ width: MOBILE_SECTION_CONTENT_PADDING_LEFT }}
+        >
+          <PortfolioLogoMark
+            className="size-12 shrink-0 text-white"
+            style={{
+              transform: `translateX(calc(0px - ${MOBILE_SECTION_NAVIGATION_OPTICAL_OFFSET}))`,
+            }}
+          />
+        </div>
+      ) : null}
 
       {model.isWideLayout || model.isTouchInput ? (
         <SectionNavigation
