@@ -9,7 +9,6 @@ import {
 import {
   NAVIGATION_BREAKAWAY_DISTANCE,
   NAVIGATION_RETURN_DELAY,
-  NAVIGATION_RING_HOVER_STROKE,
   NAVIGATION_RING_STROKE,
   NAVIGATION_SNAP_DISTANCE,
 } from './navigationTokens';
@@ -28,7 +27,6 @@ export {
   NAVIGATION_DOT_RADIUS,
   NAVIGATION_RETURN_DELAY,
   NAVIGATION_RING_DIAMETER,
-  NAVIGATION_RING_HOVER_STROKE,
   NAVIGATION_RING_RADIUS,
   NAVIGATION_RING_STROKE,
   NAVIGATION_SLIDE_STEP,
@@ -94,12 +92,10 @@ export class TrackedNavigationController {
   private pinnedIndex: number | null = null;
   private snappedIndex: number | null = null;
   private mode: NavigationMode = 'source-linked';
-  private strokeWidth = NAVIGATION_RING_STROKE;
   private pressedIndex: number | null = null;
   private pressScale = 1;
   private returnTimeout: ReturnType<typeof setTimeout> | null = null;
   private moveTween: gsap.core.Tween | null = null;
-  private strokeTween: gsap.core.Tween | null = null;
   private pressTimeline: gsap.core.Timeline | null = null;
   private pressReleaseQueued = false;
   private readonly motion: { coordinate: number };
@@ -218,7 +214,6 @@ export class TrackedNavigationController {
 
     this.snappedIndex = nextSnapIndex;
     this.mode = nextSnapIndex === null ? 'pointer-follow' : 'snap';
-    this.animateStroke(NAVIGATION_RING_HOVER_STROKE);
     this.moveToCoordinate(targetCoordinate, {
       duration: acquire ? 0.3 : snapChanged ? 0.2 : 0,
       ease: 'power3.out',
@@ -240,7 +235,6 @@ export class TrackedNavigationController {
       this.returnTimeout = null;
       this.previewIndex = null;
       this.mode = 'source-linked';
-      this.animateStroke(NAVIGATION_RING_STROKE);
       this.moveToPosition(this.sourcePosition, {
         duration: 0.3,
         ease: 'power3.out',
@@ -264,7 +258,6 @@ export class TrackedNavigationController {
     this.previewIndex = index;
     this.mode = 'snap';
     this.snappedIndex = index;
-    this.animateStroke(NAVIGATION_RING_HOVER_STROKE);
     this.moveToPosition(index, { duration: 0.3, ease: 'power3.out' });
   }
 
@@ -311,7 +304,6 @@ export class TrackedNavigationController {
     this.snappedIndex = sourceLinked ? null : index;
     this.activeIndex = index;
     this.mode = sourceLinked ? 'source-linked' : 'pinned';
-    this.animateStroke(NAVIGATION_RING_STROKE);
 
     if (sourceLinked) {
       this.moveToPosition(this.sourcePosition, { immediate: true });
@@ -347,7 +339,6 @@ export class TrackedNavigationController {
     this.pinnedIndex = null;
     this.snappedIndex = null;
     this.mode = 'source-linked';
-    this.animateStroke(NAVIGATION_RING_STROKE);
     this.moveToPosition(this.sourcePosition, { duration: 0.3 });
   }
 
@@ -428,7 +419,6 @@ export class TrackedNavigationController {
   destroy() {
     this.clearReturnTimeout();
     this.moveTween?.kill();
-    this.strokeTween?.kill();
     this.pressTimeline?.kill();
   }
 
@@ -491,27 +481,6 @@ export class TrackedNavigationController {
     this.moveTween = tween;
   }
 
-  private animateStroke(strokeWidth: number) {
-    if (this.strokeWidth === strokeWidth) {
-      return;
-    }
-
-    this.strokeTween?.kill();
-
-    if (this.reducedMotion) {
-      this.strokeWidth = strokeWidth;
-      this.render();
-      return;
-    }
-
-    this.strokeTween = gsap.to(this, {
-      strokeWidth,
-      duration: 0.2,
-      ease: 'power2.out',
-      onUpdate: () => this.render(),
-    });
-  }
-
   private render() {
     const position = getPositionForCoordinate(
       this.geometry.centers,
@@ -528,7 +497,7 @@ export class TrackedNavigationController {
       pressScale: this.pressScale,
       ringScale: getNavigationScale(position, this.activeIndex),
       snappedIndex: this.snappedIndex,
-      strokeWidth: this.strokeWidth,
+      strokeWidth: NAVIGATION_RING_STROKE,
     });
   }
 

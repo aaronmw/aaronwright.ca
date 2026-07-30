@@ -64,7 +64,7 @@ describe('TrackedNavigationController', () => {
       coordinate: 60,
       mode: 'snap',
       snappedIndex: 1,
-      strokeWidth: 2,
+      strokeWidth: 4,
     })
 
     controller.trackPointer(78)
