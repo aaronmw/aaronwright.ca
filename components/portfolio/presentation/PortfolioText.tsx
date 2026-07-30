@@ -117,7 +117,7 @@ export function SectionBlurb({
 }) {
   return (
     <span
-      className={`max-w-[54ch] text-[clamp(0.75rem,1.5vh,0.9rem)] font-light normal-case leading-snug tracking-normal text-current opacity-70 transition-[color,opacity] duration-200 ease-out group-hover:text-white group-hover:opacity-100 group-focus-visible:text-white group-focus-visible:opacity-100 motion-reduce:transition-none sm:text-[clamp(0.75rem,1.55vh,1rem)] ${
+      className={`max-w-[54ch] text-[clamp(0.75rem,1.5vh,0.9rem)] font-light normal-case leading-snug tracking-normal text-white opacity-70 transition-opacity duration-200 ease-out group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none sm:text-[clamp(0.75rem,1.55vh,1rem)] ${
         className ?? ''
       }`}
     >

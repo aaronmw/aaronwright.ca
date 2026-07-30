@@ -325,7 +325,7 @@ export function PortfolioStartScreen({
                 {isWideLayout ? (
                   <>
                     <span className="relative flex min-w-0 items-center">
-                      <span className="absolute right-full mr-5 w-8 shrink-0 text-right text-sm font-light text-current opacity-70 transition-[color,opacity] duration-200 ease-out group-hover:text-white group-hover:opacity-100 group-focus-visible:text-white group-focus-visible:opacity-100 motion-reduce:transition-none sm:text-base">
+                      <span className="absolute right-full mr-5 w-8 shrink-0 text-right text-sm font-light text-white opacity-70 transition-opacity duration-200 ease-out group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none sm:text-base">
                         {pending ? (
                           <FontAwesomeIcon
                             icon={faSpinner}
@@ -358,7 +358,7 @@ export function PortfolioStartScreen({
                   </span>
                 )}
                 {!isWideLayout ? (
-                  <span className="text-sm font-light text-current opacity-70 transition-[color,opacity] duration-200 ease-out group-hover:text-white group-hover:opacity-100 group-focus-visible:text-white group-focus-visible:opacity-100 motion-reduce:transition-none sm:text-base">
+                  <span className="text-sm font-light text-white opacity-70 transition-opacity duration-200 ease-out group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none sm:text-base">
                     {pending ? (
                       <FontAwesomeIcon
                         icon={faSpinner}
