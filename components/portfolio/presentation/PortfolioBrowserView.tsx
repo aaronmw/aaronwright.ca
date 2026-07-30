@@ -50,7 +50,7 @@ import type {
 
 const START_SCREEN_INDEX = -1
 const PROJECT_COLOR_OVERRIDES: Record<string, string> = {
-  'building-with-ai': '#e51b65',
+  'building-with-ai': '#75A462',
   'aarons-toolbox': '#7d45e4',
   'informal-systems': '#244ED0',
   'mini-series-browser': '#C30000',
