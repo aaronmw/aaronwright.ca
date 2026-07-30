@@ -216,7 +216,10 @@ export class SectionNavigationRenderer {
         const concealed =
           context.modalPresentationActive &&
           itemIndex !== context.activeIndex;
-        const dimmed = !context.hovered && itemIndex !== context.activeIndex;
+        const dimmed =
+          context.activeIndex !== 0 &&
+          !context.hovered &&
+          itemIndex !== context.activeIndex;
 
         this.setAttribute(
           itemGroup,
