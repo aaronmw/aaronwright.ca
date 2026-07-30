@@ -53,8 +53,8 @@ const PROJECT_COLOR_OVERRIDES: Record<string, string> = {
   'building-with-ai': '#e51b65',
   'aarons-toolbox': '#7d45e4',
   'informal-systems': '#0a307a',
-  'mini-series-browser': '#650e17',
-  nextphrase: '#bb133d',
+  'mini-series-browser': '#710c1c',
+  nextphrase: '#2a699f',
 }
 const GENERATED_PROJECT_COLORS = buildProjectColors(portfolioSlides.length)
 const GENERATED_ACTIVE_PROJECT_COLORS = buildActiveProjectColors(
