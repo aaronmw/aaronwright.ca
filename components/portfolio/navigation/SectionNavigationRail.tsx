@@ -96,7 +96,7 @@ export type SectionNavigationRailActions = {
   ) => void;
   onRingRef: (
     side: SectionNavigationSide,
-    node: SVGCircleElement | null,
+    node: SVGEllipseElement | null,
   ) => void;
   onTooltipRef: (
     side: SectionNavigationSide,

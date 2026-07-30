@@ -49,11 +49,11 @@ export const NavigationDot = forwardRef<
 });
 
 export const NavigationRing = forwardRef<
-  SVGCircleElement,
-  SVGProps<SVGCircleElement>
+  SVGEllipseElement,
+  SVGProps<SVGEllipseElement>
 >(function NavigationRing(props, ref) {
   return (
-    <circle
+    <ellipse
       ref={ref}
       fill="none"
       vectorEffect="non-scaling-stroke"

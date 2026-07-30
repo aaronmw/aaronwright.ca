@@ -9,7 +9,7 @@ import type { SlideNavigationItem } from './slideNavigationTypes';
 export type SlideNavigationViewRefs = {
   dotRefs: MutableRefObject<Map<number, SVGCircleElement>>;
   latticeRef: MutableRefObject<SVGGElement | null>;
-  ringRef: MutableRefObject<SVGCircleElement | null>;
+  ringRef: MutableRefObject<SVGEllipseElement | null>;
   slotRefs: MutableRefObject<Map<number, SVGGElement>>;
   svgRef: MutableRefObject<SVGSVGElement | null>;
 };

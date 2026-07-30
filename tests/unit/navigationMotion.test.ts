@@ -57,12 +57,16 @@ describe('TrackedNavigationController', () => {
       coordinate: 20,
       mode: 'source-linked',
       position: 0,
+      ringAxisScale: 1,
+      ringCrossAxisScale: 1,
     })
 
     controller.engagePointer(58)
     expect(render.mock.lastCall?.[0]).toMatchObject({
       coordinate: 60,
       mode: 'snap',
+      ringAxisScale: 1,
+      ringCrossAxisScale: 1,
       snappedIndex: 1,
       strokeWidth: 4,
     })
@@ -109,6 +113,80 @@ describe('TrackedNavigationController', () => {
       pressScale: 1,
       pressedIndex: null,
     })
+
+    controller.destroy()
+  })
+
+  it('does not interrupt preview travel when identical geometry is reapplied', () => {
+    const render = vi.fn()
+    const geometry = {
+      centers: [20, 60, 100],
+      colors: ['red', 'green', 'blue'],
+    }
+    const controller = new TrackedNavigationController({
+      geometry,
+      activeIndex: 0,
+      onRender: render,
+    })
+
+    controller.preview(2)
+    controller.updateGeometry(
+      {
+        centers: [...geometry.centers],
+        colors: [...geometry.colors],
+      },
+      true,
+    )
+
+    expect(render.mock.lastCall?.[0].coordinate).toBeLessThan(100)
+
+    controller.destroy()
+  })
+
+  it('reacquires the pointer after parking beyond the breakaway boundary', () => {
+    const render = vi.fn()
+    const controller = new TrackedNavigationController({
+      geometry: {
+        centers: [20, 60, 100],
+        colors: ['red', 'green', 'blue'],
+      },
+      activeIndex: 0,
+      reducedMotion: true,
+      onRender: render,
+    })
+
+    controller.engagePointer(160)
+    expect(controller.isPointerArmed()).toBe(true)
+    expect(render.mock.lastCall?.[0]).toMatchObject({
+      coordinate: 20,
+      mode: 'source-linked',
+    })
+
+    controller.trackPointer(100)
+    expect(render.mock.lastCall?.[0]).toMatchObject({
+      coordinate: 100,
+      mode: 'snap',
+      snappedIndex: 2,
+    })
+
+    controller.destroy()
+  })
+
+  it('keeps the initial pointer acquisition animated through pointermove', () => {
+    const render = vi.fn()
+    const controller = new TrackedNavigationController({
+      geometry: {
+        centers: [20, 60, 100],
+        colors: ['red', 'green', 'blue'],
+      },
+      activeIndex: 0,
+      onRender: render,
+    })
+
+    controller.engagePointer(100)
+    controller.trackPointer(100)
+
+    expect(render.mock.lastCall?.[0].coordinate).toBeLessThan(100)
 
     controller.destroy()
   })

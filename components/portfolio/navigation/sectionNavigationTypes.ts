@@ -32,7 +32,7 @@ export type SectionNavigationGeometry = {
 };
 
 export type SectionNavigationView = {
-  ring: SVGCircleElement | null;
+  ring: SVGEllipseElement | null;
   itemGroups: Array<SVGGElement | null>;
   arrowGroups: Array<SVGGElement | null>;
   dots: Array<SVGCircleElement | null>;
