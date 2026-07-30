@@ -11,6 +11,7 @@ import type { PortfolioProject } from '@/lib/portfolio';
 import { OverscrollIndicator } from '@/components/OverscrollIndicator';
 
 type ProjectColorStyle = CSSProperties & {
+  '--project-body-color': string;
   '--project-content-color': string;
   '--project-color': string;
 };
@@ -137,6 +138,7 @@ export function ProjectDescription({
   project,
   projectNumber,
   projectColor,
+  projectBodyColor,
   projectContentColor,
   setDescriptionRef,
   isWideLayout,
@@ -145,6 +147,7 @@ export function ProjectDescription({
   project: PortfolioProject;
   projectNumber: string;
   projectColor: string;
+  projectBodyColor: string;
   projectContentColor: string;
   setDescriptionRef: (node: HTMLDivElement | null) => void;
   isWideLayout: boolean;
@@ -158,6 +161,7 @@ export function ProjectDescription({
       style={
         {
           '--project-color': projectColor,
+          '--project-body-color': projectBodyColor,
           '--project-content-color': projectContentColor,
           ...(isWideLayout
             ? {
@@ -212,6 +216,7 @@ export function BuildingWithAiTextPanel({
   project,
   projectNumber,
   projectColor,
+  projectBodyColor,
   projectContentColor,
   isWideLayout,
   setDescriptionRef,
@@ -219,6 +224,7 @@ export function BuildingWithAiTextPanel({
   project: PortfolioProject;
   projectNumber: string;
   projectColor: string;
+  projectBodyColor: string;
   projectContentColor: string;
   isWideLayout: boolean;
   setDescriptionRef: (node: HTMLDivElement | null) => void;
@@ -234,6 +240,7 @@ export function BuildingWithAiTextPanel({
       style={
         {
           '--project-color': projectColor,
+          '--project-body-color': projectBodyColor,
           '--project-content-color': projectContentColor,
           ...(isWideLayout
             ? {

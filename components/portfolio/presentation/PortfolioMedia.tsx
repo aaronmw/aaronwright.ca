@@ -209,6 +209,7 @@ export function ProjectPanel({
   project,
   projectNumber,
   projectColor,
+  projectBodyColor,
   projectContentColor,
   slide,
   carouselIndex,
@@ -227,6 +228,7 @@ export function ProjectPanel({
   project: PortfolioProject;
   projectNumber: string;
   projectColor: string;
+  projectBodyColor: string;
   projectContentColor: string;
   slide: ProjectSlide;
   carouselIndex: number;
@@ -284,6 +286,7 @@ export function ProjectPanel({
         project={project}
         projectNumber={projectNumber}
         projectColor={projectColor}
+        projectBodyColor={projectBodyColor}
         projectContentColor={projectContentColor}
         setDescriptionRef={setDescriptionRef}
         isWideLayout={isWideLayout}
@@ -316,6 +319,7 @@ export function ProjectPanel({
             project={project}
             projectNumber={projectNumber}
             projectColor={projectColor}
+            projectBodyColor={projectBodyColor}
             projectContentColor={projectContentColor}
             isWideLayout={isWideLayout}
             setDescriptionRef={setDescriptionRef}

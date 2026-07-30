@@ -351,10 +351,15 @@ export function PortfolioBrowserView({
             model.activeSlideIndexes[projectIndex] ?? 0,
           )
           const projectColor = getProjectColor(projectIndex)
-          const projectContentColor =
+          const isProjectActive =
             model.activeProjectIndex === projectIndex
+          const projectContentColor =
+            isProjectActive
               ? getActiveProjectColor(projectIndex)
               : projectColor
+          const projectBodyColor = isProjectActive
+            ? '#fff'
+            : 'rgb(255 255 255 / 0.8)'
 
           return (
             <section
@@ -368,6 +373,7 @@ export function PortfolioBrowserView({
                   project={project}
                   projectNumber={projectNumber}
                   projectColor={projectColor}
+                  projectBodyColor={projectBodyColor}
                   projectContentColor={projectContentColor}
                   setDescriptionRef={actions.setDescriptionRef(project.slug)}
                   isWideLayout={model.isWideLayout}
@@ -400,6 +406,7 @@ export function PortfolioBrowserView({
                     project={project}
                     projectNumber={projectNumber}
                     projectColor={projectColor}
+                    projectBodyColor={projectBodyColor}
                     projectContentColor={projectContentColor}
                     slide={slide}
                     carouselIndex={realIndex}

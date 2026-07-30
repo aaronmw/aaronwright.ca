@@ -12,6 +12,12 @@
   initial-value: #e00000;
 }
 
+@property --project-body-color {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #fff;
+}
+
 html,
 body {
   min-height: 100%;
@@ -34,7 +40,9 @@ button {
 }
 
 .portfolio-project-content-theme {
-  transition: --project-content-color 200ms ease-out;
+  transition:
+    --project-content-color 200ms ease-out,
+    --project-body-color 200ms ease-out;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -100,16 +108,17 @@ button {
 }
 
 .portfolio-markdown {
-  --tw-prose-body: #fff;
-  --tw-prose-headings: #fff;
+  --tw-prose-body: var(--project-body-color, #fff);
+  --tw-prose-headings: var(--project-body-color, #fff);
   --tw-prose-links: var(--project-color, var(--color-portfolio-red));
-  --tw-prose-bold: #fff;
+  --tw-prose-bold: var(--project-body-color, #fff);
   --tw-prose-counters: var(--project-color, var(--color-portfolio-red));
   --tw-prose-bullets: var(--project-color, var(--color-portfolio-red));
-  --tw-prose-code: #fff;
+  --tw-prose-code: var(--project-body-color, #fff);
   --tw-prose-hr: rgb(255 255 255 / 0.2);
-  --tw-prose-quotes: #fff;
+  --tw-prose-quotes: var(--project-body-color, #fff);
   --tw-prose-quote-borders: var(--project-color, var(--color-portfolio-red));
+  color: var(--project-body-color, #fff);
 }
 
 .portfolio-markdown p {
