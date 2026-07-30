@@ -1,6 +1,11 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  isBrowserPageActive,
+  waitForPageActivity,
+  withPageActivityTimeout
+} from '@/components/portfolio/runtime/pageActivity';
 
 export type PortfolioMediaElement = HTMLImageElement | HTMLVideoElement;
 
@@ -15,25 +20,6 @@ const MEDIA_RETRY_DELAYS_MS = [250, 500, 1000];
 
 function delay(duration: number) {
   return new Promise<void>((resolve) => window.setTimeout(resolve, duration));
-}
-
-function withTimeout<T>(promise: Promise<T>, duration: number, key: string) {
-  return new Promise<T>((resolve, reject) => {
-    const timeout = window.setTimeout(() => {
-      reject(new Error(`Timed out loading portfolio media: ${key}`));
-    }, duration);
-
-    promise.then(
-      (value) => {
-        window.clearTimeout(timeout);
-        resolve(value);
-      },
-      (error) => {
-        window.clearTimeout(timeout);
-        reject(error);
-      }
-    );
-  });
 }
 
 function waitForImage(image: HTMLImageElement) {
@@ -181,15 +167,18 @@ export function usePortfolioMediaReadiness() {
       let lastError = new Error(`Portfolio media did not load: ${key}`);
 
       for (let attempt = 0; attempt < MEDIA_ATTEMPT_COUNT; attempt += 1) {
+        await waitForPageActivity();
+
         if (attempt > 0) {
           await delay(MEDIA_RETRY_DELAYS_MS[attempt - 1]);
+          await waitForPageActivity();
         }
 
         try {
-          const registeredElement = await withTimeout(
+          const registeredElement = await withPageActivityTimeout(
             waitForRegisteredElement(key),
             MEDIA_ATTEMPT_TIMEOUT_MS,
-            key
+            () => new Error(`Timed out loading portfolio media: ${key}`)
           );
           const loadingElement =
             attempt === 0 && !key.startsWith('modal:')
@@ -203,9 +192,19 @@ export function usePortfolioMediaReadiness() {
               ? waitForImage(loadingElement)
               : waitForVideo(loadingElement);
 
-          await withTimeout(loadPromise, MEDIA_ATTEMPT_TIMEOUT_MS, key);
+          await withPageActivityTimeout(
+            loadPromise,
+            MEDIA_ATTEMPT_TIMEOUT_MS,
+            () => new Error(`Timed out loading portfolio media: ${key}`)
+          );
           return;
         } catch (error) {
+          if (!isBrowserPageActive()) {
+            await waitForPageActivity();
+            attempt -= 1;
+            continue;
+          }
+
           lastError =
             error instanceof Error ? error : new Error(`Portfolio media failed: ${key}`);
         }
