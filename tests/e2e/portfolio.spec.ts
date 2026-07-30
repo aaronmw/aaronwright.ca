@@ -145,28 +145,51 @@ test('vertical endpoint wraps use the boundary blur lifecycle', async ({
   await waitForPortfolio(page)
 
   const verticalCarousel = page.locator('[data-portfolio-vertical-scroll]')
+  const firstScreen = verticalCarousel.locator(':scope > section').first()
 
   await page.keyboard.press('ArrowUp')
   await expect(verticalCarousel).toHaveAttribute(
     'data-portfolio-boundary-blur',
     'true',
   )
+  await expect
+    .poll(async () =>
+      firstScreen.evaluate((screen) => {
+        const match = getComputedStyle(screen).filter.match(
+          /blur\(([0-9.]+)px\)/,
+        )
+        return Number(match?.[1] ?? 0)
+      }),
+    )
+    .toBeGreaterThan(1)
   await expect(page).toHaveURL(/\/work\/nextphrase$/)
   await expect(verticalCarousel).not.toHaveAttribute(
     'data-portfolio-boundary-blur',
     'true',
   )
+  await expect(firstScreen).toHaveCSS('filter', 'blur(0px)')
 
   await page.keyboard.press('ArrowDown')
   await expect(verticalCarousel).toHaveAttribute(
     'data-portfolio-boundary-blur',
     'true',
   )
+  await expect
+    .poll(async () =>
+      firstScreen.evaluate((screen) => {
+        const match = getComputedStyle(screen).filter.match(
+          /blur\(([0-9.]+)px\)/,
+        )
+        return Number(match?.[1] ?? 0)
+      }),
+    )
+    .toBeGreaterThan(1)
   await expect(page).toHaveURL(/\/work$/)
   await expect(verticalCarousel).not.toHaveAttribute(
     'data-portfolio-boundary-blur',
     'true',
   )
+  await expect(firstScreen).toHaveCSS('filter', 'blur(0px)')
 })
 
 test('focused section navigation keeps its tooltip through navigation', async ({

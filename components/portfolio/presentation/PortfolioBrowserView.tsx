@@ -298,7 +298,7 @@ export function PortfolioBrowserView({
         onPointerDownCapture={actions.cancelVerticalUserTravel}
         onTouchStartCapture={actions.cancelVerticalUserTravel}
         onWheelCapture={actions.cancelVerticalUserTravel}
-        className={`h-dvh overscroll-none portfolio-scrollbar-none ${
+        className={`h-dvh overscroll-none portfolio-scrollbar-none [&>section]:blur-0 [&>section]:transition-[filter] [&>section]:duration-1000 [&>section]:ease-in-out motion-reduce:[&>section]:transition-none ${
           model.introPhase === 'ready' ? 'snap-y snap-mandatory' : 'snap-none'
         } ${
           model.introPhase === 'ready' && model.sectionEntryMediaReady

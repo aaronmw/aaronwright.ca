@@ -84,6 +84,15 @@ export function usePortfolioSectionRuntime({
       } else {
         vertical.removeAttribute('data-portfolio-boundary-blur')
       }
+
+      for (const screen of Array.from(vertical.children)) {
+        if (!(screen instanceof HTMLElement)) continue
+        if (shouldBlur) {
+          screen.style.setProperty('filter', 'blur(20px)')
+        } else {
+          screen.style.removeProperty('filter')
+        }
+      }
     },
     [verticalRef],
   )
