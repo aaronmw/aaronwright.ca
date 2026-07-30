@@ -138,6 +138,37 @@ test('keyboard navigation retargets sections and slides', async ({
   await expect(page).toHaveURL(/\/work\/nextphrase$/)
 })
 
+test('vertical endpoint wraps use the boundary blur lifecycle', async ({
+  page,
+}) => {
+  await page.goto('/work')
+  await waitForPortfolio(page)
+
+  const verticalCarousel = page.locator('[data-portfolio-vertical-scroll]')
+
+  await page.keyboard.press('ArrowUp')
+  await expect(verticalCarousel).toHaveAttribute(
+    'data-portfolio-boundary-blur',
+    'true',
+  )
+  await expect(page).toHaveURL(/\/work\/nextphrase$/)
+  await expect(verticalCarousel).not.toHaveAttribute(
+    'data-portfolio-boundary-blur',
+    'true',
+  )
+
+  await page.keyboard.press('ArrowDown')
+  await expect(verticalCarousel).toHaveAttribute(
+    'data-portfolio-boundary-blur',
+    'true',
+  )
+  await expect(page).toHaveURL(/\/work$/)
+  await expect(verticalCarousel).not.toHaveAttribute(
+    'data-portfolio-boundary-blur',
+    'true',
+  )
+})
+
 test('focused section navigation keeps its tooltip through navigation', async ({
   page,
 }, testInfo) => {

@@ -39,6 +39,16 @@ button {
   animation: portfolio-pending-ring 0.8s linear infinite;
 }
 
+[data-portfolio-vertical-scroll] > section {
+  filter: blur(0);
+  transition: filter 1000ms ease-in-out;
+}
+
+[data-portfolio-vertical-scroll][data-portfolio-boundary-blur="true"]
+  > section {
+  filter: blur(20px);
+}
+
 .portfolio-project-content-theme {
   transition:
     --project-content-color 200ms ease-out,
@@ -48,6 +58,10 @@ button {
 @media (prefers-reduced-motion: reduce) {
   .portfolio-pending-ring {
     animation: none;
+  }
+
+  [data-portfolio-vertical-scroll] > section {
+    transition: none;
   }
 
   .portfolio-project-content-theme {

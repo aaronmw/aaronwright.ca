@@ -13,6 +13,7 @@ import type { PortfolioProject } from '@/lib/portfolio'
 import {
   NAVIGATION_TRAVEL_EASE,
   getNavigationTravelDuration,
+  isCarouselBoundaryJump,
 } from '@/components/portfolio/domain/carousel'
 import {
   getSlideMediaKey,
@@ -73,17 +74,32 @@ export function usePortfolioSectionRuntime({
 }: UsePortfolioSectionRuntimeOptions) {
   const verticalScrollTweenRef = useRef<gsap.core.Tween | null>(null)
 
+  const setVerticalBoundaryBlur = useCallback(
+    (shouldBlur: boolean) => {
+      const vertical = verticalRef.current
+      if (!vertical) return
+
+      if (shouldBlur) {
+        vertical.setAttribute('data-portfolio-boundary-blur', 'true')
+      } else {
+        vertical.removeAttribute('data-portfolio-boundary-blur')
+      }
+    },
+    [verticalRef],
+  )
+
   const restoreVerticalScrollSnap = useCallback(() => {
     const vertical = verticalRef.current
     vertical?.style.removeProperty('scroll-snap-type')
     vertical?.removeAttribute('data-portfolio-programmatic-scroll')
-  }, [])
+  }, [verticalRef])
 
   const cancelVerticalScrollTween = useCallback(() => {
     verticalScrollTweenRef.current?.kill()
     verticalScrollTweenRef.current = null
+    setVerticalBoundaryBlur(false)
     restoreVerticalScrollSnap()
-  }, [restoreVerticalScrollSnap])
+  }, [restoreVerticalScrollSnap, setVerticalBoundaryBlur])
 
   const cancelVerticalUserTravel = useCallback(() => {
     cancelVerticalScrollTween()
@@ -120,19 +136,37 @@ export function usePortfolioSectionRuntime({
       setActiveProjectIndex(boundedIndex)
       if (vertical) {
         const targetScrollTop = vertical.clientHeight * (boundedIndex + 1)
+        const screenCount = projects.length + 1
+        const currentScreenIndex = Math.max(
+          0,
+          Math.min(
+            screenCount - 1,
+            Math.round(vertical.scrollTop / Math.max(vertical.clientHeight, 1)),
+          ),
+        )
+        const targetScreenIndex = boundedIndex + 1
         const distanceInScreens =
           Math.abs(targetScrollTop - vertical.scrollTop) /
           Math.max(vertical.clientHeight, 1)
+        const shouldBlurBoundary =
+          screenCount > 2 &&
+          isCarouselBoundaryJump(
+            currentScreenIndex,
+            targetScreenIndex,
+            screenCount,
+          )
         cancelVerticalScrollTween()
 
         if (
           behavior !== 'smooth' ||
           window.matchMedia('(prefers-reduced-motion: reduce)').matches
         ) {
+          setVerticalBoundaryBlur(false)
           vertical.scrollTo({ top: targetScrollTop, behavior: 'auto' })
         } else {
           vertical.style.setProperty('scroll-snap-type', 'none')
           vertical.setAttribute('data-portfolio-programmatic-scroll', 'true')
+          setVerticalBoundaryBlur(shouldBlurBoundary)
           const tween = gsap.to(vertical, {
             scrollTop: targetScrollTop,
             duration: getNavigationTravelDuration(distanceInScreens),
@@ -144,12 +178,14 @@ export function usePortfolioSectionRuntime({
               if (verticalScrollTweenRef.current === tween) {
                 verticalScrollTweenRef.current = null
               }
+              setVerticalBoundaryBlur(false)
               restoreVerticalScrollSnap()
             },
             onInterrupt: () => {
               if (verticalScrollTweenRef.current === tween) {
                 verticalScrollTweenRef.current = null
               }
+              setVerticalBoundaryBlur(false)
               restoreVerticalScrollSnap()
             },
           })
@@ -188,9 +224,12 @@ export function usePortfolioSectionRuntime({
       resetDescriptionScroll,
       restoreVerticalScrollSnap,
       scrollHorizontalToRealIndex,
+      sectionNavigationControllerRef,
+      setVerticalBoundaryBlur,
       setActiveProjectIndex,
       setActiveSlideIndexes,
       updateUrl,
+      verticalRef,
     ],
   )
 
@@ -262,15 +301,16 @@ export function usePortfolioSectionRuntime({
     }
     vertical.addEventListener('scrollend', handleScrollEnd)
     return () => vertical.removeEventListener('scrollend', handleScrollEnd)
-  }, [sectionNavigationControllerRef])
+  }, [sectionNavigationControllerRef, verticalRef])
 
   useEffect(
     () => () => {
       verticalScrollTweenRef.current?.kill()
       verticalScrollTweenRef.current = null
+      setVerticalBoundaryBlur(false)
       restoreVerticalScrollSnap()
     },
-    [restoreVerticalScrollSnap],
+    [restoreVerticalScrollSnap, setVerticalBoundaryBlur],
   )
 
   return {
