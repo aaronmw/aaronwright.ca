@@ -106,12 +106,13 @@ function ZoomableScreenshot({
               ? 'absolute'
               : undefined,
           inset: isFixedViewportPresentation ? '0px' : undefined,
-          right: isFixedViewportPresentation
+          right: isFixedViewportPresentation ? '0px' : undefined,
+          left: isFixedViewportPresentation
             ? '0px'
             : expandToViewport
               ? isPresented
-                ? '0px'
-                : 'var(--portfolio-control-gutter-width)'
+                ? '50%'
+                : 'calc(50vw + var(--portfolio-description-rail-half-width) - 3rem)'
               : undefined,
           top: isFixedViewportPresentation
             ? '0px'
@@ -137,7 +138,7 @@ function ZoomableScreenshot({
           transform: isFixedViewportPresentation
             ? 'none'
             : expandToViewport
-              ? 'translate3d(0, -50%, 0)'
+              ? 'translate3d(-50%, -50%, 0)'
               : undefined,
           zIndex: isFixedViewportPresentation ? 30 : undefined,
           willChange: isPresented
@@ -258,7 +259,7 @@ export function ProjectPanel({
       : ''
     : `place-items-center ${
         isWideLayout
-          ? 'grid-cols-[minmax(var(--portfolio-description-rail-width),1fr)_auto_var(--portfolio-control-gutter-width)]'
+          ? 'grid-cols-[var(--portfolio-description-rail-width)_minmax(0,1fr)_var(--portfolio-control-gutter-width)]'
           : ''
       }`;
 
@@ -302,7 +303,7 @@ export function ProjectPanel({
           <div
             className={`grid aspect-square place-items-center border border-white/15 text-center ${
               isWideLayout
-                ? 'col-start-2 h-[var(--portfolio-screenshot-size)] max-h-none w-[var(--portfolio-screenshot-size)] max-w-none self-center justify-self-end'
+                ? 'col-start-2 h-[var(--portfolio-screenshot-size)] max-h-none w-[var(--portfolio-screenshot-size)] max-w-none self-center justify-self-center'
                 : 'max-h-[calc(100dvh-5rem)] w-full max-w-[calc(100dvh-5rem)]'
             }`}
           >
@@ -330,7 +331,7 @@ export function ProjectPanel({
             onPresentationChange={onInlinePresentationChange}
             className={
               isWideLayout
-                ? 'col-start-2 aspect-square h-[var(--portfolio-screenshot-size)] max-h-none w-[var(--portfolio-screenshot-size)] max-w-none self-center justify-self-end'
+                ? 'col-span-full aspect-square h-[var(--portfolio-screenshot-size)] max-h-none w-[var(--portfolio-screenshot-size)] max-w-none self-center justify-self-center'
                 : 'h-full min-h-0 w-full'
             }
           >

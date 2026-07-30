@@ -56,6 +56,7 @@ const SECTION_NAV_HAS_SLIDES = [
 ]
 
 type WideLayoutStyle = CSSProperties & {
+  '--portfolio-description-rail-half-width': string
   '--portfolio-description-rail-width': string
   '--portfolio-control-gutter-width': string
   '--portfolio-slide-navigation-reserved-height': string
@@ -67,8 +68,10 @@ type ProjectColorStyle = CSSProperties & {
 }
 
 const WIDE_LAYOUT_STYLE: WideLayoutStyle = {
+  '--portfolio-description-rail-half-width':
+    'min(calc(50vw - 2rem), calc(3.5rem + max(16rem, 24ch)))',
   '--portfolio-description-rail-width':
-    'min(calc(100vw - 4rem), calc(7rem + max(32rem, 48ch)))',
+    'calc(var(--portfolio-description-rail-half-width) + var(--portfolio-description-rail-half-width))',
   '--portfolio-control-gutter-width': '6rem',
   '--portfolio-slide-navigation-reserved-height': `calc(${NAVIGATION_SVG_SIZE}px + max(2rem, env(safe-area-inset-bottom, 0px)))`,
   '--portfolio-screenshot-size':
@@ -485,7 +488,7 @@ export function PortfolioBrowserView({
       <nav
         className={`pointer-events-none isolate ${
           model.isWideLayout
-            ? 'grid grid-cols-[minmax(var(--portfolio-description-rail-width),1fr)_var(--portfolio-screenshot-size)_var(--portfolio-control-gutter-width)]'
+            ? 'grid grid-cols-[var(--portfolio-description-rail-width)_minmax(0,1fr)_var(--portfolio-control-gutter-width)]'
             : 'flex justify-center px-6'
         }`}
         aria-label={
@@ -503,7 +506,7 @@ export function PortfolioBrowserView({
             'zIndex': model.isModalLayerActive ? 60 : 40,
             '--project-color': activeProjectColor ?? getProjectColor(0),
             '--portfolio-modal-indicator-translate-x':
-              'calc(var(--portfolio-control-gutter-width) + (var(--portfolio-screenshot-size) / 2) - 50vw)',
+              'calc(3rem - var(--portfolio-description-rail-half-width))',
           } as ProjectColorStyle &
             WideLayoutStyle & {
               '--portfolio-modal-indicator-translate-x': string
