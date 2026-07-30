@@ -32,6 +32,7 @@ import {
   SlideNavigation,
   type SlideIndicatorMotionController,
 } from '@/components/portfolio/navigation/SlideNavigation'
+import { NAVIGATION_SVG_SIZE } from '@/components/portfolio/navigation/navigationTokens'
 import {
   CircularIconButton,
   PortfolioHelperMessage,
@@ -563,13 +564,15 @@ export function PortfolioBrowserView({
         </div>
         {!model.isTouchInput ? (
           <div
-            className={`pointer-events-auto absolute right-5 top-0 grid h-[52px] w-11 place-items-center transition-opacity duration-300 ease-out ${
+            className={`pointer-events-auto absolute top-0 grid h-[52px] place-items-center transition-opacity duration-300 ease-out ${
               model.activeProjectIndex === START_SCREEN_INDEX
                 ? 'pointer-events-none opacity-0'
                 : 'opacity-100'
             }`}
             style={{
-              right: 'max(1.25rem, env(safe-area-inset-right, 0px))',
+              right:
+                'calc(1.5rem + env(safe-area-inset-right, 0px))',
+              width: NAVIGATION_SVG_SIZE,
             }}
           >
             <CircularIconButton
