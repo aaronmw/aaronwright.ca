@@ -517,7 +517,9 @@ export function PortfolioBrowserView({
           }))}
           activeIndex={model.activeProjectIndex + 1}
           hovered={model.sectionNavHovered}
-          geometryMode={model.isTouchInput ? 'centered' : 'title-linked'}
+          geometryMode={
+            model.isTouchLandscapeLayout ? 'centered' : 'title-linked'
+          }
           hideRightRail={model.isTouchInput}
           modalLayerActive={model.isModalLayerActive}
           modalPresentationActive={model.isModalPresentationActive}

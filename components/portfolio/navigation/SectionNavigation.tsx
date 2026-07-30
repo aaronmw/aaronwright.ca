@@ -296,9 +296,18 @@ export function SectionNavigation({
       }
 
       const titleCenters = titles.map((title) => {
-        const rect = title.getBoundingClientRect();
+        const titleContainerRect =
+          title.parentElement?.getBoundingClientRect() ??
+          title.getBoundingClientRect();
+        const titleLineHeight = Number.parseFloat(
+          window.getComputedStyle(title).lineHeight,
+        );
 
-        return rect.top + source.scrollTop + rect.height / 2;
+        return (
+          titleContainerRect.top +
+          source.scrollTop +
+          titleLineHeight / 2
+        );
       });
       setGeometry({
         centers: getTitleLinkedSectionCenters(titleCenters),
