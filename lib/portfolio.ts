@@ -18,6 +18,7 @@ export type PortfolioProject = {
 const MARKDOWN_ACRONYMS = {
   AI: 'Artificial Intelligence',
   CMS: 'Content Management System',
+  PWA: 'Progressive Web App',
   UI: 'User Interface',
   UX: 'User Experience',
 } as const;
@@ -292,7 +293,7 @@ Some of you may recognize the concept (it's [Catch Phrase](https://en.wikipedia.
 
 My original motivation for making the game was two-fold: first, I kept finding myself at parties with friends wanting to play Catch Phrase, but nobody had it. If only I had it on my phone... Secondly, I wanted to try my hand at React Native.
 
-I've built this game at least five times now. I've built it with different themes, different mechanics, and on different technologies. Now it's just a simple PWA app because it's the most accessible: just visit [NextPhrase.app](https://nextphrase.app) and add it to your home screen for the best experience.
+I've built this game at least five times now. I've built it with different themes, different mechanics, and on different technologies. Now it's just a simple PWA because it's the most accessible: just visit [NextPhrase.app](https://nextphrase.app) and add it to your home screen for the best experience.
 
 I've learned a LOT building this game over and over, including the architectural challenges of building a game where pretty much everything is animated, despite running on a wee computer without 16GB of memory to lean on. Give it a shot at your next party!
 `,
