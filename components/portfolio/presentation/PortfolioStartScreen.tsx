@@ -20,6 +20,8 @@ type ProjectColorStyle = CSSProperties & {
 };
 
 const MOBILE_CONTENT_VERTICAL_PADDING_REM = 1.5;
+const CONTACT_LINK_CLASS_NAME =
+  'underline decoration-1 decoration-white/60 underline-offset-[0.18em] transition-[color,text-decoration-color] hover:text-white hover:decoration-white focus-visible:text-white focus-visible:decoration-white';
 
 function useStartScreenContentAlignment(enabled: boolean) {
   const startScreenRef = useRef<HTMLElement>(null);
@@ -207,13 +209,13 @@ export function PortfolioStartScreen({
               }
             >
               <a
-                className="underline decoration-white/30 underline-offset-[0.18em] transition-[color,text-decoration-color] hover:text-white hover:decoration-white/70 focus-visible:text-white focus-visible:decoration-white/70"
+                className={CONTACT_LINK_CLASS_NAME}
                 href="tel:+16477469426"
               >
                 +1-647-746-9426
               </a>
               <a
-                className="underline decoration-white/30 underline-offset-[0.18em] transition-[color,text-decoration-color] hover:text-white hover:decoration-white/70 focus-visible:text-white focus-visible:decoration-white/70"
+                className={CONTACT_LINK_CLASS_NAME}
                 href="mailto:aaron@aaronwright.ca"
               >
                 aaron@aaronwright.ca
@@ -221,7 +223,7 @@ export function PortfolioStartScreen({
             </p>
             <p>
               <Link
-                className="underline decoration-white/30 underline-offset-[0.18em] transition-[color,text-decoration-color] hover:text-white hover:decoration-white/70 focus-visible:text-white focus-visible:decoration-white/70"
+                className={CONTACT_LINK_CLASS_NAME}
                 href="/resume.pdf"
                 target="_blank"
                 rel="noreferrer"
@@ -315,7 +317,7 @@ export function PortfolioStartScreen({
                       >
                         {project.title}
                       </SectionTitle>
-                      <span className="absolute right-full top-0 mr-3 flex h-[clamp(1.1rem,3.4vh,2rem)] w-8 items-center justify-end text-right text-sm font-light text-white opacity-70 transition-opacity duration-200 ease-out group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none sm:h-[clamp(1.25rem,4.2vh,4.2rem)] sm:text-base lg:h-[clamp(1.5rem,4.8vh,4.8rem)]">
+                      <span className="absolute right-full top-0 mr-3 flex h-[clamp(1.1rem,3.4vh,2rem)] w-8 items-center justify-end text-right text-sm font-light leading-none text-white opacity-70 transition-opacity duration-200 ease-out group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none sm:h-[clamp(1.25rem,4.2vh,4.2rem)] sm:text-base lg:h-[clamp(1.5rem,4.8vh,4.8rem)]">
                         {pending ? (
                           <FontAwesomeIcon
                             icon={faSpinner}
