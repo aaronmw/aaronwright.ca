@@ -100,36 +100,16 @@ button {
 }
 
 .portfolio-markdown {
-  --tw-prose-body: color-mix(
-    in srgb,
-    var(--project-color, var(--color-portfolio-red)) 82%,
-    transparent
-  );
-  --tw-prose-headings: var(--project-color, var(--color-portfolio-red));
+  --tw-prose-body: #fff;
+  --tw-prose-headings: #fff;
   --tw-prose-links: var(--project-color, var(--color-portfolio-red));
-  --tw-prose-bold: color-mix(
-    in srgb,
-    var(--project-color, var(--color-portfolio-red)) 90%,
-    transparent
-  );
+  --tw-prose-bold: #fff;
   --tw-prose-counters: var(--project-color, var(--color-portfolio-red));
   --tw-prose-bullets: var(--project-color, var(--color-portfolio-red));
-  --tw-prose-code: color-mix(
-    in srgb,
-    var(--project-color, var(--color-portfolio-red)) 90%,
-    transparent
-  );
+  --tw-prose-code: #fff;
   --tw-prose-hr: rgb(255 255 255 / 0.2);
-  --tw-prose-quotes: color-mix(
-    in srgb,
-    var(--project-color, var(--color-portfolio-red)) 90%,
-    transparent
-  );
+  --tw-prose-quotes: #fff;
   --tw-prose-quote-borders: var(--project-color, var(--color-portfolio-red));
-}
-
-.portfolio-project-content {
-  --project-color: var(--project-content-color);
 }
 
 .portfolio-markdown p {
