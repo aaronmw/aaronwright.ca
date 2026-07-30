@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFilePdf, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import type { PortfolioProject } from '@/lib/portfolio';
 import {
   MOBILE_SECTION_CONTENT_PADDING_LEFT,
@@ -180,7 +180,9 @@ export function PortfolioStartScreen({
                 ? 'items-end gap-0 text-right text-sm leading-snug'
                 : `${
                     isTouchInput && !isWideLayout
-                      ? 'gap-0.5 leading-snug'
+                      ? `gap-0.5 leading-snug ${
+                          isMobilePortraitLayout ? 'pt-[0.8125rem]' : ''
+                        }`
                       : 'gap-1 leading-relaxed'
                   } text-base ${
                     isWideLayout
@@ -205,13 +207,13 @@ export function PortfolioStartScreen({
               }
             >
               <a
-                className="transition-colors hover:text-white focus-visible:text-white"
+                className="underline decoration-white/30 underline-offset-[0.18em] transition-[color,text-decoration-color] hover:text-white hover:decoration-white/70 focus-visible:text-white focus-visible:decoration-white/70"
                 href="tel:+16477469426"
               >
                 +1-647-746-9426
               </a>
               <a
-                className="transition-colors hover:text-white focus-visible:text-white"
+                className="underline decoration-white/30 underline-offset-[0.18em] transition-[color,text-decoration-color] hover:text-white hover:decoration-white/70 focus-visible:text-white focus-visible:decoration-white/70"
                 href="mailto:aaron@aaronwright.ca"
               >
                 aaron@aaronwright.ca
@@ -219,13 +221,12 @@ export function PortfolioStartScreen({
             </p>
             <p>
               <Link
-                className="inline-flex items-center gap-2 transition-colors hover:text-white focus-visible:text-white"
+                className="underline decoration-white/30 underline-offset-[0.18em] transition-[color,text-decoration-color] hover:text-white hover:decoration-white/70 focus-visible:text-white focus-visible:decoration-white/70"
                 href="/resume.pdf"
                 target="_blank"
                 rel="noreferrer"
               >
-                <FontAwesomeIcon icon={faFilePdf} className="size-4" />
-                <span>Resume</span>
+                Resume PDF
               </Link>
             </p>
           </address>
