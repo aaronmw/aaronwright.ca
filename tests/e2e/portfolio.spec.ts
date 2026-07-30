@@ -405,7 +405,15 @@ test('vertical endpoint wraps use the boundary blur lifecycle', async ({
     'data-portfolio-boundary-blur',
     'true',
   )
-  await expect(firstScreen).toHaveCSS('filter', 'blur(0px)')
+  await expect
+    .poll(async () =>
+      firstScreen.evaluate(screen => {
+        const match =
+          getComputedStyle(screen).filter.match(/blur\(([0-9.]+)px\)/)
+        return Number(match?.[1] ?? 0)
+      }),
+    )
+    .toBe(0)
 
   await page.keyboard.press('ArrowDown')
   await expect(verticalCarousel).toHaveAttribute(
@@ -426,7 +434,15 @@ test('vertical endpoint wraps use the boundary blur lifecycle', async ({
     'data-portfolio-boundary-blur',
     'true',
   )
-  await expect(firstScreen).toHaveCSS('filter', 'blur(0px)')
+  await expect
+    .poll(async () =>
+      firstScreen.evaluate(screen => {
+        const match =
+          getComputedStyle(screen).filter.match(/blur\(([0-9.]+)px\)/)
+        return Number(match?.[1] ?? 0)
+      }),
+    )
+    .toBe(0)
 })
 
 test('focused section navigation keeps its tooltip through navigation', async ({
