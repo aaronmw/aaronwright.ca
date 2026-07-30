@@ -52,7 +52,7 @@ const START_SCREEN_INDEX = -1
 const PROJECT_COLOR_OVERRIDES: Record<string, string> = {
   'building-with-ai': '#e51b65',
   'aarons-toolbox': '#7d45e4',
-  'informal-systems': '#d3e4f9',
+  'informal-systems': '#244ED0',
   'mini-series-browser': '#A72525',
   nextphrase: '#2a699f',
 }
