@@ -28,6 +28,7 @@ import {
 
 const CAROUSEL_MEDIA_CLASS =
   'object-contain transition-[filter,padding] [transition-duration:1000ms,500ms] [transition-timing-function:ease-in-out,var(--ease-out)] motion-reduce:transition-none';
+const WIDE_RESTING_MEDIA_CENTER = 'calc(50% - 42px)';
 const MOBILE_SECTION_CONTENT_INSETS: CSSProperties = {
   paddingLeft: MOBILE_SECTION_CONTENT_PADDING_LEFT,
   paddingRight: MOBILE_SECTION_CONTENT_PADDING_RIGHT,
@@ -115,7 +116,9 @@ function ZoomableScreenshot({
           top: isFixedViewportPresentation
             ? '0px'
             : expandToViewport
-              ? '50%'
+              ? isPresented
+                ? '50%'
+                : WIDE_RESTING_MEDIA_CENTER
               : undefined,
           width: isFixedViewportPresentation
             ? '100vw'
