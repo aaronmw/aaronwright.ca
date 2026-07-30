@@ -358,7 +358,7 @@ export function PortfolioStartScreen({
                   </span>
                 )}
                 {!isWideLayout ? (
-                  <span className="absolute right-full top-1/2 mr-3 w-8 -translate-y-1/2 text-right text-sm font-light text-white opacity-70 transition-opacity duration-200 ease-out group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none sm:text-base">
+                  <span className="absolute right-full top-[calc(clamp(1.1rem,3.4vh,2rem)/2)] mr-3 w-8 -translate-y-1/2 text-right text-sm font-light text-white opacity-70 transition-opacity duration-200 ease-out group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none sm:top-[calc(clamp(1.25rem,4.2vh,4.2rem)/2)] sm:text-base lg:top-[calc(clamp(1.5rem,4.8vh,4.8rem)/2)]">
                     {pending ? (
                       <FontAwesomeIcon
                         icon={faSpinner}
