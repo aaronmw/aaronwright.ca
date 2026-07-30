@@ -58,6 +58,7 @@ const SECTION_NAV_HAS_SLIDES = [
 type WideLayoutStyle = CSSProperties & {
   '--portfolio-description-rail-width': string
   '--portfolio-control-gutter-width': string
+  '--portfolio-slide-navigation-reserved-height': string
   '--portfolio-screenshot-size': string
 }
 
@@ -69,8 +70,9 @@ const WIDE_LAYOUT_STYLE: WideLayoutStyle = {
   '--portfolio-description-rail-width':
     'min(calc(100vw - 4rem), calc(7rem + max(32rem, 48ch)))',
   '--portfolio-control-gutter-width': '6rem',
+  '--portfolio-slide-navigation-reserved-height': `calc(${NAVIGATION_SVG_SIZE}px + max(2rem, env(safe-area-inset-bottom, 0px)))`,
   '--portfolio-screenshot-size':
-    'min(100dvh, calc(100vw - var(--portfolio-description-rail-width) - var(--portfolio-control-gutter-width)))',
+    'min(calc(100dvh - var(--portfolio-slide-navigation-reserved-height)), calc(100vw - var(--portfolio-description-rail-width) - var(--portfolio-control-gutter-width)))',
 }
 
 function getProjectColor(projectIndex: number) {
