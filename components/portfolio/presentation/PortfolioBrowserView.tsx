@@ -54,7 +54,7 @@ const PROJECT_COLOR_OVERRIDES: Record<string, string> = {
   'aarons-toolbox': '#7d45e4',
   'informal-systems': '#244ED0',
   'mini-series-browser': '#A72525',
-  nextphrase: '#2a699f',
+  nextphrase: '#F02D5D',
 }
 const GENERATED_PROJECT_COLORS = buildProjectColors(portfolioSlides.length)
 const GENERATED_ACTIVE_PROJECT_COLORS = buildActiveProjectColors(
