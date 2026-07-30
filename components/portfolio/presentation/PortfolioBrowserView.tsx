@@ -19,6 +19,7 @@ import {
 } from '@/components/portfolio/domain/slides'
 import {
   TOP_SCREEN_COLOR,
+  buildActiveProjectColorFromHex,
   buildActiveProjectColors,
   buildProjectColors,
   getProjectColor as getThemeProjectColor,
@@ -48,8 +49,28 @@ import type {
 } from '@/components/portfolio/runtime/types'
 
 const START_SCREEN_INDEX = -1
-const PROJECT_COLORS = buildProjectColors(portfolioSlides.length)
-const ACTIVE_PROJECT_COLORS = buildActiveProjectColors(portfolioSlides.length)
+const PROJECT_COLOR_OVERRIDES: Record<string, string> = {
+  'building-with-ai': '#e51b65',
+  'aarons-toolbox': '#7d45e4',
+  'informal-systems': '#0a307a',
+  'mini-series-browser': '#650e17',
+  nextphrase: '#bb133d',
+}
+const GENERATED_PROJECT_COLORS = buildProjectColors(portfolioSlides.length)
+const GENERATED_ACTIVE_PROJECT_COLORS = buildActiveProjectColors(
+  portfolioSlides.length,
+)
+const PROJECT_COLORS = portfolioSlides.map(
+  (project, projectIndex) =>
+    PROJECT_COLOR_OVERRIDES[project.slug] ??
+    GENERATED_PROJECT_COLORS[projectIndex],
+)
+const ACTIVE_PROJECT_COLORS = portfolioSlides.map((project, projectIndex) => {
+  const override = PROJECT_COLOR_OVERRIDES[project.slug]
+  return override
+    ? buildActiveProjectColorFromHex(override)
+    : GENERATED_ACTIVE_PROJECT_COLORS[projectIndex]
+})
 const SECTION_NAV_HAS_SLIDES = [
   false,
   ...portfolioSlides.map(project => project.screenshots.length > 1),

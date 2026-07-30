@@ -116,6 +116,40 @@ export function buildActiveProjectColors(projectCount: number) {
   })
 }
 
+export function buildActiveProjectColorFromHex(baseColor: string) {
+  const hex = baseColor.match(/^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i)
+  if (!hex) {
+    throw new Error(`Expected a six-digit hex color, received "${baseColor}"`)
+  }
+
+  const [red, green, blue] = hex
+    .slice(1)
+    .map(channel => Number.parseInt(channel, 16) / 255)
+  const maximum = Math.max(red, green, blue)
+  const minimum = Math.min(red, green, blue)
+  const delta = maximum - minimum
+  const lightness = (maximum + minimum) / 2
+  const saturation =
+    delta === 0 ? 0 : delta / (1 - Math.abs(2 * lightness - 1))
+
+  let hue = 0
+  if (delta !== 0) {
+    if (maximum === red) {
+      hue = 60 * (((green - blue) / delta) % 6)
+    } else if (maximum === green) {
+      hue = 60 * ((blue - red) / delta + 2)
+    } else {
+      hue = 60 * ((red - green) / delta + 4)
+    }
+  }
+
+  const normalizedHue = hue < 0 ? hue + 360 : hue
+  const format = (value: number) =>
+    Number.parseFloat(value.toFixed(2)).toString()
+
+  return `hsl(${format(normalizedHue)} ${format(saturation * 100)}% ${PROJECT_COLOR_ACTIVE_LIGHTNESS}%)`
+}
+
 export function getProjectColor(colors: string[], projectIndex: number) {
   const normalizedIndex =
     ((projectIndex % colors.length) + colors.length) % colors.length
