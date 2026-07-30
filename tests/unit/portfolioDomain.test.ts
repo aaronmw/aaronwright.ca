@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { PortfolioProject } from '../../lib/portfolio'
+import { portfolioSlides, type PortfolioProject } from '../../lib/portfolio'
 import {
   getCanonicalCarouselEntries,
   getCanonicalRenderedCarouselIndex,
@@ -74,6 +74,18 @@ const projects: PortfolioProject[] = [
     ],
   },
 ]
+
+describe('portfolio project order', () => {
+  it('uses the curated section sequence', () => {
+    expect(portfolioSlides.map(project => project.slug)).toEqual([
+      'building-with-ai',
+      'informal-systems',
+      'aarons-toolbox',
+      'nextphrase',
+      'mini-series-browser',
+    ])
+  })
+})
 
 describe('portfolio slide derivation', () => {
   it('derives descriptions, screenshots, and initial indexes', () => {

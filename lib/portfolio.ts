@@ -355,9 +355,23 @@ I've learned a LOT building this game over and over, including the architectural
   },
 ] satisfies PortfolioProject[];
 
-export const portfolioSlides = rawPortfolioSlides.map(
-  transformPortfolioProjectMarkdown
-);
+const PORTFOLIO_PROJECT_ORDER = [
+  'building-with-ai',
+  'informal-systems',
+  'aarons-toolbox',
+  'nextphrase',
+  'mini-series-browser',
+] as const;
+
+export const portfolioSlides = PORTFOLIO_PROJECT_ORDER.map((slug) => {
+  const project = rawPortfolioSlides.find((candidate) => candidate.slug === slug);
+
+  if (!project) {
+    throw new Error(`Missing portfolio project: ${slug}`);
+  }
+
+  return transformPortfolioProjectMarkdown(project);
+});
 
 export function getPortfolioProject(slug: string) {
   return portfolioSlides.find((project) => project.slug === slug);

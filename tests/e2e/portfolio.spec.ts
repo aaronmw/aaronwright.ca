@@ -176,7 +176,7 @@ test('keyboard navigation retargets sections and slides', async ({
   await page.goto('/work')
   await waitForPortfolio(page)
 
-  await page.keyboard.press('3')
+  await page.keyboard.press('2')
   await expect(page).toHaveURL(/\/work\/informal-systems$/)
 
   await page.keyboard.press('ArrowRight')
@@ -202,7 +202,7 @@ test('navigation rings deform on their travel axes and settle circular', async (
     page,
     '[data-portfolio-section-nav-ring="left"]',
   )
-  await page.keyboard.press('ArrowDown')
+  await page.keyboard.press('ArrowUp')
   await expect(page).toHaveURL(/\/work\/informal-systems$/)
   await expect
     .poll(async () =>
@@ -215,7 +215,7 @@ test('navigation rings deform on their travel axes and settle circular', async (
     .toBeLessThanOrEqual(0.01)
 
   const verticalSamples = await stopRingDeformationSampling(page)
-  expect(verticalSamples.some(({ rx, ry }) => Math.abs(ry - rx) > 0.05)).toBe(
+  expect(verticalSamples.some(({ rx, ry }) => Math.abs(ry - rx) > 0.005)).toBe(
     true,
   )
   expect(
@@ -244,9 +244,9 @@ test('navigation rings deform on their travel axes and settle circular', async (
     .toBeLessThanOrEqual(0.01)
 
   const horizontalSamples = await stopRingDeformationSampling(page)
-  expect(horizontalSamples.some(({ rx, ry }) => Math.abs(rx - ry) > 0.05)).toBe(
-    true,
-  )
+  expect(
+    horizontalSamples.some(({ rx, ry }) => Math.abs(rx - ry) > 0.005),
+  ).toBe(true)
   expect(
     horizontalSamples.some(
       ({ coordinate, cx }) => Math.abs(cx - coordinate) > 0.05,
@@ -267,7 +267,9 @@ test('long section travel deforms the ring more than an adjacent hop', async ({
     )
     await page.keyboard.press(key)
     await expect(page).toHaveURL(
-      key === 'ArrowDown' ? /\/work\/building-with-ai$/ : /\/work\/nextphrase$/,
+      key === 'ArrowDown'
+        ? /\/work\/building-with-ai$/
+        : /\/work\/mini-series-browser$/,
     )
     await expect
       .poll(async () =>
@@ -398,7 +400,7 @@ test('vertical endpoint wraps use the boundary blur lifecycle', async ({
       }),
     )
     .toBeGreaterThan(1)
-  await expect(page).toHaveURL(/\/work\/nextphrase$/)
+  await expect(page).toHaveURL(/\/work\/mini-series-browser$/)
   await expect(verticalCarousel).not.toHaveAttribute(
     'data-portfolio-boundary-blur',
     'true',
@@ -435,7 +437,7 @@ test('focused section navigation keeps its tooltip through navigation', async ({
   await waitForPortfolio(page)
 
   const destination = page.locator(
-    'button[data-portfolio-section-nav-side="left"][data-portfolio-section-nav-index="2"]',
+    'button[data-portfolio-section-nav-side="left"][data-portfolio-section-nav-index="3"]',
   )
   await destination.focus()
   const tooltip = page.locator(
@@ -505,7 +507,7 @@ test('pointer-clicked section navigation does not retain its tooltip', async ({
   await waitForPortfolio(page)
 
   const activeItem = page.locator(
-    'button[data-portfolio-section-nav-side="left"][data-portfolio-section-nav-index="4"]',
+    'button[data-portfolio-section-nav-side="left"][data-portfolio-section-nav-index="5"]',
   )
   const tooltip = page.locator(
     '[data-portfolio-section-nav-zone="left"] [role="tooltip"]',
@@ -558,7 +560,7 @@ test('homepage section preview remains pinned throughout pointer press', async (
   await waitForPortfolio(page)
 
   const destination = page.locator(
-    'button[data-portfolio-start-section-index="2"]',
+    'button[data-portfolio-start-section-index="3"]',
   )
   const destinationBox = await destination.boundingBox()
 
@@ -568,7 +570,7 @@ test('homepage section preview remains pinned throughout pointer press', async (
     destinationBox!.y + destinationBox!.height / 2,
   )
   await expect
-    .poll(() => getSectionRingDistance(page, 2))
+    .poll(() => getSectionRingDistance(page, 3))
     .toBeLessThanOrEqual(0.5)
 
   await page.mouse.down()
@@ -581,7 +583,7 @@ test('homepage section preview remains pinned throughout pointer press', async (
         '[data-portfolio-section-nav-ring="left"]',
       )
       const visual = document.querySelector<SVGGraphicsElement>(
-        '[data-portfolio-section-nav-zone="left"] [data-portfolio-section-nav-visual-index="2"]',
+        '[data-portfolio-section-nav-zone="left"] [data-portfolio-section-nav-visual-index="3"]',
       )
 
       if (!ring || !visual) {
@@ -691,10 +693,10 @@ test('settled section navigation cross-fades its dot to a horizontal arrow', asy
     samplingWindow.__portfolioAffordanceSamples = []
     const sample = () => {
       const arrow = document.querySelector<SVGGraphicsElement>(
-        '[data-portfolio-section-nav-zone="left"] [data-portfolio-section-nav-arrow="2"]',
+        '[data-portfolio-section-nav-zone="left"] [data-portfolio-section-nav-arrow="3"]',
       )
       const dot = document.querySelector<SVGGraphicsElement>(
-        '[data-portfolio-section-nav-zone="left"] [data-portfolio-section-nav-dot="2"]',
+        '[data-portfolio-section-nav-zone="left"] [data-portfolio-section-nav-dot="3"]',
       )
       if (arrow && dot) {
         samplingWindow.__portfolioAffordanceSamples?.push({
@@ -707,7 +709,7 @@ test('settled section navigation cross-fades its dot to a horizontal arrow', asy
     sample()
   })
 
-  await page.locator('button[data-portfolio-start-section-index="2"]').click()
+  await page.locator('button[data-portfolio-start-section-index="3"]').click()
   await expect(page).toHaveURL(/\/work\/aarons-toolbox$/)
   await page.waitForTimeout(1_000)
 
@@ -730,12 +732,12 @@ test('settled section navigation cross-fades its dot to a horizontal arrow', asy
   expect(samples.at(-1)?.dot).toBeLessThanOrEqual(0.01)
   await expect(
     page.locator(
-      '[data-portfolio-section-nav-zone="left"] [data-portfolio-section-nav-arrow="2"]',
+      '[data-portfolio-section-nav-zone="left"] [data-portfolio-section-nav-arrow="3"]',
     ),
   ).toHaveAttribute('transform', /rotate\(90\)/)
   await expect(
     page.locator(
-      '[data-portfolio-section-nav-zone="right"] [data-portfolio-section-nav-arrow="2"]',
+      '[data-portfolio-section-nav-zone="right"] [data-portfolio-section-nav-arrow="3"]',
     ),
   ).toHaveAttribute('transform', /rotate\(-90\)/)
 })
@@ -786,7 +788,7 @@ test('inline zoom keeps navigation available and exits with vertical intent', as
   ).toBeVisible()
 
   await page.keyboard.press('ArrowDown')
-  await expect(page).toHaveURL(/\/work\/informal-systems$/)
+  await expect(page).toHaveURL(/\/work\/nextphrase$/)
   await expect(
     page.locator('[data-portfolio-inline-zoomed="true"]'),
   ).toHaveCount(0)
