@@ -134,7 +134,7 @@ While I've yet to collaborate with others on an AI-assisted project, I'm super k
     slug: 'aarons-toolbox',
     title: "Aaron's Toolbox",
     blurb:
-      'A suite of **Figma plugins** for cleaning, remixing, and organizing design work.',
+      'One **Figma plugin** with built-in tools for cleaning, remixing, and organizing design work.',
     url: 'https://www.figma.com/community/plugin/1616614645120502242/aarons-toolbox',
     descriptionMarkdown: `
 I'm infatuated with Figma both as a user and as a developer building on their platform. I'm equally obsessed with the art and science of tool-building, so the match is cosmically perfect.
