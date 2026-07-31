@@ -160,6 +160,7 @@ button {
 
 .portfolio-markdown a {
   color: var(--project-color, var(--color-portfolio-red));
+  font-weight: 400;
   text-decoration: underline;
   text-decoration-thickness: 0.08em;
   text-underline-offset: 0.18em;
