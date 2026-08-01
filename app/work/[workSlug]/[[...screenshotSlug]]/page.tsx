@@ -19,9 +19,14 @@ type SlidePageProps = {
 
 function plainTextFromMarkdown(markdown: string) {
   return markdown
-    .replace(/<[^>]+>/g, '')
     .trim()
-    .split('\n')[0];
+    .split('\n')[0]
+    .replace(/!?\[([^\]]*)\]\((?:[^()]|\([^()]*\))*\)/g, '$1')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/[*_~`]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 export function generateStaticParams() {

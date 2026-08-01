@@ -114,11 +114,11 @@ const rawPortfolioSlides = [
     descriptionMarkdown: `
 I'm including this slide up top because, while it may not constitute a "project" per se, it's a hot topic and it's gonna come up. The tl;dr is that I've enthusiastically adopted AI because it handles the tedious stuff while I can stay focused on steering the actual project.
 
-AI hit the scene just as I was burning out on all the coding I'd been doing as the UX/UI guy for a handful of different teams. While AI wasn't as adept as it is today, it made short work of large refactors where I'd otherwise have settled for less-than-ideal. With these tools, I feel more "agile" than ever: experimenting with major architectural pivots is almost trivial. The Devil, as always, is in the details.
+AI hit the scene just as I was burning out on all the coding I'd been doing as the UX/UI guy for a handful of different teams. While AI wasn't as adept as it is today, it made short work of large refactors where I'd otherwise have settled for less-than-ideal. With these tools, I feel more "agile" than ever: experimenting with major architectural pivots is almost trivial. The devil, as always, is in the details.
 
 I'd already fancied myself a pretty quick draw in the Wild West of frontend dev. I had a whole arsenal of boilerplates from which I'd begin new projects, as well as various workflows and patterns that I could flex from muscle memory. I was briefly worried all that effort would be obsoleted, but it proved to be an agent-onboarding _goldmine_. Granted, I'm still updating the core skills on a daily basis with new or improved articulations of all sorts of nuances and nitpicks, but the static friction of starting a new project has been drastically reduced and I've found a renewed enthusiasm for building.
 
-While I've yet to collaborate with others on an AI-assisted project, I'm super keen to see how it can transform entire teams of people contributing to a shared skillset. I'm equal parts excited and anxious to see how it transforms the worlds of software, services, and products both digital and physical.
+While I've yet to collaborate with others on an AI-assisted project, I'm super keen to see how it can transform entire teams of people contributing to a shared skill set. I'm equal parts excited and anxious to see how it transforms the worlds of software, services, and products both digital and physical.
 `,
     screenshots: [
       {
@@ -141,7 +141,7 @@ I'm infatuated with Figma both as a user and as a developer building on their pl
 
 **Aaron's Toolbox** is a collection of utilities I've built to solve problems I repeatedly encounter in my own design work. Some automate repetitive tasks, others simplify common workflows, and two are actually evolutions of plugins I'd already built and refined over years of use (both with [tens of thousands of users in the Figma Community](https://www.figma.com/@aaronmw)).
 
-My first Figma plugins were simple replacements for features I'd missed from other apps: **Selection Saver** revived a feature I'd long missed from Adobe Illustrator. **Property Randomizer** exists because I was assigned a Dashboard project and wanted my charts and data to look real enough that they wouldn't be distracting. I once needed to do a fancy regular expression replace operation in a giant Figma file but it wasn't supported at the time, so I built **Find and Replace** and it's still among my most popular plugins.
+My first Figma plugins were simple replacements for features I'd missed from other apps: **Selection Saver** revived a feature I'd long missed from Adobe Illustrator. **Property Randomizer** exists because I was assigned a dashboard project and wanted my charts and data to look real enough that they wouldn't be distracting. I once needed to do a fancy regular expression replace operation in a giant Figma file but it wasn't supported at the time, so I built **Find and Replace** and it's still among my most popular plugins.
 
 There are few things from which I derive more satisfaction than my Figma plugins. They were useful to me, sure, but knowing that so many others have been spared the same tedium I'd faced myself is just 👩‍🍳🤌 I think they're the best expression of what I'm all about.
 
@@ -188,7 +188,7 @@ There are few things from which I derive more satisfaction than my Figma plugins
     descriptionMarkdown: `
 Informal was a freelance customer of mine when their needs grew into a full-time role for me as their sole UX/UI developer. I got to wear the hats of researcher, designer, developer, internal tool builder, and more. One of my earliest contributions serves as a good example of what I brought:
 
-The website I'd built was a simple NextJS app and lived as code on Github and as a hosted app on Netlify. Making a copy change was just another task for me, but a bit of a steep hill to climb for someone just looking to fix a typo on a blog post. Time to hire a CMS.
+The website I'd built was a simple Next.js app and lived as code on GitHub and as a hosted app on Netlify. Making a copy change was just another task for me, but a bit of a steep hill to climb for someone just looking to fix a typo on a blog post. Time to hire a CMS.
 
 I chose Contentful for its headlessness and built a lightweight editing workflow around it. The trick was giving teams the freedom to update their own content without giving them enough freedom to accidentally, shall we say, redesign the site.
 
@@ -241,12 +241,12 @@ Finally, I built a \`ContentfulSpotCopy\` component which accepts a \`path\` and
     slug: 'mini-series-browser',
     title: 'Mini Series Browser',
     blurb:
-      'I can never decide what to watch, and am too easily persuaded (or disuaded) by cover art. So I built this.',
+      'I can never decide what to watch, and am too easily persuaded (or dissuaded) by cover art. So I built this.',
     url: 'https://mini-series-browser.netlify.app',
     descriptionMarkdown: `
 Deciding what to watch is harder and harder with all the options spread over all the providers. I've also grown a little resentful of "normal" television series failing to conclude either because they were cancelled, or because concluding would mean they couldn't make another season. This led me to narrow the pool substantially to limited series productions only: stories that are started with an ending in mind, told over an arc of 2 to 12 episodes.
 
-The UI has evolved from a very scrappy list titles, to a much more functional tool usable by people other than myself. With over 600 titles to render, there was a lot of optimization work including list virtualization, image caching, and more.
+The UI has evolved from a very scrappy list of titles to a much more functional tool usable by people other than myself. With over 600 titles to render, there was a lot of optimization work including list virtualization, image caching, and more.
 
 The most immediate "optimization" was free, and the reason I built it in the first place: by default, it only shows short descriptions of each title. No cover art. No ratings. No ways to watch. No distractions!
 
