@@ -635,6 +635,7 @@ export function PortfolioBrowserView({
             <CircularIconButton
               icon={faArrowUp}
               iconClassName="size-7"
+              iconStrokeWidth={12}
               ring
               className="relative size-11 bg-transparent text-[var(--project-color)]"
               aria-label="Back to top"

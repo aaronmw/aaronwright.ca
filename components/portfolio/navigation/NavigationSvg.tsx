@@ -35,7 +35,14 @@ export function NavigationSvgIcon({
       }) scale(${scale})`}
     >
       {paths.map((path, index) => (
-        <path key={index} d={path} fill="currentColor" />
+        <path
+          key={index}
+          d={path}
+          fill="currentColor"
+          stroke="currentColor"
+          strokeWidth={20}
+          strokeLinejoin="round"
+        />
       ))}
     </g>
   );

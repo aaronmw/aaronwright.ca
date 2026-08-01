@@ -224,6 +224,7 @@ export function CircularIconButton({
   buttonRef,
   iconRef,
   iconClassName,
+  iconStrokeWidth,
   visualRef,
   secondaryVisual,
   ring = false,
@@ -234,6 +235,7 @@ export function CircularIconButton({
   buttonRef?: (node: HTMLButtonElement | null) => void;
   iconRef?: (node: SVGSVGElement | null) => void;
   iconClassName: string;
+  iconStrokeWidth?: number;
   visualRef?: (node: HTMLSpanElement | null) => void;
   secondaryVisual?: ReactNode;
   ring?: boolean;
@@ -259,6 +261,9 @@ export function CircularIconButton({
               ref={iconRef}
               icon={icon}
               className={`${iconClassName} drop-shadow-[1px_1px_0_black]`}
+              stroke={iconStrokeWidth ? 'currentColor' : undefined}
+              strokeWidth={iconStrokeWidth}
+              strokeLinejoin={iconStrokeWidth ? 'round' : undefined}
               aria-hidden="true"
             />
           </span>
@@ -273,6 +278,9 @@ export function CircularIconButton({
           ref={iconRef}
           icon={icon}
           className={`relative z-10 ${iconClassName} drop-shadow-[1px_1px_0_black]`}
+          stroke={iconStrokeWidth ? 'currentColor' : undefined}
+          strokeWidth={iconStrokeWidth}
+          strokeLinejoin={iconStrokeWidth ? 'round' : undefined}
           aria-hidden="true"
         />
       )}
