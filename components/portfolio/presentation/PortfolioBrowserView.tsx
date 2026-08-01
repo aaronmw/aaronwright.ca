@@ -17,13 +17,11 @@ import {
   isModalScreenshotSlide,
   type ProjectSlide,
 } from '@/components/portfolio/domain/slides'
+import { TOP_SCREEN_COLOR } from '@/components/portfolio/domain/theme'
 import {
-  TOP_SCREEN_COLOR,
-  buildActiveProjectColorFromHex,
-  buildActiveProjectColors,
-  buildProjectColors,
-  getProjectColor as getThemeProjectColor,
-} from '@/components/portfolio/domain/theme'
+  getActiveProjectColor,
+  getProjectColor,
+} from '@/components/portfolio/domain/portfolioColors'
 import type { PortfolioMediaElement } from '@/components/portfolio/usePortfolioMediaReadiness'
 import {
   SectionNavigation,
@@ -54,28 +52,6 @@ import type {
 } from '@/components/portfolio/runtime/types'
 
 const START_SCREEN_INDEX = -1
-const PROJECT_COLOR_OVERRIDES: Record<string, string> = {
-  'building-with-ai': '#75A462',
-  'aarons-toolbox': '#7d45e4',
-  'informal-systems': '#244ED0',
-  'mini-series-browser': '#C30000',
-  nextphrase: '#F02D5D',
-}
-const GENERATED_PROJECT_COLORS = buildProjectColors(portfolioSlides.length)
-const GENERATED_ACTIVE_PROJECT_COLORS = buildActiveProjectColors(
-  portfolioSlides.length,
-)
-const PROJECT_COLORS = portfolioSlides.map(
-  (project, projectIndex) =>
-    PROJECT_COLOR_OVERRIDES[project.slug] ??
-    GENERATED_PROJECT_COLORS[projectIndex],
-)
-const ACTIVE_PROJECT_COLORS = portfolioSlides.map((project, projectIndex) => {
-  const override = PROJECT_COLOR_OVERRIDES[project.slug]
-  return override
-    ? buildActiveProjectColorFromHex(override)
-    : GENERATED_ACTIVE_PROJECT_COLORS[projectIndex]
-})
 const SECTION_NAV_HAS_SLIDES = [
   false,
   ...portfolioSlides.map(project => project.screenshots.length > 1),
@@ -102,14 +78,6 @@ const WIDE_LAYOUT_STYLE: WideLayoutStyle = {
   '--portfolio-slide-navigation-reserved-height': `calc(${NAVIGATION_SVG_SIZE}px + max(2rem, env(safe-area-inset-bottom, 0px)))`,
   '--portfolio-screenshot-size':
     'min(calc(100dvh - var(--portfolio-slide-navigation-reserved-height)), calc(100vw - var(--portfolio-description-rail-width) - var(--portfolio-control-gutter-width)))',
-}
-
-function getProjectColor(projectIndex: number) {
-  return getThemeProjectColor(PROJECT_COLORS, projectIndex)
-}
-
-function getActiveProjectColor(projectIndex: number) {
-  return getThemeProjectColor(ACTIVE_PROJECT_COLORS, projectIndex)
 }
 
 type PortfolioBrowserViewRefs = {
@@ -212,6 +180,7 @@ export function PortfolioBrowserView({
     model.activeProjectIndex >= 0
       ? getProjectColor(model.activeProjectIndex)
       : undefined
+
   const activeCarouselSlides = activeProject
     ? actions.getCarouselSlides(activeProject)
     : []
@@ -659,7 +628,7 @@ export function PortfolioBrowserView({
         }`}
         style={
           {
-            '--project-color': activeProjectColor ?? PROJECT_COLORS[0],
+            '--project-color': activeProjectColor ?? getProjectColor(0),
             'position': 'fixed',
             'top': 'max(1.25rem, env(safe-area-inset-top, 0px))',
             'right': 'max(1.25rem, env(safe-area-inset-right, 0px))',

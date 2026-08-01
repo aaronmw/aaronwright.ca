@@ -1,19 +1,22 @@
 'use client';
 
 import { useEffect } from 'react';
+import { usePathname } from 'next/navigation';
+import { getProjectColorBySlug } from '@/components/portfolio/domain/portfolioColors';
+import { TOP_SCREEN_COLOR } from '@/components/portfolio/domain/theme';
+import { faviconDataUrl } from '@/lib/favicon';
 import { colorStore } from '@/stores/colorStore';
 
-const LOGO_COORDS = [
-  [1, 1], [5, 1], [1, 2], [3, 2], [5, 2], [1, 3], [5, 3],
-  [1, 4], [3, 4], [5, 4], [1, 5], [2, 5], [3, 5], [4, 5], [5, 5],
-];
+function getRouteColor(pathname: string) {
+  const [rootSegment, projectSlug] = pathname.split('/').filter(Boolean);
 
-function faviconDataUrl(color: string) {
-  const squares = LOGO_COORDS
-    .map(([x, y]) => `<rect x="${x}" y="${y}" width="1" height="1" fill="${color}"/>`)
-    .join('');
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 7 7"><rect width="7" height="7" fill="#000"/>${squares}</svg>`;
-  return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+  if (rootSegment !== 'work') {
+    return undefined;
+  }
+
+  return projectSlug
+    ? (getProjectColorBySlug(projectSlug) ?? TOP_SCREEN_COLOR)
+    : TOP_SCREEN_COLOR;
 }
 
 function setFavicon(href: string) {
@@ -27,14 +30,29 @@ function setFavicon(href: string) {
 }
 
 export function FaviconSync() {
+  const pathname = usePathname();
+
   useEffect(() => {
-    const update = () => setFavicon(faviconDataUrl(colorStore.getColor()));
-    const rafId = requestAnimationFrame(() => requestAnimationFrame(update));
-    const unsub = colorStore.subscribe(update);
+    const routeColor = getRouteColor(pathname);
+    const update = () =>
+      setFavicon(faviconDataUrl(routeColor ?? colorStore.getColor()));
+    let secondRafId: number | undefined;
+
+    update();
+    const firstRafId = requestAnimationFrame(() => {
+      secondRafId = requestAnimationFrame(update);
+    });
+    const unsubscribe =
+      routeColor === undefined ? colorStore.subscribe(update) : undefined;
+
     return () => {
-      cancelAnimationFrame(rafId);
-      unsub();
+      cancelAnimationFrame(firstRafId);
+      if (secondRafId !== undefined) {
+        cancelAnimationFrame(secondRafId);
+      }
+      unsubscribe?.();
     };
-  }, []);
+  }, [pathname]);
+
   return null;
 }

@@ -1,6 +1,9 @@
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import { PortfolioBrowser } from '@/components/portfolio/PortfolioBrowser';
+import { getProjectColorBySlug } from '@/components/portfolio/domain/portfolioColors';
+import { TOP_SCREEN_COLOR } from '@/components/portfolio/domain/theme';
+import { faviconDataUrl } from '@/lib/favicon';
 import {
   getPortfolioProject,
   getPortfolioScreenshot,
@@ -57,6 +60,11 @@ export async function generateMetadata({ params }: SlidePageProps) {
       ? `${project.title}: ${screenshot.slug} | Aaron M. Wright`
       : `${project.title} | Aaron M. Wright`,
     description: plainTextFromMarkdown(project.descriptionMarkdown),
+    icons: {
+      icon: faviconDataUrl(
+        getProjectColorBySlug(project.slug) ?? TOP_SCREEN_COLOR,
+      ),
+    },
   };
 }
 
