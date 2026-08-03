@@ -882,6 +882,34 @@ test('inline zoom keeps navigation available and exits with vertical intent', as
   ).toHaveCount(0)
 })
 
+test('inline zoom expands from the resting image geometry', async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name.includes('iphone'))
+  await page.goto('/work/aarons-toolbox/overview')
+  await waitForPortfolio(page)
+
+  const surface = page
+    .locator('[data-portfolio-screenshot-id="aarons-toolbox-overview"]:visible')
+    .first()
+  const restingBox = await surface.boundingBox()
+  const viewport = page.viewportSize()
+
+  expect(restingBox).not.toBeNull()
+  expect(viewport).not.toBeNull()
+
+  await surface.dblclick()
+
+  const openingBox = await surface.boundingBox()
+  expect(openingBox).not.toBeNull()
+  expect(openingBox!.width).toBeGreaterThanOrEqual(restingBox!.width)
+  expect(openingBox!.width).toBeLessThan(viewport!.width)
+
+  await expect
+    .poll(async () => (await surface.boundingBox())?.width ?? 0)
+    .toBe(viewport!.width)
+})
+
 test('double-click enters inline presentation without scaling the image', async ({
   page,
 }, testInfo) => {

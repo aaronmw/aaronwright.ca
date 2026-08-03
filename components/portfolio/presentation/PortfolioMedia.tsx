@@ -91,7 +91,7 @@ function ZoomableScreenshot({
       ref={surfaceRef}
       data-portfolio-screenshot-id={screenshotId}
       data-portfolio-inline-zoomed={isLocallyPresented ? 'true' : 'false'}
-      className={`portfolio-theme-surface relative overflow-hidden border border-transparent transition-[width,height,right,top,left,background-color] duration-500 ease-out motion-reduce:transition-none ${className} ${cursorClass} ${
+      className={`relative overflow-hidden border border-transparent bg-[var(--portfolio-surface)] transition-[width,height,right,top,left,background-color] duration-500 ease-out motion-reduce:transition-none ${className} ${cursorClass} ${
         concealed ? 'invisible' : ''
       }`}
       style={

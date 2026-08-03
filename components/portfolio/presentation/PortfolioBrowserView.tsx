@@ -646,7 +646,7 @@ export function PortfolioBrowserView({
         icon={faXmark}
         iconClassName="size-7"
         ring
-        className={`portfolio-theme-surface fixed right-5 top-5 z-[70] isolate size-11 text-[var(--project-color)] transition-[transform,opacity,background-color] duration-300 motion-reduce:transition-none ${
+        className={`fixed right-5 top-5 z-[70] isolate size-11 bg-[var(--portfolio-surface)] text-[var(--project-color)] transition-[transform,opacity,background-color] duration-300 motion-reduce:transition-none ${
           model.isInlineZoomPresentationActive
             ? 'translate-y-0 rotate-0 opacity-100'
             : 'pointer-events-none -translate-y-16 rotate-90 opacity-0'
