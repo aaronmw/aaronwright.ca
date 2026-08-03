@@ -409,6 +409,7 @@ export function ScreenshotMedia({
       alt={screenshot.alt}
       fill
       draggable={false}
+      unoptimized={screenshot.animated}
       onDragStart={(event) => event.preventDefault()}
       priority={priority}
       sizes={sizes}

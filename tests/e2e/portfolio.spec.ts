@@ -882,6 +882,23 @@ test('inline zoom keeps navigation available and exits with vertical intent', as
   ).toHaveCount(0)
 })
 
+test('animated screenshots bypass image optimization', async ({ page }) => {
+  await page.goto('/work/aarons-toolbox/overview')
+  await waitForPortfolio(page)
+
+  const currentSrc = await page
+    .locator(
+      '[data-portfolio-screenshot-id="aarons-toolbox-overview"]:visible img',
+    )
+    .first()
+    .evaluate(image => (image as HTMLImageElement).currentSrc)
+
+  expect(currentSrc).toContain(
+    '/portfolio/aarons-toolbox/aarons-toolbox-community-preview.png',
+  )
+  expect(currentSrc).not.toContain('/_next/image')
+})
+
 test('inline zoom expands from the resting image geometry', async ({
   page,
 }, testInfo) => {

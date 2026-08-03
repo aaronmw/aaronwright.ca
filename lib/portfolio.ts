@@ -3,6 +3,7 @@ export type PortfolioScreenshot = {
   slug: string;
   src: string;
   alt: string;
+  animated?: boolean;
 };
 
 export type PortfolioProject = {
@@ -156,6 +157,7 @@ There are few things from which I derive more satisfaction than my Figma plugins
         slug: 'overview',
         src: '/portfolio/aarons-toolbox/aarons-toolbox-community-preview.png',
         alt: "1 of 5: Aaron's Toolbox overview",
+        animated: true,
       },
       {
         id: 'normalizer',
