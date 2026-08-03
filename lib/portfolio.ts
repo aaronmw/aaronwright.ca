@@ -106,26 +106,30 @@ function transformPortfolioProjectMarkdown(
 
 const rawPortfolioSlides = [
   {
-    id: 'building-with-ai',
-    slug: 'building-with-ai',
-    title: 'Building with AI',
+    id: 'about-me',
+    slug: 'about-me',
+    title: 'About Me',
     blurb:
-      'How I use **AI** as a practical collaborator for faster, more flexible product work.',
+      'Twenty-five years across **product design** and **frontend development**, now focused on helping other people do excellent work.',
     descriptionMarkdown: `
-I'm including this slide up top because, while it may not constitute a "project" per se, it's a hot topic and it's gonna come up. The tl;dr is that I've enthusiastically adopted AI because it handles the tedious stuff while I can stay focused on steering the actual project.
+I’ve been building things for the web since the summer after seventh grade, when I found Microsoft FrontPage installed on our family computer and eventually figured out that it was not, in fact, just a stranger version of Word.
 
-AI hit the scene just as I was burning out on all the coding I'd been doing as the UX/UI guy for a handful of different teams. While AI wasn't as adept as it is today, it made short work of large refactors where I'd otherwise have settled for less-than-ideal. With these tools, I feel more "agile" than ever: experimenting with major architectural pivots is almost trivial. The devil, as always, is in the details.
+The first time I clicked “Publish” and saw my ridiculous homepage appear on the actual internet—where, theoretically, anyone could see it—I was hooked. That feedback loop has never really stopped working on me: make something, put it in front of people, see what happens, then make it better.
 
-I'd already fancied myself a pretty quick draw in the Wild West of frontend dev. I had a whole arsenal of boilerplates from which I'd begin new projects, as well as various workflows and patterns that I could flex from muscle memory. I was briefly worried all that effort would be obsoleted, but it proved to be an agent-onboarding _goldmine_. Granted, I'm still updating the core skills on a daily basis with new or improved articulations of all sorts of nuances and nitpicks, but the static friction of starting a new project has been drastically reduced and I've found a renewed enthusiasm for building.
+Over the following 25 years, I’ve moved back and forth between product design and frontend development, usually ending up somewhere in the middle. I’ve designed products, built design systems and shared frontend foundations, improved workflows, taught interaction design, mentored designers and engineers, and spent an unreasonable amount of time removing friction that other people had apparently learned to live with.
 
-While I've yet to collaborate with others on an AI-assisted project, I'm super keen to see how it can transform entire teams of people contributing to a shared skill set. I'm equal parts excited and anxious to see how it transforms the worlds of software, services, and products both digital and physical.
+More recently, AI has made building feel new again. I use it throughout my toolchain to explore ideas, prototype, write code, and avoid personally implementing the same forms, validation, and other assorted plumbing for the hundredth time. I still need to understand and direct the work; I just get to spend more of my time on the parts that require judgment.
+
+And increasingly, that’s how I want to spend my time in general: helping other people do excellent work. Running critiques. Teaching and demonstrating. Building better systems and practices. Making design and engineering work better together. Raising the bar while making the work clearer, easier, and more satisfying.
+
+I still like making things—and have a small stable of pet projects to prove it—but I’m most interested now in helping build the teams, tools, and conditions that let other people make great things too.
 `,
     screenshots: [
       {
-        id: 'building-with-ai-home-page',
-        slug: 'home-page',
+        id: 'about-me-overview',
+        slug: 'overview',
         src: '/portfolio/building-with-ai/building-with-ai.png',
-        alt: 'Building with AI overview',
+        alt: 'About Me overview',
       },
     ],
   },
@@ -150,7 +154,7 @@ There are few things from which I derive more satisfaction than my Figma plugins
       {
         id: 'aarons-toolbox-overview',
         slug: 'overview',
-        src: '/portfolio/aarons-toolbox/store-images--four-up.png',
+        src: '/portfolio/aarons-toolbox/aarons-toolbox-community-preview.png',
         alt: "1 of 5: Aaron's Toolbox overview",
       },
       {
@@ -357,7 +361,7 @@ I've learned a LOT building this game over and over, including the architectural
 ] satisfies PortfolioProject[];
 
 const PORTFOLIO_PROJECT_ORDER = [
-  'building-with-ai',
+  'about-me',
   'informal-systems',
   'aarons-toolbox',
   'nextphrase',

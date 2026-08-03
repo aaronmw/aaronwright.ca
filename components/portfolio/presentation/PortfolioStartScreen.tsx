@@ -21,7 +21,7 @@ type ProjectColorStyle = CSSProperties & {
 
 const MOBILE_CONTENT_VERTICAL_PADDING_REM = 1.5;
 const CONTACT_LINK_CLASS_NAME =
-  'underline decoration-1 decoration-white/60 underline-offset-[0.18em] transition-[color,text-decoration-color] hover:text-white hover:decoration-white focus-visible:text-white focus-visible:decoration-white';
+  'portfolio-contact-link underline decoration-1 underline-offset-[0.18em]';
 
 function useStartScreenContentAlignment(enabled: boolean) {
   const startScreenRef = useRef<HTMLElement>(null);
@@ -111,7 +111,11 @@ export function PortfolioStartScreen({
   return (
     <section
       ref={startScreenRef}
-      className={`portfolio-safe-inline relative h-dvh snap-start snap-always ${
+      className={`relative h-dvh snap-start snap-always ${
+        isWideLayout && !isTouchLandscapeLayout
+          ? 'portfolio-wide-content-inset'
+          : 'portfolio-safe-inline'
+      } ${
         isTouchLandscapeLayout
           ? 'grid grid-rows-[auto_minmax(0,1fr)] gap-2'
           : isWideLayout
@@ -142,12 +146,15 @@ export function PortfolioStartScreen({
           isTouchLandscapeLayout
             ? 'min-w-0'
             : isWideLayout
-              ? 'portfolio-safe-inline absolute inset-x-0 top-6'
+              ? 'portfolio-wide-content-inset absolute inset-x-0 top-6'
               : 'min-w-0'
         }
       >
         <div
-          className={`mx-auto w-full max-w-6xl ${
+          data-portfolio-start-header-content
+          className={`mx-auto w-full ${
+            isWideLayout && !isTouchLandscapeLayout ? '' : 'max-w-6xl'
+          } ${
             isMobilePortraitLayout
               ? 'relative'
               : `flex gap-4 ${
@@ -159,16 +166,19 @@ export function PortfolioStartScreen({
                 }`
           }`}
         >
-          {!isMobilePortraitLayout ? (
-            <div className="flex shrink-0 items-center gap-5">
+          {!isMobilePortraitLayout && !isWideLayout ? (
+            <div
+              className="flex shrink-0 items-center gap-5"
+              data-portfolio-start-logo
+            >
               <PortfolioLogoMark
-                className={`shrink-0 text-white ${
+                className={`shrink-0 text-[var(--portfolio-ink)] ${
                   isTouchLandscapeLayout ? 'size-9' : 'size-12'
                 }`}
                 size={isTouchLandscapeLayout ? 36 : 48}
               />
               <p
-                className={`font-light text-white/70 ${
+                className={`font-light text-[var(--portfolio-ink-70)] ${
                   isTouchLandscapeLayout ? 'text-sm' : 'text-base'
                 }`}
               >
@@ -177,7 +187,7 @@ export function PortfolioStartScreen({
             </div>
           ) : null}
           <address
-            className={`flex min-w-0 flex-col font-light not-italic text-white/70 ${
+            className={`flex min-w-0 flex-col font-light not-italic text-[var(--portfolio-ink-70)] ${
               isTouchLandscapeLayout
                 ? 'items-end gap-0 text-right text-sm leading-snug'
                 : `${
@@ -188,13 +198,13 @@ export function PortfolioStartScreen({
                       : 'gap-1 leading-relaxed'
                   } text-base ${
                     isWideLayout
-                      ? 'items-end text-right'
+                      ? 'ml-auto items-end text-right'
                       : 'items-start text-left'
                   }`
             }`}
           >
             {isMobilePortraitLayout ? (
-              <p className="mb-2 font-bold text-white">Aaron M. Wright</p>
+              <p className="mb-2 font-bold text-[var(--portfolio-ink)]">Aaron M. Wright</p>
             ) : null}
             <p>302-70 Dyrgas Gate</p>
             <p>
@@ -236,17 +246,22 @@ export function PortfolioStartScreen({
       </div>
       <div
         ref={contentSectionRef}
-        className={`mx-auto w-full max-w-6xl ${
+        data-portfolio-start-content
+        className={`mx-auto w-full ${
           isWideLayout && !isTouchLandscapeLayout
             ? ''
-            : `min-h-0 ${shouldBottomAlign ? 'self-end' : 'self-center'}`
+            : `max-w-6xl min-h-0 ${
+                shouldBottomAlign ? 'self-end' : 'self-center'
+              }`
         }`}
       >
-        <p className="mb-[clamp(0.65rem,1.6vh,2rem)] text-xs font-light uppercase tracking-[0.35em] text-white/45">
+        <p className="mb-[clamp(0.65rem,1.6vh,2rem)] text-xs font-light uppercase tracking-[0.35em] text-[var(--portfolio-ink-45)]">
           Sections
         </p>
         <div
-          className="divide-y divide-white/15 border-y border-white/15"
+          className={`divide-y divide-[var(--portfolio-hairline)] border-y border-[var(--portfolio-hairline)] ${
+            isWideLayout ? 'pl-[3.25rem]' : ''
+          }`}
           onPointerEnter={() => onHoveredChange(true)}
           onPointerLeave={() => onHoveredChange(false)}
         >
@@ -258,7 +273,7 @@ export function PortfolioStartScreen({
                 key={project.id}
                 type="button"
                 data-portfolio-start-section-index={index + 1}
-                className={`group w-full items-center gap-[clamp(0.75rem,1.8vh,1.5rem)] py-[clamp(0.2rem,0.65vh,0.75rem)] text-left text-white outline-none transition-colors duration-200 ease-out hover:text-[var(--project-color)] focus-visible:text-[var(--project-color)] motion-reduce:transition-none sm:py-[clamp(0.3rem,0.85vh,1.25rem)] ${
+                className={`group w-full items-center gap-[clamp(0.75rem,1.8vh,1.5rem)] py-[clamp(0.2rem,0.65vh,0.75rem)] text-left text-[var(--portfolio-ink)] outline-none transition-colors duration-200 ease-out hover:text-[var(--project-color)] focus-visible:text-[var(--project-color)] motion-reduce:transition-none sm:py-[clamp(0.3rem,0.85vh,1.25rem)] ${
                   isWideLayout
                     ? 'grid grid-cols-[minmax(0,1fr)_36ch]'
                     : `relative flex items-start ${
@@ -289,7 +304,7 @@ export function PortfolioStartScreen({
                 {isWideLayout ? (
                   <>
                     <span className="relative flex min-w-0 items-center">
-                      <span className="absolute right-full mr-5 w-8 shrink-0 text-right text-sm font-light text-white opacity-70 transition-opacity duration-200 ease-out group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none sm:text-base">
+                      <span className="absolute right-full mr-5 w-8 shrink-0 text-left text-sm font-light text-[var(--portfolio-ink)] opacity-70 transition-opacity duration-200 ease-out group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none sm:text-base">
                         {pending ? (
                           <FontAwesomeIcon
                             icon={faSpinner}
@@ -319,7 +334,7 @@ export function PortfolioStartScreen({
                       >
                         {project.title}
                       </SectionTitle>
-                      <span className="absolute right-full top-0 mr-3 flex h-[clamp(1.1rem,3.4vh,2rem)] w-8 items-center justify-end text-right text-sm font-light leading-none text-white opacity-70 transition-opacity duration-200 ease-out group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none sm:h-[clamp(1.25rem,4.2vh,4.2rem)] sm:text-base lg:h-[clamp(1.5rem,4.8vh,4.8rem)]">
+                      <span className="absolute right-full top-0 mr-3 flex h-[clamp(1.1rem,3.4vh,2rem)] w-8 items-center justify-end text-right text-sm font-light leading-none text-[var(--portfolio-ink)] opacity-70 transition-opacity duration-200 ease-out group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none sm:h-[clamp(1.25rem,4.2vh,4.2rem)] sm:text-base lg:h-[clamp(1.5rem,4.8vh,4.8rem)]">
                         {pending ? (
                           <FontAwesomeIcon
                             icon={faSpinner}

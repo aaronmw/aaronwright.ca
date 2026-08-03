@@ -16,13 +16,13 @@ import type { LoopingCarouselEntry } from '@/components/portfolio/domain/carouse
 import {
   carouselMediaKey,
   hasProjectScreenshots,
-  isBuildingWithAiTextSlide,
+  isAboutMeTextSlide,
   isVideoScreenshot,
   modalMediaKey,
   type ProjectSlide,
 } from '@/components/portfolio/domain/slides';
 import {
-  BuildingWithAiTextPanel,
+  AboutMeTextPanel,
   ProjectDescription,
 } from './PortfolioText';
 
@@ -91,7 +91,7 @@ function ZoomableScreenshot({
       ref={surfaceRef}
       data-portfolio-screenshot-id={screenshotId}
       data-portfolio-inline-zoomed={isLocallyPresented ? 'true' : 'false'}
-      className={`relative overflow-hidden border border-transparent bg-black transition-[width,height,right,top,left] duration-500 ease-out motion-reduce:transition-none ${className} ${cursorClass} ${
+      className={`portfolio-theme-surface relative overflow-hidden border border-transparent transition-[width,height,right,top,left,background-color] duration-500 ease-out motion-reduce:transition-none ${className} ${cursorClass} ${
         concealed ? 'invisible' : ''
       }`}
       style={
@@ -169,7 +169,7 @@ export function CarouselPullBoundary({
   const icon = (
     <FontAwesomeIcon
       icon={edge === 'before' ? faArrowRight : faArrowLeft}
-      className="size-7 text-[var(--project-color)] drop-shadow-[1px_1px_0_black]"
+      className="portfolio-icon-shadow size-7 text-[var(--project-color)]"
     />
   );
 
@@ -183,7 +183,7 @@ export function CarouselPullBoundary({
         />
         <div
           data-portfolio-carousel-boundary-visual={edge}
-          className="pointer-events-none grid h-dvh w-[50vw] shrink-0 place-items-center bg-black"
+          className="portfolio-theme-surface pointer-events-none grid h-dvh w-[50vw] shrink-0 place-items-center"
           style={{ '--project-color': projectColor } as ProjectColorStyle}
           aria-hidden="true"
         >
@@ -196,7 +196,7 @@ export function CarouselPullBoundary({
   return (
     <div
       data-portfolio-carousel-boundary={edge}
-      className="pointer-events-none grid h-dvh w-[50vw] shrink-0 snap-start snap-always place-items-center bg-black"
+      className="portfolio-theme-surface pointer-events-none grid h-dvh w-[50vw] shrink-0 snap-start snap-always place-items-center"
       style={{ '--project-color': projectColor } as ProjectColorStyle}
       aria-hidden="true"
     >
@@ -250,7 +250,7 @@ export function ProjectPanel({
     presented: boolean,
   ) => void;
 }) {
-  const isTextSlide = isBuildingWithAiTextSlide(project, slide);
+  const isTextSlide = isAboutMeTextSlide(project, slide);
   const shouldShowDescriptionPlaceholder =
     isWideLayout &&
     slide.kind === 'description' &&
@@ -269,7 +269,7 @@ export function ProjectPanel({
     <article
       data-portfolio-carousel-panel={carouselEntryKind}
       data-portfolio-carousel-index={carouselIndex}
-      className={`grid h-dvh w-screen shrink-0 snap-start snap-always grid-rows-[1fr] bg-black ${
+      className={`portfolio-theme-surface grid h-dvh w-screen shrink-0 snap-start snap-always grid-rows-[1fr] ${
         isWideLayout ? 'px-0 py-0' : 'portfolio-safe-inline pb-24 pt-8'
       }`}
       aria-hidden={!isActive}
@@ -304,18 +304,18 @@ export function ProjectPanel({
       >
         {slide.kind === 'description' ? (
           <div
-            className={`grid aspect-square place-items-center border border-white/15 text-center ${
+            className={`grid aspect-square place-items-center border border-[var(--portfolio-hairline)] text-center ${
               isWideLayout
                 ? 'col-start-2 h-[var(--portfolio-screenshot-size)] max-h-none w-[var(--portfolio-screenshot-size)] max-w-none self-center justify-self-center'
                 : 'max-h-[calc(100dvh-5rem)] w-full max-w-[calc(100dvh-5rem)]'
             }`}
           >
-            <span className="px-8 text-5xl font-black uppercase leading-none text-white/12">
+            <span className="px-8 text-5xl font-black uppercase leading-none text-[color-mix(in_srgb,var(--portfolio-ink)_12%,transparent)]">
               Coming soon
             </span>
           </div>
         ) : isTextSlide ? (
-          <BuildingWithAiTextPanel
+          <AboutMeTextPanel
             project={project}
             projectNumber={projectNumber}
             projectColor={projectColor}

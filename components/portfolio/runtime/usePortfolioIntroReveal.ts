@@ -10,7 +10,7 @@ import {
 import { gsap } from 'gsap'
 import type { PortfolioProject, PortfolioScreenshot } from '@/lib/portfolio'
 import {
-  isBuildingWithAiTextSlide,
+  isAboutMeTextSlide,
   modalMediaKey,
   type ProjectSlide,
 } from '@/components/portfolio/domain/slides'
@@ -95,7 +95,7 @@ export function usePortfolioIntroReveal({
       initialModalRequestedRef.current &&
       initialProject &&
       initialSlide?.kind === 'screenshot' &&
-      !isBuildingWithAiTextSlide(initialProject, initialSlide),
+      !isAboutMeTextSlide(initialProject, initialSlide),
     )
 
     window.history.scrollRestoration = 'manual'

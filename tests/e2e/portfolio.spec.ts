@@ -255,6 +255,78 @@ test('navigation rings deform on their travel axes and settle circular', async (
   await expectRingCenteredOnActiveDot(page)
 })
 
+test('wide sections share content boundaries and clear the navigation tracks', async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-desktop')
+  await page.setViewportSize({ width: 1280, height: 900 })
+  await page.goto('/work')
+  await waitForPortfolio(page)
+
+  const leftRingBox = await page
+    .locator('[data-portfolio-section-nav-ring="left"]')
+    .boundingBox()
+  const rightRingBox = await page
+    .locator('[data-portfolio-section-nav-ring="right"]')
+    .boundingBox()
+  const contentBox = await page
+    .locator('[data-portfolio-start-content]')
+    .boundingBox()
+  const headerBox = await page
+    .locator('[data-portfolio-start-header-content]')
+    .boundingBox()
+  const firstSectionNumberLeft = await page
+    .getByText('01', { exact: true })
+    .evaluate(element => {
+      const range = document.createRange()
+      range.selectNodeContents(element)
+      return range.getBoundingClientRect().x
+    })
+  const editorialInsets = await page
+    .locator('section.portfolio-project-content-theme[aria-label="About Me"]')
+    .first()
+    .evaluate(element => {
+      const style = getComputedStyle(element)
+      return {
+        left: Number.parseFloat(style.paddingLeft),
+        right: Number.parseFloat(style.paddingRight),
+      }
+    })
+  const viewport = page.viewportSize()
+
+  expect(leftRingBox).not.toBeNull()
+  expect(rightRingBox).not.toBeNull()
+  expect(contentBox).not.toBeNull()
+  expect(headerBox).not.toBeNull()
+  expect(viewport).not.toBeNull()
+  expect(contentBox!.x - (leftRingBox!.x + leftRingBox!.width)).toBeGreaterThanOrEqual(
+    8,
+  )
+  expect(rightRingBox!.x - (contentBox!.x + contentBox!.width)).toBeGreaterThanOrEqual(
+    8,
+  )
+  expect(Math.abs(headerBox!.x - contentBox!.x)).toBeLessThanOrEqual(0.5)
+  expect(
+    Math.abs(
+      headerBox!.x + headerBox!.width -
+        (contentBox!.x + contentBox!.width),
+    ),
+  ).toBeLessThanOrEqual(0.5)
+  expect(Math.abs(contentBox!.x - editorialInsets.left)).toBeLessThanOrEqual(
+    0.5,
+  )
+  expect(
+    Math.abs(firstSectionNumberLeft - editorialInsets.left),
+  ).toBeLessThanOrEqual(0.5)
+  expect(
+    Math.abs(
+      viewport!.width -
+        (contentBox!.x + contentBox!.width) -
+        editorialInsets.right,
+    ),
+  ).toBeLessThanOrEqual(0.5)
+})
+
 test('long section travel deforms the ring more than an adjacent hop', async ({
   page,
 }) => {
@@ -268,7 +340,7 @@ test('long section travel deforms the ring more than an adjacent hop', async ({
     await page.keyboard.press(key)
     await expect(page).toHaveURL(
       key === 'ArrowDown'
-        ? /\/work\/building-with-ai$/
+        ? /\/work\/about-me$/
         : /\/work\/mini-series-browser$/,
     )
     await expect
@@ -929,7 +1001,7 @@ test('mobile portrait keeps the logo fixed while sections move', async ({
   const initialPosition = await logo.boundingBox()
 
   await page.keyboard.press('ArrowDown')
-  await expect(page).toHaveURL(/\/work\/building-with-ai$/)
+  await expect(page).toHaveURL(/\/work\/about-me$/)
   const projectPosition = await logo.boundingBox()
 
   expect(initialPosition).not.toBeNull()

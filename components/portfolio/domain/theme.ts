@@ -3,7 +3,14 @@ export const PROJECT_COLOR_START_HUE = 342
 export const PROJECT_COLOR_SATURATION = 78
 export const PROJECT_COLOR_LIGHTNESS = 54
 export const PROJECT_COLOR_ACTIVE_LIGHTNESS = 95
+export const PROJECT_COLOR_LIGHT_ACTIVE_LIGHTNESS = 12
 export const PROJECT_COLOR_MIN_CONTRAST = 4.5
+
+type HslColor = {
+  hue: number
+  saturation: number
+  lightness: number
+}
 
 function buildProjectHues(projectCount: number) {
   const safeProjectCount = Math.max(1, projectCount)
@@ -54,18 +61,46 @@ function toLinearChannel(channel: number) {
   return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4
 }
 
-export function getContrastAgainstBlack(
+function getRelativeLuminance(
   hue: number,
   saturation: number,
   lightness: number,
 ) {
   const [red, green, blue] = hslToRgb(hue, saturation, lightness)
-  const relativeLuminance =
+
+  return (
     0.2126 * toLinearChannel(red) +
     0.7152 * toLinearChannel(green) +
     0.0722 * toLinearChannel(blue)
+  )
+}
+
+export function getContrastAgainstBlack(
+  hue: number,
+  saturation: number,
+  lightness: number,
+) {
+  const relativeLuminance = getRelativeLuminance(
+    hue,
+    saturation,
+    lightness,
+  )
 
   return (relativeLuminance + 0.05) / 0.05
+}
+
+export function getContrastAgainstWhite(
+  hue: number,
+  saturation: number,
+  lightness: number,
+) {
+  const relativeLuminance = getRelativeLuminance(
+    hue,
+    saturation,
+    lightness,
+  )
+
+  return 1.05 / (relativeLuminance + 0.05)
 }
 
 export function ensureContrastAgainstBlack(
@@ -97,6 +132,35 @@ export function ensureContrastAgainstBlack(
   return Math.ceil(passingLightness * 100) / 100
 }
 
+export function ensureContrastAgainstWhite(
+  hue: number,
+  saturation: number,
+  lightness: number,
+  minimumContrast: number,
+) {
+  if (getContrastAgainstWhite(hue, saturation, lightness) >= minimumContrast) {
+    return lightness
+  }
+
+  let passingLightness = 0
+  let failingLightness = lightness
+
+  for (let iteration = 0; iteration < 20; iteration += 1) {
+    const candidateLightness = (passingLightness + failingLightness) / 2
+
+    if (
+      getContrastAgainstWhite(hue, saturation, candidateLightness) >=
+      minimumContrast
+    ) {
+      passingLightness = candidateLightness
+    } else {
+      failingLightness = candidateLightness
+    }
+  }
+
+  return Math.floor(passingLightness * 100) / 100
+}
+
 export function buildProjectColors(projectCount: number) {
   return buildProjectHues(projectCount).map(hue => {
     const lightness = ensureContrastAgainstBlack(
@@ -116,7 +180,7 @@ export function buildActiveProjectColors(projectCount: number) {
   })
 }
 
-export function buildActiveProjectColorFromHex(baseColor: string) {
+function hexToHsl(baseColor: string): HslColor {
   const hex = baseColor.match(/^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i)
   if (!hex) {
     throw new Error(`Expected a six-digit hex color, received "${baseColor}"`)
@@ -143,11 +207,68 @@ export function buildActiveProjectColorFromHex(baseColor: string) {
     }
   }
 
-  const normalizedHue = hue < 0 ? hue + 360 : hue
+  return {
+    hue: hue < 0 ? hue + 360 : hue,
+    saturation: saturation * 100,
+    lightness: lightness * 100,
+  }
+}
+
+function parseCssHslColor(color: string): HslColor {
+  const hsl = color.match(
+    /^hsl\(\s*(-?\d+(?:\.\d+)?)\s+([\d.]+)%\s+([\d.]+)%\s*\)$/i,
+  )
+
+  if (hsl) {
+    return {
+      hue: Number.parseFloat(hsl[1]),
+      saturation: Number.parseFloat(hsl[2]),
+      lightness: Number.parseFloat(hsl[3]),
+    }
+  }
+
+  return hexToHsl(color)
+}
+
+function formatHsl({ hue, saturation, lightness }: HslColor) {
   const format = (value: number) =>
     Number.parseFloat(value.toFixed(2)).toString()
 
-  return `hsl(${format(normalizedHue)} ${format(saturation * 100)}% ${PROJECT_COLOR_ACTIVE_LIGHTNESS}%)`
+  return `hsl(${format(hue)} ${format(saturation)}% ${format(lightness)}%)`
+}
+
+export function getCssColorContrastAgainstWhite(color: string) {
+  const { hue, saturation, lightness } = parseCssHslColor(color)
+  return getContrastAgainstWhite(hue, saturation, lightness)
+}
+
+export function buildLightProjectColor(baseColor: string) {
+  const hsl = parseCssHslColor(baseColor)
+
+  return formatHsl({
+    ...hsl,
+    lightness: ensureContrastAgainstWhite(
+      hsl.hue,
+      hsl.saturation,
+      hsl.lightness,
+      PROJECT_COLOR_MIN_CONTRAST,
+    ),
+  })
+}
+
+export function buildLightActiveProjectColor(baseColor: string) {
+  const hsl = parseCssHslColor(baseColor)
+
+  return formatHsl({
+    ...hsl,
+    lightness: PROJECT_COLOR_LIGHT_ACTIVE_LIGHTNESS,
+  })
+}
+
+export function buildActiveProjectColorFromHex(baseColor: string) {
+  const hsl = hexToHsl(baseColor)
+
+  return formatHsl({ ...hsl, lightness: PROJECT_COLOR_ACTIVE_LIGHTNESS })
 }
 
 export function getProjectColor(colors: string[], projectIndex: number) {

@@ -23,7 +23,7 @@ import {
   getProjectSlidesBySlug,
   getSlideMediaKey,
   getVerticalTargetProjectIndex,
-  isBuildingWithAiTextSlide,
+  isAboutMeTextSlide,
   isModalScreenshotSlide,
   isVideoScreenshot,
   modalMediaKey,
@@ -38,17 +38,17 @@ import {
 
 const projects: PortfolioProject[] = [
   {
-    id: 'building-with-ai',
-    slug: 'building-with-ai',
-    title: 'Building with AI',
+    id: 'about-me',
+    slug: 'about-me',
+    title: 'About Me',
     blurb: '',
     descriptionMarkdown: '',
     screenshots: [
       {
-        id: 'building-with-ai-home-page',
-        slug: 'home-page',
-        src: '/ai.png',
-        alt: 'Building with AI overview',
+        id: 'about-me-overview',
+        slug: 'overview',
+        src: '/about-me.png',
+        alt: 'About Me overview',
       },
     ],
   },
@@ -78,7 +78,7 @@ const projects: PortfolioProject[] = [
 describe('portfolio project order', () => {
   it('uses the curated section sequence', () => {
     expect(portfolioSlides.map(project => project.slug)).toEqual([
-      'building-with-ai',
+      'about-me',
       'informal-systems',
       'aarons-toolbox',
       'nextphrase',
@@ -105,13 +105,13 @@ describe('portfolio slide derivation', () => {
   })
 
   it('preserves special text-slide and media-key rules', () => {
-    const aiSlide = getProjectSlides(projects[0])[1]
+    const aboutMeSlide = getProjectSlides(projects[0])[1]
     const screenshotSlide = getProjectSlides(projects[1])[1]
 
-    expect(isBuildingWithAiTextSlide(projects[0], aiSlide)).toBe(true)
-    expect(isModalScreenshotSlide(projects[0], aiSlide)).toBe(false)
+    expect(isAboutMeTextSlide(projects[0], aboutMeSlide)).toBe(true)
+    expect(isModalScreenshotSlide(projects[0], aboutMeSlide)).toBe(false)
     expect(getProjectMediaScreenshots(projects[0])).toEqual([])
-    expect(getSlideMediaKey(projects[0], aiSlide, false)).toBeUndefined()
+    expect(getSlideMediaKey(projects[0], aboutMeSlide, false)).toBeUndefined()
     expect(getSlideMediaKey(projects[1], screenshotSlide, false)).toBe(
       'carousel:overview',
     )
@@ -147,7 +147,7 @@ describe('portfolio routes', () => {
     ).toEqual({ projectIndex: 1, slideIndex: 1, modalOpen: true })
     expect(
       parsePortfolioRoute(
-        '/work/building-with-ai/home-page',
+        '/work/about-me/overview',
         '?modal=image',
         projects,
         slidesBySlug,

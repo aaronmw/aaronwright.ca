@@ -117,7 +117,7 @@ export function SectionBlurb({
 }) {
   return (
     <span
-      className={`max-w-[54ch] text-[clamp(0.75rem,1.5vh,0.9rem)] font-light normal-case leading-snug tracking-normal text-white opacity-70 transition-opacity duration-200 ease-out group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none sm:text-[clamp(0.75rem,1.55vh,1rem)] ${
+      className={`max-w-[54ch] text-[clamp(0.75rem,1.5vh,0.9rem)] font-light normal-case leading-snug tracking-normal text-[var(--portfolio-ink)] opacity-70 transition-opacity duration-200 ease-out group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none sm:text-[clamp(0.75rem,1.55vh,1rem)] ${
         className ?? ''
       }`}
     >
@@ -191,6 +191,7 @@ export function ProjectDescription({
           contentClassName={`portfolio-project-content portfolio-markdown portfolio-markdown-scroll-body prose min-w-0 w-full max-w-[48ch] font-light leading-relaxed ${
             isWideLayout ? 'text-xl' : 'text-lg'
           }`}
+          indicatorColor="var(--portfolio-surface-translucent)"
         >
           <PortfolioMarkdown>{project.descriptionMarkdown}</PortfolioMarkdown>
         </OverscrollIndicator>
@@ -200,7 +201,7 @@ export function ProjectDescription({
               href={project.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex min-h-14 w-full items-center justify-center rounded-lg px-6 py-4 text-center text-base font-black leading-none tracking-normal text-black outline-none transition-[background-color,filter] duration-200 hover:brightness-110 focus-visible:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--project-color)] active:brightness-95 motion-reduce:transition-none"
+              className="flex min-h-14 w-full items-center justify-center rounded-lg px-6 py-4 text-center text-base font-black leading-none tracking-normal text-[var(--portfolio-inverse-ink)] outline-none transition-[background-color,filter] duration-200 hover:brightness-110 focus-visible:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--project-color)] active:brightness-95 motion-reduce:transition-none"
               style={{ backgroundColor: projectContentColor }}
             >
               Visit Project
@@ -212,7 +213,7 @@ export function ProjectDescription({
   );
 }
 
-export function BuildingWithAiTextPanel({
+export function AboutMeTextPanel({
   project,
   projectNumber,
   projectColor,
@@ -233,7 +234,7 @@ export function BuildingWithAiTextPanel({
     <section
       className={`portfolio-project-content-theme grid min-h-0 min-w-0 w-full grid-rows-[auto_minmax(0,1fr)] ${
         isWideLayout
-          ? 'h-full bg-black/80 py-16 pl-[var(--portfolio-control-gutter-width)] pr-[var(--portfolio-control-gutter-width)] backdrop-blur-md'
+          ? 'portfolio-theme-panel portfolio-wide-content-inset h-full py-16 backdrop-blur-md'
           : 'h-full'
       }`}
       aria-label={project.title}
@@ -242,12 +243,6 @@ export function BuildingWithAiTextPanel({
           '--project-color': projectColor,
           '--project-body-color': projectBodyColor,
           '--project-content-color': projectContentColor,
-          ...(isWideLayout
-            ? {
-                paddingLeft:
-                  'max(var(--portfolio-control-gutter-width), calc(env(safe-area-inset-left, 0px) + 5.5rem))',
-              }
-            : {}),
         } as ProjectColorStyle
       }
     >
@@ -270,6 +265,7 @@ export function BuildingWithAiTextPanel({
             ? 'portfolio-project-content portfolio-markdown portfolio-markdown-scroll-body prose min-w-0 w-full max-w-[calc(108ch+7rem)] text-lg font-light leading-relaxed [column-count:3] [column-fill:balance] [column-gap:3.5rem]'
             : 'portfolio-project-content portfolio-markdown portfolio-markdown-scroll-body prose min-w-0 w-full max-w-[48ch] text-lg font-light leading-relaxed'
         }
+        indicatorColor="var(--portfolio-surface-translucent)"
       >
         <PortfolioMarkdown>{project.descriptionMarkdown}</PortfolioMarkdown>
       </OverscrollIndicator>

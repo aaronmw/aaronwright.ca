@@ -13,7 +13,7 @@ import {
 } from '@/components/portfolio/domain/carousel'
 import { slideNavigationTitle } from '@/components/portfolio/domain/routing'
 import {
-  hasBuildingWithAiTextSlide,
+  hasAboutMeTextSlide,
   isModalScreenshotSlide,
   type ProjectSlide,
 } from '@/components/portfolio/domain/slides'
@@ -40,6 +40,7 @@ import {
 import { CarouselPullBoundary, ProjectPanel } from './PortfolioMedia'
 import { ImageModal, type ModalTransitionRect } from './ImageModal'
 import { PortfolioLogoMark } from './PortfolioLogoMark'
+import { PortfolioDesktopIdentity } from './PortfolioDesktopIdentity'
 import { PortfolioStartScreen } from './PortfolioStartScreen'
 import { ProjectDescription } from './PortfolioText'
 import {
@@ -50,6 +51,8 @@ import type {
   PendingNavigation,
   PortfolioIntroPhase,
 } from '@/components/portfolio/runtime/types'
+import { usePortfolioTheme } from '@/components/portfolio/PortfolioThemeProvider'
+import { PortfolioThemeMenu } from '@/components/portfolio/PortfolioThemeMenu'
 
 const START_SCREEN_INDEX = -1
 const SECTION_NAV_HAS_SLIDES = [
@@ -74,7 +77,7 @@ const WIDE_LAYOUT_STYLE: WideLayoutStyle = {
     'min(calc(50vw - 2rem), calc(3.5rem + max(16rem, 24ch)))',
   '--portfolio-description-rail-width':
     'calc(var(--portfolio-description-rail-half-width) + var(--portfolio-description-rail-half-width))',
-  '--portfolio-control-gutter-width': '6rem',
+  '--portfolio-control-gutter-width': 'var(--portfolio-wide-content-inset)',
   '--portfolio-slide-navigation-reserved-height': `calc(${NAVIGATION_SVG_SIZE}px + max(2rem, env(safe-area-inset-bottom, 0px)))`,
   '--portfolio-screenshot-size':
     'min(calc(100dvh - var(--portfolio-slide-navigation-reserved-height)), calc(100vw - var(--portfolio-description-rail-width) - var(--portfolio-control-gutter-width)))',
@@ -162,6 +165,9 @@ export function PortfolioBrowserView({
   model: PortfolioBrowserViewModel
   refs: PortfolioBrowserViewRefs
 }) {
+  const { resolvedTheme } = usePortfolioTheme()
+  const topScreenColor =
+    resolvedTheme === 'dark' ? TOP_SCREEN_COLOR : 'hsl(0 0% 0%)'
   const activeProject =
     model.activeProjectIndex >= 0
       ? portfolioSlides[model.activeProjectIndex]
@@ -178,7 +184,7 @@ export function PortfolioBrowserView({
     activeSlide?.kind === 'screenshot' ? activeSlide.screenshot : undefined
   const activeProjectColor =
     model.activeProjectIndex >= 0
-      ? getProjectColor(model.activeProjectIndex)
+      ? getProjectColor(model.activeProjectIndex, resolvedTheme)
       : undefined
 
   const activeCarouselSlides = activeProject
@@ -260,13 +266,13 @@ export function PortfolioBrowserView({
       id: 'work',
       projectIndex: START_SCREEN_INDEX,
       title: 'Work',
-      color: TOP_SCREEN_COLOR,
+      color: topScreenColor,
     },
     ...portfolioSlides.map((project, projectIndex) => ({
       id: project.id,
       projectIndex,
       title: project.title,
-      color: getProjectColor(projectIndex),
+      color: getProjectColor(projectIndex, resolvedTheme),
     })),
   ]
   const shouldCenterSlideNavigation =
@@ -285,7 +291,7 @@ export function PortfolioBrowserView({
     <main
       ref={refs.keyboardSurfaceRef}
       tabIndex={-1}
-      className="relative isolate h-dvh overflow-hidden bg-black text-white outline-none"
+      className="portfolio-theme-surface relative isolate h-dvh overflow-hidden text-[var(--portfolio-ink)] outline-none"
     >
       <div
         ref={refs.verticalRef}
@@ -311,7 +317,9 @@ export function PortfolioBrowserView({
           isTouchInput={model.isTouchInput}
           isWideLayout={model.isWideLayout}
           isTouchLandscapeLayout={model.isTouchLandscapeLayout}
-          getProjectColor={getProjectColor}
+          getProjectColor={projectIndex =>
+            getProjectColor(projectIndex, resolvedTheme)
+          }
           setTitleRef={(index, node) => {
             refs.sectionMenuTitleRefs.current[index] = node
           }}
@@ -345,25 +353,25 @@ export function PortfolioBrowserView({
             project,
             model.activeSlideIndexes[projectIndex] ?? 0,
           )
-          const projectColor = getProjectColor(projectIndex)
+          const projectColor = getProjectColor(projectIndex, resolvedTheme)
           const isProjectActive =
             model.activeProjectIndex === projectIndex
           const projectContentColor =
             isProjectActive
-              ? getActiveProjectColor(projectIndex)
+              ? getActiveProjectColor(projectIndex, resolvedTheme)
               : projectColor
           const projectBodyColor = isProjectActive
-            ? '#fff'
-            : 'rgb(255 255 255 / 0.8)'
+            ? 'var(--portfolio-project-body-active)'
+            : 'var(--portfolio-project-body-resting)'
 
           return (
             <section
               key={project.id}
-              className="relative h-dvh snap-start snap-always overflow-hidden bg-black"
+              className="portfolio-theme-surface relative h-dvh snap-start snap-always overflow-hidden"
               aria-label={project.title}
               style={WIDE_LAYOUT_STYLE}
             >
-              {model.isWideLayout && !hasBuildingWithAiTextSlide(project) ? (
+              {model.isWideLayout && !hasAboutMeTextSlide(project) ? (
                 <ProjectDescription
                   project={project}
                   projectNumber={projectNumber}
@@ -372,7 +380,7 @@ export function PortfolioBrowserView({
                   projectContentColor={projectContentColor}
                   setDescriptionRef={actions.setDescriptionRef(project.slug)}
                   isWideLayout={model.isWideLayout}
-                  className={`absolute bottom-10 left-0 top-10 z-10 w-[var(--portfolio-description-rail-width)] bg-black/80 py-6 pl-[var(--portfolio-control-gutter-width)] pr-6 backdrop-blur-md transition-opacity duration-500 ease-out motion-reduce:transition-none ${
+                  className={`portfolio-theme-panel absolute bottom-10 left-0 top-10 z-10 w-[var(--portfolio-description-rail-width)] py-6 pl-[var(--portfolio-control-gutter-width)] pr-6 backdrop-blur-md transition-opacity duration-500 ease-out motion-reduce:transition-none ${
                     model.isInlineZoomPresentationActive &&
                     model.activeProjectIndex === projectIndex
                       ? 'pointer-events-none opacity-0'
@@ -449,6 +457,13 @@ export function PortfolioBrowserView({
         })}
       </div>
 
+      {model.isWideLayout ? (
+        <PortfolioDesktopIdentity
+          color={activeProjectColor ?? topScreenColor}
+          sourceRef={refs.verticalRef}
+        />
+      ) : null}
+
       {model.isTouchInput &&
       !model.isWideLayout &&
       !model.isTouchLandscapeLayout ? (
@@ -458,13 +473,22 @@ export function PortfolioBrowserView({
           style={{ width: MOBILE_SECTION_CONTENT_PADDING_LEFT }}
         >
           <PortfolioLogoMark
-            className="size-12 shrink-0 text-white"
+            className="size-12 shrink-0 text-[var(--portfolio-ink)]"
             style={{
               transform: `translateX(calc(0px - ${MOBILE_SECTION_NAVIGATION_OPTICAL_OFFSET}))`,
             }}
           />
         </div>
       ) : null}
+
+      <PortfolioThemeMenu
+        hidden={
+          model.isModalLayerActive || model.isInlineZoomPresentationActive
+        }
+        isTouchInput={model.isTouchInput}
+        isTouchLandscapeLayout={model.isTouchLandscapeLayout}
+        isWideLayout={model.isWideLayout}
+      />
 
       {model.isWideLayout || model.isTouchInput ? (
         <SectionNavigation
@@ -525,7 +549,8 @@ export function PortfolioBrowserView({
             'height': '52px',
             'overflow': 'visible',
             'zIndex': model.isModalLayerActive ? 60 : 40,
-            '--project-color': activeProjectColor ?? getProjectColor(0),
+            '--project-color':
+              activeProjectColor ?? getProjectColor(0, resolvedTheme),
             '--portfolio-modal-indicator-translate-x':
               'calc(3rem - var(--portfolio-description-rail-half-width))',
           } as ProjectColorStyle &
@@ -554,7 +579,7 @@ export function PortfolioBrowserView({
             }))}
             activeIndex={activeNavigationIndex}
             pendingIndex={pendingNavigationIndex}
-            color={activeProjectColor ?? getProjectColor(0)}
+            color={activeProjectColor ?? getProjectColor(0, resolvedTheme)}
             onSelect={navigationIndex => {
               if (!activeProject) {
                 return
@@ -621,17 +646,20 @@ export function PortfolioBrowserView({
         icon={faXmark}
         iconClassName="size-7"
         ring
-        className={`fixed right-5 top-5 z-[70] isolate size-11 bg-black text-[var(--project-color)] transition-[transform,opacity] duration-300 motion-reduce:transition-none ${
+        className={`portfolio-theme-surface fixed right-5 top-5 z-[70] isolate size-11 text-[var(--project-color)] transition-[transform,opacity,background-color] duration-300 motion-reduce:transition-none ${
           model.isInlineZoomPresentationActive
             ? 'translate-y-0 rotate-0 opacity-100'
             : 'pointer-events-none -translate-y-16 rotate-90 opacity-0'
         }`}
         style={
           {
-            '--project-color': activeProjectColor ?? getProjectColor(0),
+            '--project-color':
+              activeProjectColor ?? getProjectColor(0, resolvedTheme),
             'position': 'fixed',
             'top': 'max(1.25rem, env(safe-area-inset-top, 0px))',
-            'right': 'max(1.25rem, env(safe-area-inset-right, 0px))',
+            'right': model.isWideLayout
+              ? 'calc(1.75rem + env(safe-area-inset-right, 0px))'
+              : 'max(1.25rem, env(safe-area-inset-right, 0px))',
           } as ProjectColorStyle
         }
         aria-label="Reset image zoom"
@@ -645,7 +673,7 @@ export function PortfolioBrowserView({
         <ImageModal
           indicatorMotionControllerRef={refs.slideIndicatorMotionControllerRef}
           project={activeProject}
-          projectColor={activeProjectColor ?? getProjectColor(0)}
+          projectColor={activeProjectColor ?? getProjectColor(0, resolvedTheme)}
           screenshot={activeScreenshot}
           screenshots={activeModalScreenshots}
           activeScreenshotIndex={activeModalScreenshotIndex}
@@ -667,7 +695,7 @@ export function PortfolioBrowserView({
         ref={refs.curtainRef}
         data-portfolio-loading-curtain
         data-phase={model.introPhase}
-        className={`fixed inset-0 z-[100] grid place-items-center bg-black ${
+        className={`portfolio-theme-surface fixed inset-0 z-[100] grid place-items-center ${
           model.introPhase === 'ready'
             ? 'pointer-events-none'
             : 'pointer-events-auto'
@@ -680,14 +708,14 @@ export function PortfolioBrowserView({
           }`}
           aria-hidden={model.introPhase === 'error' ? undefined : true}
         >
-          <p className="text-lg font-light leading-relaxed text-white/80">
+          <p className="text-lg font-light leading-relaxed text-[var(--portfolio-ink-80)]">
             Portfolio media didn&apos;t finish loading.
           </p>
           <CircularIconButton
             icon={faRotateRight}
             iconClassName="size-6"
             ring
-            className="relative size-11 bg-black text-white"
+            className="portfolio-theme-surface relative size-11 text-[var(--portfolio-ink)]"
             aria-label="Reload page"
             title="Reload page"
             onClick={() => window.location.reload()}

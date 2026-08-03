@@ -85,7 +85,7 @@ export function ImageModal({
       >
         <div
           ref={motion.backdropRef}
-          className="fixed inset-0 bg-black"
+          className="portfolio-theme-surface fixed inset-0"
           aria-hidden="true"
         />
         <div
@@ -149,7 +149,7 @@ export function ImageModal({
         iconClassName="size-7"
         ring
         data-portfolio-modal-close
-        className={`fixed right-5 top-5 z-[70] isolate size-11 bg-black text-[var(--project-color)] ${
+        className={`portfolio-theme-surface fixed right-5 top-5 z-[70] isolate size-11 text-[var(--project-color)] ${
           isClosing ? 'pointer-events-none' : ''
         }`}
         style={

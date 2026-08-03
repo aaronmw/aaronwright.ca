@@ -1,6 +1,6 @@
 import type { PortfolioProject } from '@/lib/portfolio'
 import type { PortfolioSelection, ProjectSlide } from './slides'
-import { isBuildingWithAiTextSlide } from './slides'
+import { isAboutMeTextSlide } from './slides'
 
 export type PortfolioRouteState = PortfolioSelection & {
   modalOpen: boolean
@@ -47,7 +47,7 @@ export function parsePortfolioRoute(
   const modalOpen =
     new URLSearchParams(search).get('modal') === 'image' &&
     slide.kind === 'screenshot' &&
-    !isBuildingWithAiTextSlide(project, slide)
+    !isAboutMeTextSlide(project, slide)
 
   return { projectIndex, slideIndex, modalOpen }
 }

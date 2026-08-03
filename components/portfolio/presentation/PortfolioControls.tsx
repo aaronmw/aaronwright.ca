@@ -33,10 +33,10 @@ function KeyboardKey({
   return (
     <kbd
       aria-label={ariaLabel}
-      className="relative mx-0.5 inline-grid h-[1.3125rem] min-w-[1.3125rem] place-items-center rounded-sm bg-white/40 px-[0.1875rem] pb-[0.1875rem] pt-[0.09375rem] align-middle"
+      className="relative mx-0.5 inline-grid h-[1.3125rem] min-w-[1.3125rem] place-items-center rounded-sm bg-[var(--portfolio-keycap-shadow)] px-[0.1875rem] pb-[0.1875rem] pt-[0.09375rem] align-middle"
     >
       <span
-        className={`grid h-[0.9375rem] min-w-[0.9375rem] -translate-y-px place-items-center rounded-xs bg-white text-[0.5rem] font-black leading-none text-black ${
+        className={`grid h-[0.9375rem] min-w-[0.9375rem] -translate-y-px place-items-center rounded-xs bg-[var(--portfolio-inverse-surface)] text-[0.5rem] font-black leading-none text-[var(--portfolio-inverse-ink)] ${
           label ? 'px-[0.28125rem]' : 'px-0'
         }`}
         aria-hidden={ariaLabel ? true : undefined}
@@ -110,7 +110,7 @@ export function PortfolioHelperMessage({
       role="status"
       aria-live="polite"
       aria-hidden={isVisible ? undefined : true}
-      className="pointer-events-none fixed bottom-5 right-5 z-[110] max-w-[calc(100vw-2.5rem)] translate-y-16 rounded-full bg-white/10 px-4 py-2 text-sm font-normal leading-tight text-white opacity-0 backdrop-blur-md motion-reduce:translate-y-0"
+      className="pointer-events-none fixed bottom-5 right-5 z-[110] max-w-[calc(100vw-2.5rem)] translate-y-16 rounded-full bg-[var(--portfolio-helper-surface)] px-4 py-2 text-sm font-normal leading-tight text-[var(--portfolio-ink)] opacity-0 backdrop-blur-md motion-reduce:translate-y-0"
       style={{
         right: 'max(1.25rem, env(safe-area-inset-right, 0px))',
         bottom: 'max(1.25rem, env(safe-area-inset-bottom, 0px))',
@@ -211,7 +211,10 @@ export function NavigationActiveRing({
             }`}
             style={{ backgroundColor: 'currentColor' }}
           >
-            <span ref={tooltip.textElementRef} className="text-black" />
+            <span
+              ref={tooltip.textElementRef}
+              className="text-[var(--portfolio-inverse-ink)]"
+            />
           </div>
         ) : null}
       </div>
@@ -260,7 +263,7 @@ export function CircularIconButton({
             <FontAwesomeIcon
               ref={iconRef}
               icon={icon}
-              className={`${iconClassName} drop-shadow-[1px_1px_0_black]`}
+              className={`${iconClassName} portfolio-icon-shadow`}
               stroke={iconStrokeWidth ? 'currentColor' : undefined}
               strokeWidth={iconStrokeWidth}
               strokeLinejoin={iconStrokeWidth ? 'round' : undefined}
@@ -277,7 +280,7 @@ export function CircularIconButton({
         <FontAwesomeIcon
           ref={iconRef}
           icon={icon}
-          className={`relative z-10 ${iconClassName} drop-shadow-[1px_1px_0_black]`}
+          className={`relative z-10 ${iconClassName} portfolio-icon-shadow`}
           stroke={iconStrokeWidth ? 'currentColor' : undefined}
           strokeWidth={iconStrokeWidth}
           strokeLinejoin={iconStrokeWidth ? 'round' : undefined}

@@ -99,7 +99,7 @@ export function SlideNavigationView({
                   }
                   cx={0}
                   cy={NAVIGATION_SVG_CENTER}
-                  fill="white"
+                  fill="var(--portfolio-ink)"
                   className={`transition-opacity duration-200 ease-out motion-reduce:transition-none ${
                     targetIndex < 0 || targetIndex === model.visualActiveIndex
                       ? 'opacity-100'
@@ -112,7 +112,7 @@ export function SlideNavigationView({
                     cy={NAVIGATION_SVG_CENTER}
                     r={7}
                     fill="none"
-                    stroke="white"
+                    stroke="var(--portfolio-ink)"
                     strokeWidth={2}
                     strokeDasharray="20 24"
                     className="portfolio-pending-ring"

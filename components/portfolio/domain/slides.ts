@@ -82,23 +82,22 @@ export function hasProjectScreenshots(project: PortfolioProject) {
   return project.screenshots.length > 0
 }
 
-export function isBuildingWithAiTextScreenshot(
+export function isAboutMeTextScreenshot(
   project: PortfolioProject,
   screenshot: PortfolioScreenshot,
 ) {
   return (
-    project.id === 'building-with-ai' &&
-    screenshot.id === 'building-with-ai-home-page'
+    project.id === 'about-me' && screenshot.id === 'about-me-overview'
   )
 }
 
-export function isBuildingWithAiTextSlide(
+export function isAboutMeTextSlide(
   project: PortfolioProject,
   slide: ProjectSlide,
 ) {
   return (
     slide.kind === 'screenshot' &&
-    isBuildingWithAiTextScreenshot(project, slide.screenshot)
+    isAboutMeTextScreenshot(project, slide.screenshot)
   )
 }
 
@@ -107,13 +106,13 @@ export function isModalScreenshotSlide(
   slide: ProjectSlide,
 ): slide is Extract<ProjectSlide, { kind: 'screenshot' }> {
   return (
-    slide.kind === 'screenshot' && !isBuildingWithAiTextSlide(project, slide)
+    slide.kind === 'screenshot' && !isAboutMeTextSlide(project, slide)
   )
 }
 
-export function hasBuildingWithAiTextSlide(project: PortfolioProject) {
+export function hasAboutMeTextSlide(project: PortfolioProject) {
   return project.screenshots.some(screenshot =>
-    isBuildingWithAiTextScreenshot(project, screenshot),
+    isAboutMeTextScreenshot(project, screenshot),
   )
 }
 
@@ -127,7 +126,7 @@ export function modalMediaKey(screenshot: PortfolioScreenshot) {
 
 export function getProjectMediaScreenshots(project: PortfolioProject) {
   return project.screenshots.filter(
-    screenshot => !isBuildingWithAiTextScreenshot(project, screenshot),
+    screenshot => !isAboutMeTextScreenshot(project, screenshot),
   )
 }
 
@@ -138,7 +137,7 @@ export function getSlideMediaKey(
 ) {
   if (
     slide.kind === 'screenshot' &&
-    !isBuildingWithAiTextSlide(project, slide)
+    !isAboutMeTextSlide(project, slide)
   ) {
     return carouselMediaKey(slide.screenshot)
   }

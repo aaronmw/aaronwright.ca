@@ -5,7 +5,7 @@ import { portfolioSlides } from '@/lib/portfolio'
 import { pageTitle } from '@/components/portfolio/domain/routing'
 import {
   getSlideMediaKey,
-  isBuildingWithAiTextScreenshot,
+  isAboutMeTextScreenshot,
   modalMediaKey,
 } from '@/components/portfolio/domain/slides'
 import { usePortfolioMediaReadiness } from '@/components/portfolio/usePortfolioMediaReadiness'
@@ -128,7 +128,7 @@ export function PortfolioBrowser({
     !(
       activeProject &&
       activeScreenshot &&
-      isBuildingWithAiTextScreenshot(activeProject, activeScreenshot)
+      isAboutMeTextScreenshot(activeProject, activeScreenshot)
     )
   const isModalPresentationActive = shouldShowModal && !isModalClosing
   const isModalLayerActive = shouldShowModal

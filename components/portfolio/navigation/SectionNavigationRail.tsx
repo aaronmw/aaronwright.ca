@@ -208,7 +208,10 @@ export function SectionNavigationRail({
               <g
                 ref={(node) => actions.onArrowGroupRef(side, itemIndex, node)}
                 data-portfolio-section-nav-arrow={itemIndex}
-                style={{ filter: 'drop-shadow(1px 1px 0 black)' }}
+                style={{
+                  filter:
+                    'drop-shadow(1px 1px 0 var(--portfolio-navigation-shadow))',
+                }}
               >
                 {item.pending ? (
                   <circle
@@ -322,7 +325,7 @@ export function SectionNavigationRail({
       >
         <span
           ref={(node) => actions.onTooltipTextRef(side, node)}
-          className="text-black"
+          className="text-[var(--portfolio-inverse-ink)]"
         />
       </div>
     </div>
