@@ -4,6 +4,7 @@ export type PortfolioScreenshot = {
   src: string;
   alt: string;
   animated?: boolean;
+  clipToPhoneFrame?: boolean;
 };
 
 export type PortfolioProject = {
@@ -305,58 +306,65 @@ I've learned a LOT building this game over and over, including the architectural
 `,
     screenshots: [
       {
+        id: 'nextphrase-intro',
+        slug: 'intro',
+        src: '/portfolio/nextphrase/intro-video.webm',
+        alt: '1 of 10: NextPhrase app walkthrough',
+        clipToPhoneFrame: true,
+      },
+      {
         id: 'nextphrase-home',
         slug: 'home',
         src: '/portfolio/nextphrase/nextphrase--1.png',
-        alt: '1 of 9: NextPhrase home screen',
+        alt: '2 of 10: NextPhrase home screen',
       },
       {
         id: 'nextphrase-round-start',
         slug: 'round-start',
         src: '/portfolio/nextphrase/nextphrase--2.png',
-        alt: '2 of 9: NextPhrase team scoreboard and round-start screen',
+        alt: '3 of 10: NextPhrase team scoreboard and round-start screen',
       },
       {
         id: 'nextphrase-in-game',
         slug: 'in-game',
         src: '/portfolio/nextphrase/nextphrase--3.png',
-        alt: '3 of 9: NextPhrase live round with a phrase and pass control',
+        alt: '4 of 10: NextPhrase live round with a phrase and pass control',
       },
       {
         id: 'nextphrase-hearts-lost',
         slug: 'hearts-lost',
         src: '/portfolio/nextphrase/nextphrase--4.png',
-        alt: '4 of 9: NextPhrase team screen with both teams missing hearts',
+        alt: '5 of 10: NextPhrase team screen with both teams missing hearts',
       },
       {
         id: 'nextphrase-winner',
         slug: 'winner',
         src: '/portfolio/nextphrase/nextphrase--5.png',
-        alt: '5 of 9: NextPhrase winner screen for Team A',
+        alt: '6 of 10: NextPhrase winner screen for Team A',
       },
       {
         id: 'nextphrase-instructions',
         slug: 'instructions',
         src: '/portfolio/nextphrase/nextphrase--6.png',
-        alt: '6 of 9: NextPhrase how-to-play seating instructions',
+        alt: '7 of 10: NextPhrase how-to-play seating instructions',
       },
       {
         id: 'nextphrase-instructions-passing',
         slug: 'instructions-passing',
         src: '/portfolio/nextphrase/nextphrase--7.png',
-        alt: '7 of 9: NextPhrase how-to-play phrase-passing instructions',
+        alt: '8 of 10: NextPhrase how-to-play phrase-passing instructions',
       },
       {
         id: 'nextphrase-instructions-winning',
         slug: 'instructions-winning',
         src: '/portfolio/nextphrase/nextphrase--8.png',
-        alt: '8 of 9: NextPhrase how-to-play winning instructions',
+        alt: '9 of 10: NextPhrase how-to-play winning instructions',
       },
       {
         id: 'nextphrase-options',
         slug: 'options',
         src: '/portfolio/nextphrase/nextphrase--9.png',
-        alt: '9 of 9: NextPhrase options screen',
+        alt: '10 of 10: NextPhrase options screen',
       },
     ],
   },

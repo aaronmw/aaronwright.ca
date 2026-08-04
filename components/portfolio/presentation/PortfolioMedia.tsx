@@ -385,7 +385,7 @@ export function ScreenshotMedia({
   };
 
   if (isVideoScreenshot(screenshot)) {
-    return (
+    const video = (
       <video
         ref={setMediaRef}
         src={screenshot.src}
@@ -397,8 +397,30 @@ export function ScreenshotMedia({
         onDragStart={(event) => event.preventDefault()}
         playsInline
         preload={priority ? 'auto' : 'metadata'}
-        className={`absolute inset-0 h-full w-full select-none [padding:var(--portfolio-media-padding,1.5rem)] ${className}`}
+        className={
+          screenshot.clipToPhoneFrame
+            ? 'block h-auto w-auto max-h-full max-w-full select-none'
+            : `absolute inset-0 h-full w-full select-none [padding:var(--portfolio-media-padding,1.5rem)] ${className}`
+        }
+        style={
+          screenshot.clipToPhoneFrame
+            ? {
+                clipPath:
+                  'inset(0 1% round 18% 18% 20% 20% / 9% 9% 10% 10%)',
+              }
+            : undefined
+        }
       />
+    );
+
+    return screenshot.clipToPhoneFrame ? (
+      <div
+        className={`absolute inset-0 flex items-center justify-center [padding:var(--portfolio-media-padding,1.5rem)] ${className}`}
+      >
+        {video}
+      </div>
+    ) : (
+      video
     );
   }
 
