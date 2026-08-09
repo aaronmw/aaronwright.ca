@@ -1,7 +1,15 @@
 import Image from 'next/image';
-import type { CSSProperties, ReactNode } from 'react';
+import type {
+  CSSProperties,
+  MouseEvent as ReactMouseEvent,
+  ReactNode,
+} from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowLeft, faArrowRight } from '@fortawesome/free-solid-svg-icons';
+import {
+  faArrowLeft,
+  faArrowRight,
+  faRotateRight,
+} from '@fortawesome/free-solid-svg-icons';
 import type {
   PortfolioProject,
   PortfolioScreenshot,
@@ -25,6 +33,7 @@ import {
   AboutMeTextPanel,
   ProjectDescription,
 } from './PortfolioText';
+import { CircularIconButton } from './PortfolioControls';
 
 const CAROUSEL_MEDIA_CLASS =
   'object-contain transition-[filter,padding] [transition-duration:1000ms,500ms] [transition-timing-function:ease-in-out,var(--ease-out)] motion-reduce:transition-none';
@@ -55,6 +64,7 @@ function ZoomableScreenshot({
   restingMediaPadding,
   presentationActive,
   onPresentationChange,
+  restartable,
   children,
 }: {
   active: boolean;
@@ -65,6 +75,7 @@ function ZoomableScreenshot({
   restingMediaPadding: string;
   presentationActive: boolean;
   onPresentationChange: (screenshotId: string, presented: boolean) => void;
+  restartable?: boolean;
   children: ReactNode;
 }) {
   const {
@@ -85,13 +96,27 @@ function ZoomableScreenshot({
     isLocallyPresented ||
     (presentationActive && (expandToViewport || active));
   const isFixedViewportPresentation = isPresented && !expandToViewport;
+  const handleRestart = (event: ReactMouseEvent<HTMLButtonElement>) => {
+    if (event.detail > 1) {
+      return;
+    }
+
+    const video = surfaceRef.current?.querySelector('video');
+
+    if (!video) {
+      return;
+    }
+
+    video.currentTime = 0;
+    void video.play().catch(() => undefined);
+  };
 
   return (
     <div
       ref={surfaceRef}
       data-portfolio-screenshot-id={screenshotId}
       data-portfolio-inline-zoomed={isLocallyPresented ? 'true' : 'false'}
-      className={`relative overflow-hidden border border-transparent bg-[var(--portfolio-surface)] transition-[width,height,right,top,left,background-color] duration-500 ease-out motion-reduce:transition-none ${className} ${cursorClass} ${
+      className={`group/restart relative overflow-hidden border border-transparent bg-[var(--portfolio-surface)] transition-[width,height,right,top,left,background-color] duration-500 ease-out motion-reduce:transition-none ${className} ${cursorClass} ${
         concealed ? 'invisible' : ''
       }`}
       style={
@@ -155,6 +180,16 @@ function ZoomableScreenshot({
       >
         {children}
       </div>
+      {active && restartable ? (
+        <CircularIconButton
+          icon={faRotateRight}
+          iconClassName="size-14"
+          aria-label="Restart animation"
+          title="Restart animation"
+          onClick={handleRestart}
+          className="pointer-events-none absolute left-1/2 top-1/2 z-20 size-[88px] -translate-x-1/2 -translate-y-1/2 scale-[0.96] bg-white/10 text-black/50 opacity-0 backdrop-blur transition-[opacity,scale,color] duration-150 ease-out hover:text-black focus-visible:pointer-events-auto focus-visible:scale-100 focus-visible:text-black focus-visible:opacity-100 [@media(hover:hover)]:group-hover/restart:pointer-events-auto [@media(hover:hover)]:group-hover/restart:scale-100 [@media(hover:hover)]:group-hover/restart:opacity-100 motion-reduce:scale-100 motion-reduce:transition-none"
+        />
+      ) : null}
     </div>
   );
 }
@@ -333,6 +368,7 @@ export function ProjectPanel({
             restingMediaPadding={restingMediaPadding}
             presentationActive={inlineZoomPresentationActive}
             onPresentationChange={onInlinePresentationChange}
+            restartable={slide.screenshot.restartable}
             className={
               isWideLayout
                 ? 'col-span-full aspect-square h-[var(--portfolio-screenshot-size)] max-h-none w-[var(--portfolio-screenshot-size)] max-w-none self-center justify-self-center'

@@ -5,6 +5,7 @@ export type PortfolioScreenshot = {
   alt: string;
   animated?: boolean;
   clipToPhoneFrame?: boolean;
+  restartable?: boolean;
 };
 
 export type PortfolioProject = {
@@ -157,32 +158,38 @@ There are few things from which I derive more satisfaction than my Figma plugins
         id: 'aarons-toolbox-overview',
         slug: 'overview',
         src: '/portfolio/aarons-toolbox/aarons-toolbox-community-preview.png',
-        alt: "1 of 5: Aaron's Toolbox overview",
+        alt: "1 of 6: Aaron's Toolbox overview",
         animated: true,
       },
       {
         id: 'normalizer',
         slug: 'normalizer',
         src: '/portfolio/aarons-toolbox/store-images--normalizer.png',
-        alt: '2 of 5: Normalizer',
+        alt: '2 of 6: Normalizer',
       },
       {
         id: 'randomizer',
         slug: 'randomizer',
         src: '/portfolio/aarons-toolbox/store-images--randomizer.png',
-        alt: '3 of 5: Randomizer',
+        alt: '3 of 6: Randomizer',
       },
       {
         id: 'componentizer',
         slug: 'componentizer',
         src: '/portfolio/aarons-toolbox/store-images--componentizer.png',
-        alt: '4 of 5: Componentizer',
+        alt: '4 of 6: Componentizer',
+      },
+      {
+        id: 'distributor',
+        slug: 'distributor',
+        src: '/portfolio/aarons-toolbox/store-images--distributor.png',
+        alt: '5 of 6: Distributor',
       },
       {
         id: 'selection-saver',
         slug: 'selection-saver',
         src: '/portfolio/aarons-toolbox/store-images--selection-saver.png',
-        alt: '5 of 5: Selection Saver',
+        alt: '6 of 6: Selection Saver',
       },
     ],
   },
@@ -311,6 +318,7 @@ I've learned a LOT building this game over and over, including the architectural
         src: '/portfolio/nextphrase/intro-video.webm',
         alt: '1 of 10: NextPhrase app walkthrough',
         clipToPhoneFrame: true,
+        restartable: true,
       },
       {
         id: 'nextphrase-home',
