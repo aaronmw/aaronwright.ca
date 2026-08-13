@@ -157,9 +157,8 @@ There are few things from which I derive more satisfaction than my Figma plugins
       {
         id: 'aarons-toolbox-overview',
         slug: 'overview',
-        src: '/portfolio/aarons-toolbox/aarons-toolbox-community-preview.png',
+        src: '/portfolio/aarons-toolbox/aarons-toolbox-community-preview.mp4',
         alt: "1 of 6: Aaron's Toolbox overview",
-        animated: true,
       },
       {
         id: 'normalizer',
