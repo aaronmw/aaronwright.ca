@@ -1,4 +1,5 @@
 module.exports = {
+  allowedDevOrigins: ['aaronwright-dot-ca.localhost'],
   reactStrictMode: false,
   reactCompiler: true,
   async redirects() {
