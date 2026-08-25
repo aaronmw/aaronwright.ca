@@ -33,9 +33,17 @@ function plainTextFromMarkdown(markdown: string) {
 }
 
 export function generateStaticParams() {
-  return portfolioSlides.flatMap((project) => [
+  return portfolioSlides.flatMap(project => [
     { workSlug: project.slug, screenshotSlug: [] },
-    ...project.screenshots.map((screenshot) => ({
+    ...(project.cover_image
+      ? [
+          {
+            workSlug: project.slug,
+            screenshotSlug: [project.cover_image.slug],
+          },
+        ]
+      : []),
+    ...project.screenshots.map(screenshot => ({
       workSlug: project.slug,
       screenshotSlug: [screenshot.slug],
     })),
@@ -68,7 +76,10 @@ export async function generateMetadata({ params }: SlidePageProps) {
   };
 }
 
-export default async function SlidePage({ params, searchParams }: SlidePageProps) {
+export default async function SlidePage({
+  params,
+  searchParams,
+}: SlidePageProps) {
   const [{ workSlug, screenshotSlug = [] }, { modal }] = await Promise.all([
     params,
     searchParams,

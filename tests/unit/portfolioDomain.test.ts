@@ -79,6 +79,8 @@ describe('portfolio project order', () => {
   it('uses the curated section sequence', () => {
     expect(portfolioSlides.map(project => project.slug)).toEqual([
       'about-me',
+      'loopio',
+      'freshbooks',
       'informal-systems',
       'aarons-toolbox',
       'nextphrase',

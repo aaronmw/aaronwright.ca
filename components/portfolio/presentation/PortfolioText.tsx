@@ -1,36 +1,32 @@
-import type {
-  AnchorHTMLAttributes,
-  CSSProperties,
-  HTMLAttributes,
-} from 'react';
-import ReactMarkdown from 'react-markdown';
-import rehypeRaw from 'rehype-raw';
-import remarkGfm from 'remark-gfm';
-import type { Components } from 'react-markdown';
-import type { PortfolioProject } from '@/lib/portfolio';
-import { OverscrollIndicator } from '@/components/OverscrollIndicator';
+import type { AnchorHTMLAttributes, CSSProperties, HTMLAttributes } from 'react'
+import ReactMarkdown from 'react-markdown'
+import rehypeRaw from 'rehype-raw'
+import remarkGfm from 'remark-gfm'
+import type { Components } from 'react-markdown'
+import type { PortfolioProject } from '@/lib/portfolio'
+import { OverscrollIndicator } from '@/components/OverscrollIndicator'
 
 type ProjectColorStyle = CSSProperties & {
-  '--project-body-color': string;
-  '--project-content-color': string;
-  '--project-color': string;
-};
+  '--project-body-color': string
+  '--project-content-color': string
+  '--project-color': string
+}
 
 type MarkdownLinkProps = AnchorHTMLAttributes<HTMLAnchorElement> & {
-  node?: unknown;
-};
+  node?: unknown
+}
 
 type MarkdownHeadingProps = HTMLAttributes<HTMLHeadingElement> & {
-  node?: unknown;
-};
+  node?: unknown
+}
 
-type MarkdownHeadingTag = 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
+type MarkdownHeadingTag = 'h2' | 'h3' | 'h4' | 'h5' | 'h6'
 
 const INLINE_MARKDOWN_COMPONENTS = {
   p({ children }) {
-    return <>{children}</>;
+    return <>{children}</>
   },
-} satisfies Components;
+} satisfies Components
 
 const PORTFOLIO_MARKDOWN_COMPONENTS = {
   a: MarkdownLink,
@@ -40,23 +36,23 @@ const PORTFOLIO_MARKDOWN_COMPONENTS = {
   h4: createMarkdownHeading('h5'),
   h5: createMarkdownHeading('h6'),
   h6: createMarkdownHeading('h6'),
-} satisfies Components;
+} satisfies Components
 
 function isExternalSiteHref(href?: string) {
   if (!href) {
-    return false;
+    return false
   }
 
   try {
-    const url = new URL(href, 'https://aaronwright.ca');
+    const url = new URL(href, 'https://aaronwright.ca')
 
     return (
       (url.protocol === 'http:' || url.protocol === 'https:') &&
       url.hostname !== 'aaronwright.ca' &&
       url.hostname !== 'www.aaronwright.ca'
-    );
+    )
   } catch {
-    return false;
+    return false
   }
 }
 
@@ -66,7 +62,7 @@ function MarkdownLink({
   node: _node,
   ...props
 }: MarkdownLinkProps) {
-  const isExternalSite = isExternalSiteHref(href);
+  const isExternalSite = isExternalSiteHref(href)
 
   return (
     <a
@@ -77,15 +73,15 @@ function MarkdownLink({
     >
       {children}
     </a>
-  );
+  )
 }
 
 function createMarkdownHeading(Tag: MarkdownHeadingTag) {
   function MarkdownHeading({ node: _node, ...props }: MarkdownHeadingProps) {
-    return <Tag {...props} />;
+    return <Tag {...props} />
   }
 
-  return MarkdownHeading;
+  return MarkdownHeading
 }
 
 export function SectionTitle({
@@ -93,9 +89,9 @@ export function SectionTitle({
   color,
   elementRef,
 }: {
-  children: string;
-  color: string;
-  elementRef?: (node: HTMLSpanElement | null) => void;
+  children: string
+  color: string
+  elementRef?: (node: HTMLSpanElement | null) => void
 }) {
   return (
     <span
@@ -105,15 +101,15 @@ export function SectionTitle({
     >
       {children}
     </span>
-  );
+  )
 }
 
 export function SectionBlurb({
   children,
   className,
 }: {
-  children: string;
-  className?: string;
+  children: string
+  className?: string
 }) {
   return (
     <span
@@ -131,7 +127,7 @@ export function SectionBlurb({
         {children}
       </ReactMarkdown>
     </span>
-  );
+  )
 }
 
 export function ProjectDescription({
@@ -143,23 +139,33 @@ export function ProjectDescription({
   setDescriptionRef,
   isWideLayout,
   className,
+  layoutStyle,
+  presence,
 }: {
-  project: PortfolioProject;
-  projectNumber: string;
-  projectColor: string;
-  projectBodyColor: string;
-  projectContentColor: string;
-  setDescriptionRef: (node: HTMLDivElement | null) => void;
-  isWideLayout: boolean;
-  className?: string;
+  project: PortfolioProject
+  projectNumber: string
+  projectColor: string
+  projectBodyColor: string
+  projectContentColor: string
+  setDescriptionRef: (node: HTMLDivElement | null) => void
+  isWideLayout: boolean
+  className?: string
+  layoutStyle?: CSSProperties
+  presence?: 'visible' | 'concealed'
 }) {
   return (
     <div
-      className={`portfolio-project-content-theme grid min-h-0 min-w-0 grid-rows-[auto_minmax(0,1fr)] pr-1 ${
+      data-portfolio-presence={presence}
+      className={`portfolio-project-content-theme ${
+        presence
+          ? 'portfolio-presence-transition portfolio-left-rail-transition'
+          : ''
+      } grid min-h-0 min-w-0 grid-rows-[auto_minmax(0,1fr)] pr-1 ${
         className ?? ''
       }`}
       style={
         {
+          ...layoutStyle,
           '--project-color': projectColor,
           '--project-body-color': projectBodyColor,
           '--project-content-color': projectContentColor,
@@ -210,7 +216,7 @@ export function ProjectDescription({
         ) : null}
       </div>
     </div>
-  );
+  )
 }
 
 export function AboutMeTextPanel({
@@ -222,13 +228,13 @@ export function AboutMeTextPanel({
   isWideLayout,
   setDescriptionRef,
 }: {
-  project: PortfolioProject;
-  projectNumber: string;
-  projectColor: string;
-  projectBodyColor: string;
-  projectContentColor: string;
-  isWideLayout: boolean;
-  setDescriptionRef: (node: HTMLDivElement | null) => void;
+  project: PortfolioProject
+  projectNumber: string
+  projectColor: string
+  projectBodyColor: string
+  projectContentColor: string
+  isWideLayout: boolean
+  setDescriptionRef: (node: HTMLDivElement | null) => void
 }) {
   return (
     <section
@@ -270,7 +276,51 @@ export function AboutMeTextPanel({
         <PortfolioMarkdown>{project.descriptionMarkdown}</PortfolioMarkdown>
       </OverscrollIndicator>
     </section>
-  );
+  )
+}
+
+export function SlideDescription({
+  children,
+  projectColor,
+  projectBodyColor,
+  projectContentColor,
+  hidden,
+  transitionState = 'visible',
+}: {
+  children: string
+  projectColor: string
+  projectBodyColor: string
+  projectContentColor: string
+  hidden: boolean
+  transitionState?: 'entering' | 'visible' | 'exiting'
+}) {
+  const isConcealed = hidden || transitionState !== 'visible'
+  const renderedTransitionState = hidden ? 'hidden' : transitionState
+
+  return (
+    <div
+      data-portfolio-slide-description
+      data-transition-state={renderedTransitionState}
+      className="portfolio-project-content-theme portfolio-presence-transition portfolio-slide-description-transition portfolio-theme-panel portfolio-themed-scrollbar fixed z-30 max-h-[50dvh] w-[min(60ch,calc(100vw-3rem))] overflow-y-auto border border-[var(--portfolio-hairline)] p-5 shadow-[0_1.5rem_4rem_rgb(0_0_0/0.3)] backdrop-blur-xl sm:p-7"
+      aria-hidden={isConcealed ? true : undefined}
+      inert={isConcealed}
+      style={
+        {
+          '--project-color': projectColor,
+          '--project-body-color': projectBodyColor,
+          '--project-content-color': projectContentColor,
+          'right':
+            'max(1.5rem, calc(env(safe-area-inset-right, 0px) + 1.5rem))',
+          'bottom':
+            'calc(var(--portfolio-slide-navigation-reserved-height, 5.25rem) + 1rem)',
+        } as ProjectColorStyle
+      }
+    >
+      <div className="portfolio-markdown prose max-w-none text-base font-light leading-relaxed sm:text-lg [&>:last-child]:mb-0">
+        <PortfolioMarkdown>{children}</PortfolioMarkdown>
+      </div>
+    </div>
+  )
 }
 
 function ProjectHeading({
@@ -279,10 +329,10 @@ function ProjectHeading({
   projectColor,
   isWideLayout,
 }: {
-  project: PortfolioProject;
-  projectNumber: string;
-  projectColor: string;
-  isWideLayout: boolean;
+  project: PortfolioProject
+  projectNumber: string
+  projectColor: string
+  isWideLayout: boolean
 }) {
   return (
     <div>
@@ -303,7 +353,7 @@ function ProjectHeading({
         {project.title}
       </h1>
     </div>
-  );
+  )
 }
 
 function PortfolioMarkdown({ children }: { children: string }) {
@@ -315,5 +365,5 @@ function PortfolioMarkdown({ children }: { children: string }) {
     >
       {children}
     </ReactMarkdown>
-  );
+  )
 }

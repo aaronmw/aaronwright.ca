@@ -10,10 +10,7 @@ import {
   faArrowRight,
   faRotateRight,
 } from '@fortawesome/free-solid-svg-icons';
-import type {
-  PortfolioProject,
-  PortfolioScreenshot,
-} from '@/lib/portfolio';
+import type { PortfolioProject, PortfolioScreenshot } from '@/lib/portfolio';
 import {
   MOBILE_SECTION_CONTENT_PADDING_LEFT,
   MOBILE_SECTION_CONTENT_PADDING_RIGHT,
@@ -29,10 +26,7 @@ import {
   modalMediaKey,
   type ProjectSlide,
 } from '@/components/portfolio/domain/slides';
-import {
-  AboutMeTextPanel,
-  ProjectDescription,
-} from './PortfolioText';
+import { AboutMeTextPanel, ProjectDescription } from './PortfolioText';
 import { CircularIconButton } from './PortfolioControls';
 
 const CAROUSEL_MEDIA_CLASS =
@@ -61,6 +55,7 @@ function ZoomableScreenshot({
   concealed,
   className,
   expandToViewport,
+  fillWideViewport,
   restingMediaPadding,
   presentationActive,
   onPresentationChange,
@@ -72,6 +67,7 @@ function ZoomableScreenshot({
   concealed: boolean;
   className: string;
   expandToViewport: boolean;
+  fillWideViewport: boolean;
   restingMediaPadding: string;
   presentationActive: boolean;
   onPresentationChange: (screenshotId: string, presented: boolean) => void;
@@ -84,7 +80,7 @@ function ZoomableScreenshot({
     isPresented: isLocallyPresented,
     isZoomed,
     surfaceRef,
-  } = useInlineMediaZoom(active, (presented) =>
+  } = useInlineMediaZoom(active, presented =>
     onPresentationChange(screenshotId, presented),
   );
   const cursorClass = isZoomed
@@ -93,8 +89,7 @@ function ZoomableScreenshot({
       : 'cursor-grab'
     : '';
   const isPresented =
-    isLocallyPresented ||
-    (presentationActive && (expandToViewport || active));
+    isLocallyPresented || (presentationActive && (expandToViewport || active));
   const isFixedViewportPresentation = isPresented && !expandToViewport;
   const handleRestart = (event: ReactMouseEvent<HTMLButtonElement>) => {
     if (event.detail > 1) {
@@ -124,49 +119,57 @@ function ZoomableScreenshot({
           '--portfolio-media-padding': isPresented
             ? '6rem'
             : restingMediaPadding,
-          touchAction: isZoomed ? 'none' : 'pan-x pan-y',
-          position: isFixedViewportPresentation
+          'touchAction': isZoomed ? 'none' : 'pan-x pan-y',
+          'position': isFixedViewportPresentation
             ? 'fixed'
             : expandToViewport
               ? 'absolute'
               : undefined,
-          inset: isFixedViewportPresentation ? '0px' : undefined,
-          right: isFixedViewportPresentation ? '0px' : undefined,
-          left: isFixedViewportPresentation
+          'inset': isFixedViewportPresentation ? '0px' : undefined,
+          'right': isFixedViewportPresentation ? '0px' : undefined,
+          'left': isFixedViewportPresentation
             ? '0px'
             : expandToViewport
               ? isPresented
                 ? '50%'
-                : 'calc(50vw + var(--portfolio-description-rail-half-width) - 3rem)'
+                : fillWideViewport
+                  ? '50%'
+                  : 'calc(50vw + var(--portfolio-description-rail-half-width) - 3rem)'
               : undefined,
-          top: isFixedViewportPresentation
+          'top': isFixedViewportPresentation
             ? '0px'
             : expandToViewport
               ? isPresented
                 ? '50%'
-                : WIDE_RESTING_MEDIA_CENTER
+                : fillWideViewport
+                  ? 'calc((100dvh - var(--portfolio-slide-navigation-reserved-height)) / 2)'
+                  : WIDE_RESTING_MEDIA_CENTER
               : undefined,
-          width: isFixedViewportPresentation
+          'width': isFixedViewportPresentation
             ? '100vw'
             : expandToViewport
               ? isPresented
                 ? '100vw'
-                : 'var(--portfolio-screenshot-size)'
+                : fillWideViewport
+                  ? '100vw'
+                  : 'var(--portfolio-screenshot-size)'
               : undefined,
-          height: isFixedViewportPresentation
+          'height': isFixedViewportPresentation
             ? '100dvh'
             : expandToViewport
               ? isPresented
                 ? '100dvh'
-                : 'var(--portfolio-screenshot-size)'
+                : fillWideViewport
+                  ? 'calc(100dvh - var(--portfolio-slide-navigation-reserved-height))'
+                  : 'var(--portfolio-screenshot-size)'
               : undefined,
-          transform: isFixedViewportPresentation
+          'transform': isFixedViewportPresentation
             ? 'none'
             : expandToViewport
               ? 'translate3d(-50%, -50%, 0)'
               : undefined,
-          zIndex: isFixedViewportPresentation ? 30 : undefined,
-          willChange: isPresented
+          'zIndex': isFixedViewportPresentation ? 30 : undefined,
+          'willChange': isPresented
             ? 'width, height, right, top, left'
             : undefined,
         } as InlineMediaSurfaceStyle
@@ -256,6 +259,7 @@ export function ProjectPanel({
   inlineZoomPresentationActive,
   shouldBlurMedia,
   concealedScreenshotId,
+  layoutStyle,
   registerMediaElement,
   setDescriptionRef,
   onInlinePresentationChange,
@@ -275,6 +279,7 @@ export function ProjectPanel({
   inlineZoomPresentationActive: boolean;
   shouldBlurMedia: boolean;
   concealedScreenshotId?: string;
+  layoutStyle?: CSSProperties;
   registerMediaElement: (
     key: string,
     element: PortfolioMediaElement | null,
@@ -286,6 +291,7 @@ export function ProjectPanel({
   ) => void;
 }) {
   const isTextSlide = isAboutMeTextSlide(project, slide);
+  const isCaseStudyCoverSlide = project.cover_image?.id === slide.id;
   const shouldShowDescriptionPlaceholder =
     isWideLayout &&
     slide.kind === 'description' &&
@@ -304,12 +310,13 @@ export function ProjectPanel({
     <article
       data-portfolio-carousel-panel={carouselEntryKind}
       data-portfolio-carousel-index={carouselIndex}
-      className={`portfolio-theme-surface grid h-dvh w-screen shrink-0 snap-start snap-always grid-rows-[1fr] ${
+      className={`portfolio-theme-surface relative grid h-dvh w-screen shrink-0 snap-start snap-always grid-rows-[1fr] ${
         isWideLayout ? 'px-0 py-0' : 'portfolio-safe-inline pb-24 pt-8'
       }`}
       aria-hidden={!isActive}
       style={
         {
+          ...layoutStyle,
           '--project-color': projectColor,
           ...(reserveSectionNavigationGutter
             ? MOBILE_SECTION_CONTENT_INSETS
@@ -365,13 +372,18 @@ export function ProjectPanel({
             screenshotId={slide.screenshot.id}
             concealed={concealedScreenshotId === slide.screenshot.id}
             expandToViewport={isWideLayout}
+            fillWideViewport={
+              Boolean(project.cover_image) && !isCaseStudyCoverSlide
+            }
             restingMediaPadding={restingMediaPadding}
             presentationActive={inlineZoomPresentationActive}
             onPresentationChange={onInlinePresentationChange}
             restartable={slide.screenshot.restartable}
             className={
               isWideLayout
-                ? 'col-span-full aspect-square h-[var(--portfolio-screenshot-size)] max-h-none w-[var(--portfolio-screenshot-size)] max-w-none self-center justify-self-center'
+                ? project.cover_image && !isCaseStudyCoverSlide
+                  ? 'col-span-full h-[calc(100dvh_-_var(--portfolio-slide-navigation-reserved-height))] max-h-none w-screen max-w-none self-start justify-self-center'
+                  : 'col-span-full aspect-square h-[var(--portfolio-screenshot-size)] max-h-none w-[var(--portfolio-screenshot-size)] max-w-none self-center justify-self-center'
                 : 'h-full min-h-0 w-full'
             }
           >
@@ -430,7 +442,7 @@ export function ScreenshotMedia({
         draggable={false}
         loop
         muted
-        onDragStart={(event) => event.preventDefault()}
+        onDragStart={event => event.preventDefault()}
         playsInline
         preload={priority ? 'auto' : 'metadata'}
         className={
@@ -441,8 +453,7 @@ export function ScreenshotMedia({
         style={
           screenshot.clipToPhoneFrame
             ? {
-                clipPath:
-                  'inset(0 1% round 18% 18% 20% 20% / 9% 9% 10% 10%)',
+                clipPath: 'inset(0 1% round 18% 18% 20% 20% / 9% 9% 10% 10%)',
               }
             : undefined
         }
@@ -468,7 +479,7 @@ export function ScreenshotMedia({
       fill
       draggable={false}
       unoptimized
-      onDragStart={(event) => event.preventDefault()}
+      onDragStart={event => event.preventDefault()}
       priority={priority}
       sizes={sizes}
       className={`select-none [padding:var(--portfolio-media-padding,1.5rem)] ${className}`}

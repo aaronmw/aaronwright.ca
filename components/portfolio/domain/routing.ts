@@ -53,7 +53,7 @@ export function parsePortfolioRoute(
 }
 
 export function projectUrl(project: PortfolioProject, slide: ProjectSlide) {
-  if (slide.kind === 'description') {
+  if (slide.kind === 'description' || project.cover_image?.id === slide.id) {
     return `/work/${project.slug}`
   }
 
@@ -65,7 +65,7 @@ export function pageTitle(project?: PortfolioProject, slide?: ProjectSlide) {
     return 'Work | Aaron M. Wright'
   }
 
-  if (slide.kind === 'description') {
+  if (slide.kind === 'description' || project.cover_image?.id === slide.id) {
     return `${project.title} | Aaron M. Wright`
   }
 
@@ -94,9 +94,12 @@ export function slideNavigationTitle(
   }
 
   const altMatch = slide.screenshot.alt.match(/^(\d+\s+of\s+\d+):\s*(.+)$/i)
+  const screenshots = project.cover_image
+    ? [project.cover_image, ...project.screenshots]
+    : project.screenshots
   const positionLabel =
     altMatch?.[1] ??
-    `${project.screenshots.findIndex(screenshot => screenshot.id === slide.screenshot.id) + 1} of ${project.screenshots.length}`
+    `${screenshots.findIndex(screenshot => screenshot.id === slide.screenshot.id) + 1} of ${screenshots.length}`
   const rawSlideLabel = altMatch?.[2] ?? slide.screenshot.slug
   const projectPrefixPattern = new RegExp(
     `^${escapeRegExp(project.title)}\\s*`,

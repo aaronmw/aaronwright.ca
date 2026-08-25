@@ -20,18 +20,32 @@ export type PortfolioSelection = {
 }
 
 export function getProjectSlides(project: PortfolioProject): ProjectSlide[] {
+  const screenshotSlides = project.screenshots.map(screenshot => ({
+    id: screenshot.id,
+    kind: 'screenshot' as const,
+    slug: screenshot.slug,
+    screenshot,
+  }))
+
+  if (project.cover_image) {
+    return [
+      {
+        id: project.cover_image.id,
+        kind: 'screenshot',
+        slug: project.cover_image.slug,
+        screenshot: project.cover_image,
+      },
+      ...screenshotSlides,
+    ]
+  }
+
   return [
     {
       id: `${project.id}-description`,
       kind: 'description',
       slug: 'description',
     },
-    ...project.screenshots.map(screenshot => ({
-      id: screenshot.id,
-      kind: 'screenshot' as const,
-      slug: screenshot.slug,
-      screenshot,
-    })),
+    ...screenshotSlides,
   ]
 }
 
@@ -51,11 +65,11 @@ export function getInitialSlideIndexes(
       return 0
     }
 
-    const screenshotIndex = project.screenshots.findIndex(
-      screenshot => screenshot.slug === screenshotSlug,
+    const slideIndex = getProjectSlides(project).findIndex(
+      slide => slide.slug === screenshotSlug,
     )
 
-    return screenshotIndex >= 0 ? screenshotIndex + 1 : 0
+    return slideIndex >= 0 ? slideIndex : 0
   })
 }
 
@@ -79,16 +93,14 @@ export function isVideoScreenshot(screenshot: PortfolioScreenshot) {
 }
 
 export function hasProjectScreenshots(project: PortfolioProject) {
-  return project.screenshots.length > 0
+  return Boolean(project.cover_image) || project.screenshots.length > 0
 }
 
 export function isAboutMeTextScreenshot(
   project: PortfolioProject,
   screenshot: PortfolioScreenshot,
 ) {
-  return (
-    project.id === 'about-me' && screenshot.id === 'about-me-overview'
-  )
+  return project.id === 'about-me' && screenshot.id === 'about-me-overview'
 }
 
 export function isAboutMeTextSlide(
@@ -105,9 +117,7 @@ export function isModalScreenshotSlide(
   project: PortfolioProject,
   slide: ProjectSlide,
 ): slide is Extract<ProjectSlide, { kind: 'screenshot' }> {
-  return (
-    slide.kind === 'screenshot' && !isAboutMeTextSlide(project, slide)
-  )
+  return slide.kind === 'screenshot' && !isAboutMeTextSlide(project, slide)
 }
 
 export function hasAboutMeTextSlide(project: PortfolioProject) {
@@ -125,7 +135,11 @@ export function modalMediaKey(screenshot: PortfolioScreenshot) {
 }
 
 export function getProjectMediaScreenshots(project: PortfolioProject) {
-  return project.screenshots.filter(
+  const screenshots = project.cover_image
+    ? [project.cover_image, ...project.screenshots]
+    : project.screenshots
+
+  return screenshots.filter(
     screenshot => !isAboutMeTextScreenshot(project, screenshot),
   )
 }
@@ -135,10 +149,7 @@ export function getSlideMediaKey(
   slide: ProjectSlide,
   useDesktopVisual: boolean,
 ) {
-  if (
-    slide.kind === 'screenshot' &&
-    !isAboutMeTextSlide(project, slide)
-  ) {
+  if (slide.kind === 'screenshot' && !isAboutMeTextSlide(project, slide)) {
     return carouselMediaKey(slide.screenshot)
   }
 

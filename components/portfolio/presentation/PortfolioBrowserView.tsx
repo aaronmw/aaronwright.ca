@@ -43,6 +43,7 @@ import { PortfolioLogoMark } from './PortfolioLogoMark'
 import { PortfolioDesktopIdentity } from './PortfolioDesktopIdentity'
 import { PortfolioStartScreen } from './PortfolioStartScreen'
 import { ProjectDescription } from './PortfolioText'
+import { SlideDescriptionPresence } from './SlideDescriptionPresence'
 import {
   MOBILE_SECTION_CONTENT_PADDING_LEFT,
   MOBILE_SECTION_NAVIGATION_OPTICAL_OFFSET,
@@ -83,6 +84,12 @@ const WIDE_LAYOUT_STYLE: WideLayoutStyle = {
     'min(calc(100dvh - var(--portfolio-slide-navigation-reserved-height)), calc(100vw - var(--portfolio-description-rail-width) - var(--portfolio-control-gutter-width)))',
 }
 
+const CASE_STUDY_WIDE_LAYOUT_STYLE: WideLayoutStyle = {
+  ...WIDE_LAYOUT_STYLE,
+  '--portfolio-description-rail-half-width': '0rem',
+  '--portfolio-description-rail-width': '0rem',
+}
+
 type PortfolioBrowserViewRefs = {
   curtainRef: RefObject<HTMLDivElement | null>
   keyboardSurfaceRef: RefObject<HTMLElement | null>
@@ -105,6 +112,7 @@ type PortfolioBrowserViewModel = {
   isTouchLandscapeLayout: boolean
   isWideLayout: boolean
   modalTransitionRect: ModalTransitionRect | null
+  navigationTargetSlideIndexes: Readonly<Record<string, number>>
   pendingNavigation: PendingNavigation
   projectCarouselsReady: boolean[]
   projectSlides: Record<string, ProjectSlide[]>
@@ -186,6 +194,12 @@ export function PortfolioBrowserView({
     model.activeProjectIndex >= 0
       ? getProjectColor(model.activeProjectIndex, resolvedTheme)
       : undefined
+  const isActiveCaseStudyCover =
+    activeProject?.cover_image?.id === activeScreenshot?.id
+  const activeWideLayoutStyle =
+    activeProject?.cover_image && !isActiveCaseStudyCover
+      ? CASE_STUDY_WIDE_LAYOUT_STYLE
+      : WIDE_LAYOUT_STYLE
 
   const activeCarouselSlides = activeProject
     ? actions.getCarouselSlides(activeProject)
@@ -229,6 +243,17 @@ export function PortfolioBrowserView({
               slide.screenshot.id === pendingModalScreenshotId,
           )
         : undefined
+  const navigationTargetSlide = activeProject
+    ? activeSlides[model.navigationTargetSlideIndexes[activeProject.slug] ?? -1]
+    : undefined
+  const presentedSlide =
+    navigationTargetSlide ?? pendingNavigationSlide ?? activeSlide
+  const presentedScreenshot =
+    presentedSlide?.kind === 'screenshot'
+      ? presentedSlide.screenshot
+      : undefined
+  const isPresentedCaseStudyCover =
+    activeProject?.cover_image?.id === presentedScreenshot?.id
   const pendingNavigationIndex = pendingNavigationSlide
     ? activeNavigationSlides.findIndex(
         slide => slide.id === pendingNavigationSlide.id,
@@ -354,12 +379,25 @@ export function PortfolioBrowserView({
             model.activeSlideIndexes[projectIndex] ?? 0,
           )
           const projectColor = getProjectColor(projectIndex, resolvedTheme)
-          const isProjectActive =
-            model.activeProjectIndex === projectIndex
-          const projectContentColor =
-            isProjectActive
-              ? getActiveProjectColor(projectIndex, resolvedTheme)
-              : projectColor
+          const isProjectActive = model.activeProjectIndex === projectIndex
+          const activeProjectSlide =
+            model.projectSlides[project.slug][
+              model.activeSlideIndexes[projectIndex] ?? 0
+            ]
+          const navigationTargetSlideIndex =
+            model.navigationTargetSlideIndexes[project.slug]
+          const presentedProjectSlide =
+            navigationTargetSlideIndex === undefined
+              ? activeProjectSlide
+              : model.projectSlides[project.slug][navigationTargetSlideIndex]
+          const isCaseStudyCoverPresented =
+            project.cover_image?.id === presentedProjectSlide?.id
+          const shouldShowProjectDescription =
+            !project.cover_image ||
+            (isProjectActive && isCaseStudyCoverPresented)
+          const projectContentColor = isProjectActive
+            ? getActiveProjectColor(projectIndex, resolvedTheme)
+            : projectColor
           const projectBodyColor = isProjectActive
             ? 'var(--portfolio-project-body-active)'
             : 'var(--portfolio-project-body-resting)'
@@ -369,7 +407,11 @@ export function PortfolioBrowserView({
               key={project.id}
               className="portfolio-theme-surface relative h-dvh snap-start snap-always overflow-hidden"
               aria-label={project.title}
-              style={WIDE_LAYOUT_STYLE}
+              style={
+                project.cover_image
+                  ? CASE_STUDY_WIDE_LAYOUT_STYLE
+                  : WIDE_LAYOUT_STYLE
+              }
             >
               {model.isWideLayout && !hasAboutMeTextSlide(project) ? (
                 <ProjectDescription
@@ -380,12 +422,14 @@ export function PortfolioBrowserView({
                   projectContentColor={projectContentColor}
                   setDescriptionRef={actions.setDescriptionRef(project.slug)}
                   isWideLayout={model.isWideLayout}
-                  className={`portfolio-theme-panel absolute bottom-10 left-0 top-10 z-10 w-[var(--portfolio-description-rail-width)] py-6 pl-[var(--portfolio-control-gutter-width)] pr-6 backdrop-blur-md transition-opacity duration-500 ease-out motion-reduce:transition-none ${
-                    model.isInlineZoomPresentationActive &&
-                    model.activeProjectIndex === projectIndex
-                      ? 'pointer-events-none opacity-0'
-                      : 'opacity-100'
-                  }`}
+                  layoutStyle={WIDE_LAYOUT_STYLE}
+                  presence={
+                    !shouldShowProjectDescription ||
+                    (model.isInlineZoomPresentationActive && isProjectActive)
+                      ? 'concealed'
+                      : 'visible'
+                  }
+                  className="portfolio-theme-panel absolute bottom-10 left-0 top-10 z-10 w-[var(--portfolio-description-rail-width)] py-6 pl-[var(--portfolio-control-gutter-width)] pr-6 backdrop-blur-md"
                 />
               ) : null}
               <div
@@ -415,9 +459,14 @@ export function PortfolioBrowserView({
                     carouselIndex={realIndex}
                     carouselEntryKind={kind}
                     isWideLayout={model.isWideLayout}
-                    restingMediaPadding={
-                      model.isTouchInput ? '0rem' : '1.5rem'
+                    layoutStyle={
+                      project.cover_image?.id === slide.id
+                        ? WIDE_LAYOUT_STYLE
+                        : project.cover_image
+                          ? CASE_STUDY_WIDE_LAYOUT_STYLE
+                          : WIDE_LAYOUT_STYLE
                     }
+                    restingMediaPadding={model.isTouchInput ? '0rem' : '1.5rem'}
                     reserveSectionNavigationGutter={
                       model.isTouchInput && !model.isWideLayout
                     }
@@ -456,6 +505,33 @@ export function PortfolioBrowserView({
           )
         })}
       </div>
+
+      <SlideDescriptionPresence
+        screenshotId={
+          activeProject &&
+          presentedScreenshot?.description &&
+          (!model.isWideLayout || !isPresentedCaseStudyCover)
+            ? presentedScreenshot.id
+            : undefined
+        }
+        description={
+          activeProject &&
+          presentedScreenshot?.description &&
+          (!model.isWideLayout || !isPresentedCaseStudyCover)
+            ? presentedScreenshot.description
+            : undefined
+        }
+        projectColor={activeProjectColor ?? getProjectColor(0, resolvedTheme)}
+        projectBodyColor="var(--portfolio-project-body-active)"
+        projectContentColor={
+          model.activeProjectIndex >= 0
+            ? getActiveProjectColor(model.activeProjectIndex, resolvedTheme)
+            : getActiveProjectColor(0, resolvedTheme)
+        }
+        hidden={
+          model.isInlineZoomPresentationActive || model.isModalLayerActive
+        }
+      />
 
       {model.isWideLayout ? (
         <PortfolioDesktopIdentity
@@ -541,7 +617,7 @@ export function PortfolioBrowserView({
         }
         style={
           {
-            ...WIDE_LAYOUT_STYLE,
+            ...activeWideLayoutStyle,
             'position': 'absolute',
             'right': 0,
             'bottom': 'max(2rem, env(safe-area-inset-bottom, 0px))',
@@ -621,8 +697,7 @@ export function PortfolioBrowserView({
                 : 'opacity-100'
             }`}
             style={{
-              right:
-                'calc(1.5rem + env(safe-area-inset-right, 0px))',
+              right: 'calc(1.5rem + env(safe-area-inset-right, 0px))',
               width: NAVIGATION_SVG_SIZE,
             }}
           >

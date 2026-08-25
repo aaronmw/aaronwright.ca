@@ -1,19 +1,27 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 @plugin "@tailwindcss/forms";
 @plugin "@tailwindcss/typography";
 
 @theme {
   --color-portfolio-red: #e00000;
+  --color-brief-paper: #f3f1eb;
+  --color-brief-ink: #191917;
+  --color-brief-muted: #68665f;
+  --color-brief-line: rgb(25 25 23 / 0.16);
+  --color-brief-field: #e9e6de;
+  --color-brief-field-hover: #e4e1d8;
+  --color-brief-signal: #e00000;
+  --font-brief: Arial, Helvetica, sans-serif;
 }
 
 @property --project-content-color {
-  syntax: "<color>";
+  syntax: '<color>';
   inherits: true;
   initial-value: #e00000;
 }
 
 @property --project-body-color {
-  syntax: "<color>";
+  syntax: '<color>';
   inherits: true;
   initial-value: #fff;
 }
@@ -263,6 +271,44 @@ button {
     --project-body-color 200ms ease-out;
 }
 
+.portfolio-project-content-theme.portfolio-presence-transition {
+  transition:
+    background-color 180ms ease-out,
+    --project-content-color 200ms ease-out,
+    --project-body-color 200ms ease-out,
+    opacity 280ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 280ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.portfolio-left-rail-transition[data-portfolio-presence='visible'] {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+.portfolio-left-rail-transition[data-portfolio-presence='concealed'] {
+  pointer-events: none;
+  opacity: 0;
+  transform: translate3d(-100%, 0, 0);
+}
+
+.portfolio-slide-description-transition[data-transition-state='visible'] {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+.portfolio-slide-description-transition[data-transition-state='entering'],
+.portfolio-slide-description-transition[data-transition-state='exiting'] {
+  pointer-events: none;
+  opacity: 0;
+  transform: translate3d(calc(100% + 2rem), 0, 0);
+}
+
+.portfolio-slide-description-transition[data-transition-state='hidden'] {
+  pointer-events: none;
+  opacity: 0;
+  transform: translate3d(0, 0.75rem, 0);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .portfolio-pending-ring {
     animation: none;
@@ -270,6 +316,17 @@ button {
 
   .portfolio-project-content-theme {
     transition: none;
+  }
+
+  .portfolio-project-content-theme.portfolio-presence-transition {
+    transition:
+      background-color 180ms ease-out,
+      opacity 150ms ease-out;
+  }
+
+  .portfolio-left-rail-transition,
+  .portfolio-slide-description-transition {
+    transform: none;
   }
 }
 

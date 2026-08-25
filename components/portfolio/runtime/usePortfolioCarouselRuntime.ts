@@ -90,6 +90,27 @@ export function usePortfolioCarouselRuntime({
   const [boundaryBlurProjectSlugs, setBoundaryBlurProjectSlugs] = useState<
     ReadonlySet<string>
   >(() => new Set())
+  const [navigationTargetSlideIndexes, setNavigationTargetSlideIndexes] =
+    useState<Readonly<Record<string, number>>>({})
+
+  const setNavigationTargetSlideIndex = (
+    projectSlug: string,
+    slideIndex?: number,
+  ) => {
+    setNavigationTargetSlideIndexes(currentIndexes => {
+      if (slideIndex !== undefined) {
+        if (currentIndexes[projectSlug] === slideIndex) return currentIndexes
+
+        return { ...currentIndexes, [projectSlug]: slideIndex }
+      }
+
+      if (currentIndexes[projectSlug] === undefined) return currentIndexes
+
+      const nextIndexes = { ...currentIndexes }
+      delete nextIndexes[projectSlug]
+      return nextIndexes
+    })
+  }
 
   const resetDescriptionScroll = (project: PortfolioProject) => {
     descriptionRefs.current[project.slug]?.scrollTo({ top: 0 })
@@ -368,6 +389,7 @@ export function usePortfolioCarouselRuntime({
     horizontalTargetSlideIndexesRef.current[project.slug] = nextIndex
     horizontalKeyboardIndicatorIndexesRef.current[project.slug] =
       getCarouselIndexFromSlideIndex(project, nextIndex)
+    setNavigationTargetSlideIndex(project.slug, nextIndex)
     const canNavigate = await prepareMediaNavigation(
       { kind: 'slide', projectIndex, slideIndex: nextIndex },
       getSlideMediaKey(project, nextSlide, isWideLayout),
@@ -386,6 +408,7 @@ export function usePortfolioCarouselRuntime({
       ) {
         delete horizontalPendingNavigationIntentRefs.current[project.slug]
         delete horizontalTargetSlideIndexesRef.current[project.slug]
+        setNavigationTargetSlideIndex(project.slug)
       }
       return
     }
@@ -418,6 +441,7 @@ export function usePortfolioCarouselRuntime({
               currentProjectIndex === projectIndex ? nextIndex : index,
             ),
           )
+          setNavigationTargetSlideIndex(project.slug)
         })
       },
       { syncIndicator: true, boundarySourceIndex },
@@ -630,6 +654,7 @@ export function usePortfolioCarouselRuntime({
     getCarouselIndexFromSlideIndex,
     getCarouselSlides,
     moveHorizontal,
+    navigationTargetSlideIndexes,
     resetDescriptionScroll,
     scrollHorizontalToRealIndex,
     setActiveSlide,

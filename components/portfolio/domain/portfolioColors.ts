@@ -10,6 +10,8 @@ import {
 import type { ResolvedPortfolioTheme } from './appearance'
 
 const PROJECT_COLOR_OVERRIDES: Record<string, string> = {
+  'loopio': '#00A99D',
+  'freshbooks': '#0075DD',
   'about-me': '#75A462',
   'aarons-toolbox': '#7d45e4',
   'informal-systems': '#244ED0',
