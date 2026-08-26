@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import {
+  NAVIGATION_RING_DIAMETER,
   NAVIGATION_RING_STROKE,
   TrackedNavigationController,
   getColorForPosition,
@@ -30,13 +31,13 @@ describe('navigation geometry', () => {
     ).toBe('hsla(18,78%,54%,1)')
   })
 
-  it('keeps active scale and outer ring diameter stable', () => {
-    expect(getNavigationScale(2, 2)).toBe(1.1)
+  it('keeps active scale and outer ring diameter on the logo grid', () => {
+    expect(getNavigationScale(2, 2)).toBe(1)
     expect(getNavigationScale(1, 2)).toBe(1)
     expect(
       getNavigationRingRadius(1, NAVIGATION_RING_STROKE) * 2 +
         NAVIGATION_RING_STROKE,
-    ).toBe(44)
+    ).toBe(NAVIGATION_RING_DIAMETER)
   })
 })
 
@@ -68,7 +69,7 @@ describe('TrackedNavigationController', () => {
       ringAxisScale: 1,
       ringCrossAxisScale: 1,
       snappedIndex: 1,
-      strokeWidth: 4,
+      strokeWidth: NAVIGATION_RING_STROKE,
     })
 
     controller.trackPointer(78)
@@ -83,7 +84,7 @@ describe('TrackedNavigationController', () => {
       activeIndex: 2,
       coordinate: 100,
       mode: 'pinned',
-      strokeWidth: 4,
+      strokeWidth: NAVIGATION_RING_STROKE,
     })
 
     controller.completePin(2)

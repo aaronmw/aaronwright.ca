@@ -1,14 +1,9 @@
 import type { Metadata } from 'next';
-import { Open_Sans } from 'next/font/google';
 import { TOP_SCREEN_COLOR } from '@/components/portfolio/domain/theme';
 import { PortfolioThemeProvider } from '@/components/portfolio/PortfolioThemeProvider';
 import { PORTFOLIO_THEME_BOOTSTRAP_SCRIPT } from '@/components/portfolio/themeBootstrap';
 import { faviconDataUrl } from '@/lib/favicon';
-
-const openSans = Open_Sans({
-  subsets: ['latin'],
-  weight: ['300', '500', '800'],
-});
+import { portfolioControlsFont, portfolioFont } from '@/lib/portfolioFonts';
 
 export const metadata: Metadata = {
   title: 'Work | Aaron M. Wright',
@@ -30,7 +25,7 @@ export default function WorkLayout({
       />
       <PortfolioThemeProvider>
         <section
-          className={`${openSans.className} portfolio-theme-root`}
+          className={`${portfolioFont.className} ${portfolioFont.variable} ${portfolioControlsFont.variable} portfolio-theme-root`}
           data-portfolio-theme-root
         >
           {children}

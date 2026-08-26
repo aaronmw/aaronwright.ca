@@ -68,8 +68,7 @@ function getControlPosition({
   if (isTouchLandscapeLayout) {
     return {
       top: 'max(0.5rem, env(safe-area-inset-top, 0px))',
-      right:
-        'max(0.625rem, calc(env(safe-area-inset-right, 0px) + 0.625rem))',
+      right: 'max(0.625rem, calc(env(safe-area-inset-right, 0px) + 0.625rem))',
     }
   }
 
@@ -215,7 +214,7 @@ export function PortfolioThemeMenu({
 
   return (
     <div
-      className="portfolio-theme-control"
+      className="portfolio-theme-control font-portfolio-controls"
       data-interactive-pop="off"
       hidden={hidden}
       style={getControlPosition({
@@ -277,7 +276,10 @@ export function PortfolioThemeMenu({
               onKeyDown={event => handleOptionKeyDown(event, index)}
               onClick={() => selectPreference(option.value)}
             >
-              <span className="portfolio-theme-menu-check" aria-hidden="true">
+              <span
+                className="portfolio-theme-menu-check"
+                aria-hidden="true"
+              >
                 <FontAwesomeIcon
                   icon={faCheck}
                   className={`size-3.5 transition-opacity duration-150 motion-reduce:transition-none ${

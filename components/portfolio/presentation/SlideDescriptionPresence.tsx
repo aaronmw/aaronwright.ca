@@ -24,6 +24,7 @@ export function SlideDescriptionPresence({
   projectBodyColor,
   projectContentColor,
   hidden,
+  isWideLayout,
 }: {
   screenshotId?: string
   description?: string
@@ -31,6 +32,7 @@ export function SlideDescriptionPresence({
   projectBodyColor: string
   projectContentColor: string
   hidden: boolean
+  isWideLayout: boolean
 }) {
   const target =
     screenshotId && description
@@ -107,6 +109,7 @@ export function SlideDescriptionPresence({
       projectBodyColor={entry.projectBodyColor}
       projectContentColor={entry.projectContentColor}
       hidden={hidden}
+      isWideLayout={isWideLayout}
       transitionState={entry.state}
     >
       {entry.markdown}

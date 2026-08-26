@@ -36,7 +36,7 @@ function KeyboardKey({
       className="relative mx-0.5 inline-grid h-[1.3125rem] min-w-[1.3125rem] place-items-center rounded-sm bg-[var(--portfolio-keycap-shadow)] px-[0.1875rem] pb-[0.1875rem] pt-[0.09375rem] align-middle"
     >
       <span
-        className={`grid h-[0.9375rem] min-w-[0.9375rem] -translate-y-px place-items-center rounded-xs bg-[var(--portfolio-inverse-surface)] text-[0.5rem] font-black leading-none text-[var(--portfolio-inverse-ink)] ${
+        className={`grid h-[0.9375rem] min-w-[0.9375rem] -translate-y-px place-items-center rounded-xs bg-[var(--portfolio-inverse-surface)] text-[0.5rem] font-bold leading-none text-[var(--portfolio-inverse-ink)] ${
           label ? 'px-[0.28125rem]' : 'px-0'
         }`}
         aria-hidden={ariaLabel ? true : undefined}
@@ -118,10 +118,23 @@ export function PortfolioHelperMessage({
     >
       {renderedKind === 'navigation' ? (
         <span className="leading-6">
-          Use <KeyboardKey icon={faArrowLeft} ariaLabel="left arrow" />
-          <KeyboardKey icon={faArrowRight} ariaLabel="right arrow" />
-          <KeyboardKey icon={faArrowUp} ariaLabel="up arrow" />
-          <KeyboardKey icon={faArrowDown} ariaLabel="down arrow" />
+          Use{' '}
+          <KeyboardKey
+            icon={faArrowLeft}
+            ariaLabel="left arrow"
+          />
+          <KeyboardKey
+            icon={faArrowRight}
+            ariaLabel="right arrow"
+          />
+          <KeyboardKey
+            icon={faArrowUp}
+            ariaLabel="up arrow"
+          />
+          <KeyboardKey
+            icon={faArrowDown}
+            ariaLabel="down arrow"
+          />
           , or <KeyboardKey label="1" />,
           <KeyboardKey label="2" />, ... <KeyboardKey label="0" /> to navigate
           sections
@@ -258,7 +271,10 @@ export function CircularIconButton({
         />
       ) : null}
       {visualRef || secondaryVisual ? (
-        <span ref={visualRef} className="relative z-10 block h-full w-full">
+        <span
+          ref={visualRef}
+          className="relative z-10 block h-full w-full"
+        >
           <span className="absolute inset-0 flex items-center justify-center">
             <FontAwesomeIcon
               ref={iconRef}

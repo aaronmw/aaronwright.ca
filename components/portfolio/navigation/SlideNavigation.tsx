@@ -91,9 +91,9 @@ export function SlideNavigation({
     null,
   )
   const svgRef = useRef<SVGSVGElement | null>(null)
-  const ringRef = useRef<SVGEllipseElement | null>(null)
+  const ringRef = useRef<SVGRectElement | null>(null)
   const latticeRef = useRef<SVGGElement | null>(null)
-  const dotRefs = useRef(new Map<number, SVGCircleElement>())
+  const dotRefs = useRef(new Map<number, SVGRectElement>())
   const slotRefs = useRef(new Map<number, SVGGElement>())
   const pointerFrameRef = useRef<number | null>(null)
   const pendingPointerXRef = useRef<number | null>(null)
@@ -161,13 +161,14 @@ export function SlideNavigation({
         state.strokeWidth,
       )
 
-      ring.setAttribute(
-        'cx',
-        String(state.coordinate + radius * state.ringAxisOffset),
-      )
-      ring.setAttribute('cy', String(SVG_CENTER_Y))
-      ring.setAttribute('rx', String(radius * state.ringAxisScale))
-      ring.setAttribute('ry', String(radius * state.ringCrossAxisScale))
+      const centerX = state.coordinate + radius * state.ringAxisOffset
+      const halfWidth = radius * state.ringAxisScale
+      const halfHeight = radius * state.ringCrossAxisScale
+
+      ring.setAttribute('x', String(centerX - halfWidth))
+      ring.setAttribute('y', String(SVG_CENTER_Y - halfHeight))
+      ring.setAttribute('width', String(halfWidth * 2))
+      ring.setAttribute('height', String(halfHeight * 2))
       ring.setAttribute('stroke', state.color)
       ring.setAttribute('stroke-width', String(state.strokeWidth))
       ring.setAttribute('opacity', targetCountRef.current > 0 ? '1' : '0')
@@ -183,10 +184,12 @@ export function SlideNavigation({
           : 1
       const pressScale = state.pressedIndex === itemIndex ? state.pressScale : 1
 
-      dot.setAttribute(
-        'r',
-        String(NAVIGATION_DOT_RADIUS * activeScale * pressScale),
-      )
+      const halfSize = NAVIGATION_DOT_RADIUS * activeScale * pressScale
+
+      dot.setAttribute('x', String(-halfSize))
+      dot.setAttribute('y', String(SVG_CENTER_Y - halfSize))
+      dot.setAttribute('width', String(halfSize * 2))
+      dot.setAttribute('height', String(halfSize * 2))
     })
   }, [])
 

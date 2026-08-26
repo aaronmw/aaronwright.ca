@@ -98,14 +98,14 @@ export class SectionNavigationRenderer {
           state.strokeWidth,
         )
 
-        this.setAttribute(ring, 'cx', String(NAVIGATION_SVG_CENTER))
-        this.setAttribute(
-          ring,
-          'cy',
-          String(state.coordinate + radius * state.ringAxisOffset),
-        )
-        this.setAttribute(ring, 'rx', String(radius * state.ringCrossAxisScale))
-        this.setAttribute(ring, 'ry', String(radius * state.ringAxisScale))
+        const centerY = state.coordinate + radius * state.ringAxisOffset
+        const halfWidth = radius * state.ringCrossAxisScale
+        const halfHeight = radius * state.ringAxisScale
+
+        this.setAttribute(ring, 'x', String(NAVIGATION_SVG_CENTER - halfWidth))
+        this.setAttribute(ring, 'y', String(centerY - halfHeight))
+        this.setAttribute(ring, 'width', String(halfWidth * 2))
+        this.setAttribute(ring, 'height', String(halfHeight * 2))
         this.setAttribute(ring, 'stroke', state.color)
         this.setAttribute(ring, 'stroke-width', String(state.strokeWidth))
         this.setAttribute(
@@ -234,12 +234,12 @@ export class SectionNavigationRenderer {
         this.setAffordanceOpacity(side, 'arrows', itemIndex, arrowOpacity)
 
         if (dot) {
-          this.setAttribute(dot, 'cy', String(centerY))
-          this.setAttribute(
-            dot,
-            'r',
-            String(NAVIGATION_DOT_RADIUS * visualScale),
-          )
+          const halfSize = NAVIGATION_DOT_RADIUS * visualScale
+
+          this.setAttribute(dot, 'x', String(NAVIGATION_SVG_CENTER - halfSize))
+          this.setAttribute(dot, 'y', String(centerY - halfSize))
+          this.setAttribute(dot, 'width', String(halfSize * 2))
+          this.setAttribute(dot, 'height', String(halfSize * 2))
           this.setAffordanceOpacity(side, 'dots', itemIndex, dotOpacity)
         }
       })

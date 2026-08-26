@@ -1,77 +1,80 @@
-import type { CSSProperties, MutableRefObject, RefObject } from 'react'
+import type { CSSProperties, MutableRefObject, RefObject } from 'react';
 import {
   faArrowUp,
   faRotateRight,
   faXmark,
-} from '@fortawesome/free-solid-svg-icons'
-import type { PortfolioProject, PortfolioScreenshot } from '@/lib/portfolio'
-import { portfolioSlides } from '@/lib/portfolio'
+} from '@fortawesome/free-solid-svg-icons';
+import type { PortfolioProject, PortfolioScreenshot } from '@/lib/portfolio';
+import { portfolioSlides } from '@/lib/portfolio';
 import {
   getCanonicalCarouselEntries,
   getLoopingCarouselEntries,
   positiveModulo,
-} from '@/components/portfolio/domain/carousel'
-import { slideNavigationTitle } from '@/components/portfolio/domain/routing'
+} from '@/components/portfolio/domain/carousel';
+import { slideNavigationTitle } from '@/components/portfolio/domain/routing';
 import {
   hasAboutMeTextSlide,
   isModalScreenshotSlide,
   type ProjectSlide,
-} from '@/components/portfolio/domain/slides'
-import { TOP_SCREEN_COLOR } from '@/components/portfolio/domain/theme'
+} from '@/components/portfolio/domain/slides';
+import {
+  RESUME_INK_COLOR,
+  TOP_SCREEN_COLOR,
+} from '@/components/portfolio/domain/theme';
 import {
   getActiveProjectColor,
   getProjectColor,
-} from '@/components/portfolio/domain/portfolioColors'
-import type { PortfolioMediaElement } from '@/components/portfolio/usePortfolioMediaReadiness'
+} from '@/components/portfolio/domain/portfolioColors';
+import type { PortfolioMediaElement } from '@/components/portfolio/usePortfolioMediaReadiness';
 import {
   SectionNavigation,
   type SectionNavigationHandle,
-} from '@/components/portfolio/navigation/SectionNavigation'
+} from '@/components/portfolio/navigation/SectionNavigation';
 import {
   SlideNavigation,
   type SlideIndicatorMotionController,
-} from '@/components/portfolio/navigation/SlideNavigation'
-import { NAVIGATION_SVG_SIZE } from '@/components/portfolio/navigation/navigationTokens'
+} from '@/components/portfolio/navigation/SlideNavigation';
+import { NAVIGATION_SVG_SIZE } from '@/components/portfolio/navigation/navigationTokens';
 import {
   CircularIconButton,
   PortfolioHelperMessage,
   type PortfolioHelperMessageKind,
-} from './PortfolioControls'
-import { CarouselPullBoundary, ProjectPanel } from './PortfolioMedia'
-import { ImageModal, type ModalTransitionRect } from './ImageModal'
-import { PortfolioLogoMark } from './PortfolioLogoMark'
-import { PortfolioDesktopIdentity } from './PortfolioDesktopIdentity'
-import { PortfolioStartScreen } from './PortfolioStartScreen'
-import { ProjectDescription } from './PortfolioText'
-import { SlideDescriptionPresence } from './SlideDescriptionPresence'
+} from './PortfolioControls';
+import { CarouselPullBoundary, ProjectPanel } from './PortfolioMedia';
+import { ImageModal, type ModalTransitionRect } from './ImageModal';
+import { PortfolioLogoMark } from './PortfolioLogoMark';
+import { PortfolioDesktopIdentity } from './PortfolioDesktopIdentity';
+import { PortfolioStartScreen } from './PortfolioStartScreen';
+import { ProjectDescription } from './PortfolioText';
+import { SlideDescriptionPresence } from './SlideDescriptionPresence';
 import {
   MOBILE_SECTION_CONTENT_PADDING_LEFT,
   MOBILE_SECTION_NAVIGATION_OPTICAL_OFFSET,
-} from '@/components/portfolio/mobileLayout'
+} from '@/components/portfolio/mobileLayout';
 import type {
   PendingNavigation,
   PortfolioIntroPhase,
-} from '@/components/portfolio/runtime/types'
-import { usePortfolioTheme } from '@/components/portfolio/PortfolioThemeProvider'
-import { PortfolioThemeMenu } from '@/components/portfolio/PortfolioThemeMenu'
+} from '@/components/portfolio/runtime/types';
+import { usePortfolioTheme } from '@/components/portfolio/PortfolioThemeProvider';
+import { PortfolioThemeMenu } from '@/components/portfolio/PortfolioThemeMenu';
 
-const START_SCREEN_INDEX = -1
+const START_SCREEN_INDEX = -1;
 const SECTION_NAV_HAS_SLIDES = [
   false,
   ...portfolioSlides.map(project => project.screenshots.length > 1),
-]
+];
 
 type WideLayoutStyle = CSSProperties & {
-  '--portfolio-description-rail-half-width': string
-  '--portfolio-description-rail-width': string
-  '--portfolio-control-gutter-width': string
-  '--portfolio-slide-navigation-reserved-height': string
-  '--portfolio-screenshot-size': string
-}
+  '--portfolio-description-rail-half-width': string;
+  '--portfolio-description-rail-width': string;
+  '--portfolio-control-gutter-width': string;
+  '--portfolio-slide-navigation-reserved-height': string;
+  '--portfolio-screenshot-size': string;
+};
 
 type ProjectColorStyle = CSSProperties & {
-  '--project-color': string
-}
+  '--project-color': string;
+};
 
 const WIDE_LAYOUT_STYLE: WideLayoutStyle = {
   '--portfolio-description-rail-half-width':
@@ -82,153 +85,153 @@ const WIDE_LAYOUT_STYLE: WideLayoutStyle = {
   '--portfolio-slide-navigation-reserved-height': `calc(${NAVIGATION_SVG_SIZE}px + max(2rem, env(safe-area-inset-bottom, 0px)))`,
   '--portfolio-screenshot-size':
     'min(calc(100dvh - var(--portfolio-slide-navigation-reserved-height)), calc(100vw - var(--portfolio-description-rail-width) - var(--portfolio-control-gutter-width)))',
-}
+};
 
 const CASE_STUDY_WIDE_LAYOUT_STYLE: WideLayoutStyle = {
   ...WIDE_LAYOUT_STYLE,
   '--portfolio-description-rail-half-width': '0rem',
   '--portfolio-description-rail-width': '0rem',
-}
+};
 
 type PortfolioBrowserViewRefs = {
-  curtainRef: RefObject<HTMLDivElement | null>
-  keyboardSurfaceRef: RefObject<HTMLElement | null>
-  sectionMenuTitleRefs: MutableRefObject<Array<HTMLSpanElement | null>>
-  sectionNavigationControllerRef: MutableRefObject<SectionNavigationHandle | null>
-  slideIndicatorMotionControllerRef: MutableRefObject<SlideIndicatorMotionController | null>
-  verticalRef: MutableRefObject<HTMLDivElement | null>
-}
+  curtainRef: RefObject<HTMLDivElement | null>;
+  keyboardSurfaceRef: RefObject<HTMLElement | null>;
+  sectionMenuTitleRefs: MutableRefObject<Array<HTMLSpanElement | null>>;
+  sectionNavigationControllerRef: MutableRefObject<SectionNavigationHandle | null>;
+  slideIndicatorMotionControllerRef: MutableRefObject<SlideIndicatorMotionController | null>;
+  verticalRef: MutableRefObject<HTMLDivElement | null>;
+};
 
 type PortfolioBrowserViewModel = {
-  activeProjectIndex: number
-  activeSlideIndexes: number[]
-  boundaryBlurProjectSlugs: ReadonlySet<string>
-  introPhase: PortfolioIntroPhase
-  isInlineZoomPresentationActive: boolean
-  isModalClosing: boolean
-  isModalLayerActive: boolean
-  isModalPresentationActive: boolean
-  isTouchInput: boolean
-  isTouchLandscapeLayout: boolean
-  isWideLayout: boolean
-  modalTransitionRect: ModalTransitionRect | null
-  navigationTargetSlideIndexes: Readonly<Record<string, number>>
-  pendingNavigation: PendingNavigation
-  projectCarouselsReady: boolean[]
-  projectSlides: Record<string, ProjectSlide[]>
-  sectionEntryMediaReady: boolean
-  sectionNavHovered: boolean
-  shouldShowModal: boolean
-}
+  activeProjectIndex: number;
+  activeSlideIndexes: number[];
+  boundaryBlurProjectSlugs: ReadonlySet<string>;
+  introPhase: PortfolioIntroPhase;
+  isInlineZoomPresentationActive: boolean;
+  isModalClosing: boolean;
+  isModalLayerActive: boolean;
+  isModalPresentationActive: boolean;
+  isTouchInput: boolean;
+  isTouchLandscapeLayout: boolean;
+  isWideLayout: boolean;
+  modalTransitionRect: ModalTransitionRect | null;
+  navigationTargetSlideIndexes: Readonly<Record<string, number>>;
+  pendingNavigation: PendingNavigation;
+  projectCarouselsReady: boolean[];
+  projectSlides: Record<string, ProjectSlide[]>;
+  sectionEntryMediaReady: boolean;
+  sectionNavHovered: boolean;
+  shouldShowModal: boolean;
+};
 
 type PortfolioBrowserViewActions = {
-  cancelVerticalUserTravel: () => void
-  closeModal: () => void
-  exitInlineZoomPresentation: () => void
-  finishCloseModal: () => void
-  focusKeyboardSurface: () => void
+  cancelVerticalUserTravel: () => void;
+  closeModal: () => void;
+  exitInlineZoomPresentation: () => void;
+  finishCloseModal: () => void;
+  focusKeyboardSurface: () => void;
   getCarouselIndexFromSlideIndex: (
     project: PortfolioProject,
     slideIndex: number,
-  ) => number
-  getCarouselSlides: (project: PortfolioProject) => ProjectSlide[]
+  ) => number;
+  getCarouselSlides: (project: PortfolioProject) => ProjectSlide[];
   handleInlinePresentationChange: (
     screenshotId: string,
     presented: boolean,
-  ) => void
-  moveHorizontal: (direction: -1 | 1) => void
-  moveModalHorizontal: (direction: -1 | 1) => void
+  ) => void;
+  moveHorizontal: (direction: -1 | 1) => void;
+  moveModalHorizontal: (direction: -1 | 1) => void;
   registerMediaElement: (
     key: string,
     element: PortfolioMediaElement | null,
-  ) => void
-  setActiveModalSlide: (slide: ProjectSlide) => void
+  ) => void;
+  setActiveModalSlide: (slide: ProjectSlide) => void;
   setActiveProject: (
     projectIndex: number,
     mode: 'push' | 'replace',
     behavior?: ScrollBehavior,
     targetSlideIndex?: number,
-  ) => void
+  ) => void;
   setActiveSlide: (
     projectIndex: number,
     slideIndex: number,
     mode: 'push' | 'replace',
     behavior: ScrollBehavior,
-  ) => void
+  ) => void;
   setDescriptionRef: (
     projectSlug: string,
-  ) => (node: HTMLDivElement | null) => void
+  ) => (node: HTMLDivElement | null) => void;
   setHorizontalRef: (
     projectSlug: string,
-  ) => (node: HTMLDivElement | null) => void
-  setSectionNavHovered: (hovered: boolean) => void
-}
+  ) => (node: HTMLDivElement | null) => void;
+  setSectionNavHovered: (hovered: boolean) => void;
+};
 
 export function PortfolioBrowserView({
   actions,
   model,
   refs,
 }: {
-  actions: PortfolioBrowserViewActions
-  model: PortfolioBrowserViewModel
-  refs: PortfolioBrowserViewRefs
+  actions: PortfolioBrowserViewActions;
+  model: PortfolioBrowserViewModel;
+  refs: PortfolioBrowserViewRefs;
 }) {
-  const { resolvedTheme } = usePortfolioTheme()
+  const { resolvedTheme } = usePortfolioTheme();
   const topScreenColor =
-    resolvedTheme === 'dark' ? TOP_SCREEN_COLOR : 'hsl(0 0% 0%)'
+    resolvedTheme === 'dark' ? TOP_SCREEN_COLOR : RESUME_INK_COLOR;
   const activeProject =
     model.activeProjectIndex >= 0
       ? portfolioSlides[model.activeProjectIndex]
-      : undefined
+      : undefined;
   const activeSlides = activeProject
     ? model.projectSlides[activeProject.slug]
-    : []
+    : [];
   const activeSlideIndex =
     model.activeProjectIndex >= 0
       ? model.activeSlideIndexes[model.activeProjectIndex]
-      : 0
-  const activeSlide = activeSlides[activeSlideIndex]
+      : 0;
+  const activeSlide = activeSlides[activeSlideIndex];
   const activeScreenshot =
-    activeSlide?.kind === 'screenshot' ? activeSlide.screenshot : undefined
+    activeSlide?.kind === 'screenshot' ? activeSlide.screenshot : undefined;
   const activeProjectColor =
     model.activeProjectIndex >= 0
       ? getProjectColor(model.activeProjectIndex, resolvedTheme)
-      : undefined
+      : undefined;
   const isActiveCaseStudyCover =
-    activeProject?.cover_image?.id === activeScreenshot?.id
+    activeProject?.cover_image?.id === activeScreenshot?.id;
   const activeWideLayoutStyle =
     activeProject?.cover_image && !isActiveCaseStudyCover
       ? CASE_STUDY_WIDE_LAYOUT_STYLE
-      : WIDE_LAYOUT_STYLE
+      : WIDE_LAYOUT_STYLE;
 
   const activeCarouselSlides = activeProject
     ? actions.getCarouselSlides(activeProject)
-    : []
+    : [];
   const activeModalSlides = activeProject
     ? model.projectSlides[activeProject.slug].filter(slide =>
         isModalScreenshotSlide(activeProject, slide),
       )
-    : []
+    : [];
   const activeModalScreenshots = activeModalSlides.map(
     slide => slide.screenshot,
-  )
+  );
   const activeCarouselIndex = activeProject
     ? actions.getCarouselIndexFromSlideIndex(activeProject, activeSlideIndex)
-    : 0
+    : 0;
   const activeModalScreenshotIndex = Math.max(
     0,
     activeModalSlides.findIndex(slide => slide.id === activeSlide?.id),
-  )
+  );
   const activeNavigationSlides = model.isModalPresentationActive
     ? activeModalSlides
-    : activeCarouselSlides
+    : activeCarouselSlides;
   const activeNavigationIndex = model.isModalPresentationActive
     ? activeModalScreenshotIndex
-    : activeCarouselIndex
+    : activeCarouselIndex;
   const pendingModalScreenshotId =
     model.pendingNavigation?.kind === 'modal'
       ? model.pendingNavigation.screenshotId
-      : null
+      : null;
   const pendingNavigationSlide =
     model.pendingNavigation?.kind === 'slide' &&
     model.pendingNavigation.projectIndex === model.activeProjectIndex &&
@@ -242,23 +245,23 @@ export function PortfolioBrowserView({
               slide.kind === 'screenshot' &&
               slide.screenshot.id === pendingModalScreenshotId,
           )
-        : undefined
+        : undefined;
   const navigationTargetSlide = activeProject
     ? activeSlides[model.navigationTargetSlideIndexes[activeProject.slug] ?? -1]
-    : undefined
+    : undefined;
   const presentedSlide =
-    navigationTargetSlide ?? pendingNavigationSlide ?? activeSlide
+    navigationTargetSlide ?? pendingNavigationSlide ?? activeSlide;
   const presentedScreenshot =
     presentedSlide?.kind === 'screenshot'
       ? presentedSlide.screenshot
-      : undefined
+      : undefined;
   const isPresentedCaseStudyCover =
-    activeProject?.cover_image?.id === presentedScreenshot?.id
+    activeProject?.cover_image?.id === presentedScreenshot?.id;
   const pendingNavigationIndex = pendingNavigationSlide
     ? activeNavigationSlides.findIndex(
         slide => slide.id === pendingNavigationSlide.id,
       )
-    : null
+    : null;
   const helperMessageKind: PortfolioHelperMessageKind =
     model.introPhase !== 'ready'
       ? null
@@ -266,26 +269,26 @@ export function PortfolioBrowserView({
         ? 'close'
         : model.activeProjectIndex === START_SCREEN_INDEX
           ? 'navigation'
-          : null
-  const canMoveHorizontally = activeNavigationSlides.length > 1
+          : null;
+  const canMoveHorizontally = activeNavigationSlides.length > 1;
   const previousSlide = activeProject
     ? activeNavigationSlides[
         positiveModulo(activeNavigationIndex - 1, activeNavigationSlides.length)
       ]
-    : undefined
+    : undefined;
   const nextSlide = activeProject
     ? activeNavigationSlides[
         positiveModulo(activeNavigationIndex + 1, activeNavigationSlides.length)
       ]
-    : undefined
+    : undefined;
   const previousSlideTitle =
     activeProject && previousSlide
       ? slideNavigationTitle(activeProject, previousSlide)
-      : ''
+      : '';
   const nextSlideTitle =
     activeProject && nextSlide
       ? slideNavigationTitle(activeProject, nextSlide)
-      : ''
+      : '';
   const sectionNavItems = [
     {
       id: 'work',
@@ -299,18 +302,18 @@ export function PortfolioBrowserView({
       title: project.title,
       color: getProjectColor(projectIndex, resolvedTheme),
     })),
-  ]
+  ];
   const shouldCenterSlideNavigation =
-    model.isModalPresentationActive || model.isInlineZoomPresentationActive
+    model.isModalPresentationActive || model.isInlineZoomPresentationActive;
   const moveHorizontally = (direction: -1 | 1) => {
-    actions.focusKeyboardSurface()
+    actions.focusKeyboardSurface();
 
     if (model.isModalPresentationActive) {
-      actions.moveModalHorizontal(direction)
+      actions.moveModalHorizontal(direction);
     } else {
-      actions.moveHorizontal(direction)
+      actions.moveHorizontal(direction);
     }
-  }
+  };
 
   return (
     <main
@@ -346,61 +349,60 @@ export function PortfolioBrowserView({
             getProjectColor(projectIndex, resolvedTheme)
           }
           setTitleRef={(index, node) => {
-            refs.sectionMenuTitleRefs.current[index] = node
+            refs.sectionMenuTitleRefs.current[index] = node;
           }}
           onHoveredChange={actions.setSectionNavHovered}
           onPreview={(index, previewing) => {
             refs.sectionNavigationControllerRef.current?.preview(
               index + 1,
               previewing,
-            )
+            );
           }}
           onSelect={(index, keyboardTriggered) => {
-            actions.focusKeyboardSurface()
+            actions.focusKeyboardSurface();
             refs.sectionNavigationControllerRef.current?.pin(
               index + 1,
               'vertical',
               keyboardTriggered,
-            )
-            actions.setActiveProject(index, 'push', 'smooth', 0)
+            );
+            actions.setActiveProject(index, 'push', 'smooth', 0);
           }}
         />
 
         {portfolioSlides.map((project, projectIndex) => {
-          const slides = actions.getCarouselSlides(project)
+          const slides = actions.getCarouselSlides(project);
           const renderedSlides = model.isWideLayout
             ? getLoopingCarouselEntries(slides, true)
-            : getCanonicalCarouselEntries(slides)
+            : getCanonicalCarouselEntries(slides);
           const hasMobilePullBoundaries =
-            !model.isWideLayout && slides.length > 1
-          const projectNumber = String(projectIndex + 1).padStart(2, '0')
+            !model.isWideLayout && slides.length > 1;
+          const projectNumber = String(projectIndex + 1).padStart(2, '0');
           const activeCarouselIndex = actions.getCarouselIndexFromSlideIndex(
             project,
             model.activeSlideIndexes[projectIndex] ?? 0,
-          )
-          const projectColor = getProjectColor(projectIndex, resolvedTheme)
-          const isProjectActive = model.activeProjectIndex === projectIndex
+          );
+          const projectColor = getProjectColor(projectIndex, resolvedTheme);
+          const isProjectActive = model.activeProjectIndex === projectIndex;
           const activeProjectSlide =
             model.projectSlides[project.slug][
               model.activeSlideIndexes[projectIndex] ?? 0
-            ]
+            ];
           const navigationTargetSlideIndex =
-            model.navigationTargetSlideIndexes[project.slug]
+            model.navigationTargetSlideIndexes[project.slug];
           const presentedProjectSlide =
             navigationTargetSlideIndex === undefined
               ? activeProjectSlide
-              : model.projectSlides[project.slug][navigationTargetSlideIndex]
+              : model.projectSlides[project.slug][navigationTargetSlideIndex];
           const isCaseStudyCoverPresented =
-            project.cover_image?.id === presentedProjectSlide?.id
+            project.cover_image?.id === presentedProjectSlide?.id;
           const shouldShowProjectDescription =
-            !project.cover_image ||
-            (isProjectActive && isCaseStudyCoverPresented)
+            !project.cover_image || isCaseStudyCoverPresented;
           const projectContentColor = isProjectActive
             ? getActiveProjectColor(projectIndex, resolvedTheme)
-            : projectColor
+            : projectColor;
           const projectBodyColor = isProjectActive
             ? 'var(--portfolio-project-body-active)'
-            : 'var(--portfolio-project-body-resting)'
+            : 'var(--portfolio-project-body-resting)';
 
           return (
             <section
@@ -502,7 +504,7 @@ export function PortfolioBrowserView({
                 ) : null}
               </div>
             </section>
-          )
+          );
         })}
       </div>
 
@@ -531,13 +533,11 @@ export function PortfolioBrowserView({
         hidden={
           model.isInlineZoomPresentationActive || model.isModalLayerActive
         }
+        isWideLayout={model.isWideLayout}
       />
 
       {model.isWideLayout ? (
-        <PortfolioDesktopIdentity
-          color={activeProjectColor ?? topScreenColor}
-          sourceRef={refs.verticalRef}
-        />
+        <PortfolioDesktopIdentity sourceRef={refs.verticalRef} />
       ) : null}
 
       {model.isTouchInput &&
@@ -549,7 +549,7 @@ export function PortfolioBrowserView({
           style={{ width: MOBILE_SECTION_CONTENT_PADDING_LEFT }}
         >
           <PortfolioLogoMark
-            className="size-12 shrink-0 text-[var(--portfolio-ink)]"
+            className="shrink-0 text-resume-signal"
             style={{
               transform: `translateX(calc(0px - ${MOBILE_SECTION_NAVIGATION_OPTICAL_OFFSET}))`,
             }}
@@ -600,8 +600,8 @@ export function PortfolioBrowserView({
             moveHorizontally(side === 'left' ? -1 : 1)
           }
           onVerticalNavigate={itemIndex => {
-            actions.focusKeyboardSurface()
-            actions.setActiveProject(itemIndex - 1, 'push')
+            actions.focusKeyboardSurface();
+            actions.setActiveProject(itemIndex - 1, 'push');
           }}
         />
       ) : null}
@@ -631,7 +631,7 @@ export function PortfolioBrowserView({
               'calc(3rem - var(--portfolio-description-rail-half-width))',
           } as ProjectColorStyle &
             WideLayoutStyle & {
-              '--portfolio-modal-indicator-translate-x': string
+              '--portfolio-modal-indicator-translate-x': string;
             }
         }
       >
@@ -658,26 +658,26 @@ export function PortfolioBrowserView({
             color={activeProjectColor ?? getProjectColor(0, resolvedTheme)}
             onSelect={navigationIndex => {
               if (!activeProject) {
-                return
+                return;
               }
 
-              const slide = activeNavigationSlides[navigationIndex]
+              const slide = activeNavigationSlides[navigationIndex];
 
               if (!slide) {
-                return
+                return;
               }
 
-              actions.focusKeyboardSurface()
+              actions.focusKeyboardSurface();
               const slideIndex = Math.max(
                 0,
                 model.projectSlides[activeProject.slug].findIndex(
                   projectSlide => projectSlide.id === slide.id,
                 ),
-              )
+              );
 
               if (model.isModalPresentationActive) {
-                actions.setActiveModalSlide(slide)
-                return
+                actions.setActiveModalSlide(slide);
+                return;
               }
 
               actions.setActiveSlide(
@@ -685,7 +685,7 @@ export function PortfolioBrowserView({
                 slideIndex,
                 'push',
                 'smooth',
-              )
+              );
             }}
           />
         </div>
@@ -706,11 +706,11 @@ export function PortfolioBrowserView({
               iconClassName="size-7"
               iconStrokeWidth={12}
               ring
-              className="relative size-11 bg-transparent text-[var(--project-color)]"
+              className="font-portfolio-controls relative size-11 bg-transparent text-[var(--project-color)]"
               aria-label="Back to top"
               onClick={() => {
-                actions.focusKeyboardSurface()
-                actions.setActiveProject(START_SCREEN_INDEX, 'push')
+                actions.focusKeyboardSurface();
+                actions.setActiveProject(START_SCREEN_INDEX, 'push');
               }}
             />
           </div>
@@ -783,7 +783,7 @@ export function PortfolioBrowserView({
           }`}
           aria-hidden={model.introPhase === 'error' ? undefined : true}
         >
-          <p className="text-lg font-light leading-relaxed text-[var(--portfolio-ink-80)]">
+          <p className="text-lg font-normal leading-relaxed text-[var(--portfolio-ink-80)]">
             Portfolio media didn&apos;t finish loading.
           </p>
           <CircularIconButton
@@ -798,5 +798,5 @@ export function PortfolioBrowserView({
         </div>
       </div>
     </main>
-  )
+  );
 }

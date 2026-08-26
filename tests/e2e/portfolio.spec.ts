@@ -115,15 +115,15 @@ async function startRingDeformationSampling(page: Page, selector: string) {
 
     samplingWindow.__portfolioRingSamples = []
     const sample = () => {
-      const ring = document.querySelector<SVGEllipseElement>(ringSelector)
+      const ring = document.querySelector<SVGRectElement>(ringSelector)
 
       if (ring) {
         samplingWindow.__portfolioRingSamples?.push({
           coordinate: Number(ring.dataset.navigationCoordinate),
-          cx: ring.cx.baseVal.value,
-          cy: ring.cy.baseVal.value,
-          rx: ring.rx.baseVal.value,
-          ry: ring.ry.baseVal.value,
+          cx: ring.x.baseVal.value + ring.width.baseVal.value / 2,
+          cy: ring.y.baseVal.value + ring.height.baseVal.value / 2,
+          rx: ring.width.baseVal.value / 2,
+          ry: ring.height.baseVal.value / 2,
         })
       }
 
@@ -192,7 +192,7 @@ test('keyboard navigation retargets sections and slides', async ({
   await expect(page).toHaveURL(/\/work\/nextphrase$/)
 })
 
-test('navigation rings deform on their travel axes and settle circular', async ({
+test('navigation rings deform on their travel axes and settle square', async ({
   page,
 }) => {
   await page.goto('/work/aarons-toolbox/overview')
@@ -208,8 +208,8 @@ test('navigation rings deform on their travel axes and settle circular', async (
     .poll(async () =>
       page
         .locator('[data-portfolio-section-nav-ring="left"]')
-        .evaluate((ring: SVGEllipseElement) =>
-          Math.abs(ring.rx.baseVal.value - ring.ry.baseVal.value),
+        .evaluate((ring: SVGRectElement) =>
+          Math.abs(ring.width.baseVal.value - ring.height.baseVal.value),
         ),
     )
     .toBeLessThanOrEqual(0.01)
@@ -237,8 +237,8 @@ test('navigation rings deform on their travel axes and settle circular', async (
     .poll(async () =>
       page
         .locator('[data-portfolio-slide-indicator-marker="true"]')
-        .evaluate((ring: SVGEllipseElement) =>
-          Math.abs(ring.rx.baseVal.value - ring.ry.baseVal.value),
+        .evaluate((ring: SVGRectElement) =>
+          Math.abs(ring.width.baseVal.value - ring.height.baseVal.value),
         ),
     )
     .toBeLessThanOrEqual(0.01)
@@ -299,17 +299,16 @@ test('wide sections share content boundaries and clear the navigation tracks', a
   expect(contentBox).not.toBeNull()
   expect(headerBox).not.toBeNull()
   expect(viewport).not.toBeNull()
-  expect(contentBox!.x - (leftRingBox!.x + leftRingBox!.width)).toBeGreaterThanOrEqual(
-    8,
-  )
-  expect(rightRingBox!.x - (contentBox!.x + contentBox!.width)).toBeGreaterThanOrEqual(
-    8,
-  )
+  expect(
+    contentBox!.x - (leftRingBox!.x + leftRingBox!.width),
+  ).toBeGreaterThanOrEqual(8)
+  expect(
+    rightRingBox!.x - (contentBox!.x + contentBox!.width),
+  ).toBeGreaterThanOrEqual(8)
   expect(Math.abs(headerBox!.x - contentBox!.x)).toBeLessThanOrEqual(0.5)
   expect(
     Math.abs(
-      headerBox!.x + headerBox!.width -
-        (contentBox!.x + contentBox!.width),
+      headerBox!.x + headerBox!.width - (contentBox!.x + contentBox!.width),
     ),
   ).toBeLessThanOrEqual(0.5)
   expect(Math.abs(contentBox!.x - editorialInsets.left)).toBeLessThanOrEqual(
@@ -330,7 +329,7 @@ test('wide sections share content boundaries and clear the navigation tracks', a
 test('long section travel deforms the ring more than an adjacent hop', async ({
   page,
 }) => {
-  const sampleTravel = async (key: 'ArrowDown' | '5') => {
+  const sampleTravel = async (key: 'ArrowDown' | '6') => {
     await page.goto('/work')
     await waitForPortfolio(page)
     await startRingDeformationSampling(
@@ -339,16 +338,14 @@ test('long section travel deforms the ring more than an adjacent hop', async ({
     )
     await page.keyboard.press(key)
     await expect(page).toHaveURL(
-      key === 'ArrowDown'
-        ? /\/work\/about-me$/
-        : /\/work\/mini-series-browser$/,
+      key === 'ArrowDown' ? /\/work\/about-me$/ : /\/work\/nextphrase$/,
     )
     await expect
       .poll(async () =>
         page
           .locator('[data-portfolio-section-nav-ring="left"]')
-          .evaluate((ring: SVGEllipseElement) =>
-            Math.abs(ring.rx.baseVal.value - ring.ry.baseVal.value),
+          .evaluate((ring: SVGRectElement) =>
+            Math.abs(ring.width.baseVal.value - ring.height.baseVal.value),
           ),
       )
       .toBeLessThanOrEqual(0.01)
@@ -359,7 +356,7 @@ test('long section travel deforms the ring more than an adjacent hop', async ({
   }
 
   const adjacentDeformation = await sampleTravel('ArrowDown')
-  const longDeformation = await sampleTravel('5')
+  const longDeformation = await sampleTravel('6')
 
   expect(longDeformation).toBeGreaterThan(adjacentDeformation * 1.1)
 })
@@ -472,7 +469,7 @@ test('vertical endpoint wraps use the boundary blur lifecycle', async ({
       }),
     )
     .toBeGreaterThan(1)
-  await expect(page).toHaveURL(/\/work\/mini-series-browser$/)
+  await expect(page).toHaveURL(/\/work\/nextphrase$/)
   await expect(verticalCarousel).not.toHaveAttribute(
     'data-portfolio-boundary-blur',
     'true',
@@ -591,11 +588,11 @@ test('pointer-clicked section navigation does not retain its tooltip', async ({
   page,
 }, testInfo) => {
   test.skip(testInfo.project.name.includes('iphone'))
-  await page.goto('/work/mini-series-browser/descriptions-only')
+  await page.goto('/work/nextphrase/home')
   await waitForPortfolio(page)
 
   const activeItem = page.locator(
-    'button[data-portfolio-section-nav-side="left"][data-portfolio-section-nav-index="5"]',
+    'button[data-portfolio-section-nav-side="left"][data-portfolio-section-nav-index="6"]',
   )
   const tooltip = page.locator(
     '[data-portfolio-section-nav-zone="left"] [role="tooltip"]',
@@ -606,7 +603,7 @@ test('pointer-clicked section navigation does not retain its tooltip', async ({
     page.viewportSize()!.width / 2,
     page.viewportSize()!.height / 2,
   )
-  await expect(page).toHaveURL(/\/work\/mini-series-browser\/poster-grid$/)
+  await expect(page).toHaveURL(/\/work\/nextphrase\/intro$/)
   await expect(tooltip).toBeHidden()
 })
 
@@ -619,7 +616,7 @@ test('section navigation reacquires from beneath its final item', async ({
 
   const zone = page.locator('[data-portfolio-section-nav-zone="left"]')
   const finalItem = zone.locator(
-    '[data-portfolio-section-nav-visual-index="5"]',
+    '[data-portfolio-section-nav-visual-index="6"]',
   )
   const [zoneBox, finalItemBox] = await Promise.all([
     zone.boundingBox(),
@@ -636,7 +633,7 @@ test('section navigation reacquires from beneath its final item', async ({
   })
 
   await expect
-    .poll(() => getSectionRingDistance(page, 5))
+    .poll(() => getSectionRingDistance(page, 6))
     .toBeLessThanOrEqual(0.5)
 })
 
@@ -714,12 +711,14 @@ test('the first homepage section preview travels instead of teleporting', async 
 
     samplingWindow.__portfolioPreviewSamples = []
     const sample = () => {
-      const ring = document.querySelector<SVGEllipseElement>(
+      const ring = document.querySelector<SVGRectElement>(
         '[data-portfolio-section-nav-ring="left"]',
       )
 
       if (ring) {
-        samplingWindow.__portfolioPreviewSamples?.push(ring.cy.baseVal.value)
+        samplingWindow.__portfolioPreviewSamples?.push(
+          ring.y.baseVal.value + ring.height.baseVal.value / 2,
+        )
       }
 
       samplingWindow.__portfolioPreviewFrame = requestAnimationFrame(sample)
@@ -1057,19 +1056,19 @@ test('mobile portrait keeps the logo fixed while sections move', async ({
 
 test('reduced motion still completes the loading curtain', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' })
-  await page.goto('/work/mini-series-browser/expanded-card')
+  await page.goto('/work/nextphrase/home')
   await waitForPortfolio(page)
-  await expect(page).toHaveURL(/\/work\/mini-series-browser\/expanded-card$/)
+  await expect(page).toHaveURL(/\/work\/nextphrase\/home$/)
   await expect
     .poll(async () =>
       page
-        .locator('ellipse[data-portfolio-section-nav-ring]')
+        .locator('rect[data-portfolio-section-nav-ring]')
         .evaluateAll(rings =>
           Math.max(
             ...rings.map(ring =>
               Math.abs(
-                (ring as SVGEllipseElement).rx.baseVal.value -
-                  (ring as SVGEllipseElement).ry.baseVal.value,
+                (ring as SVGRectElement).width.baseVal.value -
+                  (ring as SVGRectElement).height.baseVal.value,
               ),
             ),
           ),

@@ -9,7 +9,6 @@ import {
   getActiveProjectColor,
   getProjectColor,
 } from '../../components/portfolio/domain/portfolioColors'
-import { getCssColorContrastAgainstWhite } from '../../components/portfolio/domain/theme'
 
 describe('portfolio appearance preference', () => {
   it('uses System for missing or invalid stored values', () => {
@@ -34,44 +33,14 @@ describe('portfolio appearance preference', () => {
 })
 
 describe('portfolio project colors by appearance', () => {
-  it('preserves the existing dark project and active colors', () => {
-    expect(
-      portfolioSlides.map((_, index) => getProjectColor(index, 'dark')),
-    ).toEqual([
-      '#75A462',
-      '#00A99D',
-      '#0075DD',
-      '#244ED0',
-      '#7d45e4',
-      '#F02D5D',
-      '#C30000',
-    ])
-
-    expect(
-      portfolioSlides.map((_, index) => getActiveProjectColor(index, 'dark')),
-    ).toEqual([
-      'hsl(102.73 26.61% 95%)',
-      'hsl(175.74 100% 95%)',
-      'hsl(208.24 100% 95%)',
-      'hsl(225.35 70.49% 95%)',
-      'hsl(261.13 74.65% 95%)',
-      'hsl(345.23 86.67% 95%)',
-      'hsl(0 100% 95%)',
-    ])
-  })
-
-  it('derives hue-preserving light colors with AA contrast against white', () => {
-    portfolioSlides.forEach((_, projectIndex) => {
+  it('uses resume red for every project and interaction state', () => {
+    for (const theme of ['dark', 'light'] as const) {
       expect(
-        getCssColorContrastAgainstWhite(
-          getProjectColor(projectIndex, 'light'),
-        ),
-      ).toBeGreaterThanOrEqual(4.5)
+        portfolioSlides.map((_, index) => getProjectColor(index, theme)),
+      ).toEqual(portfolioSlides.map(() => '#ff0000'))
       expect(
-        getCssColorContrastAgainstWhite(
-          getActiveProjectColor(projectIndex, 'light'),
-        ),
-      ).toBeGreaterThanOrEqual(4.5)
-    })
+        portfolioSlides.map((_, index) => getActiveProjectColor(index, theme)),
+      ).toEqual(portfolioSlides.map(() => '#ff0000'))
+    }
   })
 })

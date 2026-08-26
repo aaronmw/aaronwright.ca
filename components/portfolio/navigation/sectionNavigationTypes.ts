@@ -32,10 +32,10 @@ export type SectionNavigationGeometry = {
 };
 
 export type SectionNavigationView = {
-  ring: SVGEllipseElement | null;
+  ring: SVGRectElement | null;
   itemGroups: Array<SVGGElement | null>;
   arrowGroups: Array<SVGGElement | null>;
-  dots: Array<SVGCircleElement | null>;
+  dots: Array<SVGRectElement | null>;
   buttons: Array<HTMLButtonElement | null>;
   tooltip: HTMLDivElement | null;
   tooltipText: HTMLSpanElement | null;

@@ -7,13 +7,11 @@ const NAME_FADE_VIEWPORT_RATIO = 0.2
 const NAME_FADE_MINIMUM_DISTANCE = 160
 
 export function PortfolioDesktopIdentity({
-  color,
   sourceRef,
 }: {
-  color: string
   sourceRef: RefObject<HTMLDivElement | null>
 }) {
-  const nameRef = useRef<HTMLParagraphElement>(null)
+  const nameRef = useRef<HTMLHeadingElement>(null)
 
   useEffect(() => {
     const source = sourceRef.current
@@ -60,17 +58,17 @@ export function PortfolioDesktopIdentity({
     >
       <span className="grid size-11 shrink-0 place-items-center">
         <PortfolioLogoMark
-          className="size-12 transition-colors duration-300 ease-out motion-reduce:transition-none"
-          style={{ color, transform: 'translate(-2px, -2px)' }}
+          className="text-resume-signal"
+          style={{ transform: 'translate(-2px, -2px)' }}
         />
       </span>
-      <p
+      <h1
         ref={nameRef}
-        className="ml-5 whitespace-nowrap text-base font-light text-[var(--portfolio-ink-70)] will-change-[opacity]"
+        className="ml-12 whitespace-nowrap text-base font-bold italic text-[var(--portfolio-ink)] will-change-[opacity]"
         data-portfolio-desktop-name
       >
         Aaron M. Wright
-      </p>
+      </h1>
     </div>
   )
 }

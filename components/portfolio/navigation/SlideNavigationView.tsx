@@ -1,15 +1,17 @@
-import type {
-  MutableRefObject,
-  PointerEvent,
-} from 'react';
-import { NAVIGATION_SLIDE_STEP, NAVIGATION_SVG_CENTER, NAVIGATION_SVG_SIZE } from './navigationTokens';
+import type { MutableRefObject, PointerEvent } from 'react';
+import {
+  NAVIGATION_RING_RADIUS,
+  NAVIGATION_SLIDE_STEP,
+  NAVIGATION_SVG_CENTER,
+  NAVIGATION_SVG_SIZE,
+} from './navigationTokens';
 import { NavigationDot, NavigationRing } from './NavigationSvg';
 import type { SlideNavigationItem } from './slideNavigationTypes';
 
 export type SlideNavigationViewRefs = {
-  dotRefs: MutableRefObject<Map<number, SVGCircleElement>>;
+  dotRefs: MutableRefObject<Map<number, SVGRectElement>>;
   latticeRef: MutableRefObject<SVGGElement | null>;
-  ringRef: MutableRefObject<SVGEllipseElement | null>;
+  ringRef: MutableRefObject<SVGRectElement | null>;
   slotRefs: MutableRefObject<Map<number, SVGGElement>>;
   svgRef: MutableRefObject<SVGSVGElement | null>;
 };
@@ -18,10 +20,21 @@ export type SlideNavigationViewActions = {
   onBlur: (index: number) => void;
   onClick: (index: number, detail: number) => void;
   onFocus: (index: number) => void;
-  onKeyDown: (index: number, key: string, code: string, repeat: boolean) => void;
+  onKeyDown: (
+    index: number,
+    key: string,
+    code: string,
+    repeat: boolean,
+  ) => void;
   onKeyUp: (index: number, key: string, code: string) => void;
-  onPointerDown: (index: number, event: PointerEvent<HTMLButtonElement>) => void;
-  onPointerEnter: (index: number, event: PointerEvent<HTMLButtonElement>) => void;
+  onPointerDown: (
+    index: number,
+    event: PointerEvent<HTMLButtonElement>,
+  ) => void;
+  onPointerEnter: (
+    index: number,
+    event: PointerEvent<HTMLButtonElement>,
+  ) => void;
   onPointerLeave: (event: PointerEvent<HTMLDivElement>) => void;
   onPointerMove: (event: PointerEvent<HTMLDivElement>) => void;
   onPointerRelease: (
@@ -55,7 +68,7 @@ export function SlideNavigationView({
     <div
       data-portfolio-slide-indicators
       data-interactive-pop="off"
-      className="group/slide-nav pointer-events-auto relative h-[52px] overflow-visible"
+      className="group/slide-nav pointer-events-auto relative h-[52px] overflow-visible font-portfolio-controls"
       style={{ width: `${model.targetWidth}px` }}
       onPointerMove={actions.onPointerMove}
       onPointerLeave={actions.onPointerLeave}
@@ -70,13 +83,13 @@ export function SlideNavigationView({
         aria-hidden="true"
       >
         <g ref={refs.latticeRef}>
-          {model.renderedSlotIds.map((slotId) => {
+          {model.renderedSlotIds.map(slotId => {
             const targetIndex = model.targetSlotIds.indexOf(slotId);
 
             return (
               <g
                 key={slotId}
-                ref={(node) => {
+                ref={node => {
                   if (node) {
                     refs.slotRefs.current.set(slotId, node);
                   } else {
@@ -87,7 +100,7 @@ export function SlideNavigationView({
                 transform={`translate(${slotId * NAVIGATION_SLIDE_STEP} 0)`}
               >
                 <NavigationDot
-                  ref={(node) => {
+                  ref={node => {
                     if (node && targetIndex >= 0) {
                       refs.dotRefs.current.set(targetIndex, node);
                     } else if (targetIndex >= 0) {
@@ -97,8 +110,8 @@ export function SlideNavigationView({
                   data-portfolio-slide-indicator-visual={
                     targetIndex >= 0 ? targetIndex : undefined
                   }
-                  cx={0}
-                  cy={NAVIGATION_SVG_CENTER}
+                  centerX={0}
+                  centerY={NAVIGATION_SVG_CENTER}
                   fill="var(--portfolio-ink)"
                   className={`transition-opacity duration-200 ease-out motion-reduce:transition-none ${
                     targetIndex < 0 || targetIndex === model.visualActiveIndex
@@ -107,15 +120,16 @@ export function SlideNavigationView({
                   }`}
                 />
                 {targetIndex >= 0 && model.pendingIndex === targetIndex ? (
-                  <circle
-                    cx={0}
-                    cy={NAVIGATION_SVG_CENTER}
-                    r={7}
+                  <rect
+                    x={-NAVIGATION_RING_RADIUS}
+                    y={NAVIGATION_SVG_CENTER - NAVIGATION_RING_RADIUS}
+                    width={NAVIGATION_RING_RADIUS * 2}
+                    height={NAVIGATION_RING_RADIUS * 2}
                     fill="none"
                     stroke="var(--portfolio-ink)"
-                    strokeWidth={2}
-                    strokeDasharray="20 24"
+                    strokeDasharray={`${NAVIGATION_RING_RADIUS * 4} ${NAVIGATION_RING_RADIUS * 4}`}
                     className="portfolio-pending-ring"
+                    style={{ strokeWidth: 'var(--logo-stroke-width)' }}
                   />
                 ) : null}
               </g>
@@ -140,24 +154,17 @@ export function SlideNavigationView({
           aria-current={model.activeIndex === index ? 'true' : undefined}
           aria-busy={model.pendingIndex === index ? true : undefined}
           data-portfolio-slide-indicator-index={index}
-          onPointerEnter={(event) => actions.onPointerEnter(index, event)}
-          onPointerDown={(event) => actions.onPointerDown(index, event)}
-          onPointerUp={(event) => actions.onPointerRelease(index, event)}
-          onPointerCancel={(event) => actions.onPointerRelease(index, event)}
-          onKeyDown={(event) =>
-            actions.onKeyDown(
-              index,
-              event.key,
-              event.code,
-              event.repeat,
-            )
+          onPointerEnter={event => actions.onPointerEnter(index, event)}
+          onPointerDown={event => actions.onPointerDown(index, event)}
+          onPointerUp={event => actions.onPointerRelease(index, event)}
+          onPointerCancel={event => actions.onPointerRelease(index, event)}
+          onKeyDown={event =>
+            actions.onKeyDown(index, event.key, event.code, event.repeat)
           }
-          onKeyUp={(event) =>
-            actions.onKeyUp(index, event.key, event.code)
-          }
+          onKeyUp={event => actions.onKeyUp(index, event.key, event.code)}
           onFocus={() => actions.onFocus(index)}
           onBlur={() => actions.onBlur(index)}
-          onClick={(event) => actions.onClick(index, event.detail)}
+          onClick={event => actions.onClick(index, event.detail)}
         />
       ))}
     </div>

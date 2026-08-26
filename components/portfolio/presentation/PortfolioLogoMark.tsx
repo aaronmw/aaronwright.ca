@@ -1,27 +1,50 @@
 import type { CSSProperties } from 'react'
 
+const LOGO_CELLS = [
+  [0, 0],
+  [4, 0],
+  [0, 1],
+  [2, 1],
+  [4, 1],
+  [0, 2],
+  [4, 2],
+  [0, 3],
+  [2, 3],
+  [4, 3],
+  [0, 4],
+  [1, 4],
+  [2, 4],
+  [3, 4],
+  [4, 4],
+] as const
+
 export function PortfolioLogoMark({
   className,
   style,
-  size = 48,
 }: {
   className?: string
   style?: CSSProperties
-  size?: number
 }) {
   return (
-    <svg
-      className={className}
-      style={style}
-      width={size}
-      height={size}
-      viewBox="0 0 7 7"
+    <span
+      className={`inline-grid shrink-0 ${className ?? ''}`}
+      style={{
+        gridTemplateColumns: 'repeat(5, var(--logo-stroke-width))',
+        gridTemplateRows: 'repeat(5, var(--logo-stroke-width))',
+        ...style,
+      }}
       aria-hidden="true"
     >
-      <path
-        fill="currentColor"
-        d="M1 1h1v1H1zm4 0h1v1H5zM1 2h1v1H1zm2 0h1v1H3zm2 0h1v1H5zM1 3h1v1H1zm4 0h1v1H5zM1 4h1v1H1zm2 0h1v1H3zm2 0h1v1H5zM1 5h5v1H1z"
-      />
-    </svg>
+      {LOGO_CELLS.map(([column, row]) => (
+        <span
+          key={`${column}-${row}`}
+          className="bg-current"
+          style={{
+            gridColumnStart: column + 1,
+            gridRowStart: row + 1,
+          }}
+        />
+      ))}
+    </span>
   )
 }

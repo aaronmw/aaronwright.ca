@@ -2,6 +2,15 @@ import { forwardRef, SVGProps } from 'react';
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { NAVIGATION_DOT_RADIUS } from './navigationTokens';
 
+type NavigationSquareProps = Omit<
+  SVGProps<SVGRectElement>,
+  'height' | 'width' | 'x' | 'y'
+> & {
+  centerX?: number;
+  centerY?: number;
+  size?: number;
+};
+
 function getIconPaths(icon: IconDefinition) {
   const [width, height, , , pathData] = icon.icon;
 
@@ -48,23 +57,41 @@ export function NavigationSvgIcon({
   );
 }
 
-export const NavigationDot = forwardRef<
-  SVGCircleElement,
-  SVGProps<SVGCircleElement>
->(function NavigationDot({ r = NAVIGATION_DOT_RADIUS, ...props }, ref) {
-  return <circle ref={ref} r={r} fill="currentColor" {...props} />;
-});
+export const NavigationDot = forwardRef<SVGRectElement, NavigationSquareProps>(
+  function NavigationDot(
+    { centerX = 0, centerY = 0, size = NAVIGATION_DOT_RADIUS * 2, ...props },
+    ref,
+  ) {
+    return (
+      <rect
+        ref={ref}
+        x={centerX - size / 2}
+        y={centerY - size / 2}
+        width={size}
+        height={size}
+        fill="currentColor"
+        shapeRendering="crispEdges"
+        {...props}
+      />
+    );
+  },
+);
 
 export const NavigationRing = forwardRef<
-  SVGEllipseElement,
-  SVGProps<SVGEllipseElement>
+  SVGRectElement,
+  SVGProps<SVGRectElement>
 >(function NavigationRing(props, ref) {
+  const { style, ...restProps } = props;
+
   return (
-    <ellipse
+    <rect
       ref={ref}
       fill="none"
+      shapeRendering="crispEdges"
+      strokeLinejoin="miter"
       vectorEffect="non-scaling-stroke"
-      {...props}
+      {...restProps}
+      style={{ strokeWidth: 'var(--logo-stroke-width)', ...style }}
     />
   );
 });

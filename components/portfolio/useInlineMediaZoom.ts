@@ -15,9 +15,11 @@ import {
 const MAX_SCALE = 6;
 const ZOOM_EPSILON = 0.001;
 const WHEEL_ZOOM_SENSITIVITY = 0.0015;
+const WHEEL_PRESENTATION_INTENT_THRESHOLD_PX = 12;
+const WHEEL_PRESENTATION_INTENT_WINDOW_MS = 160;
 const KEYBOARD_ZOOM_DELTA_Y = -100;
 const ZOOM_STEP_SCALE = Math.exp(
-  -KEYBOARD_ZOOM_DELTA_Y * WHEEL_ZOOM_SENSITIVITY
+  -KEYBOARD_ZOOM_DELTA_Y * WHEEL_ZOOM_SENSITIVITY,
 );
 const PRESENTATION_EXPANSION_DURATION_MS = 500;
 
@@ -67,7 +69,7 @@ function getTouchDistance(touches: TouchPointList) {
 
   return Math.hypot(
     first.clientX - second.clientX,
-    first.clientY - second.clientY
+    first.clientY - second.clientY,
   );
 }
 
@@ -89,7 +91,7 @@ function normalizeScale(scale: number) {
 
 export function useInlineMediaZoom(
   active: boolean,
-  onPresentationChange?: (presented: boolean) => void
+  onPresentationChange?: (presented: boolean) => void,
 ) {
   const surfaceRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -104,10 +106,12 @@ export function useInlineMediaZoom(
     originY: 0,
     dragging: false,
   });
-  const [touchDoubleTapRecognizer] = useState(
-    createTouchDoubleTapRecognizer
-  );
+  const [touchDoubleTapRecognizer] = useState(createTouchDoubleTapRecognizer);
   const lastTouchInteractionAtRef = useRef(Number.NEGATIVE_INFINITY);
+  const wheelPresentationIntentRef = useRef({
+    accumulatedDelta: 0,
+    lastEventAt: Number.NEGATIVE_INFINITY,
+  });
   const animationFrameRef = useRef<number | null>(null);
   const isZoomedRef = useRef(false);
   const isPresentedRef = useRef(false);
@@ -148,7 +152,7 @@ export function useInlineMediaZoom(
     }
 
     content.style.transition = window.matchMedia(
-      '(prefers-reduced-motion: reduce)'
+      '(prefers-reduced-motion: reduce)',
     ).matches
       ? 'none'
       : 'transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1)';
@@ -194,7 +198,7 @@ export function useInlineMediaZoom(
 
   const setLiveView = (
     nextScale: number,
-    nextOffset: { x: number; y: number }
+    nextOffset: { x: number; y: number },
   ) => {
     const normalizedScale = normalizeScale(nextScale);
 
@@ -209,10 +213,7 @@ export function useInlineMediaZoom(
     scheduleLiveTransform();
   };
 
-  const zoomAtPoint = (
-    nextScale: number,
-    point: { x: number; y: number }
-  ) => {
+  const zoomAtPoint = (nextScale: number, point: { x: number; y: number }) => {
     const currentScale = liveScaleRef.current;
     const offset = liveOffsetRef.current;
     const contentPoint = {
@@ -239,6 +240,10 @@ export function useInlineMediaZoom(
     pointerDragRef.current.dragging = false;
     liveScaleRef.current = 1;
     liveOffsetRef.current = { x: 0, y: 0 };
+    wheelPresentationIntentRef.current = {
+      accumulatedDelta: 0,
+      lastEventAt: Number.NEGATIVE_INFINITY,
+    };
     presentationEnteredAtRef.current = 0;
     updateZoomedState(false);
     updatePresentedState(false);
@@ -334,7 +339,7 @@ export function useInlineMediaZoom(
         cancelAnimationFrame(animationFrameRef.current);
       }
     },
-    []
+    [],
   );
 
   const handleTouchStart = useEffectEvent((event: TouchEvent) => {
@@ -392,7 +397,7 @@ export function useInlineMediaZoom(
 
     if (gesture.kind === 'pan' && event.touches.length === 1) {
       const touch = Array.from(event.touches).find(
-        (candidate) => candidate.identifier === gesture.touchId
+        candidate => candidate.identifier === gesture.touchId,
       );
 
       if (!touch) {
@@ -412,14 +417,14 @@ export function useInlineMediaZoom(
     lastTouchInteractionAtRef.current = performance.now();
     const doubleTapPoint = touchDoubleTapRecognizer.end(
       Array.from(event.changedTouches),
-      performance.now()
+      performance.now(),
     );
 
     if (doubleTapPoint) {
       event.preventDefault();
       event.stopPropagation();
       zoomOneStepAtPoint(
-        localPoint(doubleTapPoint.clientX, doubleTapPoint.clientY)
+        localPoint(doubleTapPoint.clientX, doubleTapPoint.clientY),
       );
     }
 
@@ -457,19 +462,59 @@ export function useInlineMediaZoom(
       return;
     }
 
-    const isZoomingIn = event.deltaY < 0;
+    const deltaMultiplier =
+      event.deltaMode === WheelEvent.DOM_DELTA_LINE
+        ? 16
+        : event.deltaMode === WheelEvent.DOM_DELTA_PAGE
+          ? (surfaceRef.current?.clientHeight ?? 1)
+          : 1;
+    const pixelDeltaY = event.deltaY * deltaMultiplier;
+    const isZoomingIn = pixelDeltaY < 0;
 
     if (!isZoomingIn && !isPresentedRef.current) {
+      wheelPresentationIntentRef.current = {
+        accumulatedDelta: 0,
+        lastEventAt: Number.NEGATIVE_INFINITY,
+      };
       return;
     }
 
-    event.preventDefault();
-    event.stopPropagation();
-
     if (isZoomingIn && !isPresentedRef.current) {
+      const now = performance.now();
+      const intent = wheelPresentationIntentRef.current;
+
+      if (now - intent.lastEventAt > WHEEL_PRESENTATION_INTENT_WINDOW_MS) {
+        intent.accumulatedDelta = 0;
+      }
+
+      intent.accumulatedDelta += -pixelDeltaY;
+      intent.lastEventAt = now;
+
+      if (event.ctrlKey) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+
+      if (intent.accumulatedDelta < WHEEL_PRESENTATION_INTENT_THRESHOLD_PX) {
+        return;
+      }
+
+      wheelPresentationIntentRef.current = {
+        accumulatedDelta: 0,
+        lastEventAt: Number.NEGATIVE_INFINITY,
+      };
+      event.preventDefault();
+      event.stopPropagation();
       enterPresentation();
       return;
     }
+
+    wheelPresentationIntentRef.current = {
+      accumulatedDelta: 0,
+      lastEventAt: Number.NEGATIVE_INFINITY,
+    };
+    event.preventDefault();
+    event.stopPropagation();
 
     if (!isZoomingIn && liveScaleRef.current <= 1) {
       resetLiveView(true);
@@ -485,15 +530,8 @@ export function useInlineMediaZoom(
     }
 
     contentRef.current?.style.setProperty('transition', 'none');
-    const deltaMultiplier =
-      event.deltaMode === WheelEvent.DOM_DELTA_LINE
-        ? 16
-        : event.deltaMode === WheelEvent.DOM_DELTA_PAGE
-          ? (surfaceRef.current?.clientHeight ?? 1)
-          : 1;
     const nextScale = normalizeScale(
-      liveScaleRef.current *
-        Math.exp(-event.deltaY * deltaMultiplier * WHEEL_ZOOM_SENSITIVITY)
+      liveScaleRef.current * Math.exp(-pixelDeltaY * WHEEL_ZOOM_SENSITIVITY),
     );
 
     zoomAtPoint(nextScale, localPoint(event.clientX, event.clientY));
@@ -594,9 +632,7 @@ export function useInlineMediaZoom(
     }
 
     contentRef.current?.style.setProperty('transition', 'none');
-    const nextScale = normalizeScale(
-      liveScaleRef.current * ZOOM_STEP_SCALE
-    );
+    const nextScale = normalizeScale(liveScaleRef.current * ZOOM_STEP_SCALE);
 
     zoomAtPoint(nextScale, { x: 0, y: 0 });
   });
@@ -637,7 +673,7 @@ export function useInlineMediaZoom(
       surface.removeEventListener(INLINE_MEDIA_RESET_EVENT, handleReset);
       surface.removeEventListener(
         INLINE_MEDIA_ZOOM_IN_EVENT,
-        handleKeyboardZoomIn
+        handleKeyboardZoomIn,
       );
     };
   }, []);

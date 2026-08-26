@@ -1,4 +1,7 @@
-export const TOP_SCREEN_COLOR = 'hsl(0 0% 100%)'
+export const RESUME_PAPER_COLOR = '#fffdfb'
+export const RESUME_INK_COLOR = '#000000'
+export const RESUME_SIGNAL_COLOR = '#ff0000'
+export const TOP_SCREEN_COLOR = RESUME_PAPER_COLOR
 export const PROJECT_COLOR_START_HUE = 342
 export const PROJECT_COLOR_SATURATION = 78
 export const PROJECT_COLOR_LIGHTNESS = 54
@@ -80,11 +83,7 @@ export function getContrastAgainstBlack(
   saturation: number,
   lightness: number,
 ) {
-  const relativeLuminance = getRelativeLuminance(
-    hue,
-    saturation,
-    lightness,
-  )
+  const relativeLuminance = getRelativeLuminance(hue, saturation, lightness)
 
   return (relativeLuminance + 0.05) / 0.05
 }
@@ -94,11 +93,7 @@ export function getContrastAgainstWhite(
   saturation: number,
   lightness: number,
 ) {
-  const relativeLuminance = getRelativeLuminance(
-    hue,
-    saturation,
-    lightness,
-  )
+  const relativeLuminance = getRelativeLuminance(hue, saturation, lightness)
 
   return 1.05 / (relativeLuminance + 0.05)
 }
@@ -193,8 +188,7 @@ function hexToHsl(baseColor: string): HslColor {
   const minimum = Math.min(red, green, blue)
   const delta = maximum - minimum
   const lightness = (maximum + minimum) / 2
-  const saturation =
-    delta === 0 ? 0 : delta / (1 - Math.abs(2 * lightness - 1))
+  const saturation = delta === 0 ? 0 : delta / (1 - Math.abs(2 * lightness - 1))
 
   let hue = 0
   if (delta !== 0) {

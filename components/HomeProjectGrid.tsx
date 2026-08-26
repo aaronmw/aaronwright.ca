@@ -2,7 +2,12 @@ import Image from 'next/image'
 import Link from 'next/link'
 import type { PortfolioProject, PortfolioScreenshot } from '@/lib/portfolio'
 import { portfolioSlides } from '@/lib/portfolio'
-import { SectionBlurb } from '@/components/portfolio/presentation/PortfolioText'
+import { portfolioFont } from '@/lib/portfolioFonts'
+import {
+  PortfolioInlineMarkdown,
+  PortfolioLedgerFrame,
+  PortfolioLedgerLabel,
+} from '@/components/portfolio/presentation/PortfolioText'
 
 function isVideoSource(src: string) {
   return /\.(webm|mp4|m4v|ogv|ogg)(?:$|\?)/i.test(src)
@@ -34,13 +39,15 @@ function projectCellClass(index: number) {
 
 export function HomeProjectGrid() {
   return (
-    <main className="min-h-dvh bg-black text-white">
-      <header className="flex min-h-20 items-center justify-between gap-8 border-b border-white/20 px-6 py-4 sm:px-8 lg:px-12">
+    <main
+      className={`${portfolioFont.className} ${portfolioFont.variable} min-h-dvh bg-resume-ink text-resume-paper`}
+    >
+      <header className="flex min-h-20 items-center justify-between gap-8 border-b border-resume-paper/20 px-6 py-4 sm:px-8 lg:px-12">
         <div>
-          <p className="text-sm font-black uppercase tracking-[0.18em]">
+          <h1 className="text-sm font-bold uppercase tracking-normal">
             Aaron M. Wright
-          </p>
-          <p className="mt-1 text-sm font-light text-white/60">
+          </h1>
+          <p className="mt-1 text-sm font-normal text-resume-paper/60">
             Product design · frontend systems
           </p>
         </div>
@@ -64,7 +71,7 @@ export function HomeProjectGrid() {
       </header>
 
       <section
-        className="grid grid-cols-1 gap-px bg-white/20 md:grid-cols-12"
+        className="grid grid-cols-1 gap-px bg-resume-paper/20 md:grid-cols-12"
         aria-label="Selected work"
       >
         {portfolioSlides.map((project, index) => {
@@ -78,13 +85,14 @@ export function HomeProjectGrid() {
             >
               <Link
                 href={`/work/${project.slug}`}
-                className="absolute inset-0 isolate flex items-end overflow-hidden p-6 outline-none sm:p-8 lg:p-10"
+                className="absolute inset-0 isolate flex touch-manipulation items-end overflow-hidden p-6 outline-none sm:p-8 lg:p-10"
               >
                 <Image
                   src={screenshot.src}
                   alt=""
                   fill
                   unoptimized
+                  loading={index === 0 ? 'eager' : undefined}
                   sizes={
                     index === 0
                       ? '(min-width: 768px) 100vw, 100vw'
@@ -93,20 +101,36 @@ export function HomeProjectGrid() {
                   className="-z-20 object-cover opacity-75 saturate-[0.8] transition-[transform,opacity,filter] duration-500 ease-out group-hover:scale-[1.025] group-hover:opacity-90 group-hover:saturate-100 group-focus-within:scale-[1.025] group-focus-within:opacity-90 group-focus-within:saturate-100 motion-reduce:transition-none"
                 />
                 <span className="absolute inset-0 -z-10 bg-gradient-to-t from-black via-black/15 to-black/10 transition-colors duration-500 group-hover:from-black/85 group-focus-within:from-black/85 motion-reduce:transition-none" />
-                <span className="pointer-events-none absolute inset-2 border border-transparent transition-colors duration-200 group-focus-within:border-white" />
+                <span className="pointer-events-none absolute inset-2 border border-transparent transition-colors duration-200 group-focus-within:border-resume-signal" />
 
-                <span className="block max-w-[60ch]">
-                  <span className="mb-4 block text-xs font-black uppercase tracking-[0.24em] text-white/65">
-                    {isCaseStudy ? 'Case study' : 'Project'} ·{' '}
-                    {String(index + 1).padStart(2, '0')}
-                  </span>
-                  <span className="block text-[clamp(2.4rem,5.5vw,6.5rem)] font-black uppercase leading-[0.86] tracking-[-0.045em]">
-                    {project.title}
-                  </span>
-                  <SectionBlurb className="mt-5 block !max-w-[50ch] !text-base !leading-snug !text-white !opacity-80 sm:!text-lg">
-                    {project.blurb}
-                  </SectionBlurb>
-                </span>
+                <PortfolioLedgerFrame className="w-full max-w-[40rem]">
+                  <div className="grid grid-cols-[min-content_minmax(0,1fr)]">
+                    <div className="min-w-0 whitespace-nowrap py-2">
+                      <PortfolioLedgerLabel>
+                        {isCaseStudy ? 'Case study' : 'Project'}
+                      </PortfolioLedgerLabel>
+                      <span className="mt-1 block">
+                        {String(index + 1).padStart(2, '0')}
+                      </span>
+                    </div>
+                    <div className="min-w-0 py-2">
+                      <PortfolioLedgerLabel>
+                        Company / product
+                      </PortfolioLedgerLabel>
+                      <h2 className="mt-1 [font-size:inherit] font-normal leading-[inherit] tracking-normal">
+                        {project.title}
+                      </h2>
+                    </div>
+                  </div>
+                  <div className="block min-w-0 py-2">
+                    <PortfolioLedgerLabel>Summary / intro</PortfolioLedgerLabel>
+                    <span className="mt-1 block font-normal">
+                      <PortfolioInlineMarkdown>
+                        {project.blurb}
+                      </PortfolioInlineMarkdown>
+                    </span>
+                  </div>
+                </PortfolioLedgerFrame>
               </Link>
             </article>
           )

@@ -485,51 +485,6 @@ Finally, I built a \`ContentfulSpotCopy\` component which accepts a \`path\` and
     ],
   },
   {
-    id: 'mini-series-browser',
-    slug: 'mini-series-browser',
-    title: 'Mini Series Browser',
-    blurb:
-      'I can never decide what to watch, and am too easily persuaded (or dissuaded) by cover art. So I built this.',
-    url: 'https://mini-series-browser.netlify.app',
-    descriptionMarkdown: `
-Deciding what to watch is harder and harder with all the options spread over all the providers. I've also grown a little resentful of "normal" television series failing to conclude either because they were cancelled, or because concluding would mean they couldn't make another season. This led me to narrow the pool substantially to limited series productions only: stories that are started with an ending in mind, told over an arc of 2 to 12 episodes.
-
-The UI has evolved from a very scrappy list of titles to a much more functional tool usable by people other than myself. With over 600 titles to render, there was a lot of optimization work including list virtualization, image caching, and more.
-
-The most immediate "optimization" was free, and the reason I built it in the first place: by default, it only shows short descriptions of each title. No cover art. No ratings. No ways to watch. No distractions!
-
-It's also got some fun details and bits of polish, especially on desktop: the spotlight follows your focus, the keyboard will move you around, into, and out of title cards, and even the direction in which cards open on screen is designed to prevent as much scrolling as possible, since it's easy to lose one's place in a sea of 600+ pretty similar-looking items.
-
-It's still getting regular updates and polish as I find opportunities.
-`,
-    screenshots: [
-      {
-        id: 'mini-series-browser-descriptions-only',
-        slug: 'descriptions-only',
-        src: '/portfolio/mini-series-browser/mini-series-browser--1-descriptions-only.png',
-        alt: '1 of 4: Mini Series Browser descriptions-only view on desktop and mobile',
-      },
-      {
-        id: 'mini-series-browser-expanded-card',
-        slug: 'expanded-card',
-        src: '/portfolio/mini-series-browser/mini-series-browser--2-expanded-card.png',
-        alt: '2 of 4: Mini Series Browser expanded card on desktop and mobile',
-      },
-      {
-        id: 'mini-series-browser-filters',
-        slug: 'filters',
-        src: '/portfolio/mini-series-browser/mini-series-browser--3-filters.png',
-        alt: '3 of 4: Mini Series Browser filters on desktop and mobile',
-      },
-      {
-        id: 'mini-series-browser-poster-grid',
-        slug: 'poster-grid',
-        src: '/portfolio/mini-series-browser/mini-series-browser--4-poster-grid.png',
-        alt: '4 of 4: Mini Series Browser poster cards on desktop and mobile',
-      },
-    ],
-  },
-  {
     id: 'nextphrase',
     slug: 'nextphrase',
     title: 'Next\u00adPhrase',
@@ -618,7 +573,6 @@ const PORTFOLIO_PROJECT_ORDER = [
   'informal-systems',
   'aarons-toolbox',
   'nextphrase',
-  'mini-series-browser',
 ] as const;
 
 export const portfolioSlides = PORTFOLIO_PROJECT_ORDER.map(slug => {

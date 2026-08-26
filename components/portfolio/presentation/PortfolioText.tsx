@@ -1,4 +1,9 @@
-import type { AnchorHTMLAttributes, CSSProperties, HTMLAttributes } from 'react'
+import type {
+  AnchorHTMLAttributes,
+  CSSProperties,
+  HTMLAttributes,
+  ReactNode,
+} from 'react'
 import ReactMarkdown from 'react-markdown'
 import rehypeRaw from 'rehype-raw'
 import remarkGfm from 'remark-gfm'
@@ -37,6 +42,32 @@ const PORTFOLIO_MARKDOWN_COMPONENTS = {
   h5: createMarkdownHeading('h6'),
   h6: createMarkdownHeading('h6'),
 } satisfies Components
+
+const PROJECT_LEDGER_METADATA_PATTERN = /^\*\*(.+?)\s+·(?:\s|&nbsp;)+(.+?)\*\*$/
+const PROJECT_LEDGER_DECK_PATTERN = /^\s*#{1,6}\s+(.+)\s*$/
+
+export function PortfolioLedgerFrame({
+  children,
+  className,
+  ...props
+}: HTMLAttributes<HTMLElement> & {
+  children: ReactNode
+}) {
+  return (
+    <section
+      {...props}
+      className={`portfolio-ledger-copy font-resume-mono tabular-nums border-t border-t-resume-signal bg-resume-paper text-left text-sm font-normal leading-[1.5] text-resume-ink [--project-body-color:var(--color-resume-ink)] [--project-color:var(--color-resume-signal)] [border-top-width:var(--logo-stroke-width)] ${
+        className ?? ''
+      }`}
+    >
+      {children}
+    </section>
+  )
+}
+
+export function PortfolioLedgerLabel({ children }: { children: ReactNode }) {
+  return <span className="block font-normal uppercase">{children}</span>
+}
 
 function isExternalSiteHref(href?: string) {
   if (!href) {
@@ -84,52 +115,6 @@ function createMarkdownHeading(Tag: MarkdownHeadingTag) {
   return MarkdownHeading
 }
 
-export function SectionTitle({
-  children,
-  color,
-  elementRef,
-}: {
-  children: string
-  color: string
-  elementRef?: (node: HTMLSpanElement | null) => void
-}) {
-  return (
-    <span
-      ref={elementRef}
-      className="min-w-0 text-[clamp(1.1rem,3.4vh,2rem)] font-black uppercase leading-none tracking-normal sm:text-[clamp(1.25rem,4.2vh,4.2rem)] lg:text-[clamp(1.5rem,4.8vh,4.8rem)]"
-      style={{ color }}
-    >
-      {children}
-    </span>
-  )
-}
-
-export function SectionBlurb({
-  children,
-  className,
-}: {
-  children: string
-  className?: string
-}) {
-  return (
-    <span
-      className={`max-w-[54ch] text-[clamp(0.75rem,1.5vh,0.9rem)] font-light normal-case leading-snug tracking-normal text-[var(--portfolio-ink)] opacity-70 transition-opacity duration-200 ease-out group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none sm:text-[clamp(0.75rem,1.55vh,1rem)] ${
-        className ?? ''
-      }`}
-    >
-      <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
-        rehypePlugins={[rehypeRaw]}
-        allowedElements={['p', 'strong', 'em', 'code', 'br', 'del', 'abbr']}
-        unwrapDisallowed
-        components={INLINE_MARKDOWN_COMPONENTS}
-      >
-        {children}
-      </ReactMarkdown>
-    </span>
-  )
-}
-
 export function ProjectDescription({
   project,
   projectNumber,
@@ -153,6 +138,8 @@ export function ProjectDescription({
   layoutStyle?: CSSProperties
   presence?: 'visible' | 'concealed'
 }) {
+  const ledgerContent = getProjectLedgerContent(project.descriptionMarkdown)
+
   return (
     <div
       data-portfolio-presence={presence}
@@ -160,9 +147,7 @@ export function ProjectDescription({
         presence
           ? 'portfolio-presence-transition portfolio-left-rail-transition'
           : ''
-      } grid min-h-0 min-w-0 grid-rows-[auto_minmax(0,1fr)] pr-1 ${
-        className ?? ''
-      }`}
+      } h-full min-h-0 min-w-0 pr-1 ${className ?? ''}`}
       style={
         {
           ...layoutStyle,
@@ -178,37 +163,77 @@ export function ProjectDescription({
         } as ProjectColorStyle
       }
     >
-      <ProjectHeading
-        project={project}
-        projectNumber={projectNumber}
-        projectColor={projectContentColor}
-        isWideLayout={isWideLayout}
-      />
-      <div
-        className={`grid min-h-0 min-w-0 grid-rows-[minmax(0,1fr)_auto] ${
-          isWideLayout
-            ? 'w-[calc(48ch+2rem)] max-w-full'
-            : 'w-full max-w-[calc(48ch+2rem)]'
-        }`}
-      >
+      <div className="grid h-full min-h-0 min-w-0 grid-rows-[minmax(0,1fr)_auto]">
         <OverscrollIndicator
           ref={setDescriptionRef}
-          className="portfolio-themed-scrollbar overflow-x-hidden pr-10"
-          contentClassName={`portfolio-project-content portfolio-markdown portfolio-markdown-scroll-body prose min-w-0 w-full max-w-[48ch] font-light leading-relaxed ${
-            isWideLayout ? 'text-xl' : 'text-lg'
-          }`}
-          indicatorColor="var(--portfolio-surface-translucent)"
+          className="portfolio-themed-scrollbar overflow-x-hidden pr-4 [--project-color:var(--color-resume-signal)]"
+          contentClassName="portfolio-project-content portfolio-markdown-scroll-body min-w-0 w-full max-w-[52ch]"
+          indicatorColor="var(--color-resume-paper)"
         >
-          <PortfolioMarkdown>{project.descriptionMarkdown}</PortfolioMarkdown>
+          <PortfolioLedgerFrame aria-label={`${project.title} overview`}>
+            <div className="min-w-0 py-2">
+              <PortfolioLedgerLabel>Company / product</PortfolioLedgerLabel>
+              <h1 className="mt-1 [font-size:inherit] font-normal leading-[inherit] tracking-normal">
+                {project.title}
+              </h1>
+            </div>
+            {ledgerContent.roleMarkdown && ledgerContent.tenure ? (
+              <dl className="grid grid-cols-[min-content_minmax(0,1fr)_min-content] text-left">
+                <div className="min-w-0 whitespace-nowrap py-2">
+                  <dt>
+                    <PortfolioLedgerLabel>Case study</PortfolioLedgerLabel>
+                  </dt>
+                  <dd className="mt-1 text-left font-normal">
+                    {projectNumber}
+                  </dd>
+                </div>
+                <div className="min-w-0 py-2">
+                  <dt>
+                    <PortfolioLedgerLabel>Role</PortfolioLedgerLabel>
+                  </dt>
+                  <dd className="portfolio-ledger-role mt-1 min-w-0 whitespace-normal text-left font-normal">
+                    <PortfolioInlineMarkdown>
+                      {ledgerContent.roleMarkdown}
+                    </PortfolioInlineMarkdown>
+                  </dd>
+                </div>
+                <div className="min-w-0 whitespace-nowrap py-2">
+                  <dt>
+                    <PortfolioLedgerLabel>Tenure</PortfolioLedgerLabel>
+                  </dt>
+                  <dd className="mt-1 text-left font-normal">
+                    {ledgerContent.tenure}
+                  </dd>
+                </div>
+              </dl>
+            ) : null}
+            {ledgerContent.deckMarkdown ? (
+              <div className="min-w-0 py-2">
+                <PortfolioLedgerLabel>Title</PortfolioLedgerLabel>
+                <h2 className="mt-1 [font-size:inherit] font-bold leading-[inherit] tracking-normal text-balance">
+                  <PortfolioInlineMarkdown>
+                    {ledgerContent.deckMarkdown}
+                  </PortfolioInlineMarkdown>
+                </h2>
+              </div>
+            ) : null}
+            <div className="min-w-0 py-2">
+              <PortfolioLedgerLabel>Summary / intro</PortfolioLedgerLabel>
+              <div className="portfolio-markdown prose mt-1 max-w-none [font-size:inherit] font-normal leading-[inherit] [&>:first-child]:mt-0 [&>:last-child]:mb-0">
+                <PortfolioMarkdown>
+                  {ledgerContent.bodyMarkdown}
+                </PortfolioMarkdown>
+              </div>
+            </div>
+          </PortfolioLedgerFrame>
         </OverscrollIndicator>
         {project.url ? (
-          <div className="pr-10 pt-5">
+          <div className="pr-4 pt-5">
             <a
               href={project.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex min-h-14 w-full items-center justify-center rounded-lg px-6 py-4 text-center text-base font-black leading-none tracking-normal text-[var(--portfolio-inverse-ink)] outline-none transition-[background-color,filter] duration-200 hover:brightness-110 focus-visible:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--project-color)] active:brightness-95 motion-reduce:transition-none"
-              style={{ backgroundColor: projectContentColor }}
+              className="flex min-h-14 w-full items-center justify-center rounded-lg bg-resume-signal px-6 py-4 text-center text-base font-bold leading-none tracking-normal text-resume-paper outline-none transition-[background-color,filter] duration-200 hover:brightness-110 focus-visible:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-resume-signal active:brightness-95 motion-reduce:transition-none"
             >
               Visit Project
             </a>
@@ -238,7 +263,7 @@ export function AboutMeTextPanel({
 }) {
   return (
     <section
-      className={`portfolio-project-content-theme grid min-h-0 min-w-0 w-full grid-rows-[auto_minmax(0,1fr)] ${
+      className={`portfolio-project-content-theme min-h-0 min-w-0 w-full ${
         isWideLayout
           ? 'portfolio-theme-panel portfolio-wide-content-inset h-full py-16 backdrop-blur-md'
           : 'h-full'
@@ -252,28 +277,41 @@ export function AboutMeTextPanel({
         } as ProjectColorStyle
       }
     >
-      <ProjectHeading
-        project={project}
-        projectNumber={projectNumber}
-        projectColor={projectContentColor}
-        isWideLayout={isWideLayout}
-      />
       <OverscrollIndicator
         ref={setDescriptionRef}
-        wrapperClassName={
-          isWideLayout
-            ? 'w-full max-w-[calc(108ch+9rem)]'
-            : 'w-full max-w-[calc(48ch+2rem)]'
-        }
-        className="portfolio-themed-scrollbar overflow-x-hidden pr-10"
-        contentClassName={
-          isWideLayout
-            ? 'portfolio-project-content portfolio-markdown portfolio-markdown-scroll-body prose min-w-0 w-full max-w-[calc(108ch+7rem)] text-lg font-light leading-relaxed [column-count:3] [column-fill:balance] [column-gap:3.5rem]'
-            : 'portfolio-project-content portfolio-markdown portfolio-markdown-scroll-body prose min-w-0 w-full max-w-[48ch] text-lg font-light leading-relaxed'
-        }
-        indicatorColor="var(--portfolio-surface-translucent)"
+        wrapperClassName="h-full w-full max-w-[calc(72ch+2rem)]"
+        className="portfolio-themed-scrollbar h-full overflow-x-hidden pr-4 [--project-color:var(--color-resume-signal)]"
+        contentClassName="portfolio-project-content portfolio-markdown-scroll-body min-w-0 w-full max-w-[72ch]"
+        indicatorColor="var(--color-resume-paper)"
       >
-        <PortfolioMarkdown>{project.descriptionMarkdown}</PortfolioMarkdown>
+        <PortfolioLedgerFrame aria-label={project.title}>
+          <div className="grid grid-cols-[min-content_minmax(0,1fr)]">
+            <div className="min-w-0 whitespace-nowrap py-2">
+              <PortfolioLedgerLabel>Profile</PortfolioLedgerLabel>
+              <p className="mt-1">{projectNumber}</p>
+            </div>
+            <div className="min-w-0 py-2">
+              <PortfolioLedgerLabel>Title</PortfolioLedgerLabel>
+              <h1 className="mt-1 [font-size:inherit] font-bold leading-[inherit] tracking-normal">
+                {project.title}
+              </h1>
+            </div>
+          </div>
+          <div className="min-w-0 py-2">
+            <PortfolioLedgerLabel>Summary / intro</PortfolioLedgerLabel>
+            <div className="mt-1">
+              <PortfolioInlineMarkdown>{project.blurb}</PortfolioInlineMarkdown>
+            </div>
+          </div>
+          <div className="min-w-0 py-2">
+            <PortfolioLedgerLabel>Background</PortfolioLedgerLabel>
+            <div className="portfolio-markdown prose mt-1 max-w-none [font-size:inherit] font-normal leading-[inherit] [&>:first-child]:mt-0 [&>:last-child]:mb-0">
+              <PortfolioMarkdown>
+                {project.descriptionMarkdown}
+              </PortfolioMarkdown>
+            </div>
+          </div>
+        </PortfolioLedgerFrame>
       </OverscrollIndicator>
     </section>
   )
@@ -285,6 +323,7 @@ export function SlideDescription({
   projectBodyColor,
   projectContentColor,
   hidden,
+  isWideLayout,
   transitionState = 'visible',
 }: {
   children: string
@@ -292,66 +331,51 @@ export function SlideDescription({
   projectBodyColor: string
   projectContentColor: string
   hidden: boolean
+  isWideLayout: boolean
   transitionState?: 'entering' | 'visible' | 'exiting'
 }) {
   const isConcealed = hidden || transitionState !== 'visible'
   const renderedTransitionState = hidden ? 'hidden' : transitionState
+  const ledgerContent = getProjectLedgerContent(children)
 
   return (
     <div
       data-portfolio-slide-description
       data-transition-state={renderedTransitionState}
-      className="portfolio-project-content-theme portfolio-presence-transition portfolio-slide-description-transition portfolio-theme-panel portfolio-themed-scrollbar fixed z-30 max-h-[50dvh] w-[min(60ch,calc(100vw-3rem))] overflow-y-auto border border-[var(--portfolio-hairline)] p-5 shadow-[0_1.5rem_4rem_rgb(0_0_0/0.3)] backdrop-blur-xl sm:p-7"
+      className="portfolio-project-content-theme portfolio-presence-transition portfolio-slide-description-transition portfolio-themed-scrollbar fixed z-30 max-h-[50dvh] w-[min(60ch,calc(100vw-3rem))] overflow-y-auto text-resume-ink"
       aria-hidden={isConcealed ? true : undefined}
       inert={isConcealed}
       style={
         {
           '--project-color': projectColor,
-          '--project-body-color': projectBodyColor,
+          '--project-body-color': 'var(--color-resume-ink)',
           '--project-content-color': projectContentColor,
-          'right':
-            'max(1.5rem, calc(env(safe-area-inset-right, 0px) + 1.5rem))',
+          'right': isWideLayout
+            ? 'calc(var(--portfolio-navigation-rail-reserved-width) + env(safe-area-inset-right, 0px))'
+            : 'max(1.5rem, calc(env(safe-area-inset-right, 0px) + 1.5rem))',
           'bottom':
             'calc(var(--portfolio-slide-navigation-reserved-height, 5.25rem) + 1rem)',
         } as ProjectColorStyle
       }
     >
-      <div className="portfolio-markdown prose max-w-none text-base font-light leading-relaxed sm:text-lg [&>:last-child]:mb-0">
-        <PortfolioMarkdown>{children}</PortfolioMarkdown>
-      </div>
-    </div>
-  )
-}
-
-function ProjectHeading({
-  project,
-  projectNumber,
-  projectColor,
-  isWideLayout,
-}: {
-  project: PortfolioProject
-  projectNumber: string
-  projectColor: string
-  isWideLayout: boolean
-}) {
-  return (
-    <div>
-      <p
-        className="mb-5 text-xs font-light uppercase tracking-[0.35em] opacity-45 transition-colors duration-200 ease-out motion-reduce:transition-none"
-        style={{ color: projectColor }}
-      >
-        SECTION {projectNumber}
-      </p>
-      <h1
-        className={`mb-8 w-full max-w-[12ch] font-black uppercase leading-none tracking-normal transition-colors duration-200 ease-out motion-reduce:transition-none ${
-          isWideLayout
-            ? 'text-[clamp(3.5rem,4vw,4.75rem)]'
-            : 'text-[clamp(3rem,14vw,7rem)]'
-        }`}
-        style={{ color: projectColor }}
-      >
-        {project.title}
-      </h1>
+      <PortfolioLedgerFrame className="px-[1.5em] !text-[80%]">
+        {ledgerContent.deckMarkdown ? (
+          <div className="min-w-0 py-[1.5em]">
+            <PortfolioLedgerLabel>Title</PortfolioLedgerLabel>
+            <h2 className="mt-1 [font-size:inherit] font-bold leading-[inherit] tracking-normal text-balance">
+              <PortfolioInlineMarkdown>
+                {ledgerContent.deckMarkdown}
+              </PortfolioInlineMarkdown>
+            </h2>
+          </div>
+        ) : null}
+        <div className="min-w-0 py-[1.5em]">
+          <PortfolioLedgerLabel>Summary / intro</PortfolioLedgerLabel>
+          <div className="portfolio-markdown prose mt-1 max-w-none [font-size:inherit] font-normal leading-[1.65] [&>:first-child]:mt-0 [&>:last-child]:mb-0">
+            <PortfolioMarkdown>{ledgerContent.bodyMarkdown}</PortfolioMarkdown>
+          </div>
+        </div>
+      </PortfolioLedgerFrame>
     </div>
   )
 }
@@ -366,4 +390,49 @@ function PortfolioMarkdown({ children }: { children: string }) {
       {children}
     </ReactMarkdown>
   )
+}
+
+export function PortfolioInlineMarkdown({ children }: { children: string }) {
+  return (
+    <ReactMarkdown
+      remarkPlugins={[remarkGfm]}
+      rehypePlugins={[rehypeRaw]}
+      allowedElements={['p', 'strong', 'em', 'code', 'br', 'del', 'abbr']}
+      unwrapDisallowed
+      components={INLINE_MARKDOWN_COMPONENTS}
+    >
+      {children}
+    </ReactMarkdown>
+  )
+}
+
+function getProjectLedgerContent(markdown: string) {
+  const lines = markdown.split('\n')
+  const metadataIndex = lines.findIndex(line =>
+    PROJECT_LEDGER_METADATA_PATTERN.test(line.trim()),
+  )
+  const metadataMatch =
+    metadataIndex >= 0
+      ? lines[metadataIndex].trim().match(PROJECT_LEDGER_METADATA_PATTERN)
+      : null
+  const contentLines = lines.filter(
+    (_, lineIndex) => lineIndex !== metadataIndex,
+  )
+  const deckIndex = contentLines.findIndex(line =>
+    PROJECT_LEDGER_DECK_PATTERN.test(line),
+  )
+  const deckMatch =
+    deckIndex >= 0
+      ? contentLines[deckIndex].match(PROJECT_LEDGER_DECK_PATTERN)
+      : null
+
+  return {
+    deckMarkdown: deckMatch?.[1],
+    bodyMarkdown: contentLines
+      .filter((_, lineIndex) => lineIndex !== deckIndex)
+      .join('\n')
+      .replace(/\n{3,}/g, '\n\n'),
+    roleMarkdown: metadataMatch?.[1],
+    tenure: metadataMatch?.[2],
+  }
 }

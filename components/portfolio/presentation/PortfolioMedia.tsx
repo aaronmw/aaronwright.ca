@@ -26,7 +26,12 @@ import {
   modalMediaKey,
   type ProjectSlide,
 } from '@/components/portfolio/domain/slides';
-import { AboutMeTextPanel, ProjectDescription } from './PortfolioText';
+import {
+  AboutMeTextPanel,
+  PortfolioLedgerFrame,
+  PortfolioLedgerLabel,
+  ProjectDescription,
+} from './PortfolioText';
 import { CircularIconButton } from './PortfolioControls';
 
 const CAROUSEL_MEDIA_CLASS =
@@ -346,15 +351,18 @@ export function ProjectPanel({
       >
         {slide.kind === 'description' ? (
           <div
-            className={`grid aspect-square place-items-center border border-[var(--portfolio-hairline)] text-center ${
+            className={`grid aspect-square place-items-center ${
               isWideLayout
                 ? 'col-start-2 h-[var(--portfolio-screenshot-size)] max-h-none w-[var(--portfolio-screenshot-size)] max-w-none self-center justify-self-center'
                 : 'max-h-[calc(100dvh-5rem)] w-full max-w-[calc(100dvh-5rem)]'
             }`}
           >
-            <span className="px-8 text-5xl font-black uppercase leading-none text-[color-mix(in_srgb,var(--portfolio-ink)_12%,transparent)]">
-              Coming soon
-            </span>
+            <PortfolioLedgerFrame className="w-[min(16rem,calc(100%-2rem))]">
+              <div className="py-2">
+                <PortfolioLedgerLabel>Status</PortfolioLedgerLabel>
+                <p className="mt-1 font-normal">Coming soon</p>
+              </div>
+            </PortfolioLedgerFrame>
           </div>
         ) : isTextSlide ? (
           <AboutMeTextPanel

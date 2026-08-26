@@ -1,8 +1,4 @@
-import type {
-  FocusEvent,
-  MouseEvent,
-  PointerEvent,
-} from 'react';
+import type { FocusEvent, MouseEvent, PointerEvent } from 'react';
 import { faArrowDown } from '@fortawesome/free-solid-svg-icons';
 import {
   MOBILE_SECTION_CONTENT_PADDING_LEFT,
@@ -13,6 +9,7 @@ import {
   type SectionNavigationSide,
 } from './navigationGeometry';
 import {
+  NAVIGATION_RING_RADIUS,
   NAVIGATION_SVG_CENTER,
   NAVIGATION_SVG_SIZE,
   SECTION_NAVIGATION_ARROW_SIZE,
@@ -92,12 +89,9 @@ export type SectionNavigationRailActions = {
   onDotRef: (
     side: SectionNavigationSide,
     itemIndex: number,
-    node: SVGCircleElement | null,
+    node: SVGRectElement | null,
   ) => void;
-  onRingRef: (
-    side: SectionNavigationSide,
-    node: SVGEllipseElement | null,
-  ) => void;
+  onRingRef: (side: SectionNavigationSide, node: SVGRectElement | null) => void;
   onTooltipRef: (
     side: SectionNavigationSide,
     node: HTMLDivElement | null,
@@ -161,22 +155,24 @@ export function SectionNavigationRail({
     <div
       data-portfolio-section-nav-zone={side}
       data-interactive-pop="off"
-      className="isolate"
+      className="isolate font-portfolio-controls"
       style={{
         ...safeAreaMargin,
         position: 'absolute',
         top: 0,
-        [side]: model.singleRail ? 0 : '1.5rem',
+        [side]: model.singleRail
+          ? 0
+          : 'var(--portfolio-navigation-rail-edge-offset)',
         width: model.singleRail
           ? MOBILE_SECTION_CONTENT_PADDING_LEFT
-          : '4.5rem',
+          : 'var(--portfolio-navigation-rail-width)',
         height: geometry.height,
         overflow: 'visible',
         zIndex: model.modalLayerActive ? 60 : 40,
       }}
-      onPointerMove={(event) => actions.onZonePointerMove(side, event)}
-      onPointerLeave={(event) => actions.onZonePointerLeave(side, event)}
-      onPointerEnter={(event) => actions.onZonePointerEnter(side, event)}
+      onPointerMove={event => actions.onZonePointerMove(side, event)}
+      onPointerLeave={event => actions.onZonePointerLeave(side, event)}
+      onPointerEnter={event => actions.onZonePointerEnter(side, event)}
     >
       <svg
         className="pointer-events-none absolute top-0 overflow-visible"
@@ -201,12 +197,12 @@ export function SectionNavigationRail({
             <g
               key={item.id}
               data-portfolio-section-nav-visual-index={itemIndex}
-              ref={(node) => actions.onItemGroupRef(side, itemIndex, node)}
+              ref={node => actions.onItemGroupRef(side, itemIndex, node)}
               className="transition-opacity duration-200 ease-out motion-reduce:transition-none"
               color={item.color}
             >
               <g
-                ref={(node) => actions.onArrowGroupRef(side, itemIndex, node)}
+                ref={node => actions.onArrowGroupRef(side, itemIndex, node)}
                 data-portfolio-section-nav-arrow={itemIndex}
                 style={{
                   filter:
@@ -214,14 +210,15 @@ export function SectionNavigationRail({
                 }}
               >
                 {item.pending ? (
-                  <circle
-                    cx={NAVIGATION_SVG_CENTER}
-                    cy={centerY}
-                    r={9}
+                  <rect
+                    x={NAVIGATION_SVG_CENTER - NAVIGATION_RING_RADIUS}
+                    y={centerY - NAVIGATION_RING_RADIUS}
+                    width={NAVIGATION_RING_RADIUS * 2}
+                    height={NAVIGATION_RING_RADIUS * 2}
                     fill="none"
                     stroke="currentColor"
-                    strokeWidth={3}
-                    strokeDasharray="30 27"
+                    strokeDasharray={`${NAVIGATION_RING_RADIUS * 4} ${NAVIGATION_RING_RADIUS * 4}`}
+                    style={{ strokeWidth: 'var(--logo-stroke-width)' }}
                   >
                     <animateTransform
                       attributeName="transform"
@@ -231,7 +228,7 @@ export function SectionNavigationRail({
                       dur="0.8s"
                       repeatCount="indefinite"
                     />
-                  </circle>
+                  </rect>
                 ) : !model.singleRail ? (
                   <NavigationSvgIcon
                     icon={faArrowDown}
@@ -242,17 +239,17 @@ export function SectionNavigationRail({
                 ) : null}
               </g>
               <NavigationDot
-                ref={(node) => actions.onDotRef(side, itemIndex, node)}
+                ref={node => actions.onDotRef(side, itemIndex, node)}
                 data-portfolio-section-nav-dot={itemIndex}
-                cx={NAVIGATION_SVG_CENTER}
-                cy={centerY}
+                centerX={NAVIGATION_SVG_CENTER}
+                centerY={centerY}
                 opacity={0}
               />
             </g>
           );
         })}
         <NavigationRing
-          ref={(node) => actions.onRingRef(side, node)}
+          ref={node => actions.onRingRef(side, node)}
           data-portfolio-section-nav-ring={side}
         />
       </svg>
@@ -269,7 +266,7 @@ export function SectionNavigationRail({
         return (
           <button
             key={item.id}
-            ref={(node) => actions.onButtonRef(side, itemIndex, node)}
+            ref={node => actions.onButtonRef(side, itemIndex, node)}
             type="button"
             className="absolute inset-x-0 cursor-pointer outline-none"
             style={{ top: bounds.top, height: bounds.height }}
@@ -281,15 +278,10 @@ export function SectionNavigationRail({
             tabIndex={concealed ? -1 : undefined}
             data-portfolio-section-nav-index={itemIndex}
             data-portfolio-section-nav-side={side}
-            onPointerEnter={(event) =>
-              actions.onItemPointerEnter(
-                side,
-                itemIndex,
-                tooltipTitle,
-                event,
-              )
+            onPointerEnter={event =>
+              actions.onItemPointerEnter(side, itemIndex, tooltipTitle, event)
             }
-            onPointerDown={(event) =>
+            onPointerDown={event =>
               actions.onItemPointerDown(
                 side,
                 itemIndex,
@@ -297,22 +289,22 @@ export function SectionNavigationRail({
                 event,
               )
             }
-            onPointerUp={(event) =>
+            onPointerUp={event =>
               actions.onItemPointerRelease(itemIndex, event)
             }
-            onPointerCancel={(event) =>
+            onPointerCancel={event =>
               actions.onItemPointerRelease(itemIndex, event)
             }
-            onFocus={(event) =>
+            onFocus={event =>
               actions.onFocus(side, itemIndex, tooltipTitle, event)
             }
-            onBlur={(event) => actions.onBlur(side, itemIndex, event)}
-            onClick={(event) => actions.onClick(side, itemIndex, event)}
+            onBlur={event => actions.onBlur(side, itemIndex, event)}
+            onClick={event => actions.onClick(side, itemIndex, event)}
           />
         );
       })}
       <div
-        ref={(node) => actions.onTooltipRef(side, node)}
+        ref={node => actions.onTooltipRef(side, node)}
         id={`portfolio-${side}-section-nav-tooltip`}
         role="tooltip"
         className={`invisible pointer-events-none absolute z-30 -translate-y-1/2 whitespace-nowrap px-3 py-2 text-[0.6875rem] font-black uppercase leading-none tracking-[0.24em] opacity-0 ${
@@ -324,7 +316,7 @@ export function SectionNavigationRail({
         }}
       >
         <span
-          ref={(node) => actions.onTooltipTextRef(side, node)}
+          ref={node => actions.onTooltipTextRef(side, node)}
           className="text-[var(--portfolio-inverse-ink)]"
         />
       </div>

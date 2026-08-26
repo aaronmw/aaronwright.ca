@@ -84,7 +84,6 @@ describe('portfolio project order', () => {
       'informal-systems',
       'aarons-toolbox',
       'nextphrase',
-      'mini-series-browser',
     ])
   })
 })
