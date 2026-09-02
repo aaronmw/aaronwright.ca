@@ -103,7 +103,6 @@ export function PortfolioStartScreen({
 }) {
   const isMobilePortraitLayout =
     isTouchInput && !isWideLayout && !isTouchLandscapeLayout
-  const showIndexSummaryColumn = isWideLayout && !isTouchLandscapeLayout
   const useTwoColumnIndex = isTouchLandscapeLayout
   const { startScreenRef, headerRef, contentSectionRef, shouldBottomAlign } =
     useStartScreenContentAlignment(isMobilePortraitLayout)
@@ -220,7 +219,7 @@ export function PortfolioStartScreen({
       <div
         ref={contentSectionRef}
         data-portfolio-start-content
-        className={`mx-auto w-full max-w-[var(--resume-content-width)] ${
+        className={`portfolio-start-index-container mx-auto w-full max-w-[var(--resume-content-width)] ${
           isWideLayout && !isTouchLandscapeLayout
             ? ''
             : `min-h-0 ${shouldBottomAlign ? 'self-end' : 'self-center'}`
@@ -228,13 +227,8 @@ export function PortfolioStartScreen({
       >
         <PortfolioLedgerFrame
           aria-label="Portfolio sections"
-          className={`grid overflow-hidden ${
-            showIndexSummaryColumn
-              ? 'grid-cols-[min-content_minmax(10rem,0.7fr)_minmax(18rem,1.3fr)]'
-              : useTwoColumnIndex
-                ? 'grid-cols-2'
-                : 'grid-cols-[min-content_minmax(0,1fr)]'
-          }`}
+          data-portfolio-index-two-column={useTwoColumnIndex || undefined}
+          className="portfolio-start-index grid overflow-hidden"
           onPointerEnter={() => onHoveredChange(true)}
           onPointerLeave={() => onHoveredChange(false)}
         >
@@ -247,13 +241,7 @@ export function PortfolioStartScreen({
                 type="button"
                 data-interactive-pop="off"
                 data-portfolio-start-section-index={index + 1}
-                className={`group grid w-full touch-manipulation items-baseline pb-[1lh] text-left text-[var(--portfolio-ink)] outline-none transition-colors duration-200 ease-out hover:text-resume-signal focus-visible:text-resume-signal focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-resume-signal motion-reduce:transition-none ${
-                  showIndexSummaryColumn
-                    ? 'col-span-3 grid-cols-subgrid'
-                    : useTwoColumnIndex
-                      ? 'grid-cols-[min-content_minmax(0,1fr)]'
-                      : 'col-span-2 grid-cols-subgrid'
-                }`}
+                className="portfolio-start-index-item group grid w-full touch-manipulation items-baseline pb-[1lh] text-left text-[var(--portfolio-ink)] outline-none transition-colors duration-200 ease-out hover:text-resume-signal focus-visible:text-resume-signal focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-resume-signal motion-reduce:transition-none"
                 style={
                   {
                     '--project-color': getProjectColor(index),
@@ -292,21 +280,17 @@ export function PortfolioStartScreen({
                   >
                     {project.title}
                   </span>
-                  {!showIndexSummaryColumn ? (
-                    <span className="mt-[0.5lh] block max-w-[54ch] font-normal text-[var(--portfolio-ink-70)]">
-                      <PortfolioInlineMarkdown>
-                        {project.blurb}
-                      </PortfolioInlineMarkdown>
-                    </span>
-                  ) : null}
-                </span>
-                {showIndexSummaryColumn ? (
-                  <span className="min-w-0 text-[var(--portfolio-ink-70)]">
+                  <span className="portfolio-start-index-summary-stacked mt-[0.5lh] max-w-[54ch] font-normal text-[var(--portfolio-ink-70)]">
                     <PortfolioInlineMarkdown>
                       {project.blurb}
                     </PortfolioInlineMarkdown>
                   </span>
-                ) : null}
+                </span>
+                <span className="portfolio-start-index-summary-column min-w-0 text-[var(--portfolio-ink-70)]">
+                  <PortfolioInlineMarkdown>
+                    {project.blurb}
+                  </PortfolioInlineMarkdown>
+                </span>
               </button>
             )
           })}
