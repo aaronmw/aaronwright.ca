@@ -172,6 +172,97 @@ test('the project information remains fixed while only the media carousel moves'
   expect(await information.boundingBox()).toEqual(initialBox)
 })
 
+test('the active section item animates its project back to the first slide', async ({
+  page,
+}) => {
+  await page.goto('/work/loopio/shared-system')
+  await waitForPortfolio(page)
+
+  const horizontalTrack = page
+    .locator('[data-portfolio-carousel="loopio"]')
+    .locator(':scope > div')
+  const horizontalBox = await horizontalTrack.boundingBox()
+  expect(horizontalBox).not.toBeNull()
+  const sampledPositions = new Set<number>()
+
+  await page
+    .locator(
+      'button[data-portfolio-section-nav-side="left"][data-portfolio-section-nav-index="2"]',
+    )
+    .click()
+  await expect
+    .poll(
+      async () => {
+        const position = await horizontalTrack.evaluate(element => {
+          const transform = getComputedStyle(element).transform
+          return transform === 'none' ? 0 : new DOMMatrix(transform).m41
+        })
+        sampledPositions.add(Math.round(position))
+        return position
+      },
+      { intervals: [16, 16, 16, 16, 16, 16, 16, 16, 16, 16] },
+    )
+    .toBeGreaterThan(-horizontalBox!.width / 2)
+  await expect(page).toHaveURL(/\/work\/loopio$/)
+  await expect(
+    page.locator(
+      'button[data-portfolio-slide-indicator-index="0"][aria-current="true"]',
+    ),
+  ).toBeVisible()
+  expect(sampledPositions.size).toBeGreaterThan(2)
+
+  await page.goBack()
+  await expect(page).toHaveURL(/\/work\/loopio\/shared-system$/)
+  await expect(
+    page.locator(
+      'button[data-portfolio-slide-indicator-index="5"][aria-current="true"]',
+    ),
+  ).toBeVisible()
+})
+
+test('section navigation resets an offscreen project without changing remembered gesture state', async ({
+  page,
+}) => {
+  await page.goto('/work/loopio/shared-system')
+  await waitForPortfolio(page)
+
+  const loopioViewport = page.locator('[data-portfolio-carousel="loopio"]')
+  const loopioTrack = loopioViewport.locator(':scope > div')
+  const loopioBox = await loopioViewport.boundingBox()
+  expect(loopioBox).not.toBeNull()
+
+  await page.keyboard.press('ArrowDown')
+  await expect(page).toHaveURL(/\/work\/freshbooks$/)
+  await expect
+    .poll(() =>
+      loopioTrack.evaluate(element => {
+        const transform = getComputedStyle(element).transform
+        return transform === 'none' ? 0 : new DOMMatrix(transform).m41
+      }),
+    )
+    .toBeLessThan(-loopioBox!.width)
+
+  await page
+    .locator(
+      'button[data-portfolio-section-nav-side="left"][data-portfolio-section-nav-index="2"]',
+    )
+    .click()
+  await expect
+    .poll(() =>
+      loopioTrack.evaluate(element => {
+        const transform = getComputedStyle(element).transform
+        return transform === 'none' ? 0 : new DOMMatrix(transform).m41
+      }),
+    )
+    .toBeGreaterThan(-loopioBox!.width / 2)
+  await expect(page).toHaveURL(/\/work\/loopio$/)
+  await expect(
+    page.locator(
+      'button[data-portfolio-slide-indicator-index="0"][aria-current="true"]',
+    ),
+  ).toBeVisible()
+})
+
 test('cover-media viewer deep links open without a media path segment', async ({
   page,
 }) => {

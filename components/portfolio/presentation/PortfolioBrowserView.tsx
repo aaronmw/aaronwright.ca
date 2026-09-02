@@ -337,10 +337,22 @@ export function PortfolioBrowserView({
           activeIndex={model.activeProjectIndex + 1}
           side="left"
           hidden={viewerOpen}
-          onSelect={index => actions.setActiveProject(index - 1, 'push')}
-          onActiveNavigate={
-            activeSlides.length > 1 ? actions.moveHorizontal : undefined
-          }
+          onSelect={index => {
+            const projectIndex = index - 1
+            if (
+              projectIndex >= 0 &&
+              projectIndex === model.activeProjectIndex
+            ) {
+              actions.setActiveSlide(projectIndex, 0, 'push')
+              return
+            }
+            actions.setActiveProject(
+              projectIndex,
+              'push',
+              false,
+              projectIndex >= 0 ? 0 : undefined,
+            )
+          }}
         />
 
         {viewerOpen && model.viewerIntent && activeProject ? (

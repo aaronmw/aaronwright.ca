@@ -45,6 +45,12 @@ type PortfolioBrowserProps = {
 
 type NavigationMode = 'push' | 'replace' | 'silent'
 
+type VerticalNavigationIntent = {
+  projectIndex: number
+  mode: NavigationMode
+  slideIndex?: number
+}
+
 const START_SCREEN_INDEX = -1
 
 const TEXT_ENTRY_SELECTOR =
@@ -81,7 +87,7 @@ export function PortfolioBrowser({
   const curtainRef = useRef<HTMLDivElement>(null)
   const horizontalApisRef = useRef(new Map<number, EmblaCarouselType>())
   const horizontalModesRef = useRef(new Map<number, NavigationMode>())
-  const verticalModeRef = useRef<NavigationMode | null>(null)
+  const verticalIntentRef = useRef<VerticalNavigationIntent | null>(null)
   const verticalViewportElementRef = useRef<HTMLElement>(null)
   const viewerHistoryEntryRef = useRef(false)
   const pendingViewerCloseRef = useRef<{
@@ -266,12 +272,18 @@ export function PortfolioBrowser({
   )
 
   const commitVerticalSelection = useCallback(
-    (projectIndex: number, mode: NavigationMode) => {
+    (
+      projectIndex: number,
+      mode: NavigationMode,
+      slideIndexOverride?: number,
+    ) => {
       setActiveProjectIndex(projectIndex)
       if (mode === 'silent') return
       const slideIndex =
         projectIndex >= 0
-          ? (selectionRef.current.slideIndexes[projectIndex] ?? 0)
+          ? (slideIndexOverride ??
+            selectionRef.current.slideIndexes[projectIndex] ??
+            0)
           : 0
       updateRoute(projectIndex, slideIndex, mode)
     },
@@ -279,9 +291,15 @@ export function PortfolioBrowser({
   )
 
   const handleVerticalSelect = useEffectEvent((api: EmblaCarouselType) => {
-    const mode = verticalModeRef.current ?? 'replace'
-    verticalModeRef.current = null
-    commitVerticalSelection(api.selectedScrollSnap() - 1, mode)
+    const projectIndex = api.selectedScrollSnap() - 1
+    const intent = verticalIntentRef.current
+    verticalIntentRef.current = null
+    const matchesIntent = intent?.projectIndex === projectIndex
+    commitVerticalSelection(
+      projectIndex,
+      matchesIntent ? intent.mode : 'replace',
+      matchesIntent ? intent.slideIndex : undefined,
+    )
   })
 
   useEffect(() => {
@@ -303,18 +321,28 @@ export function PortfolioBrowser({
         START_SCREEN_INDEX,
         Math.min(portfolioSlides.length - 1, projectIndex),
       )
+      let slideIndexOverride: number | undefined
       if (target >= 0 && targetSlideIndex !== undefined) {
-        selectHorizontal(target, targetSlideIndex, 'silent', true)
+        const slides = projectSlides[portfolioSlides[target].slug]
+        slideIndexOverride = Math.max(
+          0,
+          Math.min(slides.length - 1, targetSlideIndex),
+        )
+        selectHorizontal(target, slideIndexOverride, 'silent', true)
       }
       const emblaIndex = target + 1
       if (!verticalApi || verticalApi.selectedScrollSnap() === emblaIndex) {
-        commitVerticalSelection(target, mode)
+        commitVerticalSelection(target, mode, slideIndexOverride)
         return
       }
-      verticalModeRef.current = mode
+      verticalIntentRef.current = {
+        projectIndex: target,
+        mode,
+        slideIndex: slideIndexOverride,
+      }
       verticalApi.scrollTo(emblaIndex, jump)
     },
-    [commitVerticalSelection, selectHorizontal, verticalApi],
+    [commitVerticalSelection, projectSlides, selectHorizontal, verticalApi],
   )
 
   const moveVertical = useCallback(
@@ -461,10 +489,13 @@ export function PortfolioBrowser({
       }
       const targetIndex = pendingClose.projectIndex + 1
       if (verticalApi?.selectedScrollSnap() !== targetIndex) {
-        verticalModeRef.current = 'silent'
+        verticalIntentRef.current = {
+          projectIndex: pendingClose.projectIndex,
+          mode: 'silent',
+        }
         verticalApi?.scrollTo(targetIndex, true)
       } else {
-        verticalModeRef.current = null
+        verticalIntentRef.current = null
       }
       updateRoute(pendingClose.projectIndex, pendingClose.slideIndex, 'replace')
       return
@@ -489,10 +520,13 @@ export function PortfolioBrowser({
     }
     const targetIndex = state.projectIndex + 1
     if (verticalApi?.selectedScrollSnap() !== targetIndex) {
-      verticalModeRef.current = 'silent'
+      verticalIntentRef.current = {
+        projectIndex: state.projectIndex,
+        mode: 'silent',
+      }
       verticalApi?.scrollTo(targetIndex, true)
     } else {
-      verticalModeRef.current = null
+      verticalIntentRef.current = null
     }
 
     if (state.viewerOpen && state.projectIndex >= 0) {
@@ -594,10 +628,13 @@ export function PortfolioBrowser({
 
     const targetIndex = normalizedInitialProjectIndex + 1
     if (verticalApi.selectedScrollSnap() !== targetIndex) {
-      verticalModeRef.current = 'silent'
+      verticalIntentRef.current = {
+        projectIndex: normalizedInitialProjectIndex,
+        mode: 'silent',
+      }
       verticalApi.scrollTo(targetIndex, true)
     } else {
-      verticalModeRef.current = null
+      verticalIntentRef.current = null
     }
     setIntroPhase('revealing')
     const curtain = curtainRef.current

@@ -167,14 +167,12 @@ export function PortfolioSectionRail({
   side,
   hidden,
   onSelect,
-  onActiveNavigate,
 }: {
   items: PortfolioNavigationItem[]
   activeIndex: number
   side: 'left' | 'right'
   hidden?: boolean
   onSelect: (index: number) => void
-  onActiveNavigate?: (direction: -1 | 1) => void
 }) {
   const height = items.length * NAVIGATION_SVG_SIZE
   const trackStyle = {
@@ -212,14 +210,9 @@ export function PortfolioSectionRail({
         />
         {items.map((item, index) => {
           const isActive = index === activeIndex
-          const navigatesMedia = isActive && onActiveNavigate
-          const label = navigatesMedia
-            ? side === 'left'
-              ? 'Previous screen'
-              : 'Next screen'
-            : isActive
-              ? `Current section: ${item.label}`
-              : `Show ${item.label}`
+          const label = isActive
+            ? `Current section: ${item.label}`
+            : `Show ${item.label}`
 
           return (
             <button
@@ -237,13 +230,7 @@ export function PortfolioSectionRail({
               aria-busy={item.pending || undefined}
               data-portfolio-section-nav-index={index}
               data-portfolio-section-nav-side={side}
-              onClick={() => {
-                if (navigatesMedia) {
-                  onActiveNavigate(side === 'left' ? -1 : 1)
-                } else {
-                  onSelect(index)
-                }
-              }}
+              onClick={() => onSelect(index)}
             >
               <span
                 className={item.pending ? 'portfolio-pending-dot' : ''}
