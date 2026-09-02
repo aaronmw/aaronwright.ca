@@ -1,5 +1,11 @@
 import Link from 'next/link'
-import { useLayoutEffect, useRef, useState, type CSSProperties } from 'react'
+import {
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type RefObject,
+} from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSpinner } from '@fortawesome/free-solid-svg-icons'
 import type { PortfolioProject } from '@/lib/portfolio'
@@ -78,6 +84,210 @@ function useStartScreenContentAlignment(enabled: boolean) {
   }
 }
 
+function PortfolioStartHeader({
+  headerRef,
+  isMobilePortraitLayout,
+  isTouchLandscapeLayout,
+  isWideLayout,
+}: {
+  headerRef: RefObject<HTMLDivElement | null>
+  isMobilePortraitLayout: boolean
+  isTouchLandscapeLayout: boolean
+  isWideLayout: boolean
+}) {
+  return (
+    <div
+      ref={headerRef}
+      className={
+        isTouchLandscapeLayout
+          ? 'min-w-0'
+          : isWideLayout
+            ? 'portfolio-wide-content-inset absolute inset-x-0 top-[var(--portfolio-contact-edge-inset)] [--portfolio-wide-content-inset-right:var(--portfolio-header-control-reserved-width)]'
+            : 'min-w-0'
+      }
+    >
+      <div
+        data-portfolio-start-header-content
+        className={`mx-auto w-full ${
+          isWideLayout && !isTouchLandscapeLayout ? '' : 'max-w-6xl'
+        } ${
+          isMobilePortraitLayout
+            ? 'relative'
+            : `flex flex-col items-start gap-4 sm:flex-row sm:items-start sm:justify-between ${
+                isTouchLandscapeLayout
+                  ? 'sm:flex-row'
+                  : isWideLayout
+                    ? 'sm:flex-row'
+                    : ''
+              }`
+        }`}
+      >
+        {!isWideLayout ? (
+          <div
+            className="flex shrink-0 items-center text-[var(--portfolio-ink)]"
+            data-portfolio-start-title
+          >
+            <h1 className="whitespace-nowrap text-base font-bold italic leading-[var(--portfolio-header-line-height)]">
+              Aaron M. Wright
+            </h1>
+          </div>
+        ) : null}
+        <address
+          className={`min-w-0 font-resume-mono text-base font-normal leading-[var(--portfolio-header-line-height)] text-[var(--portfolio-ink)] not-italic ${
+            isWideLayout ? 'ml-auto' : 'w-full sm:ml-auto sm:w-auto'
+          }`}
+        >
+          <div
+            className={
+              isWideLayout
+                ? 'flex items-start justify-end gap-[var(--portfolio-default-spacing)]'
+                : 'grid gap-4 sm:flex sm:items-start sm:justify-end sm:gap-[var(--portfolio-default-spacing)]'
+            }
+          >
+            <p className="sm:text-right">
+              302-70 Dyrgas Gate
+              <br />
+              Canmore, Alberta
+              <br />
+              T1W 3J6
+            </p>
+            <p className="flex flex-col items-start sm:items-end sm:text-right">
+              <a
+                className={`${CONTACT_LINK_CLASS_NAME} break-all`}
+                href="mailto:aaron@aaronwright.ca"
+              >
+                aaron@aaronwright.ca
+              </a>
+              <a
+                className={CONTACT_LINK_CLASS_NAME}
+                href="tel:+16477469426"
+              >
+                +1-647-746-9426
+              </a>
+              <Link
+                className={CONTACT_LINK_CLASS_NAME}
+                href="/resume.pdf"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Résumé PDF
+              </Link>
+            </p>
+          </div>
+        </address>
+      </div>
+    </div>
+  )
+}
+
+function PortfolioProjectIndex({
+  contentSectionRef,
+  getProjectColor,
+  pendingProjectIndex,
+  projects,
+  setTitleRef,
+  shouldBottomAlign,
+  useTwoColumnIndex,
+  isTouchLandscapeLayout,
+  isWideLayout,
+  onHoveredChange,
+  onPreview,
+  onSelect,
+}: {
+  contentSectionRef: RefObject<HTMLDivElement | null>
+  getProjectColor: (index: number) => string
+  pendingProjectIndex: number | null
+  projects: PortfolioProject[]
+  setTitleRef: (index: number, node: HTMLSpanElement | null) => void
+  shouldBottomAlign: boolean
+  useTwoColumnIndex: boolean
+  isTouchLandscapeLayout: boolean
+  isWideLayout: boolean
+  onHoveredChange: (hovered: boolean) => void
+  onPreview: (index: number, previewing: boolean) => void
+  onSelect: (index: number, keyboardTriggered: boolean) => void
+}) {
+  return (
+    <div
+      ref={contentSectionRef}
+      data-portfolio-start-content
+      className={`portfolio-start-index-container mx-auto w-full max-w-[var(--resume-content-width)] ${
+        isWideLayout && !isTouchLandscapeLayout
+          ? ''
+          : `min-h-0 ${shouldBottomAlign ? 'self-end' : 'self-center'}`
+      }`}
+    >
+      <PortfolioLedgerFrame
+        aria-label="Portfolio sections"
+        data-portfolio-index-two-column={useTwoColumnIndex || undefined}
+        className="portfolio-start-index grid overflow-hidden"
+        onPointerEnter={() => onHoveredChange(true)}
+        onPointerLeave={() => onHoveredChange(false)}
+      >
+        {projects.map((project, index) => {
+          const pending = pendingProjectIndex === index
+
+          return (
+            <button
+              key={project.id}
+              type="button"
+              data-interactive-pop="off"
+              data-portfolio-start-section-index={index + 1}
+              className="portfolio-start-index-item group grid w-full touch-manipulation items-baseline pb-[1lh] text-left text-[var(--portfolio-ink)] outline-none transition-colors duration-200 ease-out hover:text-resume-signal focus-visible:text-resume-signal focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-resume-signal motion-reduce:transition-none"
+              style={
+                {
+                  '--project-color': getProjectColor(index),
+                } as ProjectColorStyle
+              }
+              aria-busy={pending ? true : undefined}
+              onPointerEnter={() => {
+                onHoveredChange(true)
+                onPreview(index, true)
+              }}
+              onPointerDown={event => {
+                if (event.button !== 0) return
+                onHoveredChange(true)
+                onPreview(index, true)
+              }}
+              onPointerLeave={() => onPreview(index, false)}
+              onClick={event => onSelect(index, event.detail === 0)}
+            >
+              <span className="min-w-0 whitespace-nowrap text-center">
+                {pending ? (
+                  <FontAwesomeIcon
+                    icon={faSpinner}
+                    className="size-4 animate-spin"
+                  />
+                ) : (
+                  String(index + 1).padStart(2, '0')
+                )}
+              </span>
+              <span className="min-w-0 pl-[1ch]">
+                <span
+                  ref={node => setTitleRef(index, node)}
+                  className="min-w-0 font-bold"
+                >
+                  {project.title}
+                </span>
+                <span className="portfolio-start-index-summary-stacked mt-[0.5lh] max-w-[54ch] font-normal text-[var(--portfolio-ink-70)]">
+                  <PortfolioInlineMarkdown>
+                    {project.blurb}
+                  </PortfolioInlineMarkdown>
+                </span>
+              </span>
+              <span className="portfolio-start-index-summary-column min-w-0 text-[var(--portfolio-ink-70)]">
+                <PortfolioInlineMarkdown>
+                  {project.blurb}
+                </PortfolioInlineMarkdown>
+              </span>
+            </button>
+          )
+        })}
+      </PortfolioLedgerFrame>
+    </div>
+  )
+}
+
 export function PortfolioStartScreen({
   projects,
   pendingProjectIndex,
@@ -135,167 +345,26 @@ export function PortfolioStartScreen({
             : undefined
       }
     >
-      <div
-        ref={headerRef}
-        className={
-          isTouchLandscapeLayout
-            ? 'min-w-0'
-            : isWideLayout
-              ? 'portfolio-wide-content-inset absolute inset-x-0 top-[var(--portfolio-contact-edge-inset)] [--portfolio-wide-content-inset-right:var(--portfolio-header-control-reserved-width)]'
-              : 'min-w-0'
-        }
-      >
-        <div
-          data-portfolio-start-header-content
-          className={`mx-auto w-full ${
-            isWideLayout && !isTouchLandscapeLayout ? '' : 'max-w-6xl'
-          } ${
-            isMobilePortraitLayout
-              ? 'relative'
-              : `flex flex-col items-start gap-4 sm:flex-row sm:items-start sm:justify-between ${
-                  isTouchLandscapeLayout
-                    ? 'sm:flex-row'
-                    : isWideLayout
-                      ? 'sm:flex-row'
-                      : ''
-                }`
-          }`}
-        >
-          {!isWideLayout ? (
-            <div
-              className="flex shrink-0 items-center text-[var(--portfolio-ink)]"
-              data-portfolio-start-title
-            >
-              <h1 className="whitespace-nowrap text-base font-bold italic leading-[var(--portfolio-header-line-height)]">
-                Aaron M. Wright
-              </h1>
-            </div>
-          ) : null}
-          <address
-            className={`min-w-0 font-resume-mono text-base font-normal leading-[var(--portfolio-header-line-height)] text-[var(--portfolio-ink)] not-italic ${
-              isWideLayout ? 'ml-auto' : 'w-full sm:ml-auto sm:w-auto'
-            }`}
-          >
-            <div
-              className={
-                isWideLayout
-                  ? 'flex items-start justify-end gap-[var(--portfolio-default-spacing)]'
-                  : 'grid gap-4 sm:flex sm:items-start sm:justify-end sm:gap-[var(--portfolio-default-spacing)]'
-              }
-            >
-              <p className="sm:text-right">
-                302-70 Dyrgas Gate
-                <br />
-                Canmore, Alberta
-                <br />
-                T1W 3J6
-              </p>
-              <p className="flex flex-col items-start sm:items-end sm:text-right">
-                <a
-                  className={`${CONTACT_LINK_CLASS_NAME} break-all`}
-                  href="mailto:aaron@aaronwright.ca"
-                >
-                  aaron@aaronwright.ca
-                </a>
-                <a
-                  className={CONTACT_LINK_CLASS_NAME}
-                  href="tel:+16477469426"
-                >
-                  +1-647-746-9426
-                </a>
-                <Link
-                  className={CONTACT_LINK_CLASS_NAME}
-                  href="/resume.pdf"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  Résumé PDF
-                </Link>
-              </p>
-            </div>
-          </address>
-        </div>
-      </div>
-      <div
-        ref={contentSectionRef}
-        data-portfolio-start-content
-        className={`portfolio-start-index-container mx-auto w-full max-w-[var(--resume-content-width)] ${
-          isWideLayout && !isTouchLandscapeLayout
-            ? ''
-            : `min-h-0 ${shouldBottomAlign ? 'self-end' : 'self-center'}`
-        }`}
-      >
-        <PortfolioLedgerFrame
-          aria-label="Portfolio sections"
-          data-portfolio-index-two-column={useTwoColumnIndex || undefined}
-          className="portfolio-start-index grid overflow-hidden"
-          onPointerEnter={() => onHoveredChange(true)}
-          onPointerLeave={() => onHoveredChange(false)}
-        >
-          {projects.map((project, index) => {
-            const pending = pendingProjectIndex === index
-
-            return (
-              <button
-                key={project.id}
-                type="button"
-                data-interactive-pop="off"
-                data-portfolio-start-section-index={index + 1}
-                className="portfolio-start-index-item group grid w-full touch-manipulation items-baseline pb-[1lh] text-left text-[var(--portfolio-ink)] outline-none transition-colors duration-200 ease-out hover:text-resume-signal focus-visible:text-resume-signal focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-resume-signal motion-reduce:transition-none"
-                style={
-                  {
-                    '--project-color': getProjectColor(index),
-                  } as ProjectColorStyle
-                }
-                aria-busy={pending ? true : undefined}
-                onPointerEnter={() => {
-                  onHoveredChange(true)
-                  onPreview(index, true)
-                }}
-                onPointerDown={event => {
-                  if (event.button !== 0) {
-                    return
-                  }
-
-                  onHoveredChange(true)
-                  onPreview(index, true)
-                }}
-                onPointerLeave={() => onPreview(index, false)}
-                onClick={event => onSelect(index, event.detail === 0)}
-              >
-                <span className="min-w-0 whitespace-nowrap text-center">
-                  {pending ? (
-                    <FontAwesomeIcon
-                      icon={faSpinner}
-                      className="size-4 animate-spin"
-                    />
-                  ) : (
-                    String(index + 1).padStart(2, '0')
-                  )}
-                </span>
-                <span className="min-w-0 pl-[1ch]">
-                  <span
-                    ref={node => setTitleRef(index, node)}
-                    className="min-w-0 font-bold"
-                  >
-                    {project.title}
-                  </span>
-                  <span className="portfolio-start-index-summary-stacked mt-[0.5lh] max-w-[54ch] font-normal text-[var(--portfolio-ink-70)]">
-                    <PortfolioInlineMarkdown>
-                      {project.blurb}
-                    </PortfolioInlineMarkdown>
-                  </span>
-                </span>
-                <span className="portfolio-start-index-summary-column min-w-0 text-[var(--portfolio-ink-70)]">
-                  <PortfolioInlineMarkdown>
-                    {project.blurb}
-                  </PortfolioInlineMarkdown>
-                </span>
-              </button>
-            )
-          })}
-        </PortfolioLedgerFrame>
-      </div>
+      <PortfolioStartHeader
+        headerRef={headerRef}
+        isMobilePortraitLayout={isMobilePortraitLayout}
+        isTouchLandscapeLayout={isTouchLandscapeLayout}
+        isWideLayout={isWideLayout}
+      />
+      <PortfolioProjectIndex
+        contentSectionRef={contentSectionRef}
+        getProjectColor={getProjectColor}
+        isTouchLandscapeLayout={isTouchLandscapeLayout}
+        isWideLayout={isWideLayout}
+        pendingProjectIndex={pendingProjectIndex}
+        projects={projects}
+        setTitleRef={setTitleRef}
+        shouldBottomAlign={shouldBottomAlign}
+        useTwoColumnIndex={useTwoColumnIndex}
+        onHoveredChange={onHoveredChange}
+        onPreview={onPreview}
+        onSelect={onSelect}
+      />
     </section>
   )
 }

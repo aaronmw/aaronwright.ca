@@ -1,22 +1,12 @@
 'use client'
 
-import {
-  useEffect,
-  useEffectEvent,
-  useLayoutEffect,
-  useRef,
-  useState,
-  type CSSProperties,
-} from 'react'
-import useEmblaCarousel from 'embla-carousel-react'
-import { WheelGesturesPlugin } from 'embla-carousel-wheel-gestures'
+import { type CSSProperties } from 'react'
 import type { EmblaCarouselType } from 'embla-carousel'
 import type { PortfolioProject } from '@/lib/portfolio'
 import { getProjectNarratives } from '../domain/narrative'
 import type { ProjectSlide } from '../domain/slides'
 import type { PortfolioMediaElement } from '../usePortfolioMediaReadiness'
 import type { ViewerOpenIntent } from '../domain/viewer'
-import { getLockedMouseDragAxis } from '../runtime/mouseDragAxisLock'
 import {
   MOBILE_SECTION_CONTENT_PADDING_LEFT,
   MOBILE_SECTION_CONTENT_PADDING_RIGHT,
@@ -28,6 +18,7 @@ import {
   ProjectMetadata,
   ProjectNarrative,
 } from './PortfolioText'
+import { usePortfolioProjectCarousel } from './usePortfolioProjectCarousel'
 
 type WideLayoutStyle = CSSProperties & {
   '--portfolio-description-rail-half-width': string
@@ -39,20 +30,6 @@ type WideLayoutStyle = CSSProperties & {
 
 type ProjectVerticalAlignmentStyle = CSSProperties & {
   '--portfolio-project-narrative-content-top': string
-}
-
-const NARRATIVE_HEADER_GAP_IN_LINES = 2
-
-function readPixelValue(style: CSSStyleDeclaration, property: string) {
-  const value = Number.parseFloat(style.getPropertyValue(property))
-  return Number.isFinite(value) ? value : 0
-}
-
-function isSelectableTextTarget(target: EventTarget | null) {
-  return Boolean(
-    target instanceof Element &&
-    target.closest('[data-portfolio-selectable-text]'),
-  )
 }
 
 export function PortfolioProjectCarousel({
@@ -89,7 +66,6 @@ export function PortfolioProjectCarousel({
   onOpenViewer: (intent: ViewerOpenIntent) => void
   onBackdropVisibilityChange: (visible: boolean) => void
 }) {
-  const [initialSlideIndex] = useState(activeSlideIndex)
   const mediaSlides = slides.filter(
     (slide): slide is Extract<ProjectSlide, { kind: 'screenshot' }> =>
       slide.kind === 'screenshot',
@@ -98,153 +74,18 @@ export function PortfolioProjectCarousel({
   const narrative = narratives[activeSlideIndex] ?? narratives[0]
   const sideBySide = isWideLayout && !isTouchInput
   const hasMedia = mediaSlides.length > 0
-  const alignmentRootRef = useRef<HTMLDivElement>(null)
-  const [narrativeContentTop, setNarrativeContentTop] = useState<number | null>(
-    null,
-  )
-  const carouselMovingRef = useRef(false)
-  const destinationSelectedRef = useRef(false)
-  const settledSlideIndexRef = useRef(activeSlideIndex)
-  const [plugins] = useState(() => [WheelGesturesPlugin()])
-  const [viewportRef, emblaApi] = useEmblaCarousel(
-    {
-      axis: 'x',
-      align: 'start',
-      loop: false,
-      skipSnaps: false,
-      startIndex: initialSlideIndex,
-      active: hasMedia,
-      watchDrag: (_api, event) => {
-        if (event.type !== 'mousedown') return true
-        if (isSelectableTextTarget(event.target)) return false
-        return getLockedMouseDragAxis(event) === 'x'
-      },
-    },
-    plugins,
-  )
-  const notifyBackdropVisibility = useEffectEvent(onBackdropVisibilityChange)
-
-  useEffect(() => {
-    onApi(projectIndex, emblaApi ?? null)
-    if (!emblaApi) return
-    const handleSelect = () => {
-      const selectedIndex = emblaApi.selectedScrollSnap()
-      if (
-        carouselMovingRef.current &&
-        selectedIndex !== settledSlideIndexRef.current
-      ) {
-        destinationSelectedRef.current = true
-      }
-      onSelect(projectIndex, selectedIndex)
-    }
-    const handleScroll = () => {
-      const selectedIndex = emblaApi.selectedScrollSnap()
-      if (!carouselMovingRef.current) {
-        carouselMovingRef.current = true
-        destinationSelectedRef.current =
-          selectedIndex !== settledSlideIndexRef.current
-        if (active) notifyBackdropVisibility(false)
-      }
-      if (selectedIndex !== settledSlideIndexRef.current) {
-        destinationSelectedRef.current = true
-      }
-      if (!destinationSelectedRef.current) return
-
-      const snaps = emblaApi.scrollSnapList()
-      const target = snaps[selectedIndex]
-      const neighboringDistances = [
-        snaps[selectedIndex - 1],
-        snaps[selectedIndex + 1],
-      ]
-        .filter((snap): snap is number => snap !== undefined)
-        .map(snap => Math.abs(target - snap))
-      const snapDistance = Math.min(...neighboringDistances)
-      const closeToDestination =
-        Math.abs(emblaApi.scrollProgress() - target) <= snapDistance * 0.2
-      if (active) notifyBackdropVisibility(closeToDestination)
-    }
-    const handleSettle = () => {
-      carouselMovingRef.current = false
-      destinationSelectedRef.current = false
-      settledSlideIndexRef.current = emblaApi.selectedScrollSnap()
-      if (active) notifyBackdropVisibility(true)
-    }
-    emblaApi.on('select', handleSelect)
-    emblaApi.on('scroll', handleScroll)
-    emblaApi.on('settle', handleSettle)
-    handleSelect()
-    return () => {
-      emblaApi.off('select', handleSelect)
-      emblaApi.off('scroll', handleScroll)
-      emblaApi.off('settle', handleSettle)
-      onApi(projectIndex, null)
-    }
-  }, [active, emblaApi, onApi, onSelect, projectIndex])
-
-  useEffect(() => {
-    if (active) notifyBackdropVisibility(true)
-  }, [active])
-
-  useLayoutEffect(() => {
-    const root = alignmentRootRef.current
-    if (!root) return
-
-    const narrativeNodes = Array.from(
-      root.querySelectorAll<HTMLElement>(
-        '[data-portfolio-slide-narrative-content]',
-      ),
-    )
-    const metadataNode = root.querySelector<HTMLElement>(
-      '[data-portfolio-project-metadata]',
-    )
-    const stackedTextRegion = root.querySelector<HTMLElement>(
-      '[data-portfolio-stacked-text-region]',
-    )
-    if (narrativeNodes.length === 0 || !metadataNode) return
-    if (!sideBySide && !stackedTextRegion) return
-
-    const updateAlignment = () => {
-      const rootStyle = window.getComputedStyle(root)
-      const topRuleHeight = readPixelValue(rootStyle, '--logo-stroke-width')
-      const defaultSpacing =
-        readPixelValue(rootStyle, '--portfolio-default-spacing') ||
-        topRuleHeight * 5
-      const lineHeight = Number.parseFloat(
-        window.getComputedStyle(narrativeNodes[0]).lineHeight,
-      )
-      const narrativeGap =
-        (Number.isFinite(lineHeight) ? lineHeight : 0) *
-        NARRATIVE_HEADER_GAP_IN_LINES
-      const tallestNarrativeHeight = Math.max(
-        ...narrativeNodes.map(node => node.getBoundingClientRect().height),
-      )
-      const metadataHeight = metadataNode.getBoundingClientRect().height
-      const centeredTop = sideBySide
-        ? (root.clientHeight - tallestNarrativeHeight) / 2
-        : ((stackedTextRegion?.clientHeight ?? 0) -
-            (metadataHeight + narrativeGap + tallestNarrativeHeight)) /
-            2 +
-          metadataHeight +
-          narrativeGap
-      const minimumTop = sideBySide
-        ? topRuleHeight + defaultSpacing + metadataHeight + narrativeGap
-        : metadataHeight + narrativeGap
-      const nextTop = Math.round(Math.max(centeredTop, minimumTop) * 100) / 100
-
-      setNarrativeContentTop(current =>
-        current === nextTop ? current : nextTop,
-      )
-    }
-
-    const resizeObserver = new ResizeObserver(updateAlignment)
-    resizeObserver.observe(root)
-    resizeObserver.observe(metadataNode)
-    if (stackedTextRegion) resizeObserver.observe(stackedTextRegion)
-    narrativeNodes.forEach(node => resizeObserver.observe(node))
-    updateAlignment()
-
-    return () => resizeObserver.disconnect()
-  }, [project.id, sideBySide])
+  const { alignmentRootRef, narrativeContentTop, viewportRef } =
+    usePortfolioProjectCarousel({
+      active,
+      activeSlideIndex,
+      hasMedia,
+      projectId: project.id,
+      projectIndex,
+      sideBySide,
+      onApi,
+      onBackdropVisibilityChange,
+      onSelect,
+    })
 
   if (!narrative) return null
 

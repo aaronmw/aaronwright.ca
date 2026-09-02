@@ -89,58 +89,68 @@ type PortfolioBrowserViewActions = {
   ) => void
 }
 
-export function PortfolioBrowserView({
-  actions,
-  model,
-  curtainRef,
-  keyboardSurfaceRef,
-  verticalViewportRef,
-}: {
-  actions: PortfolioBrowserViewActions
-  model: PortfolioBrowserViewModel
-  curtainRef: RefObject<HTMLDivElement | null>
-  keyboardSurfaceRef: RefObject<HTMLElement | null>
-  verticalViewportRef: EmblaViewportRefType
-}) {
-  const { resolvedTheme } = usePortfolioTheme()
-  const [mediaBackdropVisible, setMediaBackdropVisible] = useState(true)
+const SECTION_ITEMS = [
+  { id: 'work', label: 'Work' },
+  ...portfolioSlides.map(project => ({ id: project.id, label: project.title })),
+]
+
+function deriveViewState(
+  model: PortfolioBrowserViewModel,
+  resolvedTheme: Parameters<typeof getProjectColor>[1],
+) {
   const viewerOpen = Boolean(model.viewerIntent)
   const usesSideBySideProjectLayout = model.isWideLayout && !model.isTouchInput
-  const activeProject =
-    model.activeProjectIndex >= 0
-      ? portfolioSlides[model.activeProjectIndex]
-      : undefined
+  const activeProject = portfolioSlides[model.activeProjectIndex]
   const activeSlides = activeProject
     ? model.projectSlides[activeProject.slug]
     : []
   const activeSlideIndex =
-    model.activeProjectIndex >= 0
-      ? (model.activeSlideIndexes[model.activeProjectIndex] ?? 0)
-      : 0
-  const activeSlide = activeSlides[activeSlideIndex]
-  const activeProjectHasMedia = activeSlides.some(
-    slide => slide.kind === 'screenshot',
-  )
-  const activeProjectColor =
-    model.activeProjectIndex >= 0
-      ? getProjectColor(model.activeProjectIndex, resolvedTheme)
-      : getProjectColor(0, resolvedTheme)
-  const sectionItems = [
-    { id: 'work', label: 'Work' },
-    ...portfolioSlides.map(project => ({
-      id: project.id,
-      label: project.title,
-    })),
-  ]
-  const selectTop = () => {
-    actions.setActiveProject(START_SCREEN_INDEX, 'push')
-    keyboardSurfaceRef.current?.focus({ preventScroll: true })
+    model.activeSlideIndexes[model.activeProjectIndex] ?? 0
+
+  return {
+    activeProject,
+    activeProjectColor: getProjectColor(
+      Math.max(0, model.activeProjectIndex),
+      resolvedTheme,
+    ),
+    activeProjectHasMedia: activeSlides.some(
+      slide => slide.kind === 'screenshot',
+    ),
+    activeSlideIndex,
+    activeSlides,
+    usesSideBySideProjectLayout,
+    viewerOpen,
   }
-  const horizontalNavigation = (
+}
+
+function PortfolioHorizontalNavigation({
+  actions,
+  activeProject,
+  activeProjectColor,
+  activeProjectIndex,
+  activeSlideIndex,
+  activeSlides,
+  introPhase,
+  isTouchInput,
+  usesSideBySideProjectLayout,
+  viewerOpen,
+}: {
+  actions: PortfolioBrowserViewActions
+  activeProject?: (typeof portfolioSlides)[number]
+  activeProjectColor: string
+  activeProjectIndex: number
+  activeSlideIndex: number
+  activeSlides: ProjectSlide[]
+  introPhase: PortfolioIntroPhase
+  isTouchInput: boolean
+  usesSideBySideProjectLayout: boolean
+  viewerOpen: boolean
+}) {
+  return (
     <nav
       data-portfolio-underlying-horizontal-navigation
       className={`pointer-events-none absolute inset-x-0 bottom-[var(--portfolio-frame-rule-size)] z-40 h-[calc(var(--portfolio-navigation-track-size)+env(safe-area-inset-bottom,0px))] transition-opacity duration-200 motion-reduce:transition-none ${
-        model.introPhase === 'ready' && !viewerOpen
+        introPhase === 'ready' && !viewerOpen
           ? 'opacity-100'
           : 'pointer-events-none opacity-0'
       }`}
@@ -157,9 +167,9 @@ export function PortfolioBrowserView({
       <div
         className="pointer-events-none absolute top-[calc(var(--portfolio-navigation-track-size)/2)] -translate-x-1/2 -translate-y-1/2"
         style={{
-          left: !usesSideBySideProjectLayout
-            ? '50%'
-            : 'calc(50% + (var(--portfolio-description-rail-width) - var(--portfolio-control-gutter-width)) / 2)',
+          left: usesSideBySideProjectLayout
+            ? 'calc(50% + (var(--portfolio-description-rail-width) - var(--portfolio-control-gutter-width)) / 2)'
+            : '50%',
         }}
       >
         <PortfolioSlideRail
@@ -172,15 +182,15 @@ export function PortfolioBrowserView({
           }))}
           activeIndex={activeSlideIndex}
           onSelect={index => {
-            if (model.activeProjectIndex < 0) return
-            actions.setActiveSlide(model.activeProjectIndex, index, 'push')
+            if (activeProjectIndex < 0) return
+            actions.setActiveSlide(activeProjectIndex, index, 'push')
           }}
         />
       </div>
-      {!model.isTouchInput ? (
+      {!isTouchInput ? (
         <div
           className={`pointer-events-auto absolute top-0 grid h-[var(--portfolio-navigation-track-size)] w-[var(--portfolio-navigation-track-size)] place-items-center transition-opacity duration-300 ease-out ${
-            model.activeProjectIndex === START_SCREEN_INDEX || viewerOpen
+            activeProjectIndex === START_SCREEN_INDEX || viewerOpen
               ? 'pointer-events-none opacity-0'
               : 'opacity-100'
           }`}
@@ -202,6 +212,192 @@ export function PortfolioBrowserView({
       ) : null}
     </nav>
   )
+}
+
+function PortfolioLoadingCurtain({
+  curtainRef,
+  introPhase,
+}: {
+  curtainRef: RefObject<HTMLDivElement | null>
+  introPhase: PortfolioIntroPhase
+}) {
+  return (
+    <div
+      ref={curtainRef}
+      data-portfolio-loading-curtain
+      data-phase={introPhase}
+      className={`portfolio-theme-surface fixed inset-0 z-[100] grid place-items-center ${
+        introPhase === 'ready' ? 'pointer-events-none' : 'pointer-events-auto'
+      }`}
+    >
+      <div
+        role={introPhase === 'error' ? 'alert' : undefined}
+        className={`flex max-w-md flex-col items-center gap-5 px-8 text-center transition-opacity duration-300 ${
+          introPhase === 'error' ? 'opacity-100' : 'opacity-0'
+        }`}
+        aria-hidden={introPhase === 'error' ? undefined : true}
+      >
+        <p className="text-lg font-normal leading-relaxed text-[var(--portfolio-ink-80)]">
+          Portfolio media didn&apos;t finish loading.
+        </p>
+        <CircularIconButton
+          icon={faRotateRight}
+          iconClassName="size-6"
+          ring
+          className="portfolio-theme-surface relative size-11 text-[var(--portfolio-ink)]"
+          aria-label="Reload page"
+          title="Reload page"
+          onClick={() => window.location.reload()}
+        />
+      </div>
+    </div>
+  )
+}
+
+function PortfolioMediaBackdrop({
+  activeProjectHasMedia,
+  activeProjectIndex,
+  mediaBackdropVisible,
+  usesSideBySideProjectLayout,
+  viewerOpen,
+}: {
+  activeProjectHasMedia: boolean
+  activeProjectIndex: number
+  mediaBackdropVisible: boolean
+  usesSideBySideProjectLayout: boolean
+  viewerOpen: boolean
+}) {
+  const visible =
+    activeProjectIndex >= 0 && activeProjectHasMedia && mediaBackdropVisible
+
+  return (
+    <div
+      className={`pointer-events-none fixed inset-0 z-0 grid ${
+        usesSideBySideProjectLayout
+          ? 'grid-cols-[var(--portfolio-description-rail-width)_minmax(0,1fr)_var(--portfolio-control-gutter-width)]'
+          : 'place-items-center'
+      }`}
+      style={WIDE_LAYOUT_STYLE}
+      aria-hidden="true"
+    >
+      <span
+        data-portfolio-media-backdrop
+        className={`size-[100vmin] transition-opacity motion-reduce:transition-none ${
+          visible
+            ? 'opacity-100 duration-[450ms] ease-out'
+            : 'opacity-0 duration-150 ease-in'
+        } ${usesSideBySideProjectLayout ? 'col-start-2 place-self-center' : ''}`}
+        style={{
+          background: viewerOpen
+            ? 'radial-gradient(circle closest-side, color-mix(in srgb, var(--color-resume-signal) 20%, transparent) 0%, transparent 100%)'
+            : 'radial-gradient(circle closest-side, color-mix(in srgb, var(--color-resume-signal) 10%, transparent) 0%, transparent 100%)',
+        }}
+      />
+    </div>
+  )
+}
+
+function PortfolioIdentityLayers({
+  activeProjectIndex,
+  isWideLayout,
+  onSelectTop,
+}: {
+  activeProjectIndex: number
+  isWideLayout: boolean
+  onSelectTop: () => void
+}) {
+  if (isWideLayout) {
+    return (
+      <PortfolioDesktopIdentity
+        activeProjectIndex={activeProjectIndex}
+        onSelectTop={onSelectTop}
+      />
+    )
+  }
+
+  return (
+    <div
+      data-portfolio-narrow-layout-logo
+      className="pointer-events-none fixed left-0 top-[var(--portfolio-header-edge-inset)] z-[35] flex justify-center"
+      style={{ width: MOBILE_SECTION_CONTENT_PADDING_LEFT }}
+    >
+      <button
+        type="button"
+        aria-label="Back to top"
+        data-interactive-pop="off"
+        data-portfolio-home-logo
+        className="pointer-events-auto grid size-11 shrink-0 place-items-center border-0 bg-transparent p-0 outline-none focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-current"
+        onClick={onSelectTop}
+      >
+        <PortfolioLogoMark className="shrink-0 text-resume-signal" />
+      </button>
+    </div>
+  )
+}
+
+function PortfolioViewerLayer({
+  actions,
+  activeProject,
+  model,
+}: {
+  actions: PortfolioBrowserViewActions
+  activeProject?: (typeof portfolioSlides)[number]
+  model: PortfolioBrowserViewModel
+}) {
+  if (!model.viewerIntent || !activeProject) return null
+
+  return (
+    <PortfolioViewer
+      project={activeProject}
+      slides={model.viewerSlides}
+      index={model.viewerIndex}
+      intent={model.viewerIntent}
+      registerMediaElement={actions.registerMediaElement}
+      onView={actions.handleViewerView}
+      onSelect={actions.handleViewerView}
+      onClose={actions.finishViewerClose}
+    />
+  )
+}
+
+function getHelperKind(model: PortfolioBrowserViewModel, viewerOpen: boolean) {
+  return model.isWideLayout &&
+    !model.isTouchInput &&
+    model.introPhase === 'ready' &&
+    model.activeProjectIndex === START_SCREEN_INDEX &&
+    !viewerOpen
+    ? 'navigation'
+    : null
+}
+
+export function PortfolioBrowserView({
+  actions,
+  model,
+  curtainRef,
+  keyboardSurfaceRef,
+  verticalViewportRef,
+}: {
+  actions: PortfolioBrowserViewActions
+  model: PortfolioBrowserViewModel
+  curtainRef: RefObject<HTMLDivElement | null>
+  keyboardSurfaceRef: RefObject<HTMLElement | null>
+  verticalViewportRef: EmblaViewportRefType
+}) {
+  const { resolvedTheme } = usePortfolioTheme()
+  const [mediaBackdropVisible, setMediaBackdropVisible] = useState(true)
+  const {
+    activeProject,
+    activeProjectColor,
+    activeProjectHasMedia,
+    activeSlideIndex,
+    activeSlides,
+    usesSideBySideProjectLayout,
+    viewerOpen,
+  } = deriveViewState(model, resolvedTheme)
+  const selectTop = () => {
+    actions.setActiveProject(START_SCREEN_INDEX, 'push')
+    keyboardSurfaceRef.current?.focus({ preventScroll: true })
+  }
 
   return (
     <main
@@ -209,31 +405,13 @@ export function PortfolioBrowserView({
       tabIndex={-1}
       className="portfolio-theme-surface relative isolate h-dvh overflow-hidden text-[var(--portfolio-ink)] outline-none"
     >
-      <div
-        className={`pointer-events-none fixed inset-0 z-0 grid ${
-          usesSideBySideProjectLayout
-            ? 'grid-cols-[var(--portfolio-description-rail-width)_minmax(0,1fr)_var(--portfolio-control-gutter-width)]'
-            : 'place-items-center'
-        }`}
-        style={WIDE_LAYOUT_STYLE}
-        aria-hidden="true"
-      >
-        <span
-          data-portfolio-media-backdrop
-          className={`size-[100vmin] transition-opacity motion-reduce:transition-none ${
-            model.activeProjectIndex >= 0 &&
-            activeProjectHasMedia &&
-            mediaBackdropVisible
-              ? 'opacity-100 duration-[450ms] ease-out'
-              : 'opacity-0 duration-150 ease-in'
-          } ${usesSideBySideProjectLayout ? 'col-start-2 place-self-center' : ''}`}
-          style={{
-            background: viewerOpen
-              ? 'radial-gradient(circle closest-side, color-mix(in srgb, var(--color-resume-signal) 20%, transparent) 0%, transparent 100%)'
-              : 'radial-gradient(circle closest-side, color-mix(in srgb, var(--color-resume-signal) 10%, transparent) 0%, transparent 100%)',
-          }}
-        />
-      </div>
+      <PortfolioMediaBackdrop
+        activeProjectHasMedia={activeProjectHasMedia}
+        activeProjectIndex={model.activeProjectIndex}
+        mediaBackdropVisible={mediaBackdropVisible}
+        usesSideBySideProjectLayout={usesSideBySideProjectLayout}
+        viewerOpen={viewerOpen}
+      />
       <div
         data-portfolio-browser-chrome
         className="absolute inset-0 z-10"
@@ -299,31 +477,11 @@ export function PortfolioBrowserView({
           </div>
         </div>
 
-        {model.isWideLayout ? (
-          <PortfolioDesktopIdentity
-            activeProjectIndex={model.activeProjectIndex}
-            onSelectTop={selectTop}
-          />
-        ) : null}
-
-        {!model.isWideLayout ? (
-          <div
-            data-portfolio-narrow-layout-logo
-            className="pointer-events-none fixed left-0 top-[var(--portfolio-header-edge-inset)] z-[35] flex justify-center"
-            style={{ width: MOBILE_SECTION_CONTENT_PADDING_LEFT }}
-          >
-            <button
-              type="button"
-              aria-label="Back to top"
-              data-interactive-pop="off"
-              data-portfolio-home-logo
-              className="pointer-events-auto grid size-11 shrink-0 place-items-center border-0 bg-transparent p-0 outline-none focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-current"
-              onClick={selectTop}
-            >
-              <PortfolioLogoMark className="shrink-0 text-resume-signal" />
-            </button>
-          </div>
-        ) : null}
+        <PortfolioIdentityLayers
+          activeProjectIndex={model.activeProjectIndex}
+          isWideLayout={model.isWideLayout}
+          onSelectTop={selectTop}
+        />
 
         <PortfolioThemeMenu
           hidden={viewerOpen}
@@ -333,7 +491,7 @@ export function PortfolioBrowserView({
         />
 
         <PortfolioSectionRail
-          items={sectionItems}
+          items={SECTION_ITEMS}
           activeIndex={model.activeProjectIndex + 1}
           side="left"
           hidden={viewerOpen}
@@ -355,63 +513,30 @@ export function PortfolioBrowserView({
           }}
         />
 
-        {viewerOpen && model.viewerIntent && activeProject ? (
-          <PortfolioViewer
-            project={activeProject}
-            slides={model.viewerSlides}
-            index={model.viewerIndex}
-            intent={model.viewerIntent}
-            registerMediaElement={actions.registerMediaElement}
-            onView={actions.handleViewerView}
-            onSelect={actions.handleViewerView}
-            onClose={actions.finishViewerClose}
-          />
-        ) : null}
-
-        <PortfolioHelperMessage
-          kind={
-            model.isWideLayout &&
-            !model.isTouchInput &&
-            model.introPhase === 'ready' &&
-            model.activeProjectIndex === START_SCREEN_INDEX &&
-            !viewerOpen
-              ? 'navigation'
-              : null
-          }
+        <PortfolioViewerLayer
+          actions={actions}
+          activeProject={activeProject}
+          model={model}
         />
 
-        <div
-          ref={curtainRef}
-          data-portfolio-loading-curtain
-          data-phase={model.introPhase}
-          className={`portfolio-theme-surface fixed inset-0 z-[100] grid place-items-center ${
-            model.introPhase === 'ready'
-              ? 'pointer-events-none'
-              : 'pointer-events-auto'
-          }`}
-        >
-          <div
-            role={model.introPhase === 'error' ? 'alert' : undefined}
-            className={`flex max-w-md flex-col items-center gap-5 px-8 text-center transition-opacity duration-300 ${
-              model.introPhase === 'error' ? 'opacity-100' : 'opacity-0'
-            }`}
-            aria-hidden={model.introPhase === 'error' ? undefined : true}
-          >
-            <p className="text-lg font-normal leading-relaxed text-[var(--portfolio-ink-80)]">
-              Portfolio media didn&apos;t finish loading.
-            </p>
-            <CircularIconButton
-              icon={faRotateRight}
-              iconClassName="size-6"
-              ring
-              className="portfolio-theme-surface relative size-11 text-[var(--portfolio-ink)]"
-              aria-label="Reload page"
-              title="Reload page"
-              onClick={() => window.location.reload()}
-            />
-          </div>
-        </div>
-        {horizontalNavigation}
+        <PortfolioHelperMessage kind={getHelperKind(model, viewerOpen)} />
+
+        <PortfolioLoadingCurtain
+          curtainRef={curtainRef}
+          introPhase={model.introPhase}
+        />
+        <PortfolioHorizontalNavigation
+          actions={actions}
+          activeProject={activeProject}
+          activeProjectColor={activeProjectColor}
+          activeProjectIndex={model.activeProjectIndex}
+          activeSlideIndex={activeSlideIndex}
+          activeSlides={activeSlides}
+          introPhase={model.introPhase}
+          isTouchInput={model.isTouchInput}
+          usesSideBySideProjectLayout={usesSideBySideProjectLayout}
+          viewerOpen={viewerOpen}
+        />
       </div>
     </main>
   )

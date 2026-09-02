@@ -4,8 +4,11 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   copyEditorEntries,
   migrateCopyEditorDraftValues,
-  type CopyEditorEntry,
 } from '@/lib/copyEditor'
+import {
+  CopyEditorEntrySlides,
+  type CopyEditorBlock,
+} from './CopyEditorEntrySlides'
 import {
   CopyEditorScrollRail,
   type CopyEditorSectionMarker,
@@ -19,21 +22,10 @@ const COPY_EDITOR_FOOTER_SELECTOR = '[data-copy-editor-footer]'
 
 type CopyValues = Record<string, string>
 
-type CopyEditorBlock = {
-  id: string
-  entries: CopyEditorEntry[]
-  media?: CopyEditorEntry['media']
-}
-
 function initialValues() {
   return Object.fromEntries(
     copyEditorEntries.map(entry => [entry.id, entry.value]),
   )
-}
-
-function wordCount(value: string) {
-  const words = value.trim().match(/\S+/g)
-  return words?.length ?? 0
 }
 
 function sectionId(group: string) {
@@ -130,29 +122,85 @@ function nextPaint() {
   })
 }
 
-function ContentSizedTextarea({
-  id,
-  ariaLabel,
-  value,
-  className,
-  onChange,
+function CopyEditorHeader({ changeCount }: { changeCount: number }) {
+  return (
+    <header
+      className={styles.header}
+      data-copy-editor-section-start="copy-editor-top"
+      data-copy-editor-slide
+      id="copy-editor-top"
+    >
+      <div>
+        <p className={styles.eyebrow}>Copy proof · all public text</p>
+        <h1 className={styles.title}>Rewrite it in context.</h1>
+        <p className={styles.introduction}>
+          Edit any field below. Images stay beside the words they describe,
+          drafts save locally, and the export contains only what changed.
+        </p>
+      </div>
+      <div
+        className={styles.tally}
+        aria-label={`${changeCount} changed fields`}
+      >
+        <strong>{String(changeCount).padStart(2, '0')}</strong>
+        <span>Fields changed</span>
+      </div>
+    </header>
+  )
+}
+
+function CopyEditorFooter({
+  changeCount,
+  copying,
+  status,
+  onCopy,
+  onReset,
 }: {
-  id: string
-  ariaLabel: string
-  value: string
-  className: string
-  onChange: (value: string) => void
+  changeCount: number
+  copying: boolean
+  status: string
+  onCopy: () => void
+  onReset: () => void
 }) {
   return (
-    <textarea
-      aria-label={ariaLabel}
-      className={className}
-      id={id}
-      value={value}
-      rows={1}
-      spellCheck
-      onChange={event => onChange(event.target.value)}
-    />
+    <footer
+      className={styles.footer}
+      data-copy-editor-footer
+    >
+      <div className={styles.footerInner}>
+        <span
+          className={styles.status}
+          aria-live="polite"
+        >
+          {status}
+        </span>
+        <div className={styles.actions}>
+          <button
+            className={styles.button}
+            type="button"
+            disabled={changeCount === 0 || copying}
+            onClick={onReset}
+          >
+            Reset changes
+          </button>
+          <button
+            className={`${styles.button} ${styles.primaryButton}`}
+            type="button"
+            disabled={changeCount === 0 || copying}
+            aria-busy={copying || undefined}
+            onClick={onCopy}
+          >
+            <span
+              className={styles.buttonIcon}
+              aria-hidden="true"
+            >
+              {copying ? <span className={styles.spinner} /> : '{}'}
+            </span>
+            <span>Copy JSON for Codex</span>
+          </button>
+        </div>
+      </div>
+    </footer>
   )
 }
 
@@ -396,202 +444,28 @@ export function CopyEditor() {
         slideStarts={slideStarts}
       />
 
-      <header
-        className={styles.header}
-        data-copy-editor-section-start="copy-editor-top"
-        data-copy-editor-slide
-        id="copy-editor-top"
-      >
-        <div>
-          <p className={styles.eyebrow}>Copy proof · all public text</p>
-          <h1 className={styles.title}>Rewrite it in context.</h1>
-          <p className={styles.introduction}>
-            Edit any field below. Images stay beside the words they describe,
-            drafts save locally, and the export contains only what changed.
-          </p>
-        </div>
-        <div
-          className={styles.tally}
-          aria-label={`${changeCount} changed fields`}
-        >
-          <strong>{String(changeCount).padStart(2, '0')}</strong>
-          <span>Fields changed</span>
-        </div>
-      </header>
+      <CopyEditorHeader changeCount={changeCount} />
 
       <div className={styles.groups}>
-        {groups.map(([group, blocks]) => {
-          return (
-            <section key={group}>
-              {blocks.map((block, blockIndex) => {
-                const mediaAltEntry = block.entries.find(entry =>
-                  entry.id.endsWith('.alt'),
-                )
-                const mediaAlt = mediaAltEntry
-                  ? (values[mediaAltEntry.id] ?? mediaAltEntry.value)
-                  : (block.media?.alt ?? '')
-
-                return (
-                  <article
-                    className={`${styles.entry} ${!block.media ? styles.entryNoMedia : ''}`}
-                    data-copy-editor-section-start={
-                      blockIndex === 0 ? sectionId(group) : undefined
-                    }
-                    data-copy-editor-slide
-                    id={blockIndex === 0 ? sectionId(group) : undefined}
-                    key={block.id}
-                  >
-                    <header className={styles.entryHeader}>
-                      <h2 className={styles.entryGroup}>{group}</h2>
-                      <span className={styles.entryProgress}>
-                        {String(blockIndex + 1).padStart(2, '0')} /{' '}
-                        {String(blocks.length).padStart(2, '0')} ·{' '}
-                        {block.entries.length}{' '}
-                        {block.entries.length === 1 ? 'field' : 'fields'}
-                      </span>
-                    </header>
-                    <div className={styles.fieldStack}>
-                      {block.entries.map(entry => {
-                        const value = values[entry.id] ?? ''
-                        const changed = value !== entry.value
-                        const controlId = `copy-editor-field-${entry.id.replace(/[^a-z0-9]+/gi, '-')}`
-
-                        return (
-                          <div
-                            className={styles.field}
-                            key={entry.id}
-                          >
-                            <span className={styles.fieldHeader}>
-                              <span>
-                                <span className={styles.label}>
-                                  {entry.label}
-                                </span>
-                                <span className={styles.path}>{entry.id}</span>
-                              </span>
-                              <span className={styles.count}>
-                                {wordCount(value)} words
-                              </span>
-                            </span>
-                            <div className={styles.versions}>
-                              <div className={styles.version}>
-                                <span className={styles.versionLabel}>
-                                  Original
-                                </span>
-                                <div
-                                  className={`${styles.original} ${entry.control === 'input' ? styles.originalInput : styles.originalTextarea}`}
-                                >
-                                  {entry.value}
-                                </div>
-                              </div>
-                              <label
-                                className={styles.version}
-                                htmlFor={controlId}
-                              >
-                                <span className={styles.versionLabel}>
-                                  Editable
-                                </span>
-                                {entry.control === 'input' ? (
-                                  <input
-                                    className={`${styles.input} ${changed ? styles.controlChanged : ''}`}
-                                    id={controlId}
-                                    type="text"
-                                    value={value}
-                                    spellCheck
-                                    onChange={event =>
-                                      updateEntry(entry.id, event.target.value)
-                                    }
-                                  />
-                                ) : (
-                                  <ContentSizedTextarea
-                                    ariaLabel={entry.label}
-                                    className={`${styles.textarea} ${changed ? styles.controlChanged : ''}`}
-                                    id={controlId}
-                                    value={value}
-                                    onChange={nextValue =>
-                                      updateEntry(entry.id, nextValue)
-                                    }
-                                  />
-                                )}
-                                {changed ? (
-                                  <span className={styles.changeNote}>
-                                    Changed from app copy
-                                  </span>
-                                ) : null}
-                              </label>
-                            </div>
-                          </div>
-                        )
-                      })}
-                    </div>
-
-                    {block.media ? (
-                      <figure className={styles.mediaFrame}>
-                        {block.media.type === 'video' ? (
-                          <video
-                            src={block.media.src}
-                            aria-label={mediaAlt}
-                            controls
-                            muted
-                            playsInline
-                            preload="metadata"
-                          />
-                        ) : (
-                          // These are known local portfolio assets; a plain image
-                          // keeps the editor compatible with every source format.
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={block.media.src}
-                            alt={mediaAlt}
-                          />
-                        )}
-                      </figure>
-                    ) : null}
-                  </article>
-                )
-              })}
-            </section>
-          )
-        })}
+        {groups.map(([group, blocks]) => (
+          <CopyEditorEntrySlides
+            blocks={blocks}
+            getSectionId={sectionId}
+            group={group}
+            key={group}
+            values={values}
+            onChange={updateEntry}
+          />
+        ))}
       </div>
 
-      <footer
-        className={styles.footer}
-        data-copy-editor-footer
-      >
-        <div className={styles.footerInner}>
-          <span
-            className={styles.status}
-            aria-live="polite"
-          >
-            {status}
-          </span>
-          <div className={styles.actions}>
-            <button
-              className={styles.button}
-              type="button"
-              disabled={changeCount === 0 || copying}
-              onClick={resetChanges}
-            >
-              Reset changes
-            </button>
-            <button
-              className={`${styles.button} ${styles.primaryButton}`}
-              type="button"
-              disabled={changeCount === 0 || copying}
-              aria-busy={copying || undefined}
-              onClick={() => void copyJson()}
-            >
-              <span
-                className={styles.buttonIcon}
-                aria-hidden="true"
-              >
-                {copying ? <span className={styles.spinner} /> : '{}'}
-              </span>
-              <span>Copy JSON for Codex</span>
-            </button>
-          </div>
-        </div>
-      </footer>
+      <CopyEditorFooter
+        changeCount={changeCount}
+        copying={copying}
+        status={status}
+        onCopy={() => void copyJson()}
+        onReset={resetChanges}
+      />
     </main>
   )
 }

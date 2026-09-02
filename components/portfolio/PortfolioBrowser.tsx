@@ -13,22 +13,16 @@ import useEmblaCarousel from 'embla-carousel-react'
 import { WheelGesturesPlugin } from 'embla-carousel-wheel-gestures'
 import { gsap } from 'gsap'
 import { portfolioSlides } from '@/lib/portfolio'
-import {
-  pageTitle,
-  parsePortfolioRoute,
-  projectUrl,
-  viewerUrl,
-} from './domain/routing'
-import { isViewerScreenshotSlide } from './domain/slides'
-import {
-  getPortfolioViewerSlides,
-  getViewerSlideIndex,
-  type ViewerOpenIntent,
-} from './domain/viewer'
 import { usePortfolioMediaReadiness } from './usePortfolioMediaReadiness'
 import { usePortfolioLayout } from './runtime/usePortfolioLayout'
 import { usePortfolioModel } from './runtime/usePortfolioModel'
 import { usePortfolioSelection } from './runtime/usePortfolioSelection'
+import {
+  usePortfolioNavigationController,
+  type NavigationMode,
+  type VerticalNavigationIntent,
+} from './runtime/usePortfolioNavigationController'
+import { usePortfolioViewerController } from './runtime/usePortfolioViewerController'
 import type { PortfolioIntroPhase } from './runtime/types'
 import { installPortfolioWheelAxisLock } from './runtime/wheelAxisLock'
 import {
@@ -41,14 +35,6 @@ type PortfolioBrowserProps = {
   initialProjectSlug?: string
   initialScreenshotSlug?: string
   initialViewerOpen?: boolean
-}
-
-type NavigationMode = 'push' | 'replace' | 'silent'
-
-type VerticalNavigationIntent = {
-  projectIndex: number
-  mode: NavigationMode
-  slideIndex?: number
 }
 
 const START_SCREEN_INDEX = -1
@@ -89,16 +75,8 @@ export function PortfolioBrowser({
   const horizontalModesRef = useRef(new Map<number, NavigationMode>())
   const verticalIntentRef = useRef<VerticalNavigationIntent | null>(null)
   const verticalViewportElementRef = useRef<HTMLElement>(null)
-  const viewerHistoryEntryRef = useRef(false)
-  const pendingViewerCloseRef = useRef<{
-    projectIndex: number
-    slideIndex: number
-  } | null>(null)
   const initialRevealStartedRef = useRef(false)
   const [introPhase, setIntroPhase] = useState<PortfolioIntroPhase>('loading')
-  const [viewerIntent, setViewerIntent] = useState<ViewerOpenIntent | null>(
-    null,
-  )
   const { isTouchInput, isTouchLandscapeLayout, isWideLayout } =
     usePortfolioLayout()
 
@@ -179,374 +157,46 @@ export function PortfolioBrowser({
     }
   }, [verticalApi])
 
-  const activeProject =
-    selection.projectIndex >= 0
-      ? portfolioSlides[selection.projectIndex]
-      : undefined
-  const activeSlides = activeProject ? projectSlides[activeProject.slug] : []
-  const activeSlideIndex =
-    selection.projectIndex >= 0
-      ? (selection.slideIndexes[selection.projectIndex] ?? 0)
-      : 0
-  const viewerSlides = activeProject
-    ? getPortfolioViewerSlides(activeProject)
-    : []
-  const viewerIndex = viewerIntent
-    ? getViewerSlideIndex(viewerSlides, viewerIntent.mediaId)
-    : 0
-
-  const updateRoute = useCallback(
-    (
-      projectIndex: number,
-      slideIndex: number,
-      mode: 'push' | 'replace',
-      viewerOpen = false,
-    ) => {
-      const project =
-        projectIndex >= 0 ? portfolioSlides[projectIndex] : undefined
-      const slide = project
-        ? projectSlides[project.slug][slideIndex]
-        : undefined
-      const path = project && slide ? projectUrl(project, slide) : '/work'
-      const url =
-        viewerOpen && project && slide ? viewerUrl(project, slide) : path
-      const current = `${window.location.pathname}${window.location.search}`
-      if (current !== url) window.history[`${mode}State`]({}, '', url)
-      document.title = pageTitle(project, slide)
-    },
-    [projectSlides],
-  )
-
-  const registerHorizontalApi = useCallback(
-    (projectIndex: number, api: EmblaCarouselType | null) => {
-      if (api) horizontalApisRef.current.set(projectIndex, api)
-      else horizontalApisRef.current.delete(projectIndex)
-    },
-    [],
-  )
-
-  const commitHorizontalSelection = useCallback(
-    (projectIndex: number, slideIndex: number, mode: NavigationMode) => {
-      setActiveSlideIndexes(indexes =>
-        indexes.map((index, indexProject) =>
-          indexProject === projectIndex ? slideIndex : index,
-        ),
-      )
-      if (
-        mode !== 'silent' &&
-        selectionRef.current.projectIndex === projectIndex
-      ) {
-        updateRoute(projectIndex, slideIndex, mode)
-      }
-    },
-    [setActiveSlideIndexes, updateRoute],
-  )
-
-  const handleHorizontalSelect = useCallback(
-    (projectIndex: number, slideIndex: number) => {
-      const mode = horizontalModesRef.current.get(projectIndex) ?? 'replace'
-      horizontalModesRef.current.delete(projectIndex)
-      commitHorizontalSelection(projectIndex, slideIndex, mode)
-    },
-    [commitHorizontalSelection],
-  )
-
-  const selectHorizontal = useCallback(
-    (
-      projectIndex: number,
-      slideIndex: number,
-      mode: NavigationMode,
-      jump = false,
-    ) => {
-      const api = horizontalApisRef.current.get(projectIndex)
-      const slides = projectSlides[portfolioSlides[projectIndex].slug]
-      const target = Math.max(0, Math.min(slides.length - 1, slideIndex))
-      if (!api || api.selectedScrollSnap() === target) {
-        commitHorizontalSelection(projectIndex, target, mode)
-        return
-      }
-      horizontalModesRef.current.set(projectIndex, mode)
-      api.scrollTo(target, jump)
-    },
-    [commitHorizontalSelection, projectSlides],
-  )
-
-  const commitVerticalSelection = useCallback(
-    (
-      projectIndex: number,
-      mode: NavigationMode,
-      slideIndexOverride?: number,
-    ) => {
-      setActiveProjectIndex(projectIndex)
-      if (mode === 'silent') return
-      const slideIndex =
-        projectIndex >= 0
-          ? (slideIndexOverride ??
-            selectionRef.current.slideIndexes[projectIndex] ??
-            0)
-          : 0
-      updateRoute(projectIndex, slideIndex, mode)
-    },
-    [setActiveProjectIndex, updateRoute],
-  )
-
-  const handleVerticalSelect = useEffectEvent((api: EmblaCarouselType) => {
-    const projectIndex = api.selectedScrollSnap() - 1
-    const intent = verticalIntentRef.current
-    verticalIntentRef.current = null
-    const matchesIntent = intent?.projectIndex === projectIndex
-    commitVerticalSelection(
-      projectIndex,
-      matchesIntent ? intent.mode : 'replace',
-      matchesIntent ? intent.slideIndex : undefined,
-    )
+  const {
+    handleHorizontalSelect,
+    moveHorizontal,
+    moveVertical,
+    registerHorizontalApi,
+    selectHorizontal,
+    setActiveProject,
+    setActiveSlide,
+    updateRoute,
+  } = usePortfolioNavigationController({
+    horizontalApisRef,
+    horizontalModesRef,
+    projectSlides,
+    selectionRef,
+    verticalApi,
+    verticalIntentRef,
+    setActiveProjectIndex,
+    setActiveSlideIndexes,
   })
 
-  useEffect(() => {
-    if (!verticalApi) return
-    verticalApi.on('select', handleVerticalSelect)
-    return () => {
-      verticalApi.off('select', handleVerticalSelect)
-    }
-  }, [verticalApi])
-
-  const setActiveProject = useCallback(
-    (
-      projectIndex: number,
-      mode: 'push' | 'replace',
-      jump = false,
-      targetSlideIndex?: number,
-    ) => {
-      const target = Math.max(
-        START_SCREEN_INDEX,
-        Math.min(portfolioSlides.length - 1, projectIndex),
-      )
-      let slideIndexOverride: number | undefined
-      if (target >= 0 && targetSlideIndex !== undefined) {
-        const slides = projectSlides[portfolioSlides[target].slug]
-        slideIndexOverride = Math.max(
-          0,
-          Math.min(slides.length - 1, targetSlideIndex),
-        )
-        selectHorizontal(target, slideIndexOverride, 'silent', true)
-      }
-      const emblaIndex = target + 1
-      if (!verticalApi || verticalApi.selectedScrollSnap() === emblaIndex) {
-        commitVerticalSelection(target, mode, slideIndexOverride)
-        return
-      }
-      verticalIntentRef.current = {
-        projectIndex: target,
-        mode,
-        slideIndex: slideIndexOverride,
-      }
-      verticalApi.scrollTo(emblaIndex, jump)
-    },
-    [commitVerticalSelection, projectSlides, selectHorizontal, verticalApi],
-  )
-
-  const moveVertical = useCallback(
-    (direction: -1 | 1) => {
-      const screenIndex = selectionRef.current.projectIndex + 1
-      const nextScreen = screenIndex + direction
-      if (nextScreen < 0 || nextScreen > portfolioSlides.length) return
-      setActiveProject(nextScreen - 1, 'push')
-    },
-    [setActiveProject],
-  )
-
-  const setActiveSlide = useCallback(
-    (projectIndex: number, slideIndex: number, mode: 'push' | 'replace') => {
-      selectHorizontal(projectIndex, slideIndex, mode)
-    },
-    [selectHorizontal],
-  )
-
-  const moveHorizontal = useCallback((direction: -1 | 1) => {
-    const projectIndex = selectionRef.current.projectIndex
-    if (projectIndex < 0) return
-    const api = horizontalApisRef.current.get(projectIndex)
-    if (!api || api.scrollSnapList().length < 2) return
-    const nextSlideIndex = api.selectedScrollSnap() + direction
-    if (nextSlideIndex < 0 || nextSlideIndex >= api.scrollSnapList().length) {
-      return
-    }
-    horizontalModesRef.current.set(projectIndex, 'push')
-    api.scrollTo(nextSlideIndex)
-  }, [])
-
-  const openViewer = useCallback(
-    (intent: ViewerOpenIntent) => {
-      const projectIndex = selectionRef.current.projectIndex
-      if (projectIndex < 0) return
-      const project = portfolioSlides[projectIndex]
-      const slides = projectSlides[project.slug]
-      const slideIndex = slides.findIndex(
-        slide =>
-          slide.kind === 'screenshot' && slide.screenshot.id === intent.mediaId,
-      )
-      if (
-        slideIndex < 0 ||
-        !isViewerScreenshotSlide(project, slides[slideIndex])
-      ) {
-        return
-      }
-
-      selectHorizontal(projectIndex, slideIndex, 'silent', true)
-      updateRoute(projectIndex, slideIndex, 'push', true)
-      viewerHistoryEntryRef.current = true
-      setViewerIntent(intent)
-    },
-    [projectSlides, selectHorizontal, updateRoute],
-  )
-
-  const openActiveViewerFromKeyboard = useCallback(() => {
-    const projectIndex = selectionRef.current.projectIndex
-    if (projectIndex < 0) return false
-    const project = portfolioSlides[projectIndex]
-    const slideIndex = selectionRef.current.slideIndexes[projectIndex] ?? 0
-    const slide = projectSlides[project.slug][slideIndex]
-    if (!isViewerScreenshotSlide(project, slide)) return false
-    const source = document.querySelector<HTMLElement>(
-      `[data-portfolio-screenshot-id="${CSS.escape(slide.screenshot.id)}"][data-portfolio-viewer-source="active"]`,
-    )
-    const rect = source?.getBoundingClientRect()
-    openViewer({
-      mediaId: slide.screenshot.id,
-      activationKind: 'keyboard',
-      sourceRect: rect
-        ? {
-            left: rect.left,
-            top: rect.top,
-            width: rect.width,
-            height: rect.height,
-          }
-        : null,
-    })
-    return true
-  }, [openViewer, projectSlides])
-
-  const handleViewerView = useCallback(
-    (nextViewerIndex: number) => {
-      const projectIndex = selectionRef.current.projectIndex
-      if (projectIndex < 0) return
-      const project = portfolioSlides[projectIndex]
-      const viewerSlide = getPortfolioViewerSlides(project)[nextViewerIndex]
-      if (!viewerSlide) return
-      const slideIndex = projectSlides[project.slug].findIndex(
-        slide => slide.id === viewerSlide.id,
-      )
-      if (slideIndex < 0) return
-      setViewerIntent(intent =>
-        intent ? { ...intent, mediaId: viewerSlide.id } : intent,
-      )
-      selectHorizontal(projectIndex, slideIndex, 'silent', true)
-      updateRoute(projectIndex, slideIndex, 'replace', true)
-    },
-    [projectSlides, selectHorizontal, updateRoute],
-  )
-
-  const finishViewerClose = useCallback(() => {
-    const projectIndex = selectionRef.current.projectIndex
-    const slideIndex =
-      projectIndex >= 0
-        ? (selectionRef.current.slideIndexes[projectIndex] ?? 0)
-        : 0
-    const closedMediaId = viewerIntent?.mediaId
-    setViewerIntent(null)
-
-    if (viewerHistoryEntryRef.current) {
-      viewerHistoryEntryRef.current = false
-      pendingViewerCloseRef.current = { projectIndex, slideIndex }
-      window.history.back()
-    } else {
-      updateRoute(projectIndex, slideIndex, 'replace')
-    }
-
-    requestAnimationFrame(() => {
-      const source = closedMediaId
-        ? document.querySelector<HTMLElement>(
-            `[data-portfolio-screenshot-id="${CSS.escape(closedMediaId)}"][data-portfolio-viewer-source="active"]`,
-          )
-        : null
-      source?.focus?.({ preventScroll: true })
-      keyboardSurfaceRef.current?.focus({ preventScroll: true })
-    })
-  }, [updateRoute, viewerIntent?.mediaId])
-
-  const applyLocationState = useEffectEvent(() => {
-    const pendingClose = pendingViewerCloseRef.current
-    if (pendingClose) {
-      pendingViewerCloseRef.current = null
-      setActiveProjectIndex(pendingClose.projectIndex)
-      if (pendingClose.projectIndex >= 0) {
-        selectHorizontal(
-          pendingClose.projectIndex,
-          pendingClose.slideIndex,
-          'silent',
-          true,
-        )
-      }
-      const targetIndex = pendingClose.projectIndex + 1
-      if (verticalApi?.selectedScrollSnap() !== targetIndex) {
-        verticalIntentRef.current = {
-          projectIndex: pendingClose.projectIndex,
-          mode: 'silent',
-        }
-        verticalApi?.scrollTo(targetIndex, true)
-      } else {
-        verticalIntentRef.current = null
-      }
-      updateRoute(pendingClose.projectIndex, pendingClose.slideIndex, 'replace')
-      return
-    }
-
-    const state = parsePortfolioRoute(
-      window.location.pathname,
-      window.location.search,
-      portfolioSlides,
-      projectSlides,
-    )
-    if (!state) {
-      window.location.assign(window.location.href)
-      return
-    }
-
-    setViewerIntent(null)
-    viewerHistoryEntryRef.current = false
-    setActiveProjectIndex(state.projectIndex)
-    if (state.projectIndex >= 0) {
-      selectHorizontal(state.projectIndex, state.slideIndex, 'silent', true)
-    }
-    const targetIndex = state.projectIndex + 1
-    if (verticalApi?.selectedScrollSnap() !== targetIndex) {
-      verticalIntentRef.current = {
-        projectIndex: state.projectIndex,
-        mode: 'silent',
-      }
-      verticalApi?.scrollTo(targetIndex, true)
-    } else {
-      verticalIntentRef.current = null
-    }
-
-    if (state.viewerOpen && state.projectIndex >= 0) {
-      const project = portfolioSlides[state.projectIndex]
-      const slide = projectSlides[project.slug][state.slideIndex]
-      if (isViewerScreenshotSlide(project, slide)) {
-        setViewerIntent({
-          mediaId: slide.screenshot.id,
-          sourceRect: null,
-          activationKind: 'deep-link',
-        })
-      }
-    }
+  const {
+    finishViewerClose,
+    handleViewerView,
+    openActiveViewerFromKeyboard,
+    openViewer,
+    setViewerIntent,
+    viewerIndex,
+    viewerIntent,
+    viewerSlides,
+  } = usePortfolioViewerController({
+    activeProjectIndex: selection.projectIndex,
+    keyboardSurfaceRef,
+    projectSlides,
+    selectionRef,
+    selectHorizontal,
+    verticalApi,
+    verticalIntentRef,
+    setActiveProjectIndex,
+    updateRoute,
   })
-
-  useEffect(() => {
-    window.history.scrollRestoration = 'manual'
-    window.addEventListener('popstate', applyLocationState)
-    return () => window.removeEventListener('popstate', applyLocationState)
-  }, [])
 
   const handleKeyDown = useEffectEvent((event: KeyboardEvent) => {
     if (viewerIntent) return
