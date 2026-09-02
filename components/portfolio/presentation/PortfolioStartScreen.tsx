@@ -252,7 +252,7 @@ function PortfolioProjectIndex({
               onPointerLeave={() => onPreview(index, false)}
               onClick={event => onSelect(index, event.detail === 0)}
             >
-              <span className="min-w-0 whitespace-nowrap text-center">
+              <span className="min-w-0 whitespace-nowrap text-center text-[var(--portfolio-ink-70)] transition-colors duration-200 ease-out group-hover:text-[var(--portfolio-ink)] group-focus-visible:text-[var(--portfolio-ink)] motion-reduce:transition-none">
                 {pending ? (
                   <FontAwesomeIcon
                     icon={faSpinner}
