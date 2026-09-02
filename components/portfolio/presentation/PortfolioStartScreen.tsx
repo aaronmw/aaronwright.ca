@@ -269,13 +269,13 @@ function PortfolioProjectIndex({
                 >
                   {project.title}
                 </span>
-                <span className="portfolio-start-index-summary-stacked mt-[0.5lh] max-w-[54ch] font-normal text-[var(--portfolio-ink-70)]">
+                <span className="portfolio-start-index-summary-stacked mt-[0.5lh] max-w-[54ch] font-normal text-[var(--portfolio-ink-70)] transition-colors duration-200 ease-out group-hover:text-[var(--portfolio-ink)] group-focus-visible:text-[var(--portfolio-ink)] motion-reduce:transition-none">
                   <PortfolioInlineMarkdown>
                     {project.blurb}
                   </PortfolioInlineMarkdown>
                 </span>
               </span>
-              <span className="portfolio-start-index-summary-column min-w-0 text-[var(--portfolio-ink-70)]">
+              <span className="portfolio-start-index-summary-column min-w-0 text-[var(--portfolio-ink-70)] transition-colors duration-200 ease-out group-hover:text-[var(--portfolio-ink)] group-focus-visible:text-[var(--portfolio-ink)] motion-reduce:transition-none">
                 <PortfolioInlineMarkdown>
                   {project.blurb}
                 </PortfolioInlineMarkdown>
