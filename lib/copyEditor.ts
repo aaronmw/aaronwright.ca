@@ -1,4 +1,8 @@
-import { portfolioSlides } from '@/lib/portfolio'
+import { portfolioSlides } from './portfolio'
+import {
+  composePortfolioNarrative,
+  parsePortfolioNarrative,
+} from './portfolioNarrative'
 
 export type CopyEditorEntry = {
   id: string
@@ -124,16 +128,6 @@ function projectEntries() {
       },
     ]
 
-    if (project.headlineMarkdown) {
-      entries.push({
-        id: `${prefix}.headlineMarkdown`,
-        group: project.title,
-        label: 'Project headline',
-        value: cleanEditableCopy(project.headlineMarkdown),
-        rows: 4,
-      })
-    }
-
     if (project.rolesMarkdown) {
       entries.push({
         id: `${prefix}.rolesMarkdown`,
@@ -154,31 +148,43 @@ function projectEntries() {
       })
     }
 
-    entries.push({
-      id: `${prefix}.descriptionMarkdown`,
+    const overviewEntry: CopyEditorEntry = {
+      id: `${prefix}.overviewMarkdown`,
       group: project.title,
-      label: 'Project introduction',
-      value: cleanEditableCopy(project.descriptionMarkdown),
-      rows: 9,
-    })
+      label: 'Overview narrative',
+      value: cleanEditableCopy(project.overviewMarkdown),
+      rows: 10,
+    }
 
     if (project.cover_image) {
+      const coverPrefix = `${prefix}.cover_image`
+      const coverMedia = {
+        src: project.cover_image.src,
+        alt: cleanEditableCopy(project.cover_image.alt),
+        type: mediaType(project.cover_image.src),
+      } as const
+
       entries.push({
-        id: `${prefix}.cover_image.alt`,
+        id: `${coverPrefix}.alt`,
         group: project.title,
         label: 'Cover image description',
         value: cleanEditableCopy(project.cover_image.alt),
+        blockId: coverPrefix,
         control: 'input',
-        media: {
-          src: project.cover_image.src,
-          alt: cleanEditableCopy(project.cover_image.alt),
-          type: mediaType(project.cover_image.src),
-        },
+        media: coverMedia,
         rows: 3,
       })
+      entries.push({
+        ...overviewEntry,
+        label: `${project.cover_image.slug}: narrative`,
+        blockId: coverPrefix,
+        media: coverMedia,
+      })
+    } else if (!project.screenshots[0] || project.screenshots[0].description) {
+      entries.push(overviewEntry)
     }
 
-    project.screenshots.forEach(screenshot => {
+    project.screenshots.forEach((screenshot, screenshotIndex) => {
       const screenshotPrefix = `${prefix}.screenshots.${screenshot.slug}`
       const screenshotMedia = {
         src: screenshot.src,
@@ -196,6 +202,19 @@ function projectEntries() {
         media: screenshotMedia,
       })
 
+      if (
+        !project.cover_image &&
+        screenshotIndex === 0 &&
+        !screenshot.description
+      ) {
+        entries.push({
+          ...overviewEntry,
+          label: `${screenshot.slug}: narrative`,
+          blockId: screenshotPrefix,
+          media: screenshotMedia,
+        })
+      }
+
       if (screenshot.description) {
         entries.push({
           id: `${screenshotPrefix}.description`,
@@ -211,6 +230,44 @@ function projectEntries() {
 
     return entries
   })
+}
+
+export function migrateCopyEditorDraftValues(values: Record<string, string>) {
+  const migrated = { ...values }
+
+  portfolioSlides.forEach(project => {
+    const prefix = `portfolio.projects.${project.slug}`
+    const overviewId = `${prefix}.overviewMarkdown`
+    const legacyHeadlineId = `${prefix}.headlineMarkdown`
+    const legacyDescriptionId = `${prefix}.descriptionMarkdown`
+
+    if (typeof migrated[overviewId] !== 'string') {
+      const legacyHeadline = migrated[legacyHeadlineId]
+      const legacyDescription = migrated[legacyDescriptionId]
+
+      if (
+        typeof legacyHeadline === 'string' ||
+        typeof legacyDescription === 'string'
+      ) {
+        const current = parsePortfolioNarrative(
+          cleanEditableCopy(project.overviewMarkdown),
+        )
+        migrated[overviewId] = composePortfolioNarrative(
+          typeof legacyHeadline === 'string'
+            ? legacyHeadline
+            : current.titleMarkdown,
+          typeof legacyDescription === 'string'
+            ? legacyDescription
+            : current.bodyMarkdown,
+        )
+      }
+    }
+
+    delete migrated[legacyHeadlineId]
+    delete migrated[legacyDescriptionId]
+  })
+
+  return migrated
 }
 
 export const copyEditorEntries = [

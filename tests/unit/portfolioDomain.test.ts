@@ -39,7 +39,7 @@ const projects: PortfolioProject[] = [
     slug: 'about-me',
     title: 'About Me',
     blurb: '',
-    descriptionMarkdown: '',
+    overviewMarkdown: '',
     screenshots: [],
   },
   {
@@ -47,7 +47,7 @@ const projects: PortfolioProject[] = [
     slug: 'project-two',
     title: 'Project Two',
     blurb: '',
-    descriptionMarkdown: '',
+    overviewMarkdown: '',
     screenshots: [
       {
         id: 'overview',
@@ -215,8 +215,7 @@ describe('project narrative resolution', () => {
     slug: 'notes',
     title: 'Notes',
     blurb: '',
-    headlineMarkdown: 'Project headline',
-    descriptionMarkdown: 'Project introduction',
+    overviewMarkdown: '# Project headline\n\nProject introduction',
     screenshots: [
       { id: 'one', slug: 'one', src: '/one.png', alt: 'One' },
       {

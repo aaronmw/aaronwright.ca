@@ -15,10 +15,9 @@ export type PortfolioProject = {
   title: string;
   blurb: string;
   url?: string;
-  headlineMarkdown?: string;
+  overviewMarkdown: string;
   rolesMarkdown?: string;
   dates?: string;
-  descriptionMarkdown: string;
   cover_image?: PortfolioScreenshot;
   screenshots: PortfolioScreenshot[];
 };
@@ -116,15 +115,10 @@ function transformPortfolioProjectMarkdown(
   return {
     ...project,
     blurb: transformPortfolioMarkdown(project.blurb),
-    headlineMarkdown: project.headlineMarkdown
-      ? transformPortfolioMarkdown(project.headlineMarkdown)
-      : undefined,
+    overviewMarkdown: transformPortfolioMarkdown(project.overviewMarkdown),
     rolesMarkdown: project.rolesMarkdown
       ? transformPortfolioMarkdown(project.rolesMarkdown)
       : undefined,
-    descriptionMarkdown: transformPortfolioMarkdown(
-      project.descriptionMarkdown,
-    ),
     cover_image: project.cover_image
       ? transformScreenshotMarkdown(project.cover_image)
       : undefined,
@@ -132,11 +126,15 @@ function transformPortfolioProjectMarkdown(
   };
 }
 
-const LOOPIO_DESCRIPTION = `
+const LOOPIO_OVERVIEW = `
+# Proving a better Loopio—then making it buildable by everyone else
+
 Loopio's core RFP workflow had outgrown the frontend beneath it. I partnered with Thomas Cheng to turn a redesign proposal into a working product, then carried that momentum into a tested, documented React system other teams could safely extend.
 `;
 
-const FRESHBOOKS_DESCRIPTION = `
+const FRESHBOOKS_OVERVIEW = `
+# Making accounting approachable without pretending it was simple
+
 I joined the small group reimagining FreshBooks as a coherent platform: clearer workflows, reusable interaction patterns, and a reversible transition that let customers move forward without being trapped there.
 `;
 
@@ -147,11 +145,9 @@ const rawPortfolioSlides = [
     title: 'Loopio',
     blurb:
       'A product redesign that became a working prototype, a new frontend, and a shared system for the teams building on it.',
-    headlineMarkdown:
-      'Proving a better Loopio—then making it buildable by everyone else',
+    overviewMarkdown: LOOPIO_OVERVIEW,
     rolesMarkdown: 'Principal Designer → Sr. UX Engineer',
     dates: '2018–2022',
-    descriptionMarkdown: LOOPIO_DESCRIPTION,
     cover_image: {
       id: 'loopio-cover',
       slug: 'cover',
@@ -165,7 +161,7 @@ const rawPortfolioSlides = [
         src: '/portfolio/loopio-case-study/legacy-project-workspace.png',
         alt: 'Loopio project workspace before the redesign',
         description: `
-## A mature product still wearing its prototype
+# A mature product still wearing its prototype
 
 Loopio had found product-market fit, but its interface had accumulated several generations of frontend thinking: jQuery, Backbone, React, Redux, Bootstrap, and one-off controls living side by side.
 
@@ -178,7 +174,7 @@ That inconsistency became most expensive in Projects, where teams coordinate hun
         src: '/portfolio/loopio-case-study/prototype-live-collaboration.png',
         alt: 'Loopio working prototype showing live collaboration',
         description: `
-## Keep the experiment small enough to become real
+# Keep the experiment small enough to become real
 
 Thomas joined in August 2018, and we used the redesigned Projects experience as a contained proving ground. I shaped the workflow and interaction model; together we turned it into a working product rather than another presentation of intent.
 
@@ -191,7 +187,7 @@ That distinction mattered. People could use the idea, react to it, and discuss t
         src: '/portfolio/loopio-case-study/project-bulk-assignment.png',
         alt: 'Loopio project redesign with bulk assignment controls',
         description: `
-## Make dense work manageable
+# Make dense work manageable
 
 RFP work is inherently complicated; the interface didn't need to make it feel more complicated. The redesign treated the project as a persistent workspace, with navigation and contextual tools close to the questions they affected.
 
@@ -204,7 +200,7 @@ Across the broader Projects work, I explored patterns for structure, assignment,
         src: '/portfolio/loopio-case-study/project-list-view.png',
         alt: 'Loopio project list redesign',
         description: `
-## A prototype people wanted became a product teams could inherit
+# A prototype people wanted became a product teams could inherit
 
 The work earned real internal momentum. Sales had a more compelling story to show; customers could respond to the experience directly; product and engineering could evaluate it against the realities of a mature application.
 
@@ -217,7 +213,7 @@ The path into production required more than enthusiasm. We worked through test c
         src: '/portfolio/loopio-case-study/loopui-storybook.png',
         alt: 'Recovered LoopUI Storybook documenting the Anchor component',
         description: `
-## From Principal Designer to the engineer behind the system
+# From Principal Designer to the engineer behind the system
 
 After Thomas left in June 2020, I kept moving the foundation forward and formally became a Senior UX Engineer in January 2021. The job shifted from proving the direction to making it dependable for everyone else.
 
@@ -230,7 +226,7 @@ I built TypeScript React components, kept Figma and production aligned, document
         src: '/portfolio/loopio-case-study/loopui-selectable-table.png',
         alt: 'Recovered LoopUI Storybook documentation for a selectable table',
         description: `
-## The component was never just the component
+# The component was never just the component
 
 A sortable, selectable table sounds small until it has to support real product teams: stable layout, meaningful defaults, keyboard access, selection, sorting, loading states, and enough flexibility for unfamiliar data.
 
@@ -243,7 +239,7 @@ This kind of work became the practical bridge between design intent and implemen
         src: '/portfolio/loopio-case-study/current-proposal-summary.jpg',
         alt: 'A current Loopio proposal workspace with recognizable design-system lineage',
         description: `
-## The most useful outcome was leverage
+# The most useful outcome was leverage
 
 Loopio replaced the old frontend and product teams continued extending the system. The team observed stronger engagement with the redesigned experience, and Sales found it easier to communicate where the product was going.
 
@@ -258,11 +254,9 @@ I don't claim sole ownership of the product visible today. I do recognize the li
     title: 'FreshBooks',
     blurb:
       'A ground-up product redesign shaped around approachable workflows, shared patterns, and a safer path through change.',
-    headlineMarkdown:
-      'Making accounting approachable without pretending it was simple',
+    overviewMarkdown: FRESHBOOKS_OVERVIEW,
     rolesMarkdown: 'UX Designer',
     dates: '2012–2018',
-    descriptionMarkdown: FRESHBOOKS_DESCRIPTION,
     cover_image: {
       id: 'freshbooks-cover',
       slug: 'cover',
@@ -276,7 +270,7 @@ I don't claim sole ownership of the product visible today. I do recognize the li
         src: '/portfolio/freshbooks-case-study/early-client-overview.png',
         alt: 'An early FreshBooks redesign exploration organized around clients',
         description: `
-## Begin with the person doing the work
+# Begin with the person doing the work
 
 FreshBooks was already loved by small-business owners, but years of growth had left important workflows constrained by their original foundations. The redesign group had to rethink the product without discarding the approachability people depended on.
 
@@ -289,7 +283,7 @@ This early exploration reorganized the experience around clients and their activ
         src: '/portfolio/freshbooks-case-study/early-client-activity.png',
         alt: 'An early FreshBooks redesign exploration combining client activity',
         description: `
-## Redesign the product as one system
+# Redesign the product as one system
 
 Invoices, estimates, expenses, projects, and payments could not each become their own little redesign. We needed a coherent product language that made related objects feel related and repeated actions behave the same way.
 
@@ -302,7 +296,7 @@ I worked across interaction models and shared patterns, using concrete screens t
         src: '/portfolio/freshbooks-current/invoice-create-filled.png',
         alt: 'FreshBooks invoice editor with contextual settings in a right-side pane',
         description: `
-## Keep the document visible while its settings change
+# Keep the document visible while its settings change
 
 One of my signature contributions was the contextual metadata pane: secondary settings stayed close at hand without replacing the invoice, estimate, or client someone was working on.
 
@@ -315,7 +309,7 @@ The pattern reduced navigation and preserved context. It also created a scalable
         src: '/portfolio/freshbooks-case-study/classic-missing-feature.png',
         alt: 'FreshBooks switch-back flow asking which feature a customer needed',
         description: `
-## Make migration reversible—and informative
+# Make migration reversible—and informative
 
 A redesign this broad could not arrive as a trap door. Customers needed a safe way to try the new FreshBooks, return to Classic when their work demanded it, and tell us what had blocked them.
 
@@ -328,7 +322,7 @@ That reversibility reduced the cost of trying the new experience. The switch-bac
         src: '/portfolio/freshbooks-current/project-create-filled.png',
         alt: 'Current FreshBooks project creation flow using shared form and settings patterns',
         description: `
-## Build the shared system alongside the product
+# Build the shared system alongside the product
 
 The redesign was a platform effort, not a sequence of isolated mockups. Repeated controls, layouts, and behaviours had to become reliable building blocks so teams could create new workflows without re-inventing FreshBooks each time.
 
@@ -341,7 +335,7 @@ My role sat naturally between the product and that system: clarifying interactio
         src: '/portfolio/freshbooks-current/invoices-list-populated.png',
         alt: 'The current FreshBooks invoices list',
         description: `
-## Endurance is a better measure than novelty
+# Endurance is a better measure than novelty
 
 FreshBooks kept evolving after I left in 2018, as it should. The valuable signal is not whether every pixel survived. It is that recognizable structural ideas remain: approachable language, contextual settings, repeatable controls, and related workflows that feel like one product.
 
@@ -356,7 +350,7 @@ The project taught me to design change as carefully as the destination. A system
     title: 'About Me',
     blurb:
       'Twenty-five years across **product design** and **frontend development**, now focused on helping other people do excellent work.',
-    descriptionMarkdown: `
+    overviewMarkdown: `
 I’ve been building things for the web since the summer after seventh grade, when I found Microsoft FrontPage installed on our family computer and eventually figured out that it was not, in fact, just a stranger version of Word.
 
 The first time I clicked “Publish” and saw my ridiculous homepage appear on the actual internet—where, theoretically, anyone could see it—I was hooked. That feedback loop has never really stopped working on me: make something, put it in front of people, see what happens, then make it better.
@@ -378,7 +372,7 @@ I still like making things—and have a small stable of pet projects to prove it
     blurb:
       'One **Figma plugin** with built-in tools for cleaning, remixing, and organizing design work.',
     url: 'https://www.figma.com/community/plugin/1616614645120502242/aarons-toolbox',
-    descriptionMarkdown: `
+    overviewMarkdown: `
 I'm infatuated with Figma both as a user and as a developer building on their platform. I'm equally obsessed with the art and science of tool-building, so the match is cosmically perfect.
 
 **Aaron's Toolbox** is a collection of utilities I've built to solve problems I repeatedly encounter in my own design work. Some automate repetitive tasks, others simplify common workflows, and two are actually evolutions of plugins I'd already built and refined over years of use (both with [tens of thousands of users in the Figma Community](https://www.figma.com/@aaronmw)).
@@ -433,7 +427,7 @@ There are few things from which I derive more satisfaction than my Figma plugins
     title: 'Informal Systems',
     blurb:
       'A CMS-backed workflow that let content owners update the site without waiting on developers.',
-    descriptionMarkdown: `
+    overviewMarkdown: `
 Informal was a freelance customer of mine when their needs grew into a full-time role for me as their sole UX/UI developer. I got to wear the hats of researcher, designer, developer, internal tool builder, and more. One of my earliest contributions serves as a good example of what I brought:
 `,
     screenshots: [
@@ -443,7 +437,7 @@ Informal was a freelance customer of mine when their needs grew into a full-time
         src: '/portfolio/informal-systems/home-page.png',
         alt: '1 of 3: Homepage Overview',
         description: `
-## Content ownership without design drift
+# Content ownership without design drift
 
 The website I'd built was a simple Next.js app and lived as code on GitHub and as a hosted app on Netlify. Making a copy change was just another task for me, but a bit of a steep hill to climb for someone just looking to fix a typo on a blog post. Time to hire a CMS.
 
@@ -456,7 +450,7 @@ I chose Contentful for its headlessness and built a lightweight editing workflow
         src: '/portfolio/informal-systems/hover-to-edit.png',
         alt: '2 of 3: Hover-to-Edit',
         description: `
-## One content shape for every editable surface
+# One content shape for every editable surface
 
 The staging version of the site pulls its content from Contentful, but includes content marked as \`draft\` whereas production only shows \`published\` content. In Contentful, everything takes the shape of a single, consistent object that I dubbed \`spot_copy_entry\`:
 
@@ -472,7 +466,7 @@ The staging version of the site pulls its content from Contentful, but includes 
         src: '/portfolio/informal-systems/informal-staking.png',
         alt: '3 of 3: Informal Staking',
         description: `
-## Let writers own the content while design stays in code
+# Let writers own the content while design stays in code
 
 The websites that consume Contentful content make a single request, constructed at request time around the route's needs. It fetches the copy and image paths for the request and makes them available to the page through React Context.
 
@@ -487,7 +481,7 @@ I built a \`ContentfulSpotCopy\` component that accepts a \`path\` and a \`rende
     title: 'Next\u00adPhrase',
     blurb: 'My own version of my favourite party game.',
     url: 'https://nextphrase.app',
-    descriptionMarkdown: `
+    overviewMarkdown: `
 Some of you may recognize the concept (it's [Catch Phrase](https://en.wikipedia.org/wiki/Catch_Phrase_(game)) by Hasbro) but I've put my own twists on it, of course.
 
 My original motivation for making the game was two-fold: first, I kept finding myself at parties with friends wanting to play Catch Phrase, but nobody had it. If only I had it on my phone... Secondly, I wanted to try my hand at React Native.

@@ -1,4 +1,5 @@
 import type { PortfolioProject } from '@/lib/portfolio'
+import { parsePortfolioNarrative } from '../../../lib/portfolioNarrative'
 import type { ProjectSlide } from './slides'
 
 export type ResolvedProjectNarrative = {
@@ -7,25 +8,7 @@ export type ResolvedProjectNarrative = {
   bodyMarkdown: string
 }
 
-const MARKDOWN_HEADING_PATTERN = /^\s*#{1,6}\s+(.+?)\s*$/
-
-export function parseSlideNarrative(markdown: string) {
-  const lines = markdown.trim().split('\n')
-  const headingIndex = lines.findIndex(line =>
-    MARKDOWN_HEADING_PATTERN.test(line),
-  )
-  const headingMatch =
-    headingIndex >= 0 ? lines[headingIndex].match(MARKDOWN_HEADING_PATTERN) : null
-
-  return {
-    titleMarkdown: headingMatch?.[1],
-    bodyMarkdown: lines
-      .filter((_, index) => index !== headingIndex)
-      .join('\n')
-      .replace(/\n{3,}/g, '\n\n')
-      .trim(),
-  }
-}
+export const parseSlideNarrative = parsePortfolioNarrative
 
 export function getProjectNarratives(
   project: PortfolioProject,
@@ -33,8 +16,7 @@ export function getProjectNarratives(
 ): ResolvedProjectNarrative[] {
   let current: ResolvedProjectNarrative = {
     sourceId: `project:${project.id}`,
-    titleMarkdown: project.headlineMarkdown,
-    bodyMarkdown: project.descriptionMarkdown,
+    ...parsePortfolioNarrative(project.overviewMarkdown),
   }
 
   return slides.map(slide => {

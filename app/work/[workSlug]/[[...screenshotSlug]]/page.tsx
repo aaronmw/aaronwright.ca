@@ -9,6 +9,7 @@ import {
   getPortfolioScreenshot,
   portfolioSlides,
 } from '@/lib/portfolio'
+import { parsePortfolioNarrative } from '@/lib/portfolioNarrative'
 
 type SlidePageProps = {
   params: Promise<{
@@ -68,7 +69,9 @@ export async function generateMetadata({ params }: SlidePageProps) {
     title: screenshot
       ? `${project.title}: ${screenshot.slug} | Aaron M. Wright`
       : `${project.title} | Aaron M. Wright`,
-    description: plainTextFromMarkdown(project.descriptionMarkdown),
+    description: plainTextFromMarkdown(
+      parsePortfolioNarrative(project.overviewMarkdown).bodyMarkdown,
+    ),
     icons: {
       icon: faviconDataUrl(
         getProjectColorBySlug(project.slug) ?? TOP_SCREEN_COLOR,
@@ -103,7 +106,8 @@ export default async function SlidePage({
   }
 
   const viewerMedia =
-    screenshot ?? (screenshotSlug.length === 0 ? project.cover_image : undefined)
+    screenshot ??
+    (screenshotSlug.length === 0 ? project.cover_image : undefined)
 
   return (
     <Suspense>

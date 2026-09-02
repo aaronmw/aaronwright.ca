@@ -1,7 +1,11 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { copyEditorEntries, type CopyEditorEntry } from '@/lib/copyEditor'
+import {
+  copyEditorEntries,
+  migrateCopyEditorDraftValues,
+  type CopyEditorEntry,
+} from '@/lib/copyEditor'
 import {
   CopyEditorScrollRail,
   type CopyEditorSectionMarker,
@@ -164,7 +168,15 @@ export function CopyEditor() {
       if (stored) {
         const parsed = JSON.parse(stored) as unknown
         if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-          setValues(current => ({ ...current, ...(parsed as CopyValues) }))
+          const migrated = migrateCopyEditorDraftValues(parsed as CopyValues)
+          setValues(current =>
+            Object.fromEntries(
+              copyEditorEntries.map(entry => [
+                entry.id,
+                migrated[entry.id] ?? current[entry.id] ?? entry.value,
+              ]),
+            ),
+          )
           setStatus('Restored local draft')
         }
       }

@@ -60,7 +60,12 @@ function mediaHeading(block) {
 
 function fieldHeading(entry) {
   if (entry.id.endsWith('.alt')) return 'Image description'
-  if (entry.id.endsWith('.description')) return 'Narrative'
+  if (
+    entry.id.endsWith('.description') ||
+    entry.id.endsWith('.overviewMarkdown')
+  ) {
+    return 'Narrative'
+  }
   return entry.label
 }
 
@@ -75,8 +80,10 @@ function mediaMarkdown(media) {
 }
 
 const portfolio = loadTypeScriptModule('lib/portfolio.ts')
+const portfolioNarrative = loadTypeScriptModule('lib/portfolioNarrative.ts')
 const { copyEditorEntries } = loadTypeScriptModule('lib/copyEditor.ts', {
-  '@/lib/portfolio': portfolio,
+  './portfolio': portfolio,
+  './portfolioNarrative': portfolioNarrative,
 })
 
 const groups = new Map()

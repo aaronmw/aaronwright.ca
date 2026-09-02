@@ -54,7 +54,7 @@ About Me
 
 Twenty-five years across **product design** and **frontend development**, now focused on helping other people do excellent work.
 
-### Project introduction
+### Overview narrative
 
 I’ve been building things for the web since the summer after seventh grade, when I found Microsoft FrontPage installed on our family computer and eventually figured out that it was not, in fact, just a stranger version of Word.
 
@@ -78,10 +78,6 @@ Loopio
 
 A product redesign that became a working prototype, a new frontend, and a shared system for the teams building on it.
 
-### Project headline
-
-Proving a better Loopio—then making it buildable by everyone else
-
 ### Role
 
 Principal Designer → Sr. UX Engineer
@@ -90,10 +86,6 @@ Principal Designer → Sr. UX Engineer
 
 2018–2022
 
-### Project introduction
-
-Loopio's core RFP workflow had outgrown the frontend beneath it. I partnered with Thomas Cheng to turn a redesign proposal into a working product, then carried that momentum into a tested, documented React system other teams could safely extend.
-
 ### Cover image
 
 ![Loopio project workspace in the current product](https://aaronwright.ca/portfolio/loopio-case-study/cover-project-workspace.jpg)
@@ -101,6 +93,12 @@ Loopio's core RFP workflow had outgrown the frontend beneath it. I partnered wit
 #### Image description
 
 Loopio project workspace in the current product
+
+#### Narrative
+
+##### Proving a better Loopio—then making it buildable by everyone else
+
+Loopio's core RFP workflow had outgrown the frontend beneath it. I partnered with Thomas Cheng to turn a redesign proposal into a working product, then carried that momentum into a tested, documented React system other teams could safely extend.
 
 ### A mature product
 
@@ -224,10 +222,6 @@ FreshBooks
 
 A ground-up product redesign shaped around approachable workflows, shared patterns, and a safer path through change.
 
-### Project headline
-
-Making accounting approachable without pretending it was simple
-
 ### Role
 
 UX Designer
@@ -236,10 +230,6 @@ UX Designer
 
 2012–2018
 
-### Project introduction
-
-I joined the small group reimagining FreshBooks as a coherent platform: clearer workflows, reusable interaction patterns, and a reversible transition that let customers move forward without being trapped there.
-
 ### Cover image
 
 ![The current FreshBooks invoice editor](https://aaronwright.ca/portfolio/freshbooks-current/invoice-create.png)
@@ -247,6 +237,12 @@ I joined the small group reimagining FreshBooks as a coherent platform: clearer 
 #### Image description
 
 The current FreshBooks invoice editor
+
+#### Narrative
+
+##### Making accounting approachable without pretending it was simple
+
+I joined the small group reimagining FreshBooks as a coherent platform: clearer workflows, reusable interaction patterns, and a reversible transition that let customers move forward without being trapped there.
 
 ### Client first
 
@@ -354,7 +350,7 @@ Informal Systems
 
 A CMS-backed workflow that let content owners update the site without waiting on developers.
 
-### Project introduction
+### Overview narrative
 
 Informal was a freelance customer of mine when their needs grew into a full-time role for me as their sole UX/UI developer. I got to wear the hats of researcher, designer, developer, internal tool builder, and more. One of my earliest contributions serves as a good example of what I brought:
 
@@ -419,7 +415,15 @@ Aaron's Toolbox
 
 One **Figma plugin** with built-in tools for cleaning, remixing, and organizing design work.
 
-### Project introduction
+### Overview
+
+[Video: 1 of 6: Aaron's Toolbox overview](https://aaronwright.ca/portfolio/aarons-toolbox/aarons-toolbox-community-preview.mp4)
+
+#### Image description
+
+1 of 6: Aaron's Toolbox overview
+
+#### Narrative
 
 I'm infatuated with Figma both as a user and as a developer building on their platform. I'm equally obsessed with the art and science of tool-building, so the match is cosmically perfect.
 
@@ -428,14 +432,6 @@ I'm infatuated with Figma both as a user and as a developer building on their pl
 My first Figma plugins were simple replacements for features I'd missed from other apps: **Selection Saver** revived a feature I'd long missed from Adobe Illustrator. **Property Randomizer** exists because I was assigned a dashboard project and wanted my charts and data to look real enough that they wouldn't be distracting. I once needed to do a fancy regular expression replace operation in a giant Figma file but it wasn't supported at the time, so I built **Find and Replace** and it's still among my most popular plugins.
 
 There are few things from which I derive more satisfaction than my Figma plugins. They were useful to me, sure, but knowing that so many others have been spared the same tedium I'd faced myself is just 👩‍🍳🤌 I think they're the best expression of what I'm all about.
-
-### Overview
-
-[Video: 1 of 6: Aaron's Toolbox overview](https://aaronwright.ca/portfolio/aarons-toolbox/aarons-toolbox-community-preview.mp4)
-
-#### Image description
-
-1 of 6: Aaron's Toolbox overview
 
 ### Normalizer
 
@@ -487,7 +483,15 @@ Next­Phrase
 
 My own version of my favourite party game.
 
-### Project introduction
+### Intro
+
+[Video: 1 of 10: NextPhrase app walkthrough](https://aaronwright.ca/portfolio/nextphrase/intro-video.webm)
+
+#### Image description
+
+1 of 10: NextPhrase app walkthrough
+
+#### Narrative
 
 Some of you may recognize the concept (it's [Catch Phrase](https://en.wikipedia.org/wiki/Catch_Phrase_(game)) by Hasbro) but I've put my own twists on it, of course.
 
@@ -496,14 +500,6 @@ My original motivation for making the game was two-fold: first, I kept finding m
 I've built this game at least five times now. I've built it with different themes, different mechanics, and on different technologies. Now it's just a simple PWA because it's the most accessible: just visit [NextPhrase.app](https://nextphrase.app) and add it to your home screen for the best experience.
 
 I've learned a LOT building this game over and over, including the architectural challenges of building a game where pretty much everything is animated, despite running on a wee computer without 16GB of memory to lean on. Give it a shot at your next party!
-
-### Intro
-
-[Video: 1 of 10: NextPhrase app walkthrough](https://aaronwright.ca/portfolio/nextphrase/intro-video.webm)
-
-#### Image description
-
-1 of 10: NextPhrase app walkthrough
 
 ### Home
 
