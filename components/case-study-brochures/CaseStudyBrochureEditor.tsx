@@ -142,9 +142,8 @@ export function CaseStudyBrochureEditor() {
       setStatus('Saved locally')
     } catch {
       setStatus('Local save unavailable')
-    } finally {
-      setReady(true)
     }
+    setReady(true)
   }, [])
 
   useEffect(() => {
@@ -225,9 +224,8 @@ export function CaseStudyBrochureEditor() {
       setStatus('Copied JSON for Codex')
     } catch {
       setStatus('Clipboard access unavailable · use Download JSON')
-    } finally {
-      setCopying(false)
     }
+    setCopying(false)
   }
 
   function downloadJson() {
@@ -251,7 +249,10 @@ export function CaseStudyBrochureEditor() {
     reader.onload = () => {
       try {
         const parsed: unknown = JSON.parse(String(reader.result))
-        if (!isBrochureDocument(parsed)) throw new Error('Unsupported schema')
+        if (!isBrochureDocument(parsed)) {
+          setStatus('That file is not a valid brochure export')
+          return
+        }
         setDocument(parsed)
         setStatus('Imported brochure draft')
       } catch {

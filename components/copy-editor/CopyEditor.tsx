@@ -185,9 +185,8 @@ export function CopyEditor() {
       }
     } catch {
       setStatus('Local draft storage is unavailable')
-    } finally {
-      setHydrated(true)
     }
+    setHydrated(true)
   }, [])
 
   useEffect(() => {
@@ -264,7 +263,7 @@ export function CopyEditor() {
 
       if (existingBlock) {
         existingBlock.entries.push(entry)
-        existingBlock.media ??= entry.media
+        existingBlock.media = existingBlock.media ?? entry.media
       } else {
         blocks.push({ id: blockId, entries: [entry], media: entry.media })
       }
@@ -360,9 +359,8 @@ export function CopyEditor() {
       )
     } catch {
       setStatus('Clipboard access is unavailable')
-    } finally {
-      setCopying(false)
     }
+    setCopying(false)
   }
 
   function resetChanges() {

@@ -627,9 +627,8 @@ export function CaseStudyIntake() {
       if (saved) setAnswers(JSON.parse(saved));
     } catch {
       setStatus('Local save unavailable');
-    } finally {
-      setReady(true);
     }
+    setReady(true);
   }, []);
 
   useEffect(() => {

@@ -106,7 +106,7 @@ export function ProjectInformation({
 export function ProjectMetadata({
   project,
   projectNumber,
-  hasMultipleRoles = project.rolesMarkdown?.includes('→') ?? false,
+  hasMultipleRoles: hasMultipleRolesOverride,
   alignWithLogo = true,
 }: {
   project: PortfolioProject
@@ -114,6 +114,9 @@ export function ProjectMetadata({
   hasMultipleRoles?: boolean
   alignWithLogo?: boolean
 }) {
+  const hasMultipleRoles =
+    hasMultipleRolesOverride ?? project.rolesMarkdown?.includes('→') ?? false
+
   return (
     <header
       data-portfolio-project-metadata

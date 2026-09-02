@@ -169,7 +169,6 @@ export function NavigationActiveRing({
   style,
   dataAttributes,
   previewDataAttributes,
-  tooltip,
 }: {
   color: string
   visualScale?: number
@@ -179,12 +178,6 @@ export function NavigationActiveRing({
   style?: CSSProperties
   dataAttributes?: Record<`data-${string}`, string>
   previewDataAttributes?: Record<`data-${string}`, string>
-  tooltip?: {
-    id: string
-    side: 'left' | 'right'
-    elementRef: (node: HTMLDivElement | null) => void
-    textElementRef: (node: HTMLSpanElement | null) => void
-  }
 }) {
   return (
     <div
@@ -192,7 +185,7 @@ export function NavigationActiveRing({
       {...dataAttributes}
       className={`pointer-events-none size-11 overflow-visible ${className}`}
       style={{ color, ...style }}
-      aria-hidden={tooltip ? undefined : true}
+      aria-hidden="true"
     >
       <div
         ref={previewElementRef}
@@ -222,24 +215,6 @@ export function NavigationActiveRing({
             }}
           />
         </span>
-        {tooltip ? (
-          <div
-            ref={tooltip.elementRef}
-            id={tooltip.id}
-            role="tooltip"
-            className={`invisible absolute top-1/2 z-30 -translate-y-1/2 whitespace-nowrap px-3 py-2 text-[0.6875rem] font-black uppercase leading-none tracking-[0.24em] opacity-0 ${
-              tooltip.side === 'left'
-                ? 'left-full ml-3 -translate-x-1'
-                : 'right-full mr-3 translate-x-1'
-            }`}
-            style={{ backgroundColor: 'currentColor' }}
-          >
-            <span
-              ref={tooltip.textElementRef}
-              className="text-[var(--portfolio-inverse-ink)]"
-            />
-          </div>
-        ) : null}
       </div>
     </div>
   )

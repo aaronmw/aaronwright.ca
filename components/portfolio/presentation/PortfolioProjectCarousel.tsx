@@ -2,8 +2,8 @@
 
 import {
   useEffect,
+  useEffectEvent,
   useLayoutEffect,
-  useMemo,
   useRef,
   useState,
   type CSSProperties,
@@ -89,15 +89,12 @@ export function PortfolioProjectCarousel({
   onOpenViewer: (intent: ViewerOpenIntent) => void
   onBackdropVisibilityChange: (visible: boolean) => void
 }) {
-  const initialSlideIndexRef = useRef(activeSlideIndex)
+  const [initialSlideIndex] = useState(activeSlideIndex)
   const mediaSlides = slides.filter(
     (slide): slide is Extract<ProjectSlide, { kind: 'screenshot' }> =>
       slide.kind === 'screenshot',
   )
-  const narratives = useMemo(
-    () => getProjectNarratives(project, slides),
-    [project, slides],
-  )
+  const narratives = getProjectNarratives(project, slides)
   const narrative = narratives[activeSlideIndex] ?? narratives[0]
   const sideBySide = isWideLayout && !isTouchInput
   const hasMedia = mediaSlides.length > 0
@@ -115,7 +112,7 @@ export function PortfolioProjectCarousel({
       align: 'start',
       loop: false,
       skipSnaps: false,
-      startIndex: initialSlideIndexRef.current,
+      startIndex: initialSlideIndex,
       active: hasMedia,
       watchDrag: (_api, event) => {
         if (event.type !== 'mousedown') return true
@@ -125,6 +122,7 @@ export function PortfolioProjectCarousel({
     },
     plugins,
   )
+  const notifyBackdropVisibility = useEffectEvent(onBackdropVisibilityChange)
 
   useEffect(() => {
     onApi(projectIndex, emblaApi ?? null)
@@ -145,7 +143,7 @@ export function PortfolioProjectCarousel({
         carouselMovingRef.current = true
         destinationSelectedRef.current =
           selectedIndex !== settledSlideIndexRef.current
-        if (active) onBackdropVisibilityChange(false)
+        if (active) notifyBackdropVisibility(false)
       }
       if (selectedIndex !== settledSlideIndexRef.current) {
         destinationSelectedRef.current = true
@@ -163,13 +161,13 @@ export function PortfolioProjectCarousel({
       const snapDistance = Math.min(...neighboringDistances)
       const closeToDestination =
         Math.abs(emblaApi.scrollProgress() - target) <= snapDistance * 0.2
-      if (active) onBackdropVisibilityChange(closeToDestination)
+      if (active) notifyBackdropVisibility(closeToDestination)
     }
     const handleSettle = () => {
       carouselMovingRef.current = false
       destinationSelectedRef.current = false
       settledSlideIndexRef.current = emblaApi.selectedScrollSnap()
-      if (active) onBackdropVisibilityChange(true)
+      if (active) notifyBackdropVisibility(true)
     }
     emblaApi.on('select', handleSelect)
     emblaApi.on('scroll', handleScroll)
@@ -181,18 +179,11 @@ export function PortfolioProjectCarousel({
       emblaApi.off('settle', handleSettle)
       onApi(projectIndex, null)
     }
-  }, [
-    active,
-    emblaApi,
-    onApi,
-    onBackdropVisibilityChange,
-    onSelect,
-    projectIndex,
-  ])
+  }, [active, emblaApi, onApi, onSelect, projectIndex])
 
   useEffect(() => {
-    if (active) onBackdropVisibilityChange(true)
-  }, [active, onBackdropVisibilityChange])
+    if (active) notifyBackdropVisibility(true)
+  }, [active])
 
   useLayoutEffect(() => {
     const root = alignmentRootRef.current

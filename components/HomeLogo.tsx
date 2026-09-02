@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useLayoutEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useReducer, useState } from 'react';
 import { invalidate } from '@react-three/fiber';
 import { Logo3D } from '@/components/Logo3D';
 import { colorStore } from '@/stores/colorStore';
@@ -15,27 +15,28 @@ const COLORS = [
 ];
 
 export function HomeLogo() {
-  const indexRef = useRef(Math.floor(Math.random() * COLORS.length));
-  const colorRef = useRef(COLORS[indexRef.current]);
+  const [colorIndex, advanceColor] = useReducer(
+    (index: number) => (index + 1) % COLORS.length,
+    0,
+    () => Math.floor(Math.random() * COLORS.length)
+  );
   const [canvasKey, setCanvasKey] = useState(0);
   const [rotationTrigger, setRotationTrigger] = useState(0);
+  const color = COLORS[colorIndex];
 
   useLayoutEffect(() => {
-    colorStore.setColor(colorRef.current);
+    colorStore.setColor(color);
     invalidate();
-  }, []);
+  }, [color]);
 
-  const handleColorChange = useCallback(() => {
-    indexRef.current = (indexRef.current + 1) % COLORS.length;
-    colorRef.current = COLORS[indexRef.current];
-    colorStore.setColor(colorRef.current);
-    invalidate();
+  function handleColorChange() {
+    advanceColor();
     setRotationTrigger((trigger) => trigger + 1);
-  }, []);
+  }
 
-  const handleContextLost = useCallback(() => {
+  function handleContextLost() {
     setCanvasKey((key) => key + 1);
-  }, []);
+  }
 
   return (
     <div className="absolute inset-0 cursor-pointer bg-black">

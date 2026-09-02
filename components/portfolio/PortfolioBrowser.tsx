@@ -671,16 +671,12 @@ export function PortfolioBrowser({
     void revealPortfolio()
   }, [verticalApi])
 
-  useEffect(() => {
-    if (mediaFailure) setIntroPhase('error')
-  }, [mediaFailure])
-
   return (
     <PortfolioBrowserView
       model={{
         activeProjectIndex: selection.projectIndex,
         activeSlideIndexes: selection.slideIndexes,
-        introPhase,
+        introPhase: mediaFailure ? 'error' : introPhase,
         isTouchInput,
         isTouchLandscapeLayout,
         isWideLayout,

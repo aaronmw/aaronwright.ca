@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useMemo } from 'react';
+import { useRef, useState } from 'react';
 import {
   Center,
   MeshTransmissionMaterial,
@@ -49,33 +49,36 @@ function getCubeRotationSnapshot(group: THREE.Group): CubeRotation {
 }
 
 function SceneTint() {
+  'use no memo';
+
   const { scene } = useThree();
   const lightRef = useRef<THREE.AmbientLight>(null);
-  const currentColor = useRef(new THREE.Color(colorStore.getColor()));
-  const targetColor = useRef(new THREE.Color(colorStore.getColor()));
-  const backgroundColor = useRef(new THREE.Color('black'));
+  const [currentColor] = useState(() => new THREE.Color(colorStore.getColor()));
+  const [targetColor] = useState(() => new THREE.Color(colorStore.getColor()));
+  const [backgroundColor] = useState(() => new THREE.Color('black'));
 
+  // React Three Fiber owns this imperative frame callback; mutations stay
+  // outside React's render lifecycle and are cleaned up with the canvas.
+  // react-doctor-disable-next-line react-hooks-js/immutability
   useFrame((_, delta) => {
-    targetColor.current.set(colorStore.getColor());
-    currentColor.current.lerp(
-      targetColor.current,
-      Math.min(1, delta * COLOR_LERP_SPEED)
-    );
+    targetColor.set(colorStore.getColor());
+    currentColor.lerp(targetColor, Math.min(1, delta * COLOR_LERP_SPEED));
 
     if (lightRef.current) {
-      lightRef.current.color.copy(currentColor.current);
+      lightRef.current.color.copy(currentColor);
     }
 
-    backgroundColor.current
-      .copy(currentColor.current)
+    backgroundColor
+      .copy(currentColor)
       .multiplyScalar(BACKGROUND_TINT_INTENSITY);
-    scene.background = backgroundColor.current;
+    // react-doctor-disable-next-line react-hooks-js/immutability
+    scene.background = backgroundColor;
   });
 
   return (
     <ambientLight
       ref={lightRef}
-      color={currentColor.current}
+      color={currentColor}
       intensity={AMBIENT_TINT_INTENSITY}
     />
   );
@@ -96,11 +99,13 @@ function Cube({
   rotationTrigger: number;
   rotationDuration: number;
 }) {
+  'use no memo';
+
   const groupRef = useRef<THREE.Group>(null);
   const lightRef = useRef<THREE.PointLight>(null);
   const materialRef = useRef<THREE.MeshStandardMaterial>(null);
-  const currentColor = useRef(new THREE.Color(colorStore.getColor()));
-  const targetColorRef = useRef(new THREE.Color(colorStore.getColor()));
+  const [currentColor] = useState(() => new THREE.Color(colorStore.getColor()));
+  const [targetColor] = useState(() => new THREE.Color(colorStore.getColor()));
   const animRef = useRef({
     lastTrigger: 0,
     startTime: 0,
@@ -147,18 +152,15 @@ function Cube({
     }
 
     if (rotationProgress >= 0.5) {
-      targetColorRef.current.set(colorStore.getColor());
-      currentColor.current.lerp(
-        targetColorRef.current,
-        Math.min(1, delta * COLOR_LERP_SPEED)
-      );
+      targetColor.set(colorStore.getColor());
+      currentColor.lerp(targetColor, Math.min(1, delta * COLOR_LERP_SPEED));
     }
     const flicker = Math.sin(t * speed + phase);
     const emissiveScale = 0.5 + flicker * 0.3;
-    if (lightRef.current) lightRef.current.color.copy(currentColor.current);
+    if (lightRef.current) lightRef.current.color.copy(currentColor);
     if (materialRef.current) {
-      materialRef.current.color.copy(currentColor.current);
-      materialRef.current.emissive.copy(currentColor.current);
+      materialRef.current.color.copy(currentColor);
+      materialRef.current.emissive.copy(currentColor);
       materialRef.current.emissiveIntensity = emissiveScale;
     }
   });
@@ -167,7 +169,7 @@ function Cube({
     <group ref={groupRef} position={position}>
       <pointLight
         ref={lightRef}
-        color={currentColor.current}
+        color={currentColor}
         intensity={BASE_INTENSITY}
         distance={100}
         decay={1.1}
@@ -175,8 +177,8 @@ function Cube({
       <RoundedBox args={[CUBE_SIZE, CUBE_SIZE, CUBE_SIZE]} radius={0.1} smoothness={4}>
         <meshStandardMaterial
           ref={materialRef}
-          color={currentColor.current}
-          emissive={currentColor.current}
+          color={currentColor}
+          emissive={currentColor}
           emissiveIntensity={0.5}
           transparent
           opacity={0.7}
@@ -194,8 +196,7 @@ function Logo({
   onColorChange: () => void;
   rotationTrigger: number;
 }) {
-  const cells = useMemo(
-    () =>
+  const [cells] = useState(() =>
       GRID.flatMap((cols, row) =>
         cols.map((col) => ({
           position: [col - 2, 2 - row, 0] as [number, number, number],
@@ -204,8 +205,7 @@ function Logo({
           rotationDuration: 0.4 + Math.random() * 0.2,
           key: `${row}-${col}`,
         }))
-      ),
-    []
+      )
   );
   return (
     <group
