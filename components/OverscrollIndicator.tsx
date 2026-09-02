@@ -55,18 +55,15 @@ export const OverscrollIndicator = forwardRef<
   });
   const [visibility, setVisibility] = useState(visibilityRef.current);
 
-  const setViewportRef = useCallback(
-    (node: HTMLDivElement | null) => {
-      viewportRef.current = node;
+  function setViewportRef(node: HTMLDivElement | null) {
+    viewportRef.current = node;
 
-      if (typeof forwardedRef === 'function') {
-        forwardedRef(node);
-      } else if (forwardedRef) {
-        forwardedRef.current = node;
-      }
-    },
-    [forwardedRef]
-  );
+    if (typeof forwardedRef === 'function') {
+      forwardedRef(node);
+    } else if (forwardedRef) {
+      forwardedRef.current = node;
+    }
+  }
 
   const updateIndicators = useCallback(() => {
     const viewport = viewportRef.current;
@@ -99,13 +96,10 @@ export const OverscrollIndicator = forwardRef<
     setVisibility(nextVisibility);
   }, []);
 
-  const handleScroll = useCallback<UIEventHandler<HTMLDivElement>>(
-    (event) => {
-      updateIndicators();
-      onScroll?.(event);
-    },
-    [onScroll, updateIndicators]
-  );
+  const handleScroll: UIEventHandler<HTMLDivElement> = (event) => {
+    updateIndicators();
+    onScroll?.(event);
+  };
 
   useLayoutEffect(() => {
     const viewport = viewportRef.current;

@@ -26,7 +26,7 @@ type MediaFrameStyle = CSSProperties & {
   '--portfolio-media-aspect-ratio'?: number
 }
 
-export function getCarouselMediaClass(shouldBlur: boolean) {
+function getCarouselMediaClass(shouldBlur: boolean) {
   return `${CAROUSEL_MEDIA_CLASS} ${shouldBlur ? 'blur-[20px]' : 'blur-0'}`
 }
 

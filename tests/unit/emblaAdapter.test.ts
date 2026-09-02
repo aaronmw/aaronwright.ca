@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { EmblaCarouselType } from 'embla-carousel'
 import { createEmblaAdapter } from '../../components/portfolio/runtime/emblaAdapter'
-import { getNavigationMarkerOffset } from '../../components/portfolio/navigation/PortfolioNavigationRail'
+import { getNavigationMarkerOffset } from '../../components/portfolio/navigation/navigationTokens'
 
 function createFakeEmbla() {
   let selected = 0

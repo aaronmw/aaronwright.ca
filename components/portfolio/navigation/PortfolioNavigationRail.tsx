@@ -1,5 +1,8 @@
 import type { CSSProperties } from 'react'
-import { NAVIGATION_SVG_SIZE } from './navigationTokens'
+import {
+  getNavigationMarkerOffset,
+  NAVIGATION_SVG_SIZE,
+} from './navigationTokens'
 
 export type PortfolioNavigationItem = {
   id: string
@@ -10,10 +13,6 @@ export type PortfolioNavigationItem = {
 const DOT_SIZE = 'var(--logo-stroke-width)'
 const ACTIVE_COLOR = 'var(--color-resume-signal)'
 const RESTING_COLOR = 'var(--portfolio-ink)'
-
-export function getNavigationMarkerOffset(index: number) {
-  return index * NAVIGATION_SVG_SIZE
-}
 
 function RailMarker() {
   return (

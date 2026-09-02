@@ -1,4 +1,3 @@
-import { useMemo } from 'react'
 import type { PortfolioProject, PortfolioScreenshot } from '@/lib/portfolio'
 import {
   carouselMediaKey,
@@ -18,36 +17,24 @@ export function usePortfolioModel({
   initialScreenshotSlug?: string
   isMediaReady: (key: string) => boolean
 }) {
-  const projectSlides = useMemo(
-    () => getProjectSlidesBySlug(projects),
-    [projects],
-  )
+  const projectSlides = getProjectSlidesBySlug(projects)
   const initialProjectIndex = initialProjectSlug
     ? projects.findIndex(project => project.slug === initialProjectSlug)
     : -1
   const normalizedInitialProjectIndex =
     initialProjectIndex >= 0 ? initialProjectIndex : -1
-  const initialSlideIndexes = useMemo(
-    () =>
-      getInitialSlideIndexes(
-        projects,
-        initialProjectSlug,
-        initialScreenshotSlug,
-      ),
-    [initialProjectSlug, initialScreenshotSlug, projects],
+  const initialSlideIndexes = getInitialSlideIndexes(
+    projects,
+    initialProjectSlug,
+    initialScreenshotSlug,
   )
-  const projectMediaKeys = useMemo(
-    () =>
-      projects.map(project =>
-        getProjectMediaScreenshots(project).map(carouselMediaKey),
-      ),
-    [projects],
+  const projectMediaKeys = projects.map(project =>
+    getProjectMediaScreenshots(project).map(carouselMediaKey),
   )
-  const sectionEntryMediaKeys = useMemo(
-    () => projectMediaKeys.flatMap(keys => (keys[0] ? [keys[0]] : [])),
-    [projectMediaKeys],
+  const sectionEntryMediaKeys = projectMediaKeys.flatMap(keys =>
+    keys[0] ? [keys[0]] : [],
   )
-  const initialTargetScreenshot = useMemo(() => {
+  const initialTargetScreenshot = (() => {
     if (normalizedInitialProjectIndex < 0) {
       return undefined
     }
@@ -61,13 +48,8 @@ export function usePortfolioModel({
     return initialSlide?.kind === 'screenshot'
       ? initialSlide.screenshot
       : undefined
-  }, [
-    initialSlideIndexes,
-    normalizedInitialProjectIndex,
-    projectSlides,
-    projects,
-  ])
-  const openingMediaKeys = useMemo(() => {
+  })()
+  const openingMediaKeys = (() => {
     const journeyKeys = projectMediaKeys
       .slice(0, normalizedInitialProjectIndex + 1)
       .map(keys => keys[0])
@@ -78,8 +60,8 @@ export function usePortfolioModel({
     }
 
     return Array.from(new Set(journeyKeys))
-  }, [initialTargetScreenshot, normalizedInitialProjectIndex, projectMediaKeys])
-  const backgroundMediaQueue = useMemo(() => {
+  })()
+  const backgroundMediaQueue = (() => {
     const activeProjectMedia =
       normalizedInitialProjectIndex >= 0
         ? getProjectMediaScreenshots(projects[normalizedInitialProjectIndex])
@@ -103,13 +85,7 @@ export function usePortfolioModel({
         ...projectMediaKeys.flat(),
       ]),
     )
-  }, [
-    initialTargetScreenshot,
-    normalizedInitialProjectIndex,
-    projectMediaKeys,
-    projects,
-    sectionEntryMediaKeys,
-  ])
+  })()
 
   return {
     backgroundMediaQueue,

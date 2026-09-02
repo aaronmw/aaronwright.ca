@@ -243,15 +243,17 @@ export function CopyEditor() {
     return () => window.removeEventListener('keydown', handleKeyDown, true)
   }, [])
 
-  const changes = useMemo(
-    () =>
-      Object.fromEntries(
-        copyEditorEntries
-          .filter(entry => values[entry.id] !== entry.value)
-          .map(entry => [entry.id, values[entry.id] ?? '']),
-      ),
-    [values],
-  )
+  const changes = useMemo(() => {
+    const changedEntries: Array<[string, string]> = []
+
+    copyEditorEntries.forEach(entry => {
+      if (values[entry.id] !== entry.value) {
+        changedEntries.push([entry.id, values[entry.id] ?? ''])
+      }
+    })
+
+    return Object.fromEntries(changedEntries)
+  }, [values])
   const changeCount = Object.keys(changes).length
 
   const groups = useMemo(() => {

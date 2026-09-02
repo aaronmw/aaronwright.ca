@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   isBrowserPageActive,
   waitForPageActivity,
@@ -120,32 +120,32 @@ export function usePortfolioMediaReadiness() {
     []
   );
 
-  const registerMediaElement = useCallback(
-    (key: string, element: PortfolioMediaElement | null) => {
-      const elements = elementsRef.current.get(key) ?? new Set();
+  function registerMediaElement(
+    key: string,
+    element: PortfolioMediaElement | null
+  ) {
+    const elements = elementsRef.current.get(key) ?? new Set();
 
-      Array.from(elements).forEach((registeredElement) => {
-        if (!registeredElement.isConnected) {
-          elements.delete(registeredElement);
-        }
-      });
-
-      if (!element) {
-        if (elements.size === 0) {
-          elementsRef.current.delete(key);
-        }
-        return;
+    Array.from(elements).forEach((registeredElement) => {
+      if (!registeredElement.isConnected) {
+        elements.delete(registeredElement);
       }
+    });
 
-      elements.add(element);
-      elementsRef.current.set(key, elements);
-      elementWaitersRef.current.get(key)?.forEach((resolve) => resolve(element));
-      elementWaitersRef.current.delete(key);
-    },
-    []
-  );
+    if (!element) {
+      if (elements.size === 0) {
+        elementsRef.current.delete(key);
+      }
+      return;
+    }
 
-  const waitForRegisteredElement = useCallback((key: string) => {
+    elements.add(element);
+    elementsRef.current.set(key, elements);
+    elementWaitersRef.current.get(key)?.forEach((resolve) => resolve(element));
+    elementWaitersRef.current.delete(key);
+  }
+
+  function waitForRegisteredElement(key: string) {
     const registeredElements = elementsRef.current.get(key);
     const existingElement = registeredElements
       ? Array.from(registeredElements).find((element) => element.isConnected)
@@ -160,139 +160,130 @@ export function usePortfolioMediaReadiness() {
       waiters.add(resolve);
       elementWaitersRef.current.set(key, waiters);
     });
-  }, []);
+  }
 
-  const loadMediaKey = useCallback(
-    async (key: string) => {
-      let lastError = new Error(`Portfolio media did not load: ${key}`);
+  async function loadMediaKey(key: string) {
+    let lastError = new Error(`Portfolio media did not load: ${key}`);
 
-      for (let attempt = 0; attempt < MEDIA_ATTEMPT_COUNT; attempt += 1) {
+    for (let attempt = 0; attempt < MEDIA_ATTEMPT_COUNT; attempt += 1) {
+      await waitForPageActivity();
+
+      if (attempt > 0) {
+        await delay(MEDIA_RETRY_DELAYS_MS[attempt - 1]);
         await waitForPageActivity();
-
-        if (attempt > 0) {
-          await delay(MEDIA_RETRY_DELAYS_MS[attempt - 1]);
-          await waitForPageActivity();
-        }
-
-        try {
-          const registeredElement = await withPageActivityTimeout(
-            waitForRegisteredElement(key),
-            MEDIA_ATTEMPT_TIMEOUT_MS,
-            () => new Error(`Timed out loading portfolio media: ${key}`)
-          );
-          const loadingElement =
-            attempt === 0 && !key.startsWith('modal:')
-              ? registeredElement
-              : cloneMediaElement(
-                  registeredElement,
-                  key.startsWith('modal:') ? '92vw' : undefined
-                );
-          const loadPromise =
-            loadingElement instanceof HTMLImageElement
-              ? waitForImage(loadingElement)
-              : waitForVideo(loadingElement);
-
-          await withPageActivityTimeout(
-            loadPromise,
-            MEDIA_ATTEMPT_TIMEOUT_MS,
-            () => new Error(`Timed out loading portfolio media: ${key}`)
-          );
-          return;
-        } catch (error) {
-          if (!isBrowserPageActive()) {
-            await waitForPageActivity();
-            attempt -= 1;
-            continue;
-          }
-
-          lastError =
-            error instanceof Error ? error : new Error(`Portfolio media failed: ${key}`);
-        }
       }
 
-      throw lastError;
-    },
-    [waitForRegisteredElement]
-  );
+      try {
+        const registeredElement = await withPageActivityTimeout(
+          waitForRegisteredElement(key),
+          MEDIA_ATTEMPT_TIMEOUT_MS,
+          () => new Error(`Timed out loading portfolio media: ${key}`)
+        );
+        const loadingElement =
+          attempt === 0 && !key.startsWith('modal:')
+            ? registeredElement
+            : cloneMediaElement(
+                registeredElement,
+                key.startsWith('modal:') ? '92vw' : undefined
+              );
+        const loadPromise =
+          loadingElement instanceof HTMLImageElement
+            ? waitForImage(loadingElement)
+            : waitForVideo(loadingElement);
 
-  const ensureMediaReady = useCallback(
-    (keys: string | string[]) => {
-      const requestedKeys = Array.from(
-        new Set(Array.isArray(keys) ? keys : [keys])
-      ).filter(Boolean);
-
-      return Promise.all(
-        requestedKeys.map((key) => {
-          if (readyKeysRef.current.has(key)) {
-            return Promise.resolve();
-          }
-
-          const existingPromise = inFlightRef.current.get(key);
-
-          if (existingPromise) {
-            return existingPromise;
-          }
-
-          const promise = loadMediaKey(key)
-            .then(() => {
-              readyKeysRef.current.add(key);
-
-              if (mountedRef.current) {
-                setReadyVersion((version) => version + 1);
-              }
-            })
-            .catch((error) => {
-              const normalizedError =
-                error instanceof Error
-                  ? error
-                  : new Error(`Portfolio media failed: ${key}`);
-
-              if (mountedRef.current) {
-                setFailure({ key, error: normalizedError });
-              }
-
-              throw normalizedError;
-            })
-            .finally(() => {
-              inFlightRef.current.delete(key);
-            });
-
-          inFlightRef.current.set(key, promise);
-          return promise;
-        })
-      ).then(() => undefined);
-    },
-    [loadMediaKey]
-  );
-
-  const preloadQueue = useCallback(
-    async (keys: string[], concurrency = 2) => {
-      const queue = Array.from(new Set(keys)).filter(
-        (key) => key && !readyKeysRef.current.has(key)
-      );
-      let cursor = 0;
-
-      const worker = async () => {
-        while (cursor < queue.length) {
-          const key = queue[cursor];
-          cursor += 1;
-          await ensureMediaReady(key);
+        await withPageActivityTimeout(
+          loadPromise,
+          MEDIA_ATTEMPT_TIMEOUT_MS,
+          () => new Error(`Timed out loading portfolio media: ${key}`)
+        );
+        return;
+      } catch (error) {
+        if (!isBrowserPageActive()) {
+          await waitForPageActivity();
+          attempt -= 1;
+          continue;
         }
-      };
 
-      await Promise.all(
-        Array.from({ length: Math.min(concurrency, queue.length) }, worker)
-      );
-    },
-    [ensureMediaReady]
-  );
+        lastError =
+          error instanceof Error
+            ? error
+            : new Error(`Portfolio media failed: ${key}`);
+      }
+    }
 
-  const isMediaReady = useCallback(
-    (key: string) => readyKeysRef.current.has(key),
-    // The version intentionally refreshes consumers of this stable ref-backed query.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [readyVersion]
-  );
+    throw lastError;
+  }
+
+  function ensureMediaReady(keys: string | string[]) {
+    const requestedKeys = Array.from(
+      new Set(Array.isArray(keys) ? keys : [keys])
+    ).filter(Boolean);
+
+    return Promise.all(
+      requestedKeys.map((key) => {
+        if (readyKeysRef.current.has(key)) {
+          return Promise.resolve();
+        }
+
+        const existingPromise = inFlightRef.current.get(key);
+
+        if (existingPromise) {
+          return existingPromise;
+        }
+
+        const promise = loadMediaKey(key)
+          .then(() => {
+            readyKeysRef.current.add(key);
+
+            if (mountedRef.current) {
+              setReadyVersion((version) => version + 1);
+            }
+          })
+          .catch((error) => {
+            const normalizedError =
+              error instanceof Error
+                ? error
+                : new Error(`Portfolio media failed: ${key}`);
+
+            if (mountedRef.current) {
+              setFailure({ key, error: normalizedError });
+            }
+
+            throw normalizedError;
+          })
+          .finally(() => {
+            inFlightRef.current.delete(key);
+          });
+
+        inFlightRef.current.set(key, promise);
+        return promise;
+      })
+    ).then(() => undefined);
+  }
+
+  async function preloadQueue(keys: string[], concurrency = 2) {
+    const queue = Array.from(new Set(keys)).filter(
+      (key) => key && !readyKeysRef.current.has(key)
+    );
+    let cursor = 0;
+
+    const worker = async () => {
+      while (cursor < queue.length) {
+        const key = queue[cursor];
+        cursor += 1;
+        await ensureMediaReady(key);
+      }
+    };
+
+    await Promise.all(
+      Array.from({ length: Math.min(concurrency, queue.length) }, worker)
+    );
+  }
+
+  function isMediaReady(key: string) {
+    void readyVersion;
+    return readyKeysRef.current.has(key);
+  }
 
   return {
     failure,

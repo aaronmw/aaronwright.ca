@@ -1,8 +1,8 @@
 'use client'
 
 import {
-  useCallback,
   useEffect,
+  useEffectEvent,
   useRef,
   useState,
   type CSSProperties,
@@ -66,24 +66,23 @@ export function PortfolioViewerOpenSurface({
   const [trackpadPinchState] = useState(createTrackpadPinchState)
   const lastTouchAtRef = useRef(-1)
 
-  const openViewer = useCallback(
-    (
-      activationKind: ViewerActivationKind,
-      focalPoint?: ViewerPoint,
-      initialPinchScale?: number,
-    ) => {
-      const surface = surfaceRef.current
-      if (!active || !surface) return
-      onOpen({
-        mediaId: screenshotId,
-        sourceRect: snapshotSourceRect(surface),
-        activationKind,
-        focalPoint,
-        initialPinchScale,
-      })
-    },
-    [active, onOpen, screenshotId],
-  )
+  function openViewer(
+    activationKind: ViewerActivationKind,
+    focalPoint?: ViewerPoint,
+    initialPinchScale?: number,
+  ) {
+    const surface = surfaceRef.current
+    if (!active || !surface) return
+    onOpen({
+      mediaId: screenshotId,
+      sourceRect: snapshotSourceRect(surface),
+      activationKind,
+      focalPoint,
+      initialPinchScale,
+    })
+  }
+
+  const openViewerFromEffect = useEffectEvent(openViewer)
 
   useEffect(() => {
     const surface = surfaceRef.current
@@ -126,7 +125,7 @@ export function PortfolioViewerOpenSurface({
       if (!opening) return
       event.preventDefault()
       event.stopPropagation()
-      openViewer(
+      openViewerFromEffect(
         'touch-pinch',
         opening.focalPoint,
         Math.min(4, opening.initialPinchScale),
@@ -148,7 +147,7 @@ export function PortfolioViewerOpenSurface({
       if (!doubleTapPoint) return
       event.preventDefault()
       event.stopPropagation()
-      openViewer(
+      openViewerFromEffect(
         'double-tap',
         { x: doubleTapPoint.clientX, y: doubleTapPoint.clientY },
         2,
@@ -172,7 +171,11 @@ export function PortfolioViewerOpenSurface({
         event.stopPropagation()
       }
       if (!opened) return
-      openViewer('trackpad-pinch', { x: event.clientX, y: event.clientY }, 1.25)
+      openViewerFromEffect(
+        'trackpad-pinch',
+        { x: event.clientX, y: event.clientY },
+        1.25,
+      )
     }
 
     const listenerOptions: AddEventListenerOptions = { passive: false }
@@ -189,7 +192,7 @@ export function PortfolioViewerOpenSurface({
       surface.removeEventListener('touchcancel', handleTouchCancel)
       surface.removeEventListener('wheel', handleWheel)
     }
-  }, [doubleTapRecognizer, openViewer, trackpadPinchState])
+  }, [doubleTapRecognizer, trackpadPinchState])
 
   return (
     <div

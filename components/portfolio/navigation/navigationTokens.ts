@@ -15,3 +15,7 @@ export const NAVIGATION_SVG_SIZE = 52;
 export const NAVIGATION_SVG_CENTER = NAVIGATION_SVG_SIZE / 2;
 export const SECTION_NAVIGATION_ARROW_SIZE = 16;
 export const SECTION_NAVIGATION_CENTERED_STEP = 60;
+
+export function getNavigationMarkerOffset(index: number) {
+  return index * NAVIGATION_SVG_SIZE;
+}

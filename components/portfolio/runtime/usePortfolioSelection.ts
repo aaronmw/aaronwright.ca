@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useState } from 'react'
 
 export type PortfolioRuntimeSelection = {
   projectIndex: number
@@ -8,31 +8,30 @@ export type PortfolioRuntimeSelection = {
 export function usePortfolioSelection(initial: PortfolioRuntimeSelection) {
   const [selection, setSelection] = useState(initial)
 
-  const setProjectIndex = useCallback((projectIndex: number) => {
+  function setProjectIndex(projectIndex: number) {
     setSelection(current =>
       current.projectIndex === projectIndex
         ? current
         : { ...current, projectIndex },
     )
-  }, [])
+  }
 
-  const setSlideIndexes = useCallback(
-    (update: number[] | ((current: number[]) => number[])) => {
-      setSelection(current => {
-        const slideIndexes =
-          typeof update === 'function' ? update(current.slideIndexes) : update
+  function setSlideIndexes(
+    update: number[] | ((current: number[]) => number[]),
+  ) {
+    setSelection(current => {
+      const slideIndexes =
+        typeof update === 'function' ? update(current.slideIndexes) : update
 
-        return slideIndexes === current.slideIndexes
-          ? current
-          : { ...current, slideIndexes }
-      })
-    },
-    [],
-  )
+      return slideIndexes === current.slideIndexes
+        ? current
+        : { ...current, slideIndexes }
+    })
+  }
 
-  const replaceSelection = useCallback((next: PortfolioRuntimeSelection) => {
+  function replaceSelection(next: PortfolioRuntimeSelection) {
     setSelection(next)
-  }, [])
+  }
 
   return { replaceSelection, selection, setProjectIndex, setSlideIndexes }
 }
