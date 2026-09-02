@@ -27,17 +27,21 @@ export function getProjectSlides(project: PortfolioProject): ProjectSlide[] {
     screenshot,
   }))
 
-  if (project.cover_image) {
-    return [
-      {
-        id: project.cover_image.id,
-        kind: 'screenshot',
-        slug: project.cover_image.slug,
-        screenshot: project.cover_image,
-      },
-      ...screenshotSlides,
-    ]
-  }
+  const mediaSlides: Array<Extract<ProjectSlide, { kind: 'screenshot' }>> = [
+    ...(project.cover_image
+      ? [
+          {
+            id: project.cover_image.id,
+            kind: 'screenshot' as const,
+            slug: project.cover_image.slug,
+            screenshot: project.cover_image,
+          },
+        ]
+      : []),
+    ...screenshotSlides,
+  ]
+
+  if (mediaSlides.length > 0) return mediaSlides
 
   return [
     {
@@ -93,55 +97,28 @@ export function isVideoScreenshot(screenshot: PortfolioScreenshot) {
 }
 
 export function hasProjectScreenshots(project: PortfolioProject) {
-  return Boolean(project.cover_image) || project.screenshots.length > 0
+  return getProjectMediaScreenshots(project).length > 0
 }
 
-export function isAboutMeTextScreenshot(
-  project: PortfolioProject,
-  screenshot: PortfolioScreenshot,
-) {
-  return project.id === 'about-me' && screenshot.id === 'about-me-overview'
-}
-
-export function isAboutMeTextSlide(
-  project: PortfolioProject,
-  slide: ProjectSlide,
-) {
-  return (
-    slide.kind === 'screenshot' &&
-    isAboutMeTextScreenshot(project, slide.screenshot)
-  )
-}
-
-export function isModalScreenshotSlide(
-  project: PortfolioProject,
+export function isViewerScreenshotSlide(
+  _project: PortfolioProject,
   slide: ProjectSlide,
 ): slide is Extract<ProjectSlide, { kind: 'screenshot' }> {
-  return slide.kind === 'screenshot' && !isAboutMeTextSlide(project, slide)
-}
-
-export function hasAboutMeTextSlide(project: PortfolioProject) {
-  return project.screenshots.some(screenshot =>
-    isAboutMeTextScreenshot(project, screenshot),
-  )
+  return slide.kind === 'screenshot'
 }
 
 export function carouselMediaKey(screenshot: PortfolioScreenshot) {
   return `carousel:${screenshot.id}`
 }
 
-export function modalMediaKey(screenshot: PortfolioScreenshot) {
+export function viewerMediaKey(screenshot: PortfolioScreenshot) {
   return `modal:${screenshot.id}`
 }
 
 export function getProjectMediaScreenshots(project: PortfolioProject) {
-  const screenshots = project.cover_image
+  return project.cover_image
     ? [project.cover_image, ...project.screenshots]
     : project.screenshots
-
-  return screenshots.filter(
-    screenshot => !isAboutMeTextScreenshot(project, screenshot),
-  )
 }
 
 export function getSlideMediaKey(
@@ -149,7 +126,7 @@ export function getSlideMediaKey(
   slide: ProjectSlide,
   useDesktopVisual: boolean,
 ) {
-  if (slide.kind === 'screenshot' && !isAboutMeTextSlide(project, slide)) {
+  if (slide.kind === 'screenshot') {
     return carouselMediaKey(slide.screenshot)
   }
 

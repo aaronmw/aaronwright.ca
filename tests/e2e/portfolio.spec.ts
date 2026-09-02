@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Page, type TestInfo } from '@playwright/test'
 
 async function waitForPortfolio(page: Page) {
   const curtain = page.locator('[data-portfolio-loading-curtain]')
@@ -6,1073 +6,661 @@ async function waitForPortfolio(page: Page) {
   await expect(curtain).toHaveCSS('visibility', 'hidden')
 }
 
-async function expectRingCenteredOnActiveDot(page: Page) {
-  const ring = page.locator('[data-portfolio-slide-indicator-marker="true"]')
-  const activeButton = page.locator(
-    'button[data-portfolio-slide-indicator-index][aria-current="true"]',
-  )
-  const activeIndex = await activeButton.getAttribute(
-    'data-portfolio-slide-indicator-index',
-  )
-  const dot = page.locator(
-    `[data-portfolio-slide-indicator-visual="${activeIndex}"]`,
-  )
-  const [ringBox, dotBox] = await Promise.all([
-    ring.boundingBox(),
-    dot.boundingBox(),
-  ])
-
-  expect(ringBox).not.toBeNull()
-  expect(dotBox).not.toBeNull()
-  expect(
-    Math.abs(ringBox!.x + ringBox!.width / 2 - (dotBox!.x + dotBox!.width / 2)),
-  ).toBeLessThanOrEqual(0.5)
-  expect(
-    Math.abs(
-      ringBox!.y + ringBox!.height / 2 - (dotBox!.y + dotBox!.height / 2),
+async function expectActiveSection(page: Page, index: number) {
+  await expect(
+    page.locator(
+      `button[data-portfolio-section-nav-side="left"][data-portfolio-section-nav-index="${index}"]`,
     ),
-  ).toBeLessThanOrEqual(0.5)
+  ).toHaveAttribute('aria-current', 'page')
 }
 
-async function expectSectionRingCenteredOnActiveItem(page: Page) {
-  const activeButton = page.locator(
-    'button[data-portfolio-section-nav-side="left"][aria-current="page"]',
+async function wheelGesture(page: Page, deltaX: number, deltaY: number) {
+  const steps = 8
+
+  for (let step = 0; step < steps; step += 1) {
+    await page.mouse.wheel(deltaX / steps, deltaY / steps)
+    await page.waitForTimeout(16)
+  }
+}
+
+async function wheelGestureSequence(
+  page: Page,
+  deltas: Array<{ x: number; y: number }>,
+) {
+  for (const delta of deltas) {
+    await page.mouse.wheel(delta.x, delta.y)
+    await page.waitForTimeout(16)
+  }
+}
+
+async function dragGesture(
+  page: Page,
+  start: { x: number; y: number },
+  delta: { x: number; y: number },
+) {
+  await page.mouse.move(start.x, start.y)
+  await page.mouse.down()
+  await page.mouse.move(start.x + delta.x, start.y + delta.y, { steps: 12 })
+  await page.mouse.up()
+}
+
+async function openOverviewViewer(page: Page, testInfo: TestInfo) {
+  const source = page.locator(
+    '[data-portfolio-screenshot-id="aarons-toolbox-overview"][data-portfolio-viewer-source="active"]',
   )
-  const activeIndex = await activeButton.getAttribute(
-    'data-portfolio-section-nav-index',
-  )
-  const ring = page.locator('[data-portfolio-section-nav-ring="left"]')
-  const visual = page.locator(
-    `[data-portfolio-section-nav-zone="left"] [data-portfolio-section-nav-visual-index="${activeIndex}"]`,
-  )
 
-  await expect
-    .poll(async () => {
-      const [ringBox, visualBox] = await Promise.all([
-        ring.boundingBox(),
-        visual.boundingBox(),
-      ])
+  if (testInfo.project.name.includes('iphone')) {
+    const box = await source.boundingBox()
+    expect(box).not.toBeNull()
+    const x = box!.x + box!.width / 2
+    const y = box!.y + box!.height / 2
+    await page.touchscreen.tap(x, y)
+    await page.waitForTimeout(80)
+    await page.touchscreen.tap(x, y)
+    return
+  }
 
-      if (!ringBox || !visualBox) {
-        return Number.POSITIVE_INFINITY
-      }
-
-      return Math.max(
-        Math.abs(
-          ringBox.x + ringBox.width / 2 - (visualBox.x + visualBox.width / 2),
-        ),
-        Math.abs(
-          ringBox.y + ringBox.height / 2 - (visualBox.y + visualBox.height / 2),
-        ),
-      )
-    })
-    .toBeLessThanOrEqual(0.5)
+  await source.dblclick()
 }
 
-async function getSectionRingDistance(page: Page, index: number) {
-  return page.evaluate(targetIndex => {
-    const distances = (['left', 'right'] as const).map(side => {
-      const ring = document.querySelector<SVGGraphicsElement>(
-        `[data-portfolio-section-nav-ring="${side}"]`,
-      )
-      const visual = document.querySelector<SVGGraphicsElement>(
-        `[data-portfolio-section-nav-zone="${side}"] [data-portfolio-section-nav-visual-index="${targetIndex}"]`,
-      )
-
-      if (!ring || !visual) {
-        return Number.POSITIVE_INFINITY
-      }
-
-      const ringBox = ring.getBoundingClientRect()
-      const visualBox = visual.getBoundingClientRect()
-
-      return Math.max(
-        Math.abs(
-          ringBox.x + ringBox.width / 2 - (visualBox.x + visualBox.width / 2),
-        ),
-        Math.abs(
-          ringBox.y + ringBox.height / 2 - (visualBox.y + visualBox.height / 2),
-        ),
-      )
-    })
-
-    return Math.max(...distances)
-  }, index)
-}
-
-async function startRingDeformationSampling(page: Page, selector: string) {
-  await page.evaluate(ringSelector => {
-    const samplingWindow = window as typeof window & {
-      __portfolioRingFrame?: number
-      __portfolioRingSamples?: Array<{
-        coordinate: number
-        cx: number
-        cy: number
-        rx: number
-        ry: number
-      }>
-    }
-
-    samplingWindow.__portfolioRingSamples = []
-    const sample = () => {
-      const ring = document.querySelector<SVGRectElement>(ringSelector)
-
-      if (ring) {
-        samplingWindow.__portfolioRingSamples?.push({
-          coordinate: Number(ring.dataset.navigationCoordinate),
-          cx: ring.x.baseVal.value + ring.width.baseVal.value / 2,
-          cy: ring.y.baseVal.value + ring.height.baseVal.value / 2,
-          rx: ring.width.baseVal.value / 2,
-          ry: ring.height.baseVal.value / 2,
-        })
-      }
-
-      samplingWindow.__portfolioRingFrame = requestAnimationFrame(sample)
-    }
-    sample()
-  }, selector)
-}
-
-async function stopRingDeformationSampling(page: Page) {
-  return page.evaluate(() => {
-    const samplingWindow = window as typeof window & {
-      __portfolioRingFrame?: number
-      __portfolioRingSamples?: Array<{
-        coordinate: number
-        cx: number
-        cy: number
-        rx: number
-        ry: number
-      }>
-    }
-
-    if (samplingWindow.__portfolioRingFrame !== undefined) {
-      cancelAnimationFrame(samplingWindow.__portfolioRingFrame)
-    }
-
-    return samplingWindow.__portfolioRingSamples ?? []
-  })
-}
-
-test('deep links reveal the requested section and preserve route state', async ({
+test('deep links restore both Embla axes and their active markers', async ({
   page,
 }) => {
   await page.goto('/work/aarons-toolbox/overview')
   await waitForPortfolio(page)
 
-  await expect(page).toHaveURL(/\/work\/aarons-toolbox\/overview$/)
+  await expect(page).toHaveURL(/\/work\/aarons-toolbox$/)
+  await expectActiveSection(page, 5)
   await expect(
     page.locator(
-      'button[data-portfolio-section-nav-side="left"][aria-current="page"]',
+      'button[data-portfolio-slide-indicator-index="0"][aria-current="true"]',
     ),
-  ).toHaveAttribute('aria-label', /Aaron's Toolbox|Previous screen/)
-  await expectRingCenteredOnActiveDot(page)
-  await expectSectionRingCenteredOnActiveItem(page)
+  ).toBeVisible()
 })
 
-test('keyboard navigation retargets sections and slides', async ({
+test('all media projects combine their intro and first media in one snap', async ({
+  page,
+}) => {
+  const projects = [
+    {
+      path: '/work/loopio',
+      title: 'Loopio',
+      mediaId: 'loopio-cover',
+    },
+    {
+      path: '/work/aarons-toolbox',
+      title: "Aaron's Toolbox",
+      mediaId: 'aarons-toolbox-overview',
+    },
+  ]
+
+  for (const project of projects) {
+    await page.goto(project.path)
+    await waitForPortfolio(page)
+
+    await expect(
+      page.locator(`[aria-label="${project.title} overview"]:visible`),
+    ).toBeVisible()
+    await expect(
+      page.locator(
+        `[data-portfolio-screenshot-id="${project.mediaId}"][data-portfolio-viewer-source="active"]`,
+      ),
+    ).toBeVisible()
+    await expect(
+      page.locator(
+        'button[data-portfolio-slide-indicator-index="0"][aria-current="true"]',
+      ),
+    ).toBeVisible()
+  }
+})
+
+test('About Me uses the shared information layout without a media carousel', async ({
+  page,
+}) => {
+  await page.goto('/work/about-me')
+  await waitForPortfolio(page)
+
+  const information = page.locator('[aria-label="About Me overview"]')
+  await expect(information).toBeVisible()
+  await expect(information).toContainText(
+    'I’ve been building things for the web',
+  )
+  await expect(
+    page.locator('[data-portfolio-carousel="about-me"]'),
+  ).toHaveCount(0)
+})
+
+test('touch layouts keep project information above a constrained media stage', async ({
   page,
 }, testInfo) => {
+  test.skip(!testInfo.project.name.includes('iphone'))
+  await page.goto('/work/loopio')
+  await waitForPortfolio(page)
+
+  const information = page.locator('[aria-label="Loopio overview"]')
+  const media = page.locator('[data-portfolio-carousel="loopio"]')
+  const [informationBox, mediaBox] = await Promise.all([
+    information.boundingBox(),
+    media.boundingBox(),
+  ])
+
+  expect(informationBox).not.toBeNull()
+  expect(mediaBox).not.toBeNull()
+  expect(informationBox!.height).toBeLessThanOrEqual(
+    (await page.evaluate(() => window.innerHeight)) / 2 + 1,
+  )
+  expect(mediaBox!.y).toBeGreaterThanOrEqual(
+    informationBox!.y + informationBox!.height - 1,
+  )
+})
+
+test('the project information remains fixed while only the media carousel moves', async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name.includes('iphone'))
+  await page.goto('/work/loopio/a-mature-product')
+  await waitForPortfolio(page)
+
+  const information = page.locator('[aria-label="Loopio overview"]')
+  const initialBox = await information.boundingBox()
+  await expect(information).toContainText('Loopio')
+  await expect(information).toContainText('A mature product')
+
+  await page.locator('button[data-portfolio-slide-indicator-index="0"]').click()
+  await expect(page).toHaveURL(/\/work\/loopio$/)
+  await expect(information).toContainText('Proving a better Loopio')
+  expect(await information.boundingBox()).toEqual(initialBox)
+})
+
+test('cover-media viewer deep links open without a media path segment', async ({
+  page,
+}) => {
+  await page.goto('/work/freshbooks?modal=image')
+  await waitForPortfolio(page)
+
+  await expect(page.locator('.portfolio-viewer')).toBeVisible()
+  await expect(page).toHaveURL(/\/work\/freshbooks\?modal=image$/)
+})
+
+test('keyboard navigation wraps across finite physical tracks', async ({
+  page,
+}) => {
   await page.goto('/work')
   await waitForPortfolio(page)
 
   await page.keyboard.press('2')
-  await expect(page).toHaveURL(/\/work\/informal-systems$/)
-
+  await expect(page).toHaveURL(/\/work\/loopio$/)
   await page.keyboard.press('ArrowRight')
-  await expect(page).toHaveURL(
-    testInfo.project.name.includes('portrait')
-      ? /\/work\/informal-systems\/home-page$/
-      : /\/work\/informal-systems\/hover-to-edit$/,
-  )
-  await expectRingCenteredOnActiveDot(page)
+  await expect(page).toHaveURL(/\/work\/loopio\/a-mature-product$/)
+  await page.keyboard.press('ArrowLeft')
+  await expect(page).toHaveURL(/\/work\/loopio$/)
 
-  await page.keyboard.press('ArrowDown')
-  await page.keyboard.press('ArrowDown')
-  await expect(page).toHaveURL(/\/work\/nextphrase$/)
-})
-
-test('navigation rings deform on their travel axes and settle square', async ({
-  page,
-}) => {
-  await page.goto('/work/aarons-toolbox/overview')
-  await waitForPortfolio(page)
-
-  await startRingDeformationSampling(
-    page,
-    '[data-portfolio-section-nav-ring="left"]',
-  )
-  await page.keyboard.press('ArrowUp')
-  await expect(page).toHaveURL(/\/work\/informal-systems$/)
-  await expect
-    .poll(async () =>
-      page
-        .locator('[data-portfolio-section-nav-ring="left"]')
-        .evaluate((ring: SVGRectElement) =>
-          Math.abs(ring.width.baseVal.value - ring.height.baseVal.value),
-        ),
-    )
-    .toBeLessThanOrEqual(0.01)
-
-  const verticalSamples = await stopRingDeformationSampling(page)
-  expect(verticalSamples.some(({ rx, ry }) => Math.abs(ry - rx) > 0.005)).toBe(
-    true,
-  )
-  expect(
-    verticalSamples.some(
-      ({ coordinate, cy }) => Math.abs(cy - coordinate) > 0.05,
-    ),
-  ).toBe(true)
-  await expectSectionRingCenteredOnActiveItem(page)
-
-  await page.goto('/work/aarons-toolbox/overview')
-  await waitForPortfolio(page)
-  await startRingDeformationSampling(
-    page,
-    '[data-portfolio-slide-indicator-marker="true"]',
-  )
-  await page.keyboard.press('ArrowRight')
-  await expect(page).toHaveURL(/\/work\/aarons-toolbox\/normalizer$/)
-  await expect
-    .poll(async () =>
-      page
-        .locator('[data-portfolio-slide-indicator-marker="true"]')
-        .evaluate((ring: SVGRectElement) =>
-          Math.abs(ring.width.baseVal.value - ring.height.baseVal.value),
-        ),
-    )
-    .toBeLessThanOrEqual(0.01)
-
-  const horizontalSamples = await stopRingDeformationSampling(page)
-  expect(
-    horizontalSamples.some(({ rx, ry }) => Math.abs(rx - ry) > 0.005),
-  ).toBe(true)
-  expect(
-    horizontalSamples.some(
-      ({ coordinate, cx }) => Math.abs(cx - coordinate) > 0.05,
-    ),
-  ).toBe(true)
-  await expectRingCenteredOnActiveDot(page)
-})
-
-test('wide sections share content boundaries and clear the navigation tracks', async ({
-  page,
-}, testInfo) => {
-  test.skip(testInfo.project.name !== 'chromium-desktop')
-  await page.setViewportSize({ width: 1280, height: 900 })
-  await page.goto('/work')
-  await waitForPortfolio(page)
-
-  const leftRingBox = await page
-    .locator('[data-portfolio-section-nav-ring="left"]')
-    .boundingBox()
-  const rightRingBox = await page
-    .locator('[data-portfolio-section-nav-ring="right"]')
-    .boundingBox()
-  const contentBox = await page
-    .locator('[data-portfolio-start-content]')
-    .boundingBox()
-  const headerBox = await page
-    .locator('[data-portfolio-start-header-content]')
-    .boundingBox()
-  const firstSectionNumberLeft = await page
-    .getByText('01', { exact: true })
-    .evaluate(element => {
-      const range = document.createRange()
-      range.selectNodeContents(element)
-      return range.getBoundingClientRect().x
-    })
-  const editorialInsets = await page
-    .locator('section.portfolio-project-content-theme[aria-label="About Me"]')
-    .first()
-    .evaluate(element => {
-      const style = getComputedStyle(element)
-      return {
-        left: Number.parseFloat(style.paddingLeft),
-        right: Number.parseFloat(style.paddingRight),
-      }
-    })
-  const viewport = page.viewportSize()
-
-  expect(leftRingBox).not.toBeNull()
-  expect(rightRingBox).not.toBeNull()
-  expect(contentBox).not.toBeNull()
-  expect(headerBox).not.toBeNull()
-  expect(viewport).not.toBeNull()
-  expect(
-    contentBox!.x - (leftRingBox!.x + leftRingBox!.width),
-  ).toBeGreaterThanOrEqual(8)
-  expect(
-    rightRingBox!.x - (contentBox!.x + contentBox!.width),
-  ).toBeGreaterThanOrEqual(8)
-  expect(Math.abs(headerBox!.x - contentBox!.x)).toBeLessThanOrEqual(0.5)
-  expect(
-    Math.abs(
-      headerBox!.x + headerBox!.width - (contentBox!.x + contentBox!.width),
-    ),
-  ).toBeLessThanOrEqual(0.5)
-  expect(Math.abs(contentBox!.x - editorialInsets.left)).toBeLessThanOrEqual(
-    0.5,
-  )
-  expect(
-    Math.abs(firstSectionNumberLeft - editorialInsets.left),
-  ).toBeLessThanOrEqual(0.5)
-  expect(
-    Math.abs(
-      viewport!.width -
-        (contentBox!.x + contentBox!.width) -
-        editorialInsets.right,
-    ),
-  ).toBeLessThanOrEqual(0.5)
-})
-
-test('long section travel deforms the ring more than an adjacent hop', async ({
-  page,
-}) => {
-  const sampleTravel = async (key: 'ArrowDown' | '6') => {
-    await page.goto('/work')
-    await waitForPortfolio(page)
-    await startRingDeformationSampling(
-      page,
-      '[data-portfolio-section-nav-ring="left"]',
-    )
-    await page.keyboard.press(key)
-    await expect(page).toHaveURL(
-      key === 'ArrowDown' ? /\/work\/about-me$/ : /\/work\/nextphrase$/,
-    )
-    await expect
-      .poll(async () =>
-        page
-          .locator('[data-portfolio-section-nav-ring="left"]')
-          .evaluate((ring: SVGRectElement) =>
-            Math.abs(ring.width.baseVal.value - ring.height.baseVal.value),
-          ),
-      )
-      .toBeLessThanOrEqual(0.01)
-
-    const samples = await stopRingDeformationSampling(page)
-
-    return Math.max(...samples.map(({ rx, ry }) => Math.abs(ry / rx - 1)))
-  }
-
-  const adjacentDeformation = await sampleTravel('ArrowDown')
-  const longDeformation = await sampleTravel('6')
-
-  expect(longDeformation).toBeGreaterThan(adjacentDeformation * 1.1)
-})
-
-test('initial pointer acquisition travels in both navigation systems', async ({
-  page,
-}, testInfo) => {
-  test.skip(testInfo.project.name.includes('iphone'))
-
-  const expectIntermediateTravel = (
-    samples: Array<{ cx: number; cy: number }>,
-    axis: 'cx' | 'cy',
-  ) => {
-    expect(samples.length).toBeGreaterThan(1)
-    const start = samples[0]![axis]
-    const end = samples.at(-1)![axis]
-    const lower = Math.min(start, end)
-    const upper = Math.max(start, end)
-
-    expect(Math.abs(end - start)).toBeGreaterThan(20)
-    expect(
-      samples.some(
-        sample => sample[axis] > lower + 1 && sample[axis] < upper - 1,
-      ),
-    ).toBe(true)
-  }
-
-  await page.goto('/work')
-  await waitForPortfolio(page)
-  await startRingDeformationSampling(
-    page,
-    '[data-portfolio-section-nav-ring="left"]',
-  )
-
-  const sectionTarget = page.locator(
-    'button[data-portfolio-section-nav-side="left"][data-portfolio-section-nav-index="4"]',
-  )
-  const sectionTargetBox = await sectionTarget.boundingBox()
-
-  expect(sectionTargetBox).not.toBeNull()
-  await page.mouse.move(
-    sectionTargetBox!.x + sectionTargetBox!.width / 2,
-    sectionTargetBox!.y + sectionTargetBox!.height / 2,
-  )
-  await expect
-    .poll(() => getSectionRingDistance(page, 4))
-    .toBeLessThanOrEqual(0.5)
-  expectIntermediateTravel(await stopRingDeformationSampling(page), 'cy')
-
-  await page.goto('/work/aarons-toolbox/overview')
-  await waitForPortfolio(page)
-  await startRingDeformationSampling(
-    page,
-    '[data-portfolio-slide-indicator-marker="true"]',
-  )
-
-  const slideTarget = page.locator(
-    'button[data-portfolio-slide-indicator-index="4"]',
-  )
-  const slideTargetBox = await slideTarget.boundingBox()
-
-  expect(slideTargetBox).not.toBeNull()
-  await page.mouse.move(
-    slideTargetBox!.x + slideTargetBox!.width / 2,
-    slideTargetBox!.y + slideTargetBox!.height / 2,
-  )
-  await expect
-    .poll(async () => {
-      const [ringBox, dotBox] = await Promise.all([
-        page
-          .locator('[data-portfolio-slide-indicator-marker="true"]')
-          .boundingBox(),
-        page
-          .locator('[data-portfolio-slide-indicator-visual="4"]')
-          .boundingBox(),
-      ])
-
-      if (!ringBox || !dotBox) {
-        return Number.POSITIVE_INFINITY
-      }
-
-      return Math.abs(
-        ringBox.x + ringBox.width / 2 - (dotBox.x + dotBox.width / 2),
-      )
-    })
-    .toBeLessThanOrEqual(0.5)
-  expectIntermediateTravel(await stopRingDeformationSampling(page), 'cx')
-})
-
-test('vertical endpoint wraps use the boundary blur lifecycle', async ({
-  page,
-}) => {
-  await page.goto('/work')
-  await waitForPortfolio(page)
-
-  const verticalCarousel = page.locator('[data-portfolio-vertical-scroll]')
-  const firstScreen = verticalCarousel.locator(':scope > section').first()
-
-  await page.keyboard.press('ArrowUp')
-  await expect(verticalCarousel).toHaveAttribute(
-    'data-portfolio-boundary-blur',
-    'true',
-  )
-  await expect
-    .poll(async () =>
-      firstScreen.evaluate(screen => {
-        const match =
-          getComputedStyle(screen).filter.match(/blur\(([0-9.]+)px\)/)
-        return Number(match?.[1] ?? 0)
-      }),
-    )
-    .toBeGreaterThan(1)
-  await expect(page).toHaveURL(/\/work\/nextphrase$/)
-  await expect(verticalCarousel).not.toHaveAttribute(
-    'data-portfolio-boundary-blur',
-    'true',
-  )
-  await expect
-    .poll(async () =>
-      firstScreen.evaluate(screen => {
-        const match =
-          getComputedStyle(screen).filter.match(/blur\(([0-9.]+)px\)/)
-        return Number(match?.[1] ?? 0)
-      }),
-    )
-    .toBe(0)
-
-  await page.keyboard.press('ArrowDown')
-  await expect(verticalCarousel).toHaveAttribute(
-    'data-portfolio-boundary-blur',
-    'true',
-  )
-  await expect
-    .poll(async () =>
-      firstScreen.evaluate(screen => {
-        const match =
-          getComputedStyle(screen).filter.match(/blur\(([0-9.]+)px\)/)
-        return Number(match?.[1] ?? 0)
-      }),
-    )
-    .toBeGreaterThan(1)
+  await page.keyboard.press('0')
   await expect(page).toHaveURL(/\/work$/)
-  await expect(verticalCarousel).not.toHaveAttribute(
-    'data-portfolio-boundary-blur',
-    'true',
-  )
+  await page.keyboard.press('ArrowUp')
+  await expect(page).toHaveURL(/\/work\/nextphrase$/)
+  await page.keyboard.press('ArrowDown')
+  await expect(page).toHaveURL(/\/work$/)
+
+  await page.locator('[data-portfolio-start-section-index="6"]').click()
+  await expect(page).toHaveURL(/\/work\/nextphrase$/)
+  await page.keyboard.press('ArrowDown')
+  await expect(page).toHaveURL(/\/work$/)
+
+  await page.keyboard.press('0')
+  await page.locator('[data-portfolio-start-section-index="2"]').click()
+  await expect(page).toHaveURL(/\/work\/loopio$/)
+  await page.keyboard.press('ArrowRight')
+  await expect(page).toHaveURL(/\/work\/loopio\/a-mature-product$/)
+
+  await page.locator('[data-portfolio-home-logo]').click()
+  await expect(page).toHaveURL(/\/work$/)
+  await page.keyboard.press('ArrowUp')
+  await expect(page).toHaveURL(/\/work\/nextphrase$/)
+})
+
+test('wrap navigation crosses the full ordered track', async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name.includes('iphone'))
+  await page.goto('/work')
+  await waitForPortfolio(page)
+
+  const verticalViewport = page.locator('[data-portfolio-vertical-carousel]')
+  const verticalTrack = verticalViewport.locator(':scope > div')
+  const verticalBox = await verticalViewport.boundingBox()
+  expect(verticalBox).not.toBeNull()
+
+  await page.keyboard.press('ArrowUp')
+  await expect(page).toHaveURL(/\/work\/nextphrase$/)
   await expect
-    .poll(async () =>
-      firstScreen.evaluate(screen => {
-        const match =
-          getComputedStyle(screen).filter.match(/blur\(([0-9.]+)px\)/)
-        return Number(match?.[1] ?? 0)
+    .poll(() =>
+      verticalTrack.evaluate(element => {
+        const transform = getComputedStyle(element).transform
+        return transform === 'none' ? 0 : new DOMMatrix(transform).m42
       }),
     )
-    .toBe(0)
-})
+    .toBeLessThan(-verticalBox!.height * 4)
 
-test('focused section navigation keeps its tooltip through navigation', async ({
-  page,
-}, testInfo) => {
-  test.skip(testInfo.project.name.includes('iphone'))
-  await page.goto('/work')
-  await waitForPortfolio(page)
-
-  const destination = page.locator(
-    'button[data-portfolio-section-nav-side="left"][data-portfolio-section-nav-index="3"]',
-  )
-  await destination.focus()
-  const tooltip = page.locator(
-    '[data-portfolio-section-nav-zone="left"] [role="tooltip"]',
-  )
-  await expect(tooltip).toBeVisible()
-
-  await destination.press('Enter')
-  await expect(page).toHaveURL(/\/work\/aarons-toolbox$/)
-  await expect(tooltip).toBeVisible()
-})
-
-test('section navigation tooltip follows the pointer within an item', async ({
-  page,
-}, testInfo) => {
-  test.skip(testInfo.project.name.includes('iphone'))
-  await page.goto('/work/nextphrase')
-  await waitForPortfolio(page)
-
-  const item = page.locator(
-    'button[data-portfolio-section-nav-side="left"][data-portfolio-section-nav-index="3"]',
-  )
-  const tooltip = page.locator(
-    '[data-portfolio-section-nav-zone="left"] [role="tooltip"]',
-  )
-  const itemBox = await item.boundingBox()
-
-  expect(itemBox).not.toBeNull()
-  const pointerX = itemBox!.x + itemBox!.width / 2
-  const firstPointerY = itemBox!.y + itemBox!.height * 0.35
-  const secondPointerY = itemBox!.y + itemBox!.height * 0.65
-
-  await page.mouse.move(pointerX, firstPointerY)
-  await expect(tooltip).toBeVisible()
+  await page.keyboard.press('ArrowDown')
+  await expect(page).toHaveURL(/\/work$/)
   await expect
-    .poll(async () => {
-      const tooltipBox = await tooltip.boundingBox()
-      return tooltipBox
-        ? Math.abs(tooltipBox.y + tooltipBox.height / 2 - firstPointerY)
-        : Number.POSITIVE_INFINITY
-    })
-    .toBeLessThanOrEqual(1)
+    .poll(() =>
+      verticalTrack.evaluate(element => {
+        const transform = getComputedStyle(element).transform
+        return transform === 'none' ? 0 : new DOMMatrix(transform).m42
+      }),
+    )
+    .toBeGreaterThan(-verticalBox!.height / 2)
 
-  await page.mouse.move(pointerX, secondPointerY)
+  await dragGesture(
+    page,
+    {
+      x: verticalBox!.x + verticalBox!.width * 0.75,
+      y: verticalBox!.y + verticalBox!.height * 0.35,
+    },
+    { x: 0, y: verticalBox!.height * 0.3 },
+  )
+  await expect(page).toHaveURL(/\/work\/nextphrase$/)
   await expect
-    .poll(async () => {
-      const tooltipBox = await tooltip.boundingBox()
-      return tooltipBox
-        ? Math.abs(tooltipBox.y + tooltipBox.height / 2 - secondPointerY)
-        : Number.POSITIVE_INFINITY
-    })
-    .toBeLessThanOrEqual(1)
+    .poll(() =>
+      verticalTrack.evaluate(element => {
+        const transform = getComputedStyle(element).transform
+        return transform === 'none' ? 0 : new DOMMatrix(transform).m42
+      }),
+    )
+    .toBeLessThan(-verticalBox!.height * 4)
 
-  const zone = page.locator('[data-portfolio-section-nav-zone="left"]')
-  const zoneBox = await zone.boundingBox()
-
-  expect(zoneBox).not.toBeNull()
-  await page.mouse.move(pointerX, zoneBox!.y + zoneBox!.height - 4)
-  await expect(tooltip).toBeHidden()
-})
-
-test('pointer-clicked section navigation does not retain its tooltip', async ({
-  page,
-}, testInfo) => {
-  test.skip(testInfo.project.name.includes('iphone'))
-  await page.goto('/work/nextphrase/home')
-  await waitForPortfolio(page)
-
-  const activeItem = page.locator(
-    'button[data-portfolio-section-nav-side="left"][data-portfolio-section-nav-index="6"]',
-  )
-  const tooltip = page.locator(
-    '[data-portfolio-section-nav-zone="left"] [role="tooltip"]',
-  )
-
-  await activeItem.click()
   await page.mouse.move(
-    page.viewportSize()!.width / 2,
-    page.viewportSize()!.height / 2,
+    verticalBox!.x + verticalBox!.width * 0.75,
+    verticalBox!.y + verticalBox!.height * 0.35,
   )
-  await expect(page).toHaveURL(/\/work\/nextphrase\/intro$/)
-  await expect(tooltip).toBeHidden()
+  await wheelGesture(page, 0, 900)
+  await expect(page).toHaveURL(/\/work$/)
+  await expect
+    .poll(() =>
+      verticalTrack.evaluate(element => {
+        const transform = getComputedStyle(element).transform
+        return transform === 'none' ? 0 : new DOMMatrix(transform).m42
+      }),
+    )
+    .toBeGreaterThan(-verticalBox!.height / 2)
+
+  await page.keyboard.press('2')
+  await expect(page).toHaveURL(/\/work\/loopio$/)
+  const horizontalViewport = page.locator('[data-portfolio-carousel="loopio"]')
+  const horizontalTrack = horizontalViewport.locator(':scope > div')
+  const horizontalBox = await horizontalViewport.boundingBox()
+  expect(horizontalBox).not.toBeNull()
+
+  await page.keyboard.press('ArrowLeft')
+  await expect
+    .poll(() =>
+      horizontalTrack.evaluate(element => {
+        const transform = getComputedStyle(element).transform
+        return transform === 'none' ? 0 : new DOMMatrix(transform).m41
+      }),
+    )
+    .toBeLessThan(-horizontalBox!.width * 2)
+
+  await page.keyboard.press('ArrowRight')
+  await expect(page).toHaveURL(/\/work\/loopio$/)
+  await expect
+    .poll(() =>
+      horizontalTrack.evaluate(element => {
+        const transform = getComputedStyle(element).transform
+        return transform === 'none' ? 0 : new DOMMatrix(transform).m41
+      }),
+    )
+    .toBeGreaterThan(-horizontalBox!.width / 2)
+
+  const horizontalGestureBox = await horizontalViewport.boundingBox()
+  expect(horizontalGestureBox).not.toBeNull()
+  await dragGesture(
+    page,
+    {
+      x: horizontalGestureBox!.x + horizontalGestureBox!.width * 0.2,
+      y: horizontalGestureBox!.y + horizontalGestureBox!.height / 2,
+    },
+    { x: horizontalGestureBox!.width * 0.6, y: 0 },
+  )
+  await expect
+    .poll(() =>
+      horizontalTrack.evaluate(element => {
+        const transform = getComputedStyle(element).transform
+        return transform === 'none' ? 0 : new DOMMatrix(transform).m41
+      }),
+    )
+    .toBeLessThan(-horizontalBox!.width * 2)
+
+  await page.mouse.move(
+    horizontalGestureBox!.x + horizontalGestureBox!.width / 2,
+    horizontalGestureBox!.y + horizontalGestureBox!.height / 2,
+  )
+  await wheelGesture(page, 900, 0)
+  await expect(page).toHaveURL(/\/work\/loopio$/)
+  await expect
+    .poll(() =>
+      horizontalTrack.evaluate(element => {
+        const transform = getComputedStyle(element).transform
+        return transform === 'none' ? 0 : new DOMMatrix(transform).m41
+      }),
+    )
+    .toBeGreaterThan(-horizontalBox!.width / 2)
 })
 
-test('section navigation reacquires from beneath its final item', async ({
+test('dominant horizontal wheel intent changes media without changing section', async ({
   page,
 }, testInfo) => {
   test.skip(testInfo.project.name.includes('iphone'))
-  await page.goto('/work')
+  await page.goto('/work/aarons-toolbox/overview')
   await waitForPortfolio(page)
 
-  const zone = page.locator('[data-portfolio-section-nav-zone="left"]')
-  const finalItem = zone.locator(
-    '[data-portfolio-section-nav-visual-index="6"]',
+  const selectableParagraph = page
+    .locator(
+      '[aria-label="Aaron\'s Toolbox overview"] [data-portfolio-selectable-text] .portfolio-markdown p',
+    )
+    .first()
+  const verticalViewport = page.locator('[data-portfolio-vertical-carousel]')
+  const verticalTrack = verticalViewport.locator(':scope > div')
+  const verticalBox = await verticalViewport.boundingBox()
+  expect(verticalBox).not.toBeNull()
+  await expect
+    .poll(() =>
+      verticalTrack.evaluate(element => {
+        const transform = getComputedStyle(element).transform
+        return transform === 'none' ? 0 : new DOMMatrix(transform).m42
+      }),
+    )
+    .toBeLessThan(-verticalBox!.height * 4.99)
+  const paragraphBox = await selectableParagraph.boundingBox()
+  expect(paragraphBox).not.toBeNull()
+  await dragGesture(
+    page,
+    { x: paragraphBox!.x + 40, y: paragraphBox!.y + 10 },
+    {
+      x: Math.min(paragraphBox!.width - 80, 300),
+      y: Math.min(paragraphBox!.height - 20, 70),
+    },
   )
-  const [zoneBox, finalItemBox] = await Promise.all([
-    zone.boundingBox(),
-    finalItem.boundingBox(),
+  await expect(page).toHaveURL(/\/work\/aarons-toolbox$/)
+  expect(
+    await page.evaluate(() => window.getSelection()?.toString().length),
+  ).toBeGreaterThan(0)
+  await page.evaluate(() => window.getSelection()?.removeAllRanges())
+
+  const media = page.locator('[data-portfolio-carousel="aarons-toolbox"]')
+  const box = await media.boundingBox()
+  expect(box).not.toBeNull()
+  await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height / 2)
+  await wheelGesture(page, 900, 40)
+
+  await expect(page).toHaveURL(/\/work\/aarons-toolbox\/normalizer$/)
+  await expectActiveSection(page, 5)
+})
+
+test('horizontal trackpad intent stays axis-locked through a vertical tail', async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name.includes('iphone'))
+  await page.goto('/work/aarons-toolbox/overview')
+  await waitForPortfolio(page)
+
+  const verticalViewport = page.locator('[data-portfolio-vertical-carousel]')
+  const verticalTrack = verticalViewport.locator(':scope > div')
+  const verticalBox = await verticalViewport.boundingBox()
+  expect(verticalBox).not.toBeNull()
+  await expect
+    .poll(() =>
+      verticalTrack.evaluate(element => {
+        const transform = getComputedStyle(element).transform
+        return transform === 'none' ? 0 : new DOMMatrix(transform).m42
+      }),
+    )
+    .toBeLessThan(-verticalBox!.height * 4.99)
+
+  const media = page.locator('[data-portfolio-carousel="aarons-toolbox"]')
+  const box = await media.boundingBox()
+  expect(box).not.toBeNull()
+  await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height / 2)
+  await wheelGestureSequence(page, [
+    { x: 400, y: 20 },
+    { x: 400, y: 30 },
+    { x: 20, y: 180 },
+    { x: 10, y: 180 },
   ])
 
-  expect(zoneBox).not.toBeNull()
-  expect(finalItemBox).not.toBeNull()
-
-  const pointerX = zoneBox!.x + zoneBox!.width / 2
-  await page.mouse.move(pointerX, zoneBox!.y + zoneBox!.height - 2)
-  await page.mouse.move(pointerX, finalItemBox!.y + finalItemBox!.height / 2, {
-    steps: 8,
-  })
-
-  await expect
-    .poll(() => getSectionRingDistance(page, 6))
-    .toBeLessThanOrEqual(0.5)
+  await expect(page).toHaveURL(/\/work\/aarons-toolbox\/normalizer$/)
+  await expectActiveSection(page, 5)
 })
 
-test('homepage section preview remains pinned throughout pointer press', async ({
+test('horizontal wheel selection settles without reinitializing the carousel', async ({
   page,
 }, testInfo) => {
   test.skip(testInfo.project.name.includes('iphone'))
-  await page.goto('/work')
+  await page.goto('/work/aarons-toolbox/overview')
   await waitForPortfolio(page)
 
-  const destination = page.locator(
-    'button[data-portfolio-start-section-index="3"]',
-  )
-  const destinationBox = await destination.boundingBox()
-
-  expect(destinationBox).not.toBeNull()
-  await page.mouse.move(
-    destinationBox!.x + destinationBox!.width / 2,
-    destinationBox!.y + destinationBox!.height / 2,
-  )
-  await expect
-    .poll(() => getSectionRingDistance(page, 3))
-    .toBeLessThanOrEqual(0.5)
-
-  await page.mouse.down()
-  const maximumDistance = await page.evaluate(async () => {
-    let maximum = 0
-
-    for (let frame = 0; frame < 8; frame += 1) {
-      await new Promise<void>(resolve => requestAnimationFrame(() => resolve()))
-      const ring = document.querySelector<SVGGraphicsElement>(
-        '[data-portfolio-section-nav-ring="left"]',
-      )
-      const visual = document.querySelector<SVGGraphicsElement>(
-        '[data-portfolio-section-nav-zone="left"] [data-portfolio-section-nav-visual-index="3"]',
-      )
-
-      if (!ring || !visual) {
-        return Number.POSITIVE_INFINITY
-      }
-
-      const ringBox = ring.getBoundingClientRect()
-      const visualBox = visual.getBoundingClientRect()
-      maximum = Math.max(
-        maximum,
-        Math.abs(
-          ringBox.x + ringBox.width / 2 - (visualBox.x + visualBox.width / 2),
-        ),
-        Math.abs(
-          ringBox.y + ringBox.height / 2 - (visualBox.y + visualBox.height / 2),
-        ),
-      )
-    }
-
-    return maximum
-  })
-
-  expect(maximumDistance).toBeLessThanOrEqual(0.5)
-  await page.mouse.up()
-  await expect(page).toHaveURL(/\/work\/aarons-toolbox$/)
-})
-
-test('the first homepage section preview travels instead of teleporting', async ({
-  page,
-}, testInfo) => {
-  test.skip(testInfo.project.name.includes('iphone'))
-  await page.goto('/work')
-  await waitForPortfolio(page)
+  const media = page.locator('[data-portfolio-carousel="aarons-toolbox"]')
+  const box = await media.boundingBox()
+  expect(box).not.toBeNull()
 
   await page.evaluate(() => {
     const samplingWindow = window as typeof window & {
-      __portfolioPreviewFrame?: number
-      __portfolioPreviewSamples?: number[]
+      __portfolioCarouselFrame?: number
+      __portfolioCarouselSamples?: number[]
     }
+    const container = document.querySelector<HTMLElement>(
+      '[data-portfolio-carousel="aarons-toolbox"] > div',
+    )
+    samplingWindow.__portfolioCarouselSamples = []
 
-    samplingWindow.__portfolioPreviewSamples = []
     const sample = () => {
-      const ring = document.querySelector<SVGRectElement>(
-        '[data-portfolio-section-nav-ring="left"]',
-      )
-
-      if (ring) {
-        samplingWindow.__portfolioPreviewSamples?.push(
-          ring.y.baseVal.value + ring.height.baseVal.value / 2,
+      if (container) {
+        samplingWindow.__portfolioCarouselSamples?.push(
+          new DOMMatrix(getComputedStyle(container).transform).m41,
         )
       }
-
-      samplingWindow.__portfolioPreviewFrame = requestAnimationFrame(sample)
+      samplingWindow.__portfolioCarouselFrame = requestAnimationFrame(sample)
     }
     sample()
   })
 
-  const destination = page.locator(
-    'button[data-portfolio-start-section-index="4"]',
-  )
-  const destinationBox = await destination.boundingBox()
+  await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height / 2)
+  await wheelGesture(page, 900, 40)
+  await expect(page).toHaveURL(/\/work\/aarons-toolbox\/normalizer$/)
+  await page.waitForTimeout(500)
 
-  expect(destinationBox).not.toBeNull()
-  await page.mouse.move(
-    destinationBox!.x + destinationBox!.width / 2,
-    destinationBox!.y + destinationBox!.height / 2,
-  )
-  await expect
-    .poll(() => getSectionRingDistance(page, 4))
-    .toBeLessThanOrEqual(0.5)
-
-  const samples = await page.evaluate(() => {
+  const maximumFrameJump = await page.evaluate(() => {
     const samplingWindow = window as typeof window & {
-      __portfolioPreviewFrame?: number
-      __portfolioPreviewSamples?: number[]
+      __portfolioCarouselFrame?: number
+      __portfolioCarouselSamples?: number[]
     }
-
-    if (samplingWindow.__portfolioPreviewFrame !== undefined) {
-      cancelAnimationFrame(samplingWindow.__portfolioPreviewFrame)
+    if (samplingWindow.__portfolioCarouselFrame !== undefined) {
+      cancelAnimationFrame(samplingWindow.__portfolioCarouselFrame)
     }
-
-    return samplingWindow.__portfolioPreviewSamples ?? []
+    const samples = samplingWindow.__portfolioCarouselSamples ?? []
+    return samples.reduce((maximum, sample, index) => {
+      if (index === 0) return maximum
+      return Math.max(maximum, Math.abs(sample - samples[index - 1]!))
+    }, 0)
   })
-  expect(samples.length).toBeGreaterThan(1)
-  const start = samples[0]!
-  const end = samples.at(-1)!
-  const lower = Math.min(start, end)
-  const upper = Math.max(start, end)
 
-  expect(Math.abs(end - start)).toBeGreaterThan(20)
-  expect(samples.some(sample => sample > lower + 1 && sample < upper - 1)).toBe(
-    true,
-  )
+  expect(maximumFrameJump).toBeLessThan(box!.width / 4)
 })
 
-test('settled section navigation cross-fades its dot to a horizontal arrow', async ({
-  page,
-}, testInfo) => {
-  test.skip(testInfo.project.name.includes('iphone'))
-  await page.goto('/work')
-  await waitForPortfolio(page)
-
-  await page.evaluate(() => {
-    const samplingWindow = window as typeof window & {
-      __portfolioAffordanceFrame?: number
-      __portfolioAffordanceSamples?: Array<{ arrow: number; dot: number }>
-    }
-
-    samplingWindow.__portfolioAffordanceSamples = []
-    const sample = () => {
-      const arrow = document.querySelector<SVGGraphicsElement>(
-        '[data-portfolio-section-nav-zone="left"] [data-portfolio-section-nav-arrow="3"]',
-      )
-      const dot = document.querySelector<SVGGraphicsElement>(
-        '[data-portfolio-section-nav-zone="left"] [data-portfolio-section-nav-dot="3"]',
-      )
-      if (arrow && dot) {
-        samplingWindow.__portfolioAffordanceSamples?.push({
-          arrow: Number.parseFloat(getComputedStyle(arrow).opacity),
-          dot: Number.parseFloat(getComputedStyle(dot).opacity),
-        })
-      }
-      samplingWindow.__portfolioAffordanceFrame = requestAnimationFrame(sample)
-    }
-    sample()
-  })
-
-  await page.locator('button[data-portfolio-start-section-index="3"]').click()
-  await expect(page).toHaveURL(/\/work\/aarons-toolbox$/)
-  await page.waitForTimeout(1_000)
-
-  const samples = await page.evaluate(() => {
-    const samplingWindow = window as typeof window & {
-      __portfolioAffordanceFrame?: number
-      __portfolioAffordanceSamples?: Array<{ arrow: number; dot: number }>
-    }
-    if (samplingWindow.__portfolioAffordanceFrame !== undefined) {
-      cancelAnimationFrame(samplingWindow.__portfolioAffordanceFrame)
-    }
-    return samplingWindow.__portfolioAffordanceSamples ?? []
-  })
-  expect(
-    samples.some(
-      ({ arrow, dot }) => arrow > 0.1 && arrow < 0.9 && dot > 0.1 && dot < 0.9,
-    ),
-  ).toBe(true)
-  expect(samples.at(-1)?.arrow).toBeGreaterThanOrEqual(0.99)
-  expect(samples.at(-1)?.dot).toBeLessThanOrEqual(0.01)
-  await expect(
-    page.locator(
-      '[data-portfolio-section-nav-zone="left"] [data-portfolio-section-nav-arrow="3"]',
-    ),
-  ).toHaveAttribute('transform', /rotate\(90\)/)
-  await expect(
-    page.locator(
-      '[data-portfolio-section-nav-zone="right"] [data-portfolio-section-nav-arrow="3"]',
-    ),
-  ).toHaveAttribute('transform', /rotate\(-90\)/)
-})
-
-test('inline zoom keeps navigation available and exits with vertical intent', async ({
+test('vertical wheel navigation changes only the outer section', async ({
   page,
 }, testInfo) => {
   test.skip(testInfo.project.name.includes('iphone'))
   await page.goto('/work/aarons-toolbox/overview')
   await waitForPortfolio(page)
 
-  await page.keyboard.press('Enter')
-  await expect(
-    page.locator('[data-portfolio-inline-zoomed="true"]'),
-  ).toBeVisible()
-
-  const nextSlideSurface = page.locator(
-    '[data-portfolio-screenshot-id="normalizer"]',
-  )
-  await expect
-    .poll(async () => (await nextSlideSurface.boundingBox())?.width ?? 0)
-    .toBe(page.viewportSize()!.width)
-
-  await page
-    .locator(
-      'button[data-portfolio-section-nav-side="right"][aria-current="page"]',
-    )
-    .click()
-  await expect(page).toHaveURL(/\/work\/aarons-toolbox\/normalizer$/)
-  await expect(
-    page.locator('[data-portfolio-inline-zoomed="true"]'),
-  ).toBeVisible()
-
-  await page
-    .locator(
-      'button[data-portfolio-section-nav-side="left"][aria-current="page"]',
-    )
-    .click()
-  await expect(page).toHaveURL(/\/work\/aarons-toolbox\/overview$/)
-  await expect(
-    page.locator('[data-portfolio-inline-zoomed="true"]'),
-  ).toBeVisible()
-
-  await page.keyboard.press('ArrowRight')
-  await expect(page).toHaveURL(/\/work\/aarons-toolbox\/normalizer$/)
-  await expect(
-    page.locator('[data-portfolio-inline-zoomed="true"]'),
-  ).toBeVisible()
-
-  await page.keyboard.press('ArrowDown')
+  await page.mouse.move(720, 450)
+  await wheelGesture(page, 40, 700)
   await expect(page).toHaveURL(/\/work\/nextphrase$/)
-  await expect(
-    page.locator('[data-portfolio-inline-zoomed="true"]'),
-  ).toHaveCount(0)
+  await expectActiveSection(page, 6)
 })
 
-test('animated screenshots bypass image optimization', async ({ page }) => {
-  await page.goto('/work/aarons-toolbox/overview')
-  await waitForPortfolio(page)
-
-  const currentSrc = await page
-    .locator(
-      '[data-portfolio-screenshot-id="aarons-toolbox-overview"]:visible img',
-    )
-    .first()
-    .evaluate(image => (image as HTMLImageElement).currentSrc)
-
-  expect(currentSrc).toContain(
-    '/portfolio/aarons-toolbox/aarons-toolbox-community-preview.png',
-  )
-  expect(currentSrc).not.toContain('/_next/image')
-})
-
-test('inline zoom expands from the resting image geometry', async ({
+test('nested drag gestures move only their intended Embla axis', async ({
   page,
 }, testInfo) => {
   test.skip(testInfo.project.name.includes('iphone'))
   await page.goto('/work/aarons-toolbox/overview')
   await waitForPortfolio(page)
 
-  const surface = page
-    .locator('[data-portfolio-screenshot-id="aarons-toolbox-overview"]:visible')
-    .first()
-  const restingBox = await surface.boundingBox()
-  const viewport = page.viewportSize()
-
-  expect(restingBox).not.toBeNull()
-  expect(viewport).not.toBeNull()
-
-  await surface.dblclick()
-
-  const openingBox = await surface.boundingBox()
-  expect(openingBox).not.toBeNull()
-  expect(openingBox!.width).toBeGreaterThanOrEqual(restingBox!.width)
-  expect(openingBox!.width).toBeLessThan(viewport!.width)
-
+  const verticalViewport = page.locator('[data-portfolio-vertical-carousel]')
+  const verticalTrack = verticalViewport.locator(':scope > div')
+  const verticalBox = await verticalViewport.boundingBox()
+  expect(verticalBox).not.toBeNull()
   await expect
-    .poll(async () => (await surface.boundingBox())?.width ?? 0)
-    .toBe(viewport!.width)
-})
-
-test('double-click enters inline presentation without scaling the image', async ({
-  page,
-}, testInfo) => {
-  test.skip(testInfo.project.name.includes('iphone'))
-  await page.goto('/work/aarons-toolbox/overview')
-  await waitForPortfolio(page)
-
-  const surface = page
-    .locator('[data-portfolio-screenshot-id="aarons-toolbox-overview"]:visible')
-    .first()
-  await surface.dblclick()
-
-  await expect(surface).toHaveAttribute('data-portfolio-inline-zoomed', 'true')
-  await expect
-    .poll(async () => (await surface.boundingBox())?.width ?? 0)
-    .toBe(page.viewportSize()!.width)
-  await expect
-    .poll(async () =>
-      surface
-        .locator('[data-portfolio-inline-zoom-content]')
-        .evaluate(element => {
-          const transform = getComputedStyle(element).transform
-          return transform === 'none'
-            ? 1
-            : Number(transform.match(/^matrix\(([^,]+)/)?.[1] ?? 0)
-        }),
+    .poll(() =>
+      verticalTrack.evaluate(element => {
+        const transform = getComputedStyle(element).transform
+        return transform === 'none' ? 0 : new DOMMatrix(transform).m42
+      }),
     )
-    .toBe(1)
-})
+    .toBeLessThan(-verticalBox!.height * 4.99)
 
-test('double-tap zooms touch media by one scale step', async ({
-  page,
-}, testInfo) => {
-  test.skip(!testInfo.project.name.includes('iphone'))
-  await page.goto('/work/aarons-toolbox/overview')
-  await waitForPortfolio(page)
-
-  const surface = page
-    .locator('[data-portfolio-screenshot-id="aarons-toolbox-overview"]:visible')
-    .first()
-  const surfaceBox = await surface.boundingBox()
-  expect(surfaceBox).not.toBeNull()
-  const tapX = surfaceBox!.x + surfaceBox!.width / 2
-  const tapY = surfaceBox!.y + surfaceBox!.height / 2
-  await page.touchscreen.tap(tapX, tapY)
-  await page.touchscreen.tap(tapX, tapY)
-
-  await expect(surface).toHaveAttribute('data-portfolio-inline-zoomed', 'true')
-  await expect
-    .poll(async () =>
-      surface
-        .locator('[data-portfolio-inline-zoom-content]')
-        .evaluate(element => {
-          const transform = getComputedStyle(element).transform
-          const match = transform.match(/^matrix\(([^,]+)/)
-          return match ? Number(match[1]) : 1
-        }),
-    )
-    .toBeGreaterThan(1.1)
-})
-
-test('modal deep links close without losing the selected slide', async ({
-  page,
-}, testInfo) => {
-  test.skip(
-    !testInfo.project.name.includes('chromium'),
-    'The existing modal query route is Chromium-specific.',
+  const media = page.locator('[data-portfolio-carousel="aarons-toolbox"]')
+  const box = await media.boundingBox()
+  expect(box).not.toBeNull()
+  await dragGesture(
+    page,
+    { x: box!.x + box!.width * 0.75, y: box!.y + box!.height / 2 },
+    { x: -box!.width * 0.7, y: -20 },
   )
-  await page.goto('/work/aarons-toolbox/overview?modal=image')
-  await waitForPortfolio(page)
-  await expect(page.locator('[data-portfolio-modal-root]')).toBeVisible()
+  await expect(page).toHaveURL(/\/work\/aarons-toolbox\/normalizer$/)
+  await expectActiveSection(page, 5)
 
-  await page.keyboard.press('Escape')
-  await expect(page.locator('[data-portfolio-modal-root]')).toHaveCount(0)
-  await expect(page).toHaveURL(/\/work\/aarons-toolbox\/overview$/)
+  await dragGesture(page, { x: 1300, y: 700 }, { x: 20, y: -600 })
+  await expect(page).toHaveURL(/\/work\/nextphrase$/)
+  await expectActiveSection(page, 6)
 })
 
-test('mobile carousels retain pull boundaries and one vertical rail', async ({
+test('viewer stays open while media navigation updates the underlying route', async ({
   page,
 }, testInfo) => {
-  test.skip(!testInfo.project.name.includes('iphone'))
-  await page.goto('/work/nextphrase/home')
+  await page.goto('/work/aarons-toolbox/overview')
   await waitForPortfolio(page)
+  const underlyingIndicators = page.locator(
+    '[data-portfolio-underlying-horizontal-navigation] [data-portfolio-slide-indicators]',
+  )
+  const initialIndicatorBox = await underlyingIndicators.boundingBox()
+  expect(initialIndicatorBox).not.toBeNull()
+  const initialIndicatorCenter =
+    initialIndicatorBox!.x + initialIndicatorBox!.width / 2
 
-  const carousel = page.locator('[data-portfolio-carousel="nextphrase"]')
-  const expectsPullBoundaries = testInfo.project.name.includes('portrait')
-  await expect(
-    carousel.locator('[data-portfolio-carousel-boundary="before"]'),
-  ).toHaveCount(expectsPullBoundaries ? 1 : 0)
-  await expect(
-    carousel.locator('[data-portfolio-carousel-boundary="after"]'),
-  ).toHaveCount(expectsPullBoundaries ? 1 : 0)
+  await openOverviewViewer(page, testInfo)
+  await expect(page.locator('.portfolio-viewer')).toBeVisible()
+  await expect(page).toHaveURL(/overview\?modal=image$/)
+  await expect(page.locator('[data-portfolio-theme-trigger]')).toHaveCount(0)
+  const viewerIndicators = page.locator(
+    '[data-portfolio-viewer-slide-navigation] [data-portfolio-slide-indicators]',
+  )
+  await expect(viewerIndicators).toBeVisible()
+  await expect
+    .poll(async () => {
+      const box = await viewerIndicators.boundingBox()
+      const viewportWidth = await page.evaluate(() => window.innerWidth)
+      return box ? Math.abs(box.x + box.width / 2 - viewportWidth / 2) : 999
+    })
+    .toBeLessThan(1)
   await expect(
     page.locator('[data-portfolio-section-nav-zone="left"]'),
-  ).toHaveCount(1)
-  await expect(
-    page.locator('[data-portfolio-section-nav-zone="right"]'),
-  ).toHaveCount(0)
-  await expect(
-    page.locator(
-      '[data-portfolio-section-nav-zone="left"] [data-portfolio-section-nav-arrow] path',
-    ),
-  ).toHaveCount(0)
-  await expectRingCenteredOnActiveDot(page)
-  await expectSectionRingCenteredOnActiveItem(page)
+  ).toHaveCSS('opacity', '0')
+
+  if (testInfo.project.name.includes('iphone')) {
+    await page.getByRole('button', { name: 'Next image' }).click()
+  } else {
+    await page.waitForTimeout(400)
+    const stage = page.locator(
+      '.yarl__slide_current [data-portfolio-viewer-stage]',
+    )
+    const box = await stage.boundingBox()
+    expect(box).not.toBeNull()
+    await dragGesture(
+      page,
+      { x: box!.x + box!.width * 0.75, y: box!.y + box!.height / 2 },
+      { x: -box!.width * 0.6, y: 0 },
+    )
+  }
+  await expect(page.locator('.portfolio-viewer')).toBeVisible()
+  await expect(page).toHaveURL(/normalizer\?modal=image$/)
+
+  await page.keyboard.press('Escape')
+  await expect(page.locator('.portfolio-viewer')).toHaveCount(0)
+  await expect(page).toHaveURL(/\/work\/aarons-toolbox\/normalizer$/)
+  await expect
+    .poll(async () => {
+      const box = await underlyingIndicators.boundingBox()
+      return box
+        ? Math.abs(box.x + box.width / 2 - initialIndicatorCenter)
+        : 999
+    })
+    .toBeLessThan(1)
 })
 
-test('mobile portrait keeps the logo fixed while sections move', async ({
+test('zoomed viewer drags pan and media changes reset zoom', async ({
   page,
 }, testInfo) => {
-  test.skip(!testInfo.project.name.includes('iphone-portrait'))
-  await page.goto('/work')
+  test.skip(testInfo.project.name.includes('iphone'))
+  await page.goto('/work/aarons-toolbox/overview')
   await waitForPortfolio(page)
+  await openOverviewViewer(page, testInfo)
+  await expect(page.locator('.portfolio-viewer')).toBeVisible()
+  await page.waitForTimeout(400)
 
-  const logo = page.locator('[data-portfolio-mobile-logo]')
-  await expect(logo).toBeVisible()
-  const initialPosition = await logo.boundingBox()
+  const stage = page.locator(
+    '.yarl__slide_current [data-portfolio-viewer-stage]',
+  )
+  const zoomWrapper = page.locator('.yarl__slide_current .yarl__slide_wrapper')
+  const box = await stage.boundingBox()
+  expect(box).not.toBeNull()
+  await stage.dblclick({
+    position: { x: box!.width / 2, y: box!.height / 2 },
+  })
+  await expect(zoomWrapper).toHaveAttribute('style', /scale\(2\)/)
 
-  await page.keyboard.press('ArrowDown')
-  await expect(page).toHaveURL(/\/work\/about-me$/)
-  const projectPosition = await logo.boundingBox()
+  await dragGesture(
+    page,
+    { x: box!.x + box!.width * 0.7, y: box!.y + box!.height / 2 },
+    { x: -box!.width * 0.35, y: 0 },
+  )
+  await expect(page).toHaveURL(/overview\?modal=image$/)
+  await expect(zoomWrapper).toHaveAttribute('style', /translateX\(-/)
 
-  expect(initialPosition).not.toBeNull()
-  expect(projectPosition).not.toBeNull()
-  expect(Math.abs(projectPosition!.x - initialPosition!.x)).toBeLessThan(0.5)
-  expect(Math.abs(projectPosition!.y - initialPosition!.y)).toBeLessThan(0.5)
+  await page.getByRole('button', { name: 'Next image' }).click()
+  await expect(page).toHaveURL(/normalizer\?modal=image$/)
+  await expect(
+    page.locator('.yarl__slide_current .yarl__slide_wrapper'),
+  ).toHaveAttribute('style', /scale\(1\)/)
 })
 
-test('reduced motion still completes the loading curtain', async ({ page }) => {
-  await page.emulateMedia({ reducedMotion: 'reduce' })
-  await page.goto('/work/nextphrase/home')
+test('viewer deep links restore with browser history', async ({
+  page,
+}, testInfo) => {
+  await page.goto('/work/aarons-toolbox/overview')
   await waitForPortfolio(page)
-  await expect(page).toHaveURL(/\/work\/nextphrase\/home$/)
-  await expect
-    .poll(async () =>
-      page
-        .locator('rect[data-portfolio-section-nav-ring]')
-        .evaluateAll(rings =>
-          Math.max(
-            ...rings.map(ring =>
-              Math.abs(
-                (ring as SVGRectElement).width.baseVal.value -
-                  (ring as SVGRectElement).height.baseVal.value,
-              ),
-            ),
-          ),
-        ),
-    )
-    .toBeLessThanOrEqual(0.01)
+  await openOverviewViewer(page, testInfo)
+  await expect(page.locator('.portfolio-viewer')).toBeVisible()
+
+  await page.goBack()
+  await expect(page.locator('.portfolio-viewer')).toHaveCount(0)
+  await expect(page).toHaveURL(/\/work\/aarons-toolbox$/)
+  await page.goForward()
+  await expect(page).toHaveURL(/overview\?modal=image$/)
+  await expect(page.locator('.portfolio-viewer')).toBeVisible()
+})
+
+test('reduced motion keeps navigation usable and shortens viewer transitions', async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto('/work/aarons-toolbox/overview')
+  await waitForPortfolio(page)
+  await page.keyboard.press('Enter')
+  await expect(page.locator('.portfolio-viewer')).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(page.locator('.portfolio-viewer')).toHaveCount(0)
 })

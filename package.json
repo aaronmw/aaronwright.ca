@@ -5,6 +5,7 @@
   "packageManager": "pnpm@11.22.0",
   "scripts": {
     "dev": "sh -c 'exec next dev --turbo \"$@\" --hostname 127.0.0.1 --port 3031' --",
+    "dev:lan": "next dev --turbo --hostname 0.0.0.0 --port 3031",
     "build": "next build",
     "export": "next build",
     "test": "pnpm test:unit && pnpm test:e2e",
@@ -19,14 +20,18 @@
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.7.0",
     "@tailwindcss/postcss": "^4.3.3",
+    "embla-carousel-react": "8.6.0",
+    "embla-carousel-wheel-gestures": "8.1.0",
     "gsap": "^3.15.0",
     "next": "^16.2.12",
     "react": "^19.2.8",
+    "react-aria-components": "1.20.0",
     "react-dom": "^19.2.8",
     "react-markdown": "^10.1.0",
     "rehype-raw": "^7.0.0",
     "remark-gfm": "^4.0.1",
-    "three": "^0.185.1"
+    "three": "^0.185.1",
+    "yet-another-react-lightbox": "3.32.2"
   },
   "devDependencies": {
     "@playwright/test": "^1.62.1",
@@ -37,6 +42,7 @@
     "@types/three": "^0.185.4",
     "autoprefixer": "^10.5.4",
     "babel-plugin-react-compiler": "^1.0.0",
+    "embla-carousel": "8.6.0",
     "postcss": "^8.5.25",
     "prettier": "^3.9.6",
     "prettier-plugin-tailwindcss": "^0.8.1",

@@ -1,20 +1,20 @@
-import type { Metadata } from 'next';
-import { TOP_SCREEN_COLOR } from '@/components/portfolio/domain/theme';
-import { PortfolioThemeProvider } from '@/components/portfolio/PortfolioThemeProvider';
-import { PORTFOLIO_THEME_BOOTSTRAP_SCRIPT } from '@/components/portfolio/themeBootstrap';
-import { faviconDataUrl } from '@/lib/favicon';
-import { portfolioControlsFont, portfolioFont } from '@/lib/portfolioFonts';
+import type { Metadata } from 'next'
+import { TOP_SCREEN_COLOR } from '@/components/portfolio/domain/theme'
+import { PortfolioThemeProvider } from '@/components/portfolio/PortfolioThemeProvider'
+import { PORTFOLIO_THEME_BOOTSTRAP_SCRIPT } from '@/components/portfolio/themeBootstrap'
+import { faviconDataUrl } from '@/lib/favicon'
+import { portfolioFont } from '@/lib/portfolioFonts'
 
 export const metadata: Metadata = {
   title: 'Work | Aaron M. Wright',
   description: 'A viewport-sized portfolio browser for Aaron M. Wright.',
   icons: { icon: faviconDataUrl(TOP_SCREEN_COLOR) },
-};
+}
 
 export default function WorkLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
   return (
     <>
@@ -25,12 +25,12 @@ export default function WorkLayout({
       />
       <PortfolioThemeProvider>
         <section
-          className={`${portfolioFont.className} ${portfolioFont.variable} ${portfolioControlsFont.variable} portfolio-theme-root`}
+          className={`${portfolioFont.className} ${portfolioFont.variable} portfolio-theme-root`}
           data-portfolio-theme-root
         >
           {children}
         </section>
       </PortfolioThemeProvider>
     </>
-  );
+  )
 }

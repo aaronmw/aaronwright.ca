@@ -5,7 +5,6 @@ import {
   getInitialSlideIndexes,
   getProjectMediaScreenshots,
   getProjectSlidesBySlug,
-  isAboutMeTextSlide,
 } from '@/components/portfolio/domain/slides'
 
 export function usePortfolioModel({
@@ -59,8 +58,7 @@ export function usePortfolioModel({
         initialSlideIndexes[normalizedInitialProjectIndex] ?? 0
       ]
 
-    return initialSlide?.kind === 'screenshot' &&
-      !isAboutMeTextSlide(project, initialSlide)
+    return initialSlide?.kind === 'screenshot'
       ? initialSlide.screenshot
       : undefined
   }, [

@@ -1,7 +1,5 @@
 export const MOBILE_SECTION_CONTENT_PADDING_LEFT =
-  'max(5.375rem, calc(env(safe-area-inset-left, 0px) + 5.125rem))';
+  'calc(env(safe-area-inset-left, 0px) + var(--portfolio-navigation-track-size))'
 
 export const MOBILE_SECTION_CONTENT_PADDING_RIGHT =
-  'max(2rem, calc(env(safe-area-inset-right, 0px) + 1.5rem))';
-
-export const MOBILE_SECTION_NAVIGATION_OPTICAL_OFFSET = '0.5rem';
+  'calc(env(safe-area-inset-right, 0px) + var(--portfolio-stacked-content-right-inset))'

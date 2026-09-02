@@ -1,24 +1,25 @@
-import { Suspense } from 'react';
-import { notFound } from 'next/navigation';
-import { PortfolioBrowser } from '@/components/portfolio/PortfolioBrowser';
-import { getProjectColorBySlug } from '@/components/portfolio/domain/portfolioColors';
-import { TOP_SCREEN_COLOR } from '@/components/portfolio/domain/theme';
-import { faviconDataUrl } from '@/lib/favicon';
+import { Suspense } from 'react'
+import { notFound, redirect } from 'next/navigation'
+import { PortfolioBrowser } from '@/components/portfolio/PortfolioBrowser'
+import { getProjectColorBySlug } from '@/components/portfolio/domain/portfolioColors'
+import { TOP_SCREEN_COLOR } from '@/components/portfolio/domain/theme'
+import { faviconDataUrl } from '@/lib/favicon'
 import {
   getPortfolioProject,
   getPortfolioScreenshot,
   portfolioSlides,
-} from '@/lib/portfolio';
+} from '@/lib/portfolio'
 
 type SlidePageProps = {
   params: Promise<{
-    workSlug: string;
-    screenshotSlug?: string[];
-  }>;
+    workSlug: string
+    screenshotSlug?: string[]
+  }>
   searchParams: Promise<{
-    modal?: string;
-  }>;
-};
+    modal?: string
+    zoom?: string
+  }>
+}
 
 function plainTextFromMarkdown(markdown: string) {
   return markdown
@@ -29,7 +30,7 @@ function plainTextFromMarkdown(markdown: string) {
     .replace(/&nbsp;/g, ' ')
     .replace(/[*_~`]/g, '')
     .replace(/\s+/g, ' ')
-    .trim();
+    .trim()
 }
 
 export function generateStaticParams() {
@@ -47,21 +48,21 @@ export function generateStaticParams() {
       workSlug: project.slug,
       screenshotSlug: [screenshot.slug],
     })),
-  ]);
+  ])
 }
 
 export async function generateMetadata({ params }: SlidePageProps) {
-  const { workSlug, screenshotSlug = [] } = await params;
-  const project = getPortfolioProject(workSlug);
+  const { workSlug, screenshotSlug = [] } = await params
+  const project = getPortfolioProject(workSlug)
 
   if (!project || screenshotSlug.length > 1) {
-    return {};
+    return {}
   }
 
   const screenshot =
     screenshotSlug.length === 1
       ? getPortfolioScreenshot(project, screenshotSlug[0])
-      : undefined;
+      : undefined
 
   return {
     title: screenshot
@@ -73,39 +74,46 @@ export async function generateMetadata({ params }: SlidePageProps) {
         getProjectColorBySlug(project.slug) ?? TOP_SCREEN_COLOR,
       ),
     },
-  };
+  }
 }
 
 export default async function SlidePage({
   params,
   searchParams,
 }: SlidePageProps) {
-  const [{ workSlug, screenshotSlug = [] }, { modal }] = await Promise.all([
-    params,
-    searchParams,
-  ]);
-  const project = getPortfolioProject(workSlug);
+  const [{ workSlug, screenshotSlug = [] }, { modal, zoom }] =
+    await Promise.all([params, searchParams])
+  const project = getPortfolioProject(workSlug)
 
   if (!project || screenshotSlug.length > 1) {
-    notFound();
+    notFound()
+  }
+
+  if (project.slug === 'about-me' && screenshotSlug[0] === 'overview') {
+    redirect('/work/about-me')
   }
 
   const screenshot =
     screenshotSlug.length === 1
       ? getPortfolioScreenshot(project, screenshotSlug[0])
-      : undefined;
+      : undefined
 
   if (screenshotSlug.length === 1 && !screenshot) {
-    notFound();
+    notFound()
   }
+
+  const viewerMedia =
+    screenshot ?? (screenshotSlug.length === 0 ? project.cover_image : undefined)
 
   return (
     <Suspense>
       <PortfolioBrowser
         initialProjectSlug={project.slug}
         initialScreenshotSlug={screenshot?.slug}
-        initialModalOpen={modal === 'image' && Boolean(screenshot)}
+        initialViewerOpen={
+          (modal === 'image' || zoom === 'image') && Boolean(viewerMedia)
+        }
       />
     </Suspense>
-  );
+  )
 }

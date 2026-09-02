@@ -1,19 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import { portfolioSlides, type PortfolioProject } from '../../lib/portfolio'
-import {
-  getCanonicalCarouselEntries,
-  getCanonicalRenderedCarouselIndex,
-  getFractionalCarouselPosition,
-  getLoopingCarouselEntries,
-  getNavigationTravelDuration,
-  isCarouselBoundaryJump,
-  positiveModulo,
-} from '../../components/portfolio/domain/carousel'
+import { positiveModulo } from '../../components/portfolio/domain/carousel'
 import {
   pageTitle,
   parsePortfolioRoute,
   projectUrl,
   slideNavigationTitle,
+  viewerUrl,
 } from '../../components/portfolio/domain/routing'
 import {
   carouselMediaKey,
@@ -23,11 +16,15 @@ import {
   getProjectSlidesBySlug,
   getSlideMediaKey,
   getVerticalTargetProjectIndex,
-  isAboutMeTextSlide,
-  isModalScreenshotSlide,
+  isViewerScreenshotSlide,
   isVideoScreenshot,
-  modalMediaKey,
+  viewerMediaKey,
 } from '../../components/portfolio/domain/slides'
+import { getProjectNarratives } from '../../components/portfolio/domain/narrative'
+import {
+  getPortfolioViewerSlides,
+  getViewerSlideIndex,
+} from '../../components/portfolio/domain/viewer'
 import {
   buildActiveProjectColorFromHex,
   buildActiveProjectColors,
@@ -43,14 +40,7 @@ const projects: PortfolioProject[] = [
     title: 'About Me',
     blurb: '',
     descriptionMarkdown: '',
-    screenshots: [
-      {
-        id: 'about-me-overview',
-        slug: 'overview',
-        src: '/about-me.png',
-        alt: 'About Me overview',
-      },
-    ],
+    screenshots: [],
   },
   {
     id: 'project-two',
@@ -89,28 +79,44 @@ describe('portfolio project order', () => {
 })
 
 describe('portfolio slide derivation', () => {
-  it('derives descriptions, screenshots, and initial indexes', () => {
+  it('keeps every media item in canonical order without a synthetic intro slide', () => {
     const slides = getProjectSlides(projects[1])
+    const coveredProject = {
+      ...projects[1],
+      cover_image: {
+        id: 'cover',
+        slug: 'cover',
+        src: '/cover.png',
+        alt: 'Cover',
+      },
+    }
+    const coveredSlides = getProjectSlides(coveredProject)
 
     expect(slides.map(({ id, kind }) => [id, kind])).toEqual([
-      ['project-two-description', 'description'],
+      ['overview', 'screenshot'],
+      ['motion', 'screenshot'],
+    ])
+    expect(coveredSlides.map(({ id, kind }) => [id, kind])).toEqual([
+      ['cover', 'screenshot'],
       ['overview', 'screenshot'],
       ['motion', 'screenshot'],
     ])
     expect(getInitialSlideIndexes(projects, 'project-two', 'motion')).toEqual([
-      0, 2,
+      0, 1,
     ])
     expect(getInitialSlideIndexes(projects, 'missing', 'motion')).toEqual([
       0, 0,
     ])
   })
 
-  it('preserves special text-slide and media-key rules', () => {
-    const aboutMeSlide = getProjectSlides(projects[0])[1]
-    const screenshotSlide = getProjectSlides(projects[1])[1]
+  it('uses one description slide only for a media-free project', () => {
+    const aboutMeSlides = getProjectSlides(projects[0])
+    const aboutMeSlide = aboutMeSlides[0]
+    const screenshotSlide = getProjectSlides(projects[1])[0]
 
-    expect(isAboutMeTextSlide(projects[0], aboutMeSlide)).toBe(true)
-    expect(isModalScreenshotSlide(projects[0], aboutMeSlide)).toBe(false)
+    expect(aboutMeSlides).toHaveLength(1)
+    expect(aboutMeSlide.kind).toBe('description')
+    expect(isViewerScreenshotSlide(projects[0], aboutMeSlide)).toBe(false)
     expect(getProjectMediaScreenshots(projects[0])).toEqual([])
     expect(getSlideMediaKey(projects[0], aboutMeSlide, false)).toBeUndefined()
     expect(getSlideMediaKey(projects[1], screenshotSlide, false)).toBe(
@@ -119,7 +125,7 @@ describe('portfolio slide derivation', () => {
     expect(carouselMediaKey(projects[1].screenshots[0])).toBe(
       'carousel:overview',
     )
-    expect(modalMediaKey(projects[1].screenshots[0])).toBe('modal:overview')
+    expect(viewerMediaKey(projects[1].screenshots[0])).toBe('modal:overview')
     expect(isVideoScreenshot(projects[1].screenshots[1])).toBe(true)
   })
 
@@ -132,11 +138,11 @@ describe('portfolio slide derivation', () => {
 describe('portfolio routes', () => {
   const slidesBySlug = getProjectSlidesBySlug(projects)
 
-  it('parses start, project, screenshot, and modal routes', () => {
+  it('parses start, project, screenshot, and legacy viewer routes', () => {
     expect(parsePortfolioRoute('/work', '', projects, slidesBySlug)).toEqual({
       projectIndex: -1,
       slideIndex: 0,
-      modalOpen: false,
+      viewerOpen: false,
     })
     expect(
       parsePortfolioRoute(
@@ -145,7 +151,15 @@ describe('portfolio routes', () => {
         projects,
         slidesBySlug,
       ),
-    ).toEqual({ projectIndex: 1, slideIndex: 1, modalOpen: true })
+    ).toEqual({ projectIndex: 1, slideIndex: 0, viewerOpen: true })
+    expect(
+      parsePortfolioRoute(
+        '/work/project-two/motion',
+        '?zoom=image',
+        projects,
+        slidesBySlug,
+      ),
+    ).toEqual({ projectIndex: 1, slideIndex: 1, viewerOpen: true })
     expect(
       parsePortfolioRoute(
         '/work/about-me/overview',
@@ -153,7 +167,7 @@ describe('portfolio routes', () => {
         projects,
         slidesBySlug,
       ),
-    ).toEqual({ projectIndex: 0, slideIndex: 1, modalOpen: false })
+    ).toBeNull()
   })
 
   it('rejects unknown or overlong routes', () => {
@@ -172,25 +186,69 @@ describe('portfolio routes', () => {
   })
 
   it('serializes URLs, document titles, and navigation labels', () => {
-    const description = slidesBySlug['project-two'][0]
-    const overview = slidesBySlug['project-two'][1]
-    const motion = slidesBySlug['project-two'][2]
+    const overview = slidesBySlug['project-two'][0]
+    const motion = slidesBySlug['project-two'][1]
 
-    expect(projectUrl(projects[1], description)).toBe('/work/project-two')
-    expect(projectUrl(projects[1], overview)).toBe('/work/project-two/overview')
+    expect(projectUrl(projects[1], overview)).toBe('/work/project-two')
+    expect(projectUrl(projects[0], slidesBySlug['about-me'][0])).toBe(
+      '/work/about-me',
+    )
+    expect(viewerUrl(projects[1], overview)).toBe(
+      '/work/project-two/overview?modal=image',
+    )
     expect(pageTitle()).toBe('Work | Aaron M. Wright')
     expect(pageTitle(projects[1], motion)).toBe(
       'Project Two: motion | Aaron M. Wright',
     )
-    expect(slideNavigationTitle(projects[1], description)).toBe(
-      'Project Two • Index',
-    )
     expect(slideNavigationTitle(projects[1], overview)).toBe(
-      '1 of 2 • Project Two • Overview',
+      'Project Two • Index',
     )
     expect(slideNavigationTitle(projects[1], motion)).toBe(
       '2 of 2 • Project Two • Motion',
     )
+  })
+})
+
+describe('project narrative resolution', () => {
+  const project: PortfolioProject = {
+    id: 'notes',
+    slug: 'notes',
+    title: 'Notes',
+    blurb: '',
+    headlineMarkdown: 'Project headline',
+    descriptionMarkdown: 'Project introduction',
+    screenshots: [
+      { id: 'one', slug: 'one', src: '/one.png', alt: 'One' },
+      {
+        id: 'two',
+        slug: 'two',
+        src: '/two.png',
+        alt: 'Two',
+        description: '## Slide two\n\nSpecific notes',
+      },
+      { id: 'three', slug: 'three', src: '/three.png', alt: 'Three' },
+    ],
+  }
+
+  it('uses the project intro until a slide supplies notes, then inherits those notes without wrapping', () => {
+    const narratives = getProjectNarratives(project, getProjectSlides(project))
+    expect(narratives).toEqual([
+      {
+        sourceId: 'project:notes',
+        titleMarkdown: 'Project headline',
+        bodyMarkdown: 'Project introduction',
+      },
+      {
+        sourceId: 'slide:two',
+        titleMarkdown: 'Slide two',
+        bodyMarkdown: 'Specific notes',
+      },
+      {
+        sourceId: 'slide:two',
+        titleMarkdown: 'Slide two',
+        bodyMarkdown: 'Specific notes',
+      },
+    ])
   })
 })
 
@@ -232,35 +290,36 @@ describe('portfolio theme colors', () => {
   })
 })
 
-describe('carousel geometry', () => {
-  const items = [{ id: 'a' }, { id: 'b' }, { id: 'c' }]
+describe('carousel selection', () => {
+  it('wraps forward and backward without clone indexes', () => {
+    expect(positiveModulo(-1, 3)).toBe(2)
+    expect(positiveModulo(3, 3)).toBe(0)
+  })
+})
 
-  it('builds canonical and looping entries without changing item identity', () => {
-    expect(getCanonicalCarouselEntries(items).map(({ key }) => key)).toEqual([
-      'real:a',
-      'real:b',
-      'real:c',
-    ])
-    expect(getLoopingCarouselEntries(items).map(({ key }) => key)).toEqual([
-      'clone-before:c',
-      'real:a',
-      'real:b',
-      'real:c',
-      'clone-after:a',
-    ])
-    expect(getLoopingCarouselEntries([items[0]])).toHaveLength(1)
-    expect(getLoopingCarouselEntries([items[0]], true)).toHaveLength(3)
+describe('portfolio viewer media', () => {
+  it('filters text slides and keeps public media in canonical order', () => {
+    expect(getPortfolioViewerSlides(projects[0])).toEqual([])
+    const viewerSlides = getPortfolioViewerSlides(projects[1])
+    expect(viewerSlides.map(slide => slide.id)).toEqual(['overview', 'motion'])
+    expect(getViewerSlideIndex(viewerSlides, 'motion')).toBe(1)
+    expect(getViewerSlideIndex(viewerSlides, 'missing')).toBe(0)
   })
 
-  it('calculates positions, rendered indexes, boundaries, and timing', () => {
-    expect(positiveModulo(-1, 3)).toBe(2)
-    expect(getFractionalCarouselPosition(450, 150, 200)).toBe(1.5)
-    expect(getCanonicalRenderedCarouselIndex(2, 3)).toBe(3)
-    expect(getCanonicalRenderedCarouselIndex(0, 1)).toBe(0)
-    expect(isCarouselBoundaryJump(2, 0, 3)).toBe(true)
-    expect(isCarouselBoundaryJump(0, 1, 2)).toBe(true)
-    expect(isCarouselBoundaryJump(0, 1, 3)).toBe(false)
-    expect(getNavigationTravelDuration(1)).toBeCloseTo(0.56)
-    expect(getNavigationTravelDuration(20)).toBe(0.85)
+  it('includes a cover before project screenshots', () => {
+    const project = {
+      ...projects[1],
+      cover_image: {
+        id: 'cover',
+        slug: 'cover',
+        src: '/cover.png',
+        alt: 'Cover',
+      },
+    }
+    expect(getPortfolioViewerSlides(project).map(slide => slide.id)).toEqual([
+      'cover',
+      'overview',
+      'motion',
+    ])
   })
 })

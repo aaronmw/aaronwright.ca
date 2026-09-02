@@ -13,16 +13,11 @@ function isVideoSource(src: string) {
   return /\.(webm|mp4|m4v|ogv|ogg)(?:$|\?)/i.test(src)
 }
 
-function getProjectImage(project: PortfolioProject): PortfolioScreenshot {
-  const screenshot =
+function getProjectImage(project: PortfolioProject): PortfolioScreenshot | undefined {
+  return (
     project.cover_image ??
     project.screenshots.find(candidate => !isVideoSource(candidate.src))
-
-  if (!screenshot) {
-    throw new Error(`Missing homepage image for ${project.slug}`)
-  }
-
-  return screenshot
+  )
 }
 
 function projectCellClass(index: number) {
@@ -76,7 +71,6 @@ export function HomeProjectGrid() {
       >
         {portfolioSlides.map((project, index) => {
           const screenshot = getProjectImage(project)
-          const isCaseStudy = Boolean(project.cover_image)
 
           return (
             <article
@@ -87,27 +81,27 @@ export function HomeProjectGrid() {
                 href={`/work/${project.slug}`}
                 className="absolute inset-0 isolate flex touch-manipulation items-end overflow-hidden p-6 outline-none sm:p-8 lg:p-10"
               >
-                <Image
-                  src={screenshot.src}
-                  alt=""
-                  fill
-                  unoptimized
-                  loading={index === 0 ? 'eager' : undefined}
-                  sizes={
-                    index === 0
-                      ? '(min-width: 768px) 100vw, 100vw'
-                      : '(min-width: 768px) 50vw, 100vw'
-                  }
-                  className="-z-20 object-cover opacity-75 saturate-[0.8] transition-[transform,opacity,filter] duration-500 ease-out group-hover:scale-[1.025] group-hover:opacity-90 group-hover:saturate-100 group-focus-within:scale-[1.025] group-focus-within:opacity-90 group-focus-within:saturate-100 motion-reduce:transition-none"
-                />
-                <span className="absolute inset-0 -z-10 bg-gradient-to-t from-black via-black/15 to-black/10 transition-colors duration-500 group-hover:from-black/85 group-focus-within:from-black/85 motion-reduce:transition-none" />
+                {screenshot ? (
+                  <>
+                    <Image
+                      src={screenshot.src}
+                      alt=""
+                      fill
+                      unoptimized
+                      loading={index === 0 ? 'eager' : undefined}
+                      sizes={index === 0 ? '100vw' : '(min-width: 768px) 50vw, 100vw'}
+                      className="-z-20 object-cover opacity-75 saturate-[0.8] transition-[transform,opacity,filter] duration-500 ease-out group-hover:scale-[1.025] group-hover:opacity-90 group-hover:saturate-100 group-focus-within:scale-[1.025] group-focus-within:opacity-90 group-focus-within:saturate-100 motion-reduce:transition-none"
+                    />
+                    <span className="absolute inset-0 -z-10 bg-gradient-to-t from-black via-black/15 to-black/10 transition-colors duration-500 group-hover:from-black/85 group-focus-within:from-black/85 motion-reduce:transition-none" />
+                  </>
+                ) : null}
                 <span className="pointer-events-none absolute inset-2 border border-transparent transition-colors duration-200 group-focus-within:border-resume-signal" />
 
                 <PortfolioLedgerFrame className="w-full max-w-[40rem]">
                   <div className="grid grid-cols-[min-content_minmax(0,1fr)]">
                     <div className="min-w-0 whitespace-nowrap py-2">
                       <PortfolioLedgerLabel>
-                        {isCaseStudy ? 'Case study' : 'Project'}
+                        Project
                       </PortfolioLedgerLabel>
                       <span className="mt-1 block">
                         {String(index + 1).padStart(2, '0')}

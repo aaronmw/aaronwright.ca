@@ -1,9 +1,13 @@
 import type { PortfolioProject } from '@/lib/portfolio'
 import type { PortfolioSelection, ProjectSlide } from './slides'
-import { isAboutMeTextSlide } from './slides'
+
+function isProjectFirstSlide(project: PortfolioProject, slide: ProjectSlide) {
+  if (slide.kind === 'description') return true
+  return (project.cover_image ?? project.screenshots[0])?.id === slide.id
+}
 
 export type PortfolioRouteState = PortfolioSelection & {
-  modalOpen: boolean
+  viewerOpen: boolean
 }
 
 export function parsePortfolioRoute(
@@ -19,7 +23,7 @@ export function parsePortfolioRoute(
   }
 
   if (segments.length === 1) {
-    return { projectIndex: -1, slideIndex: 0, modalOpen: false }
+    return { projectIndex: -1, slideIndex: 0, viewerOpen: false }
   }
 
   const projectIndex = projects.findIndex(
@@ -44,20 +48,34 @@ export function parsePortfolioRoute(
   }
 
   const slide = slides[slideIndex]
-  const modalOpen =
-    new URLSearchParams(search).get('modal') === 'image' &&
-    slide.kind === 'screenshot' &&
-    !isAboutMeTextSlide(project, slide)
+  const query = new URLSearchParams(search)
+  const viewerOpen =
+    (query.get('modal') === 'image' || query.get('zoom') === 'image') &&
+    slide.kind === 'screenshot'
 
-  return { projectIndex, slideIndex, modalOpen }
+  return { projectIndex, slideIndex, viewerOpen }
 }
 
 export function projectUrl(project: PortfolioProject, slide: ProjectSlide) {
-  if (slide.kind === 'description' || project.cover_image?.id === slide.id) {
+  if (
+    isProjectFirstSlide(project, slide)
+  ) {
     return `/work/${project.slug}`
   }
 
   return `/work/${project.slug}/${slide.slug}`
+}
+
+export function viewerUrl(project: PortfolioProject, slide: ProjectSlide) {
+  if (slide.kind === 'screenshot') {
+    const path =
+      project.cover_image?.id === slide.id
+        ? `/work/${project.slug}`
+        : `/work/${project.slug}/${slide.slug}`
+    return `${path}?modal=image`
+  }
+
+  return `${projectUrl(project, slide)}?modal=image`
 }
 
 export function pageTitle(project?: PortfolioProject, slide?: ProjectSlide) {
@@ -65,7 +83,9 @@ export function pageTitle(project?: PortfolioProject, slide?: ProjectSlide) {
     return 'Work | Aaron M. Wright'
   }
 
-  if (slide.kind === 'description' || project.cover_image?.id === slide.id) {
+  if (
+    isProjectFirstSlide(project, slide)
+  ) {
     return `${project.title} | Aaron M. Wright`
   }
 
@@ -89,6 +109,12 @@ export function slideNavigationTitle(
   project: PortfolioProject,
   slide: ProjectSlide,
 ) {
+  if (
+    isProjectFirstSlide(project, slide)
+  ) {
+    return `${project.title} • Index`
+  }
+
   if (slide.kind === 'description') {
     return `${project.title} • Index`
   }

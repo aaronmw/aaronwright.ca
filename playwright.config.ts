@@ -1,8 +1,12 @@
 import { defineConfig, devices } from '@playwright/test'
 
-const port = 3100
 const externalBaseURL = process.env.PLAYWRIGHT_BASE_URL
-const baseURL = externalBaseURL ?? `http://127.0.0.1:${port}`
+
+if (!externalBaseURL) {
+  throw new Error(
+    "PLAYWRIGHT_BASE_URL must point to Aaron's already-running local app.",
+  )
+}
 
 export default defineConfig({
   testDir: './tests/e2e',
@@ -11,17 +15,9 @@ export default defineConfig({
   fullyParallel: false,
   reporter: [['list']],
   use: {
-    baseURL,
+    baseURL: externalBaseURL,
     trace: 'retain-on-failure',
   },
-  webServer: externalBaseURL
-    ? undefined
-    : {
-        command: `pnpm dev -- --hostname 127.0.0.1 --port ${port}`,
-        url: `${baseURL}/work`,
-        reuseExistingServer: !process.env.CI,
-        timeout: 120_000,
-      },
   projects: [
     {
       name: 'chromium-desktop',
