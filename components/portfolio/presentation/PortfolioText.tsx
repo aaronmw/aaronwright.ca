@@ -1,6 +1,7 @@
 'use client'
 
 import {
+  type ComponentProps,
   useEffect,
   useReducer,
   useRef,
@@ -10,6 +11,7 @@ import {
 } from 'react'
 import ReactMarkdown from 'react-markdown'
 import rehypeRaw from 'rehype-raw'
+import rehypeSanitize, { defaultSchema } from 'rehype-sanitize'
 import remarkGfm from 'remark-gfm'
 import type { Components } from 'react-markdown'
 import type { PortfolioProject } from '@/lib/portfolio'
@@ -23,6 +25,17 @@ type MarkdownHeadingProps = HTMLAttributes<HTMLHeadingElement> & {
   node?: unknown
 }
 type MarkdownHeadingTag = 'h2' | 'h3' | 'h4' | 'h5' | 'h6'
+
+const PORTFOLIO_MARKDOWN_SCHEMA = {
+  ...defaultSchema,
+  attributes: {
+    ...defaultSchema.attributes,
+    abbr: [...(defaultSchema.attributes?.abbr ?? []), 'title'],
+  },
+}
+const PORTFOLIO_REHYPE_PLUGINS: NonNullable<
+  ComponentProps<typeof ReactMarkdown>['rehypePlugins']
+> = [rehypeRaw, [rehypeSanitize, PORTFOLIO_MARKDOWN_SCHEMA]]
 
 const INLINE_MARKDOWN_COMPONENTS = {
   p({ children }) {
@@ -349,11 +362,11 @@ function createMarkdownHeading(Tag: MarkdownHeadingTag) {
   return MarkdownHeading
 }
 
-function PortfolioMarkdown({ children }: { children: string }) {
+export function PortfolioMarkdown({ children }: { children: string }) {
   return (
     <ReactMarkdown
       remarkPlugins={[remarkGfm]}
-      rehypePlugins={[rehypeRaw]}
+      rehypePlugins={PORTFOLIO_REHYPE_PLUGINS}
       components={PORTFOLIO_MARKDOWN_COMPONENTS}
     >
       {children}
@@ -365,7 +378,7 @@ export function PortfolioInlineMarkdown({ children }: { children: string }) {
   return (
     <ReactMarkdown
       remarkPlugins={[remarkGfm]}
-      rehypePlugins={[rehypeRaw]}
+      rehypePlugins={PORTFOLIO_REHYPE_PLUGINS}
       allowedElements={['p', 'strong', 'em', 'code', 'br', 'del', 'abbr']}
       unwrapDisallowed
       components={INLINE_MARKDOWN_COMPONENTS}

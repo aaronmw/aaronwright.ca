@@ -1,9 +1,15 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { createAssetPreviewLoader } from './assetPreviewLoader';
 import styles from './caseStudyIntake.module.css';
 
 const STORAGE_KEY = 'aaron-case-study-interview-v1';
+const MONTH_FORMATTER = new Intl.DateTimeFormat('en-CA', {
+  month: 'short',
+  year: 'numeric',
+  timeZone: 'UTC',
+});
 
 type Question = {
   id: string;
@@ -898,7 +904,7 @@ function monthIndex(value: string) {
 function formatMonth(value: string) {
   if (!value) return 'Date needed';
   const [year, month] = value.split('-').map(Number);
-  return new Intl.DateTimeFormat('en-CA', { month: 'short', year: 'numeric', timeZone: 'UTC' }).format(new Date(Date.UTC(year, month - 1, 1)));
+  return MONTH_FORMATTER.format(new Date(Date.UTC(year, month - 1, 1)));
 }
 
 function formatOffset(offset: number) {
@@ -1031,21 +1037,11 @@ function AssetInventoryField({ number, value, onChange }: { number: number; valu
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    let active = true;
-    const urls: string[] = [];
-    Promise.all(assets.map(async (asset) => {
-      const blob = await getAssetImage(asset.id);
-      if (!blob) return [asset.id, ''] as const;
-      const url = URL.createObjectURL(blob);
-      urls.push(url);
-      return [asset.id, url] as const;
-    })).then((entries) => {
-      if (active) setPreviews(Object.fromEntries(entries));
-    }).catch(() => {});
-    return () => {
-      active = false;
-      urls.forEach((url) => URL.revokeObjectURL(url));
-    };
+    const loader = createAssetPreviewLoader(getAssetImage);
+    const assetIds = parseAssetAnswer(value).map((asset) => asset.id);
+
+    loader.load(assetIds).then(setPreviews).catch(() => {});
+    return loader.dispose;
   }, [value]);
 
   function commit(next: AssetRecord[]) {

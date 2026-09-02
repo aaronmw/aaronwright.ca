@@ -7,6 +7,7 @@ import {
   type ChangeEvent,
   type ReactNode,
 } from 'react'
+import Link from 'next/link'
 import {
   BROCHURE_SCHEMA,
   initialBrochureDocument,
@@ -279,12 +280,12 @@ export function CaseStudyBrochureEditor() {
     <main className="min-h-dvh bg-brief-paper pb-32 font-brief text-brief-ink antialiased">
       <header className="mx-auto grid max-w-[86rem] gap-10 px-6 pb-16 pt-10 sm:px-10 sm:pt-16 lg:grid-cols-[minmax(0,1fr)_20rem] lg:px-16 lg:pb-24">
         <div>
-          <a
+          <Link
             href="/case-study-intake"
             className="mb-8 inline-flex min-h-11 items-center text-xs font-bold uppercase tracking-[0.1em] text-brief-muted underline decoration-brief-line underline-offset-4 outline-none hover:text-brief-signal focus-visible:ring-2 focus-visible:ring-brief-signal"
           >
             ← Interview questionnaire
-          </a>
+          </Link>
           <p className="mb-4 font-mono text-xs font-bold uppercase tracking-[0.1em] text-brief-signal">
             Case-study brochure editor
           </p>

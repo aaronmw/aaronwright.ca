@@ -132,17 +132,20 @@ function nextPaint() {
 
 function ContentSizedTextarea({
   id,
+  ariaLabel,
   value,
   className,
   onChange,
 }: {
   id: string
+  ariaLabel: string
   value: string
   className: string
   onChange: (value: string) => void
 }) {
   return (
     <textarea
+      aria-label={ariaLabel}
       className={className}
       id={id}
       value={value}
@@ -500,6 +503,7 @@ export function CopyEditor() {
                                   />
                                 ) : (
                                   <ContentSizedTextarea
+                                    ariaLabel={entry.label}
                                     className={`${styles.textarea} ${changed ? styles.controlChanged : ''}`}
                                     id={controlId}
                                     value={value}
