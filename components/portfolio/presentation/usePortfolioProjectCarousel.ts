@@ -72,12 +72,16 @@ export function usePortfolioProjectCarousel({
     },
     plugins,
   )
-  const notifyBackdropVisibility = useEffectEvent(onBackdropVisibilityChange)
+  const notifyApi = useEffectEvent(onApi)
+  const notifySelect = useEffectEvent(onSelect)
+  const notifyBackdropVisibility = useEffectEvent((visible: boolean) => {
+    if (active) onBackdropVisibilityChange(visible)
+  })
 
   useEffect(() => {
     // The Embla instance is registered in a ref-backed API map and removed in cleanup.
     // react-doctor-disable-next-line react-doctor/no-pass-live-state-to-parent
-    onApi(projectIndex, emblaApi ?? null)
+    notifyApi(projectIndex, emblaApi ?? null)
     if (!emblaApi) return
 
     const handleSelect = () => {
@@ -88,7 +92,7 @@ export function usePortfolioProjectCarousel({
       ) {
         destinationSelectedRef.current = true
       }
-      onSelect(projectIndex, selectedIndex)
+      notifySelect(projectIndex, selectedIndex)
     }
     const handleScroll = () => {
       const selectedIndex = emblaApi.selectedScrollSnap()
@@ -96,7 +100,7 @@ export function usePortfolioProjectCarousel({
         carouselMovingRef.current = true
         destinationSelectedRef.current =
           selectedIndex !== settledSlideIndexRef.current
-        if (active) notifyBackdropVisibility(false)
+        notifyBackdropVisibility(false)
       }
       if (selectedIndex !== settledSlideIndexRef.current) {
         destinationSelectedRef.current = true
@@ -114,13 +118,13 @@ export function usePortfolioProjectCarousel({
       const snapDistance = Math.min(...neighboringDistances)
       const closeToDestination =
         Math.abs(emblaApi.scrollProgress() - target) <= snapDistance * 0.2
-      if (active) notifyBackdropVisibility(closeToDestination)
+      notifyBackdropVisibility(closeToDestination)
     }
     const handleSettle = () => {
       carouselMovingRef.current = false
       destinationSelectedRef.current = false
       settledSlideIndexRef.current = emblaApi.selectedScrollSnap()
-      if (active) notifyBackdropVisibility(true)
+      notifyBackdropVisibility(true)
     }
 
     emblaApi.on('select', handleSelect)
@@ -134,14 +138,14 @@ export function usePortfolioProjectCarousel({
       emblaApi.off('select', handleSelect)
       emblaApi.off('scroll', handleScroll)
       emblaApi.off('settle', handleSettle)
-      onApi(projectIndex, null)
+      notifyApi(projectIndex, null)
     }
-  }, [active, emblaApi, onApi, onSelect, projectIndex])
+  }, [emblaApi, projectIndex])
 
   useEffect(() => {
     if (active) {
       // Backdrop visibility is an animation event, not mirrored React state.
-      // react-doctor-disable-next-line react-doctor/no-pass-live-state-to-parent
+      // react-doctor-disable-next-line react-doctor/no-pass-data-to-parent
       notifyBackdropVisibility(true)
     }
   }, [active])

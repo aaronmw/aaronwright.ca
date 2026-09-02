@@ -67,11 +67,12 @@ export function usePortfolioNavigationController({
     slideIndex: number,
     mode: NavigationMode,
   ) {
-    setActiveSlideIndexes(indexes =>
-      indexes.map((index, indexProject) =>
+    setActiveSlideIndexes(indexes => {
+      if (indexes[projectIndex] === slideIndex) return indexes
+      return indexes.map((index, indexProject) =>
         indexProject === projectIndex ? slideIndex : index,
-      ),
-    )
+      )
+    })
     if (
       mode !== 'silent' &&
       selectionRef.current.projectIndex === projectIndex
