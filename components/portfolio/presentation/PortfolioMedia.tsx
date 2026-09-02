@@ -170,7 +170,6 @@ export function ScreenshotMedia({
     registerMediaElement(mediaKey, element)
     if (mediaKey.startsWith('carousel:'))
       registerMediaElement(viewerMediaKey(screenshot), element)
-    if (element) updateAspectRatio(element)
   }
 
   const frameStyle: MediaFrameStyle = aspectRatio
