@@ -103,7 +103,7 @@ export function PortfolioStartScreen({
 }) {
   const isMobilePortraitLayout =
     isTouchInput && !isWideLayout && !isTouchLandscapeLayout
-  const showIndexSummaries = isWideLayout && !isTouchLandscapeLayout
+  const showIndexSummaryColumn = isWideLayout && !isTouchLandscapeLayout
   const useTwoColumnIndex = isTouchLandscapeLayout
   const { startScreenRef, headerRef, contentSectionRef, shouldBottomAlign } =
     useStartScreenContentAlignment(isMobilePortraitLayout)
@@ -229,7 +229,7 @@ export function PortfolioStartScreen({
         <PortfolioLedgerFrame
           aria-label="Portfolio sections"
           className={`grid overflow-hidden ${
-            showIndexSummaries
+            showIndexSummaryColumn
               ? 'grid-cols-[min-content_minmax(10rem,0.7fr)_minmax(18rem,1.3fr)]'
               : useTwoColumnIndex
                 ? 'grid-cols-2'
@@ -248,7 +248,7 @@ export function PortfolioStartScreen({
                 data-interactive-pop="off"
                 data-portfolio-start-section-index={index + 1}
                 className={`group grid w-full touch-manipulation items-baseline pb-[1lh] text-left text-[var(--portfolio-ink)] outline-none transition-colors duration-200 ease-out hover:text-resume-signal focus-visible:text-resume-signal focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-resume-signal motion-reduce:transition-none ${
-                  showIndexSummaries
+                  showIndexSummaryColumn
                     ? 'col-span-3 grid-cols-subgrid'
                     : useTwoColumnIndex
                       ? 'grid-cols-[min-content_minmax(0,1fr)]'
@@ -292,8 +292,15 @@ export function PortfolioStartScreen({
                   >
                     {project.title}
                   </span>
+                  {!showIndexSummaryColumn ? (
+                    <span className="mt-[0.5lh] block max-w-[54ch] font-normal text-[var(--portfolio-ink-70)]">
+                      <PortfolioInlineMarkdown>
+                        {project.blurb}
+                      </PortfolioInlineMarkdown>
+                    </span>
+                  ) : null}
                 </span>
-                {showIndexSummaries ? (
+                {showIndexSummaryColumn ? (
                   <span className="min-w-0 text-[var(--portfolio-ink-70)]">
                     <PortfolioInlineMarkdown>
                       {project.blurb}
