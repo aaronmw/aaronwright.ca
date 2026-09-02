@@ -80,6 +80,8 @@ export function PortfolioThemeProvider({ children }: { children: ReactNode }) {
       document.documentElement.dataset.portfolioThemePreference ??
         readStoredPreference(),
     )
+    // Theme resolution depends on the mounted document, storage, and matchMedia.
+    // react-doctor-disable-next-line react-hooks-js/set-state-in-effect
     syncTheme(initialPreference)
 
     const handleSystemThemeChange = () => {

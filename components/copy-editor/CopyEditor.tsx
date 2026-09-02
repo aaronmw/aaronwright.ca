@@ -220,6 +220,8 @@ export function CopyEditor() {
         const parsed = JSON.parse(stored) as unknown
         if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
           const migrated = migrateCopyEditorDraftValues(parsed as CopyValues)
+          // Browser-only draft hydration intentionally updates after mount.
+          // react-doctor-disable-next-line react-hooks-js/set-state-in-effect
           setValues(current =>
             Object.fromEntries(
               copyEditorEntries.map(entry => [
@@ -228,12 +230,18 @@ export function CopyEditor() {
               ]),
             ),
           )
+          // Report the hydration result after the client storage read.
+          // react-doctor-disable-next-line react-hooks-js/set-state-in-effect
           setStatus('Restored local draft')
         }
       }
     } catch {
+      // Report browser-storage failures in the mounted authoring tool.
+      // react-doctor-disable-next-line react-hooks-js/set-state-in-effect
       setStatus('Local draft storage is unavailable')
     }
+    // This gate prevents the server-safe initial draft from being persisted.
+    // react-doctor-disable-next-line react-hooks-js/set-state-in-effect
     setHydrated(true)
   }, [])
 

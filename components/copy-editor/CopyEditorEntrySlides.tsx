@@ -122,6 +122,7 @@ function CopyEditorMedia({
         // These are known local portfolio assets; a plain image keeps the
         // authoring-only editor compatible with every source format.
         // eslint-disable-next-line @next/next/no-img-element
+        // react-doctor-disable-next-line react-doctor/nextjs-no-img-element
         <img
           src={media.src}
           alt={alt}

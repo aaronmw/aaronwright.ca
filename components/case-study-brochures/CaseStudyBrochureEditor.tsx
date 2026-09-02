@@ -535,21 +535,35 @@ export function CaseStudyBrochureEditor() {
       const saved = window.localStorage.getItem(STORAGE_KEY)
       if (saved) {
         const parsed: unknown = JSON.parse(saved)
-        if (isBrochureDocument(parsed)) setDocument(parsed)
+        if (isBrochureDocument(parsed)) {
+          // Browser-only draft hydration intentionally updates after mount.
+          // react-doctor-disable-next-line react-hooks-js/set-state-in-effect
+          setDocument(parsed)
+        }
       }
+      // Report the browser-storage outcome after the client read completes.
+      // react-doctor-disable-next-line react-hooks-js/set-state-in-effect
       setStatus('Saved locally')
     } catch {
+      // Report browser-storage failures in the mounted authoring tool.
+      // react-doctor-disable-next-line react-hooks-js/set-state-in-effect
       setStatus('Local save unavailable')
     }
+    // This gate prevents the initial server-safe document from being persisted.
+    // react-doctor-disable-next-line react-hooks-js/set-state-in-effect
     setReady(true)
   }, [])
 
   useEffect(() => {
     if (!ready) return
+    // Persistence status follows the debounced browser-storage lifecycle.
+    // react-doctor-disable-next-line react-hooks-js/set-state-in-effect
     setStatus('Saving…')
     const timeout = window.setTimeout(() => {
       try {
         window.localStorage.setItem(STORAGE_KEY, JSON.stringify(document))
+        // Report successful browser persistence after the timer completes.
+        // react-doctor-disable-next-line react-hooks-js/set-state-in-effect
         setStatus(
           `Saved locally · ${new Date().toLocaleTimeString([], {
             hour: 'numeric',
@@ -557,6 +571,8 @@ export function CaseStudyBrochureEditor() {
           })}`,
         )
       } catch {
+        // Report browser-storage failures after the attempted write.
+        // react-doctor-disable-next-line react-hooks-js/set-state-in-effect
         setStatus('Local save unavailable')
       }
     }, 250)
@@ -954,6 +970,9 @@ function StringListEditor({
       </legend>
       <div className="grid gap-px bg-brief-line">
         {values.map((value, index) => (
+          // Ordered string values intentionally have no persisted item identity;
+          // the controlled list is replaced atomically on edit, append, or remove.
+          // react-doctor-disable-next-line react-doctor/no-array-index-as-key
           <div
             className="grid grid-cols-[2.25rem_minmax(0,1fr)_3rem] items-stretch bg-brief-field"
             key={`${label}-${index}`}

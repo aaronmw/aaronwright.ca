@@ -32,6 +32,8 @@ function setFavicon(href: string) {
 export function FaviconSync() {
   const pathname = usePathname();
 
+  // The cleanup cancels both RAFs and invokes the optional store unsubscribe.
+  // react-doctor-disable-next-line react-doctor/effect-needs-cleanup
   useEffect(() => {
     const routeColor = getRouteColor(pathname);
     const update = () =>

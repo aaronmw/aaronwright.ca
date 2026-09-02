@@ -75,6 +75,8 @@ export function usePortfolioProjectCarousel({
   const notifyBackdropVisibility = useEffectEvent(onBackdropVisibilityChange)
 
   useEffect(() => {
+    // The Embla instance is registered in a ref-backed API map and removed in cleanup.
+    // react-doctor-disable-next-line react-doctor/no-pass-live-state-to-parent
     onApi(projectIndex, emblaApi ?? null)
     if (!emblaApi) return
 
@@ -124,6 +126,8 @@ export function usePortfolioProjectCarousel({
     emblaApi.on('select', handleSelect)
     emblaApi.on('scroll', handleScroll)
     emblaApi.on('settle', handleSettle)
+    // Initial selection is an imperative Embla lifecycle notification.
+    // react-doctor-disable-next-line react-doctor/no-pass-live-state-to-parent
     handleSelect()
 
     return () => {
@@ -135,7 +139,11 @@ export function usePortfolioProjectCarousel({
   }, [active, emblaApi, onApi, onSelect, projectIndex])
 
   useEffect(() => {
-    if (active) notifyBackdropVisibility(true)
+    if (active) {
+      // Backdrop visibility is an animation event, not mirrored React state.
+      // react-doctor-disable-next-line react-doctor/no-pass-live-state-to-parent
+      notifyBackdropVisibility(true)
+    }
   }, [active])
 
   useLayoutEffect(() => {

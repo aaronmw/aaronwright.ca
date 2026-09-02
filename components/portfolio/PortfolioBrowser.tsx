@@ -318,6 +318,8 @@ export function PortfolioBrowser({
   })
 
   useLayoutEffect(() => {
+    // Async font/media readiness intentionally advances reveal state after mount.
+    // react-doctor-disable-next-line react-hooks-js/set-state-in-effect
     void revealPortfolio()
   }, [verticalApi])
 

@@ -65,6 +65,8 @@ export const OverscrollIndicator = forwardRef<
     }
   }
 
+  // ResizeObserver needs one callback identity for its subscription lifetime.
+  // react-doctor-disable-next-line react-doctor/react-compiler-no-manual-memoization
   const updateIndicators = useCallback(() => {
     const viewport = viewportRef.current;
 

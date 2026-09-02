@@ -552,6 +552,8 @@ test('horizontal wheel selection settles without reinitializing the carousel', a
           new DOMMatrix(getComputedStyle(container).transform).m41,
         )
       }
+      // This is a bounded test sampler, not a Three.js renderer loop.
+      // react-doctor-disable-next-line react-doctor/three-prefer-set-animation-loop
       samplingWindow.__portfolioCarouselFrame = requestAnimationFrame(sample)
     }
     sample()

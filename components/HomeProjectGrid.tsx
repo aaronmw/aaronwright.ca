@@ -56,6 +56,8 @@ export function HomeProjectGrid() {
           >
             Carousel
           </Link>
+          {/* A static PDF is a document navigation, not a Next.js route. */}
+          {/* react-doctor-disable-next-line react-doctor/nextjs-no-a-element */}
           <a
             href="/resume.pdf"
             className="outline-none transition-opacity hover:opacity-65 focus-visible:opacity-65"
