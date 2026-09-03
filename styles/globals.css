@@ -594,8 +594,9 @@ button {
   margin-bottom: 0;
 }
 
-.portfolio-markdown a {
-  color: var(--project-body-color, var(--portfolio-ink));
+.portfolio-markdown a,
+.portfolio-prose-link {
+  color: var(--color-resume-signal);
   font-weight: 700;
   text-decoration: underline;
   text-decoration-color: currentColor;
@@ -606,12 +607,19 @@ button {
 }
 
 .portfolio-markdown a:hover,
-.portfolio-markdown a:focus-visible {
-  color: var(--color-resume-signal);
+.portfolio-markdown a:focus-visible,
+.portfolio-prose-link:not(:disabled):hover,
+.portfolio-prose-link:focus-visible {
+  color: var(--color-resume-paper);
+}
+
+.portfolio-prose-link:disabled {
+  color: color-mix(in srgb, var(--portfolio-ink) 30%, transparent);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .portfolio-markdown a {
+  .portfolio-markdown a,
+  .portfolio-prose-link {
     transition: none;
   }
 }

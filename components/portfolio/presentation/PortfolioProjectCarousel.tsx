@@ -12,6 +12,7 @@ import {
   MOBILE_SECTION_CONTENT_PADDING_RIGHT,
 } from '../mobileLayout'
 import { ProjectPanel } from './PortfolioMedia'
+import { PortfolioProjectControls } from './PortfolioProjectControls'
 import {
   PortfolioLedgerFrame,
   ProjectInformation,
@@ -32,6 +33,38 @@ type ProjectVerticalAlignmentStyle = CSSProperties & {
   '--portfolio-project-narrative-content-top': string
 }
 
+function ProjectCarouselMetadata({
+  activeSlideIndex,
+  project,
+  projectNumber,
+  slideCount,
+  onSelectSlide,
+}: {
+  activeSlideIndex: number
+  project: PortfolioProject
+  projectNumber: string
+  slideCount: number
+  onSelectSlide: (slideIndex: number) => void
+}) {
+  return (
+    <ProjectMetadata
+      project={project}
+      projectNumber={projectNumber}
+      alignWithLogo={false}
+    >
+      {project.url ? (
+        <PortfolioProjectControls
+          activeSlideIndex={activeSlideIndex}
+          projectTitle={project.title}
+          slideCount={slideCount}
+          url={project.url}
+          onSelectSlide={onSelectSlide}
+        />
+      ) : null}
+    </ProjectMetadata>
+  )
+}
+
 export function PortfolioProjectCarousel({
   project,
   projectIndex,
@@ -45,6 +78,7 @@ export function PortfolioProjectCarousel({
   registerMediaElement,
   onApi,
   onSelect,
+  onSelectSlide,
   onOpenViewer,
   onBackdropVisibilityChange,
 }: {
@@ -63,6 +97,7 @@ export function PortfolioProjectCarousel({
   ) => void
   onApi: (projectIndex: number, api: EmblaCarouselType | null) => void
   onSelect: (projectIndex: number, slideIndex: number) => void
+  onSelectSlide: (slideIndex: number) => void
   onOpenViewer: (intent: ViewerOpenIntent) => void
   onBackdropVisibilityChange: (visible: boolean) => void
 }) {
@@ -122,10 +157,12 @@ export function PortfolioProjectCarousel({
               aria-label={`${project.title} overview`}
               className="col-start-1 [padding-left:var(--portfolio-control-gutter-width)] [padding-right:var(--portfolio-default-spacing)] [transform:translateY(calc(-100%-2lh))]"
             >
-              <ProjectMetadata
+              <ProjectCarouselMetadata
+                activeSlideIndex={activeSlideIndex}
                 project={project}
                 projectNumber={projectNumber}
-                alignWithLogo={false}
+                slideCount={slides.length}
+                onSelectSlide={onSelectSlide}
               />
             </PortfolioLedgerFrame>
           </div>
@@ -187,10 +224,12 @@ export function PortfolioProjectCarousel({
             className="pointer-events-none relative z-20 col-start-1 row-start-1 min-h-0 min-w-0"
           >
             <PortfolioLedgerFrame className="pointer-events-auto absolute inset-x-0 mx-auto w-full max-w-[calc(var(--portfolio-description-rail-width)-var(--portfolio-control-gutter-width)-var(--portfolio-default-spacing))] top-[var(--portfolio-project-narrative-content-top)] [transform:translateY(calc(-100%-2lh))]">
-              <ProjectMetadata
+              <ProjectCarouselMetadata
+                activeSlideIndex={activeSlideIndex}
                 project={project}
                 projectNumber={projectNumber}
-                alignWithLogo={false}
+                slideCount={slides.length}
+                onSelectSlide={onSelectSlide}
               />
             </PortfolioLedgerFrame>
           </div>

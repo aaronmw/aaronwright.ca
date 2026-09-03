@@ -108,11 +108,13 @@ export function ProjectMetadata({
   projectNumber,
   hasMultipleRoles: hasMultipleRolesOverride,
   alignWithLogo = true,
+  children,
 }: {
   project: PortfolioProject
   projectNumber: string
   hasMultipleRoles?: boolean
   alignWithLogo?: boolean
+  children?: ReactNode
 }) {
   const hasMultipleRoles =
     hasMultipleRolesOverride ?? project.rolesMarkdown?.includes('→') ?? false
@@ -127,41 +129,66 @@ export function ProjectMetadata({
           : ''
       }`}
     >
-      <dl className="flex items-baseline justify-between gap-x-6">
-        <div className="flex shrink-0 items-baseline gap-x-[1ch] whitespace-nowrap">
+      <div
+        className={`flex flex-wrap justify-between gap-x-6 gap-y-2 ${children ? 'items-center' : 'items-baseline'}`}
+      >
+        <dl className="flex shrink-0 items-baseline gap-x-[1ch] whitespace-nowrap">
           <dt className="sr-only">Project</dt>
-          <dd className="font-bold">{projectNumber}</dd>
+          <dd className="font-bold text-[var(--portfolio-ink-70)]">
+            {projectNumber}
+          </dd>
           <dt className="sr-only">Company or product</dt>
           <dd className="font-bold">{project.title}</dd>
-        </div>
-        {project.rolesMarkdown || project.dates ? (
-          <div
-            className={
-              hasMultipleRoles
-                ? 'flex min-w-0 flex-col items-end justify-end text-right'
-                : 'flex min-w-0 flex-wrap items-baseline justify-end gap-x-[1ch] text-right'
-            }
-          >
-            {project.rolesMarkdown ? (
-              <>
-                <dt className="sr-only">Role</dt>
-                <dd className="shrink-0 whitespace-nowrap">
-                  <PortfolioInlineMarkdown>
-                    {project.rolesMarkdown}
-                  </PortfolioInlineMarkdown>
-                </dd>
-              </>
-            ) : null}
-            {project.dates ? (
-              <>
-                <dt className="sr-only">Dates</dt>
-                <dd className="shrink-0 whitespace-nowrap">{project.dates}</dd>
-              </>
-            ) : null}
+        </dl>
+        {project.rolesMarkdown || project.dates || children ? (
+          <div className="ml-auto flex max-w-full flex-wrap items-center justify-end gap-x-6 gap-y-2">
+            <ProjectRoleDates
+              rolesMarkdown={project.rolesMarkdown}
+              dates={project.dates}
+              hasMultipleRoles={hasMultipleRoles}
+            />
+            {children}
           </div>
         ) : null}
-      </dl>
+      </div>
     </header>
+  )
+}
+
+function ProjectRoleDates({
+  rolesMarkdown,
+  dates,
+  hasMultipleRoles,
+}: {
+  rolesMarkdown?: string
+  dates?: string
+  hasMultipleRoles: boolean
+}) {
+  if (!rolesMarkdown && !dates) return null
+
+  return (
+    <dl
+      className={
+        hasMultipleRoles
+          ? 'flex min-w-0 flex-col items-end justify-end text-right'
+          : 'flex min-w-0 flex-wrap items-baseline justify-end gap-x-[1ch] text-right'
+      }
+    >
+      {rolesMarkdown ? (
+        <>
+          <dt className="sr-only">Role</dt>
+          <dd className="shrink-0 whitespace-nowrap">
+            <PortfolioInlineMarkdown>{rolesMarkdown}</PortfolioInlineMarkdown>
+          </dd>
+        </>
+      ) : null}
+      {dates ? (
+        <>
+          <dt className="sr-only">Dates</dt>
+          <dd className="shrink-0 whitespace-nowrap">{dates}</dd>
+        </>
+      ) : null}
+    </dl>
   )
 }
 
@@ -310,16 +337,6 @@ function NarrativeContent({
         <div className="portfolio-markdown portfolio-typewritten-copy prose max-w-none [font-size:inherit] font-normal leading-[inherit]">
           <PortfolioMarkdown>{narrative.bodyMarkdown}</PortfolioMarkdown>
         </div>
-        {project.url ? (
-          <a
-            href={project.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-6 flex min-h-12 w-full items-center justify-center bg-resume-signal px-5 py-3 text-center font-bold text-resume-paper outline-none transition-[filter] hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-resume-signal active:brightness-95 motion-reduce:transition-none"
-          >
-            Visit Project
-          </a>
-        ) : null}
       </div>
     </div>
   )

@@ -469,6 +469,9 @@ export function PortfolioBrowserView({
                   registerMediaElement={actions.registerMediaElement}
                   onApi={actions.registerHorizontalApi}
                   onSelect={actions.handleHorizontalSelect}
+                  onSelectSlide={slideIndex =>
+                    actions.setActiveSlide(projectIndex, slideIndex, 'push')
+                  }
                   onOpenViewer={actions.openViewer}
                   onBackdropVisibilityChange={setMediaBackdropVisible}
                 />
