@@ -137,22 +137,18 @@ export type FiveByFiveVariant = keyof typeof VARIANT_CELLS
 export function FiveByFive({
   variant,
   cellSize = 'var(--logo-stroke-width)',
-  revealed,
-  drawDurationMs = 1000,
+  visibleCellCount,
   className,
   style,
 }: {
   variant: FiveByFiveVariant
   cellSize?: string
-  revealed?: boolean
-  drawDurationMs?: number
+  visibleCellCount?: number
   className?: string
   style?: CSSProperties
 }) {
   const enabledCells = ENABLED_CELLS[variant]
   const outlineCells = VARIANT_CELLS.outline
-  const drawStepDelayMs =
-    Math.max(0, drawDurationMs) / Math.max(1, outlineCells.length - 1)
 
   return (
     <span
@@ -174,31 +170,19 @@ export function FiveByFive({
                   outlineColumn === column && outlineRow === row,
               )
             : -1
-        const animated = drawIndex >= 0 && revealed !== undefined
+        const progressivelyRevealed =
+          drawIndex >= 0 && visibleCellCount !== undefined
+        const visible = !progressivelyRevealed || drawIndex < visibleCellCount
 
         return (
           <span
             key={cellKey}
             className={
               enabledCells.has(cellKey)
-                ? animated
-                  ? 'bg-current transition-opacity motion-reduce:transition-none'
-                  : 'bg-current'
+                ? visible
+                  ? 'bg-current'
+                  : 'bg-current opacity-0'
                 : 'bg-transparent'
-            }
-            style={
-              animated
-                ? {
-                    opacity: revealed ? 1 : 0,
-                    transitionDelay: `${
-                      drawStepDelayMs *
-                      (revealed
-                        ? drawIndex
-                        : outlineCells.length - drawIndex - 1)
-                    }ms`,
-                    transitionDuration: '0ms',
-                  }
-                : undefined
             }
           />
         )

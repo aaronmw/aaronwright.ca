@@ -1,4 +1,10 @@
-import { useState, type CSSProperties, type PointerEvent } from 'react'
+import {
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type PointerEvent,
+} from 'react'
 import { FiveByFive } from '../presentation/FiveByFive'
 import {
   getNavigationMarkerOffset,
@@ -15,6 +21,7 @@ const DOT_SIZE = 'var(--logo-stroke-width)'
 const ACTIVE_COLOR = 'var(--color-resume-signal)'
 const RESTING_COLOR = 'var(--portfolio-ink)'
 const DEFAULT_PREVIEW_DRAW_DURATION_MS = 1000
+const PREVIEW_CELL_COUNT = 16
 
 function NavigationDotButton({
   item,
@@ -38,8 +45,41 @@ function NavigationDotButton({
   onSelect: (index: number) => void
 }) {
   const [previewing, setPreviewing] = useState(false)
+  const [visiblePreviewCellCount, setVisiblePreviewCellCount] = useState(0)
+  const previewingRef = useRef(false)
+  const stepDelayMs =
+    Math.max(0, previewDrawDurationMs) / Math.max(1, PREVIEW_CELL_COUNT - 1)
+
+  const setPreview = (nextPreviewing: boolean) => {
+    if (previewingRef.current === nextPreviewing) return
+    previewingRef.current = nextPreviewing
+    setPreviewing(nextPreviewing)
+    setVisiblePreviewCellCount(current =>
+      Math.max(
+        0,
+        Math.min(PREVIEW_CELL_COUNT, current + (nextPreviewing ? 1 : -1)),
+      ),
+    )
+  }
+
+  useEffect(() => {
+    const target = previewing ? PREVIEW_CELL_COUNT : 0
+    if (visiblePreviewCellCount === target) return
+
+    const timer = window.setTimeout(() => {
+      setVisiblePreviewCellCount(current =>
+        Math.max(
+          0,
+          Math.min(PREVIEW_CELL_COUNT, current + (previewing ? 1 : -1)),
+        ),
+      )
+    }, stepDelayMs)
+
+    return () => window.clearTimeout(timer)
+  }, [previewing, stepDelayMs, visiblePreviewCellCount])
+
   const showPointerPreview = (event: PointerEvent<HTMLButtonElement>) => {
-    if (event.pointerType !== 'touch') setPreviewing(true)
+    if (event.pointerType !== 'touch') setPreview(true)
   }
 
   return (
@@ -55,19 +95,18 @@ function NavigationDotButton({
       aria-busy={item.pending || undefined}
       {...dataAttributes}
       onPointerEnter={showPointerPreview}
-      onPointerLeave={() => setPreviewing(false)}
-      onFocus={() => setPreviewing(true)}
-      onBlur={() => setPreviewing(false)}
+      onPointerLeave={() => setPreview(false)}
+      onFocus={() => setPreview(true)}
+      onBlur={() => setPreview(false)}
       onClick={() => {
-        setPreviewing(false)
+        setPreview(false)
         onSelect(index)
       }}
     >
       <span className="pointer-events-none absolute inset-0 grid place-items-center text-resume-signal">
         <FiveByFive
           variant="outline"
-          revealed={previewing}
-          drawDurationMs={previewDrawDurationMs}
+          visibleCellCount={visiblePreviewCellCount}
         />
       </span>
       <span
