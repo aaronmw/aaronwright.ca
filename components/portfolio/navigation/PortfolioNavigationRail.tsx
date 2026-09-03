@@ -18,8 +18,6 @@ export type PortfolioNavigationItem = {
 }
 
 const DOT_SIZE = 'var(--logo-stroke-width)'
-const ACTIVE_COLOR = 'var(--color-resume-signal)'
-const RESTING_COLOR = 'var(--portfolio-ink)'
 const DEFAULT_PREVIEW_DRAW_DELAY_MS = 300
 const DEFAULT_PREVIEW_DRAW_DURATION_MS = 250
 const PREVIEW_CELL_COUNT = 16
@@ -100,11 +98,12 @@ function NavigationDotButton({
   return (
     <button
       type="button"
-      className="absolute grid place-items-center border-0 bg-transparent p-0 text-current outline-none focus-visible:z-[15] focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2"
-      style={{
-        ...style,
-        color: active ? ACTIVE_COLOR : RESTING_COLOR,
-      }}
+      className={`absolute grid place-items-center border-0 bg-transparent p-0 outline-none focus-visible:z-[15] focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 ${
+        active
+          ? 'text-resume-signal'
+          : 'text-[var(--portfolio-ink)] hover:text-resume-signal focus-visible:text-resume-signal'
+      }`}
+      style={style}
       aria-label={label}
       aria-current={ariaCurrent}
       aria-busy={item.pending || undefined}
