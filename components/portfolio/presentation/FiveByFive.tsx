@@ -1,6 +1,24 @@
 import type { CSSProperties } from 'react'
 
 const VARIANT_CELLS = {
+  outline: [
+    [0, 0],
+    [1, 0],
+    [2, 0],
+    [3, 0],
+    [4, 0],
+    [4, 1],
+    [4, 2],
+    [4, 3],
+    [4, 4],
+    [3, 4],
+    [2, 4],
+    [1, 4],
+    [0, 4],
+    [0, 3],
+    [0, 2],
+    [0, 1],
+  ],
   logo: [
     [0, 0],
     [4, 0],
@@ -119,15 +137,21 @@ export type FiveByFiveVariant = keyof typeof VARIANT_CELLS
 export function FiveByFive({
   variant,
   cellSize = 'var(--logo-stroke-width)',
+  revealed,
+  drawDurationMs = 1000,
   className,
   style,
 }: {
   variant: FiveByFiveVariant
   cellSize?: string
+  revealed?: boolean
+  drawDurationMs?: number
   className?: string
   style?: CSSProperties
 }) {
   const enabledCells = ENABLED_CELLS[variant]
+  const outlineCells = VARIANT_CELLS.outline
+  const drawStepDurationMs = Math.max(0, drawDurationMs) / outlineCells.length
 
   return (
     <span
@@ -140,16 +164,45 @@ export function FiveByFive({
       }}
       aria-hidden="true"
     >
-      {GRID_CELLS.map(([column, row]) => (
-        <span
-          key={`${column}-${row}`}
-          className={
-            enabledCells.has(`${column}-${row}`)
-              ? 'bg-current'
-              : 'bg-transparent'
-          }
-        />
-      ))}
+      {GRID_CELLS.map(([column, row]) => {
+        const cellKey = `${column}-${row}`
+        const drawIndex =
+          variant === 'outline'
+            ? outlineCells.findIndex(
+                ([outlineColumn, outlineRow]) =>
+                  outlineColumn === column && outlineRow === row,
+              )
+            : -1
+        const animated = drawIndex >= 0 && revealed !== undefined
+
+        return (
+          <span
+            key={cellKey}
+            className={
+              enabledCells.has(cellKey)
+                ? animated
+                  ? 'bg-current transition-opacity motion-reduce:transition-none'
+                  : 'bg-current'
+                : 'bg-transparent'
+            }
+            style={
+              animated
+                ? {
+                    opacity: revealed ? 1 : 0,
+                    transitionDelay: `${
+                      drawStepDurationMs *
+                      (revealed
+                        ? drawIndex
+                        : outlineCells.length - drawIndex - 1)
+                    }ms`,
+                    transitionDuration: `${drawStepDurationMs}ms`,
+                    transitionTimingFunction: 'linear',
+                  }
+                : undefined
+            }
+          />
+        )
+      })}
     </span>
   )
 }

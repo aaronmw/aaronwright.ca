@@ -1,4 +1,5 @@
-import type { CSSProperties } from 'react'
+import { useState, type CSSProperties, type PointerEvent } from 'react'
+import { FiveByFive } from '../presentation/FiveByFive'
 import {
   getNavigationMarkerOffset,
   NAVIGATION_SVG_SIZE,
@@ -13,6 +14,74 @@ export type PortfolioNavigationItem = {
 const DOT_SIZE = 'var(--logo-stroke-width)'
 const ACTIVE_COLOR = 'var(--color-resume-signal)'
 const RESTING_COLOR = 'var(--portfolio-ink)'
+const DEFAULT_PREVIEW_DRAW_DURATION_MS = 1000
+
+function NavigationDotButton({
+  item,
+  index,
+  active,
+  ariaCurrent,
+  label,
+  previewDrawDurationMs,
+  style,
+  dataAttributes,
+  onSelect,
+}: {
+  item: PortfolioNavigationItem
+  index: number
+  active: boolean
+  ariaCurrent: 'true' | 'page' | undefined
+  label: string
+  previewDrawDurationMs: number
+  style: CSSProperties
+  dataAttributes: Record<`data-${string}`, string | number>
+  onSelect: (index: number) => void
+}) {
+  const [previewing, setPreviewing] = useState(false)
+  const showPointerPreview = (event: PointerEvent<HTMLButtonElement>) => {
+    if (event.pointerType !== 'touch') setPreviewing(true)
+  }
+
+  return (
+    <button
+      type="button"
+      className="absolute grid place-items-center border-0 bg-transparent p-0 text-current outline-none focus-visible:z-[15] focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2"
+      style={{
+        ...style,
+        color: active ? ACTIVE_COLOR : RESTING_COLOR,
+      }}
+      aria-label={label}
+      aria-current={ariaCurrent}
+      aria-busy={item.pending || undefined}
+      {...dataAttributes}
+      onPointerEnter={showPointerPreview}
+      onPointerLeave={() => setPreviewing(false)}
+      onFocus={() => setPreviewing(true)}
+      onBlur={() => setPreviewing(false)}
+      onClick={() => {
+        setPreviewing(false)
+        onSelect(index)
+      }}
+    >
+      <span className="pointer-events-none absolute inset-0 grid place-items-center text-resume-signal">
+        <FiveByFive
+          variant="outline"
+          revealed={previewing}
+          drawDurationMs={previewDrawDurationMs}
+        />
+      </span>
+      <span
+        className={item.pending ? 'portfolio-pending-dot' : ''}
+        style={{
+          width: DOT_SIZE,
+          height: DOT_SIZE,
+          background: 'currentColor',
+        }}
+        aria-hidden="true"
+      />
+    </button>
+  )
+}
 
 function RailMarker() {
   return (
@@ -94,10 +163,12 @@ function MaskedActiveDot({
 export function PortfolioSlideRail({
   items,
   activeIndex,
+  previewDrawDurationMs = DEFAULT_PREVIEW_DRAW_DURATION_MS,
   onSelect,
 }: {
   items: PortfolioNavigationItem[]
   activeIndex: number
+  previewDrawDurationMs?: number
   onSelect: (index: number) => void
 }) {
   if (items.length <= 1) return null
@@ -129,31 +200,24 @@ export function PortfolioSlideRail({
         const isActive = index === activeIndex
 
         return (
-          <button
+          <NavigationDotButton
             key={item.id}
-            type="button"
-            className="absolute inset-y-0 grid place-items-center border-0 bg-transparent p-0 text-current outline-none focus-visible:z-[15] focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2"
+            item={item}
+            index={index}
+            active={isActive}
+            ariaCurrent={isActive ? 'true' : undefined}
+            label={item.label}
+            previewDrawDurationMs={previewDrawDurationMs}
             style={{
               left: index * NAVIGATION_SVG_SIZE,
               width: NAVIGATION_SVG_SIZE,
-              color: isActive ? ACTIVE_COLOR : RESTING_COLOR,
+              insetBlock: 0,
             }}
-            aria-label={item.label}
-            aria-current={isActive ? 'true' : undefined}
-            aria-busy={item.pending || undefined}
-            data-portfolio-slide-indicator-index={index}
-            onClick={() => onSelect(index)}
-          >
-            <span
-              className={item.pending ? 'portfolio-pending-dot' : ''}
-              style={{
-                width: DOT_SIZE,
-                height: DOT_SIZE,
-                background: 'currentColor',
-              }}
-              aria-hidden="true"
-            />
-          </button>
+            dataAttributes={{
+              'data-portfolio-slide-indicator-index': index,
+            }}
+            onSelect={onSelect}
+          />
         )
       })}
     </div>
@@ -165,12 +229,14 @@ export function PortfolioSectionRail({
   activeIndex,
   side,
   hidden,
+  previewDrawDurationMs = DEFAULT_PREVIEW_DRAW_DURATION_MS,
   onSelect,
 }: {
   items: PortfolioNavigationItem[]
   activeIndex: number
   side: 'left' | 'right'
   hidden?: boolean
+  previewDrawDurationMs?: number
   onSelect: (index: number) => void
 }) {
   const height = items.length * NAVIGATION_SVG_SIZE
@@ -214,33 +280,26 @@ export function PortfolioSectionRail({
             : `Show ${item.label}`
 
           return (
-            <button
+            <NavigationDotButton
               key={item.id}
-              type="button"
-              className="absolute left-0 grid place-items-center border-0 bg-transparent p-0 outline-none focus-visible:z-[15] focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2"
+              item={item}
+              index={index}
+              active={isActive}
+              ariaCurrent={isActive ? 'page' : undefined}
+              label={label}
+              previewDrawDurationMs={previewDrawDurationMs}
               style={{
                 top: index * NAVIGATION_SVG_SIZE,
+                left: 0,
                 width: NAVIGATION_SVG_SIZE,
                 height: NAVIGATION_SVG_SIZE,
-                color: isActive ? ACTIVE_COLOR : RESTING_COLOR,
               }}
-              aria-label={label}
-              aria-current={isActive ? 'page' : undefined}
-              aria-busy={item.pending || undefined}
-              data-portfolio-section-nav-index={index}
-              data-portfolio-section-nav-side={side}
-              onClick={() => onSelect(index)}
-            >
-              <span
-                className={item.pending ? 'portfolio-pending-dot' : ''}
-                style={{
-                  width: DOT_SIZE,
-                  height: DOT_SIZE,
-                  background: 'currentColor',
-                }}
-                aria-hidden="true"
-              />
-            </button>
+              dataAttributes={{
+                'data-portfolio-section-nav-index': index,
+                'data-portfolio-section-nav-side': side,
+              }}
+              onSelect={onSelect}
+            />
           )
         })}
       </div>
