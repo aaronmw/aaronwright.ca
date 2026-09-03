@@ -151,7 +151,8 @@ export function FiveByFive({
 }) {
   const enabledCells = ENABLED_CELLS[variant]
   const outlineCells = VARIANT_CELLS.outline
-  const drawStepDurationMs = Math.max(0, drawDurationMs) / outlineCells.length
+  const drawStepDelayMs =
+    Math.max(0, drawDurationMs) / Math.max(1, outlineCells.length - 1)
 
   return (
     <span
@@ -190,13 +191,12 @@ export function FiveByFive({
                 ? {
                     opacity: revealed ? 1 : 0,
                     transitionDelay: `${
-                      drawStepDurationMs *
+                      drawStepDelayMs *
                       (revealed
                         ? drawIndex
                         : outlineCells.length - drawIndex - 1)
                     }ms`,
-                    transitionDuration: `${drawStepDurationMs}ms`,
-                    transitionTimingFunction: 'linear',
+                    transitionDuration: '0ms',
                   }
                 : undefined
             }
