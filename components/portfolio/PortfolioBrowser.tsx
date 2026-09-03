@@ -45,6 +45,7 @@ const ARROW_NAVIGATION_SELECTOR = `${TEXT_ENTRY_SELECTOR}, [role="menu"], [role=
 const ACTIVATION_SELECTOR = `${TEXT_ENTRY_SELECTOR}, button, a, summary, [role="button"], [role="link"], [role="menuitem"], [role="menuitemcheckbox"], [role="menuitemradio"], [role="option"], [role="tab"], [role="checkbox"], [role="radio"], [role="switch"]`
 const ACTIVE_SLIDE_INDICATOR_SELECTOR =
   '[data-portfolio-slide-indicator-index][aria-current="true"]'
+const NATIVE_WHEEL_SCROLL_SELECTOR = '[data-portfolio-native-wheel-scroll]'
 
 function targetMatches(target: EventTarget | null, selector: string) {
   const element =
@@ -144,7 +145,10 @@ export function PortfolioBrowser({
   useEffect(() => {
     const viewport = verticalViewportElementRef.current
     if (!verticalApi || !viewport) return
-    const removeWheelAxisLock = installPortfolioWheelAxisLock(viewport)
+    const removeWheelAxisLock = installPortfolioWheelAxisLock(
+      viewport,
+      target => targetMatches(target, NATIVE_WHEEL_SCROLL_SELECTOR),
+    )
     const removeMouseDragAxisLock = installPortfolioMouseDragAxisLock({
       root: viewport,
       targetSelector: '[data-portfolio-carousel]',

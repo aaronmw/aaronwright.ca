@@ -179,7 +179,7 @@ export function ProjectNarrative({
       wrapperClassName={wrapperClassName}
       className="portfolio-themed-scrollbar overflow-x-hidden pr-3 [--project-color:var(--color-resume-signal)]"
       contentClassName="relative min-h-full min-w-0"
-      indicatorColor="var(--color-resume-paper)"
+      indicatorColor="var(--portfolio-surface)"
     >
       <NarrativeContent
         project={project}
@@ -232,7 +232,7 @@ function NarrativePresence({
       ref={scrollRef}
       className="portfolio-themed-scrollbar overflow-x-hidden pr-3 [--project-color:var(--color-resume-signal)]"
       contentClassName="relative min-h-full min-w-0 overflow-clip"
-      indicatorColor="var(--color-resume-paper)"
+      indicatorColor="var(--portfolio-surface)"
     >
       {outgoing ? (
         <NarrativeContent

@@ -75,11 +75,18 @@ function constrainWheelEventToAxis(
   })
 }
 
-export function installPortfolioWheelAxisLock(root: HTMLElement) {
+export function installPortfolioWheelAxisLock(
+  root: HTMLElement,
+  ignoreTarget?: (target: EventTarget | null) => boolean,
+) {
   const state = createWheelAxisLockState()
 
   const handleWheel = (event: WheelEvent) => {
     if (event.ctrlKey) return
+    if (ignoreTarget?.(event.target)) {
+      resetWheelAxisLock(state)
+      return
+    }
 
     const axis = updateWheelAxisLock(state, {
       deltaX: event.deltaX,

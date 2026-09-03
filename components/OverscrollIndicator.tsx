@@ -1,4 +1,4 @@
-'use client';
+'use client'
 
 import {
   CSSProperties,
@@ -6,30 +6,31 @@ import {
   HTMLAttributes,
   ReactNode,
   UIEventHandler,
+  WheelEventHandler,
   useCallback,
   useLayoutEffect,
   useRef,
   useState,
-} from 'react';
+} from 'react'
 
 type OverscrollIndicatorProps = Omit<
   HTMLAttributes<HTMLDivElement>,
   'children' | 'onScroll'
 > & {
-  children: ReactNode;
-  contentClassName?: string;
-  indicatorColor?: string;
-  indicatorHeight?: CSSProperties['height'];
-  onScroll?: UIEventHandler<HTMLDivElement>;
-  wrapperClassName?: string;
-};
+  children: ReactNode
+  contentClassName?: string
+  indicatorColor?: string
+  indicatorHeight?: CSSProperties['height']
+  onScroll?: UIEventHandler<HTMLDivElement>
+  wrapperClassName?: string
+}
 
 type IndicatorVisibility = {
-  top: boolean;
-  bottom: boolean;
-};
+  top: boolean
+  bottom: boolean
+}
 
-const EDGE_EPSILON_PX = 1;
+const EDGE_EPSILON_PX = 1
 
 export const OverscrollIndicator = forwardRef<
   HTMLDivElement,
@@ -42,86 +43,108 @@ export const OverscrollIndicator = forwardRef<
     indicatorColor = 'rgb(0 0 0)',
     indicatorHeight = 50,
     onScroll,
+    onWheel,
     wrapperClassName = '',
     ...viewportProps
   },
-  forwardedRef
+  forwardedRef,
 ) {
-  const viewportRef = useRef<HTMLDivElement>(null);
-  const contentRef = useRef<HTMLDivElement>(null);
+  const viewportRef = useRef<HTMLDivElement>(null)
+  const contentRef = useRef<HTMLDivElement>(null)
   const visibilityRef = useRef<IndicatorVisibility>({
     top: false,
     bottom: false,
-  });
-  const [visibility, setVisibility] = useState(visibilityRef.current);
+  })
+  const [visibility, setVisibility] = useState(visibilityRef.current)
 
   function setViewportRef(node: HTMLDivElement | null) {
-    viewportRef.current = node;
+    viewportRef.current = node
 
     if (typeof forwardedRef === 'function') {
-      forwardedRef(node);
+      forwardedRef(node)
     } else if (forwardedRef) {
-      forwardedRef.current = node;
+      forwardedRef.current = node
     }
   }
 
   // ResizeObserver needs one callback identity for its subscription lifetime.
   // react-doctor-disable-next-line react-doctor/react-compiler-no-manual-memoization
   const updateIndicators = useCallback(() => {
-    const viewport = viewportRef.current;
+    const viewport = viewportRef.current
 
     if (!viewport) {
-      return;
+      return
     }
 
     const maximumScrollTop = Math.max(
       0,
-      viewport.scrollHeight - viewport.clientHeight
-    );
-    const hasOverflow = maximumScrollTop > EDGE_EPSILON_PX;
+      viewport.scrollHeight - viewport.clientHeight,
+    )
+    const hasOverflow = maximumScrollTop > EDGE_EPSILON_PX
     const nextVisibility = {
       top: hasOverflow && viewport.scrollTop > EDGE_EPSILON_PX,
       bottom:
-        hasOverflow &&
-        viewport.scrollTop < maximumScrollTop - EDGE_EPSILON_PX,
-    };
-    const currentVisibility = visibilityRef.current;
+        hasOverflow && viewport.scrollTop < maximumScrollTop - EDGE_EPSILON_PX,
+    }
+    const currentVisibility = visibilityRef.current
 
     if (
       currentVisibility.top === nextVisibility.top &&
       currentVisibility.bottom === nextVisibility.bottom
     ) {
-      return;
+      return
     }
 
-    visibilityRef.current = nextVisibility;
-    setVisibility(nextVisibility);
-  }, []);
+    visibilityRef.current = nextVisibility
+    setVisibility(nextVisibility)
+  }, [])
 
-  const handleScroll: UIEventHandler<HTMLDivElement> = (event) => {
-    updateIndicators();
-    onScroll?.(event);
-  };
+  const handleScroll: UIEventHandler<HTMLDivElement> = event => {
+    updateIndicators()
+    onScroll?.(event)
+  }
+
+  const handleWheel: WheelEventHandler<HTMLDivElement> = event => {
+    onWheel?.(event)
+    if (event.isPropagationStopped()) {
+      return
+    }
+
+    const viewport = event.currentTarget
+    const maximumScrollTop = Math.max(
+      0,
+      viewport.scrollHeight - viewport.clientHeight,
+    )
+    const verticalIntent = Math.abs(event.deltaY) > Math.abs(event.deltaX)
+    const canScrollUp = event.deltaY < 0 && viewport.scrollTop > EDGE_EPSILON_PX
+    const canScrollDown =
+      event.deltaY > 0 &&
+      viewport.scrollTop < maximumScrollTop - EDGE_EPSILON_PX
+
+    if (verticalIntent && (canScrollUp || canScrollDown)) {
+      event.stopPropagation()
+    }
+  }
 
   useLayoutEffect(() => {
-    const viewport = viewportRef.current;
-    const content = contentRef.current;
+    const viewport = viewportRef.current
+    const content = contentRef.current
 
     if (!viewport || !content) {
-      return;
+      return
     }
 
-    updateIndicators();
+    updateIndicators()
 
-    const resizeObserver = new ResizeObserver(updateIndicators);
-    resizeObserver.observe(viewport);
-    resizeObserver.observe(content);
+    const resizeObserver = new ResizeObserver(updateIndicators)
+    resizeObserver.observe(viewport)
+    resizeObserver.observe(content)
 
-    return () => resizeObserver.disconnect();
-  }, [updateIndicators]);
+    return () => resizeObserver.disconnect()
+  }, [updateIndicators])
 
-  const transparentIndicatorColor = `color-mix(in srgb, ${indicatorColor} 0%, transparent)`;
-  const indicatorStyle = { height: indicatorHeight };
+  const transparentIndicatorColor = `color-mix(in srgb, ${indicatorColor} 0%, transparent)`
+  const indicatorStyle = { height: indicatorHeight }
 
   return (
     <div
@@ -131,10 +154,15 @@ export const OverscrollIndicator = forwardRef<
       <div
         {...viewportProps}
         ref={setViewportRef}
+        data-portfolio-native-wheel-scroll
         className={`h-full w-full overflow-y-auto ${className}`}
         onScroll={handleScroll}
+        onWheel={handleWheel}
       >
-        <div ref={contentRef} className={contentClassName}>
+        <div
+          ref={contentRef}
+          className={contentClassName}
+        >
           {children}
         </div>
       </div>
@@ -161,5 +189,5 @@ export const OverscrollIndicator = forwardRef<
         }}
       />
     </div>
-  );
-});
+  )
+})
