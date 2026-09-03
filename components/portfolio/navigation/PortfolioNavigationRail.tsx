@@ -20,7 +20,8 @@ export type PortfolioNavigationItem = {
 const DOT_SIZE = 'var(--logo-stroke-width)'
 const ACTIVE_COLOR = 'var(--color-resume-signal)'
 const RESTING_COLOR = 'var(--portfolio-ink)'
-const DEFAULT_PREVIEW_DRAW_DURATION_MS = 1000
+const DEFAULT_PREVIEW_DRAW_DELAY_MS = 150
+const DEFAULT_PREVIEW_DRAW_DURATION_MS = 500
 const PREVIEW_CELL_COUNT = 16
 
 function NavigationDotButton({
@@ -29,6 +30,7 @@ function NavigationDotButton({
   active,
   ariaCurrent,
   label,
+  previewDrawDelayMs,
   previewDrawDurationMs,
   style,
   dataAttributes,
@@ -39,6 +41,7 @@ function NavigationDotButton({
   active: boolean
   ariaCurrent: 'true' | 'page' | undefined
   label: string
+  previewDrawDelayMs: number
   previewDrawDurationMs: number
   style: CSSProperties
   dataAttributes: Record<`data-${string}`, string | number>
@@ -54,10 +57,17 @@ function NavigationDotButton({
     if (previewingRef.current === nextPreviewing) return
     previewingRef.current = nextPreviewing
     setPreviewing(nextPreviewing)
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setVisiblePreviewCellCount(nextPreviewing ? PREVIEW_CELL_COUNT : 0)
+      return
+    }
     setVisiblePreviewCellCount(current =>
       Math.max(
         0,
-        Math.min(PREVIEW_CELL_COUNT, current + (nextPreviewing ? 1 : -1)),
+        Math.min(
+          PREVIEW_CELL_COUNT,
+          nextPreviewing ? (current === 0 ? 0 : current + 1) : current - 1,
+        ),
       ),
     )
   }
@@ -66,17 +76,22 @@ function NavigationDotButton({
     const target = previewing ? PREVIEW_CELL_COUNT : 0
     if (visiblePreviewCellCount === target) return
 
-    const timer = window.setTimeout(() => {
-      setVisiblePreviewCellCount(current =>
-        Math.max(
-          0,
-          Math.min(PREVIEW_CELL_COUNT, current + (previewing ? 1 : -1)),
-        ),
-      )
-    }, stepDelayMs)
+    const timer = window.setTimeout(
+      () => {
+        setVisiblePreviewCellCount(current =>
+          Math.max(
+            0,
+            Math.min(PREVIEW_CELL_COUNT, current + (previewing ? 1 : -1)),
+          ),
+        )
+      },
+      previewing && visiblePreviewCellCount === 0
+        ? Math.max(0, previewDrawDelayMs)
+        : stepDelayMs,
+    )
 
     return () => window.clearTimeout(timer)
-  }, [previewing, stepDelayMs, visiblePreviewCellCount])
+  }, [previewDrawDelayMs, previewing, stepDelayMs, visiblePreviewCellCount])
 
   const showPointerPreview = (event: PointerEvent<HTMLButtonElement>) => {
     if (event.pointerType !== 'touch') setPreview(true)
@@ -202,11 +217,13 @@ function MaskedActiveDot({
 export function PortfolioSlideRail({
   items,
   activeIndex,
+  previewDrawDelayMs = DEFAULT_PREVIEW_DRAW_DELAY_MS,
   previewDrawDurationMs = DEFAULT_PREVIEW_DRAW_DURATION_MS,
   onSelect,
 }: {
   items: PortfolioNavigationItem[]
   activeIndex: number
+  previewDrawDelayMs?: number
   previewDrawDurationMs?: number
   onSelect: (index: number) => void
 }) {
@@ -246,6 +263,7 @@ export function PortfolioSlideRail({
             active={isActive}
             ariaCurrent={isActive ? 'true' : undefined}
             label={item.label}
+            previewDrawDelayMs={previewDrawDelayMs}
             previewDrawDurationMs={previewDrawDurationMs}
             style={{
               left: index * NAVIGATION_SVG_SIZE,
@@ -268,6 +286,7 @@ export function PortfolioSectionRail({
   activeIndex,
   side,
   hidden,
+  previewDrawDelayMs = DEFAULT_PREVIEW_DRAW_DELAY_MS,
   previewDrawDurationMs = DEFAULT_PREVIEW_DRAW_DURATION_MS,
   onSelect,
 }: {
@@ -275,6 +294,7 @@ export function PortfolioSectionRail({
   activeIndex: number
   side: 'left' | 'right'
   hidden?: boolean
+  previewDrawDelayMs?: number
   previewDrawDurationMs?: number
   onSelect: (index: number) => void
 }) {
@@ -326,6 +346,7 @@ export function PortfolioSectionRail({
               active={isActive}
               ariaCurrent={isActive ? 'page' : undefined}
               label={label}
+              previewDrawDelayMs={previewDrawDelayMs}
               previewDrawDurationMs={previewDrawDurationMs}
               style={{
                 top: index * NAVIGATION_SVG_SIZE,
