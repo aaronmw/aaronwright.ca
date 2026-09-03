@@ -4,7 +4,7 @@ import type {
   MouseEvent as ReactMouseEvent,
   ReactNode,
 } from 'react'
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { faRotateRight } from '@fortawesome/free-solid-svg-icons'
 import type { PortfolioScreenshot } from '@/lib/portfolio'
 import type { PortfolioMediaElement } from '@/components/portfolio/usePortfolioMediaReadiness'
@@ -24,6 +24,19 @@ const MEDIA_FRAME_INSET = 'calc(var(--portfolio-default-spacing) * 2)'
 
 type MediaFrameStyle = CSSProperties & {
   '--portfolio-media-aspect-ratio'?: number
+}
+
+function getMediaAspectRatio(element: PortfolioMediaElement) {
+  const width =
+    element instanceof HTMLImageElement
+      ? element.naturalWidth
+      : element.videoWidth
+  const height =
+    element instanceof HTMLImageElement
+      ? element.naturalHeight
+      : element.videoHeight
+
+  return width && height ? width / height : null
 }
 
 function getCarouselMediaClass(shouldBlur: boolean) {
@@ -151,26 +164,31 @@ export function ScreenshotMedia({
   const [aspectRatio, setAspectRatio] = useState<number | null>(null)
 
   const updateAspectRatio = (element: PortfolioMediaElement) => {
-    const width =
-      element instanceof HTMLImageElement
-        ? element.naturalWidth
-        : element.videoWidth
-    const height =
-      element instanceof HTMLImageElement
-        ? element.naturalHeight
-        : element.videoHeight
-    if (!width || !height) return
-    const nextAspectRatio = width / height
+    const nextAspectRatio = getMediaAspectRatio(element)
+    if (!nextAspectRatio) return
     setAspectRatio(current =>
       current === nextAspectRatio ? current : nextAspectRatio,
     )
   }
 
-  const setMediaRef = (element: PortfolioMediaElement | null) => {
-    registerMediaElement(mediaKey, element)
-    if (mediaKey.startsWith('carousel:'))
-      registerMediaElement(viewerMediaKey(screenshot), element)
-  }
+  // A stable callback ref can safely read cached media dimensions without
+  // detaching and reattaching after the resulting aspect-ratio render.
+  // react-doctor-disable-next-line react-doctor/react-compiler-no-manual-memoization
+  const setMediaRef = useCallback(
+    (element: PortfolioMediaElement | null) => {
+      registerMediaElement(mediaKey, element)
+      if (mediaKey.startsWith('carousel:'))
+        registerMediaElement(viewerMediaKey(screenshot), element)
+
+      if (!element) return
+      const nextAspectRatio = getMediaAspectRatio(element)
+      if (!nextAspectRatio) return
+      setAspectRatio(current =>
+        current === nextAspectRatio ? current : nextAspectRatio,
+      )
+    },
+    [mediaKey, registerMediaElement, screenshot],
+  )
 
   const frameStyle: MediaFrameStyle = aspectRatio
     ? {
