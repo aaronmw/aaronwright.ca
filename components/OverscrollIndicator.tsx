@@ -116,22 +116,7 @@ export const OverscrollIndicator = forwardRef<
     resizeObserver.observe(viewport)
     resizeObserver.observe(content)
 
-    const handleNativeWheel = (event: WheelEvent) => {
-      const maximumScrollTop = Math.max(
-        0,
-        viewport.scrollHeight - viewport.clientHeight,
-      )
-      const verticalIntent = Math.abs(event.deltaY) > Math.abs(event.deltaX)
-      const canScrollUp =
-        event.deltaY < 0 && viewport.scrollTop > EDGE_EPSILON_PX
-      const canScrollDown =
-        event.deltaY > 0 &&
-        viewport.scrollTop < maximumScrollTop - EDGE_EPSILON_PX
-
-      if (verticalIntent && (canScrollUp || canScrollDown)) {
-        event.stopPropagation()
-      }
-    }
+    const handleNativeWheel = (event: WheelEvent) => event.stopPropagation()
     viewport.addEventListener('wheel', handleNativeWheel, { passive: true })
 
     return () => {
@@ -152,7 +137,7 @@ export const OverscrollIndicator = forwardRef<
         {...viewportProps}
         ref={setViewportRef}
         data-portfolio-native-wheel-scroll
-        className={`h-full w-full overflow-y-auto ${className}`}
+        className={`h-full w-full overflow-y-auto overscroll-y-contain ${className}`}
         onScroll={handleScroll}
       >
         <div
