@@ -6,7 +6,6 @@ import {
   HTMLAttributes,
   ReactNode,
   UIEventHandler,
-  WheelEventHandler,
   useCallback,
   useLayoutEffect,
   useRef,
@@ -43,7 +42,6 @@ export const OverscrollIndicator = forwardRef<
     indicatorColor = 'rgb(0 0 0)',
     indicatorHeight = 50,
     onScroll,
-    onWheel,
     wrapperClassName = '',
     ...viewportProps
   },
@@ -104,28 +102,6 @@ export const OverscrollIndicator = forwardRef<
     onScroll?.(event)
   }
 
-  const handleWheel: WheelEventHandler<HTMLDivElement> = event => {
-    onWheel?.(event)
-    if (event.isPropagationStopped()) {
-      return
-    }
-
-    const viewport = event.currentTarget
-    const maximumScrollTop = Math.max(
-      0,
-      viewport.scrollHeight - viewport.clientHeight,
-    )
-    const verticalIntent = Math.abs(event.deltaY) > Math.abs(event.deltaX)
-    const canScrollUp = event.deltaY < 0 && viewport.scrollTop > EDGE_EPSILON_PX
-    const canScrollDown =
-      event.deltaY > 0 &&
-      viewport.scrollTop < maximumScrollTop - EDGE_EPSILON_PX
-
-    if (verticalIntent && (canScrollUp || canScrollDown)) {
-      event.stopPropagation()
-    }
-  }
-
   useLayoutEffect(() => {
     const viewport = viewportRef.current
     const content = contentRef.current
@@ -140,7 +116,28 @@ export const OverscrollIndicator = forwardRef<
     resizeObserver.observe(viewport)
     resizeObserver.observe(content)
 
-    return () => resizeObserver.disconnect()
+    const handleNativeWheel = (event: WheelEvent) => {
+      const maximumScrollTop = Math.max(
+        0,
+        viewport.scrollHeight - viewport.clientHeight,
+      )
+      const verticalIntent = Math.abs(event.deltaY) > Math.abs(event.deltaX)
+      const canScrollUp =
+        event.deltaY < 0 && viewport.scrollTop > EDGE_EPSILON_PX
+      const canScrollDown =
+        event.deltaY > 0 &&
+        viewport.scrollTop < maximumScrollTop - EDGE_EPSILON_PX
+
+      if (verticalIntent && (canScrollUp || canScrollDown)) {
+        event.stopPropagation()
+      }
+    }
+    viewport.addEventListener('wheel', handleNativeWheel, { passive: true })
+
+    return () => {
+      resizeObserver.disconnect()
+      viewport.removeEventListener('wheel', handleNativeWheel)
+    }
   }, [updateIndicators])
 
   const transparentIndicatorColor = `color-mix(in srgb, ${indicatorColor} 0%, transparent)`
@@ -157,7 +154,6 @@ export const OverscrollIndicator = forwardRef<
         data-portfolio-native-wheel-scroll
         className={`h-full w-full overflow-y-auto ${className}`}
         onScroll={handleScroll}
-        onWheel={handleWheel}
       >
         <div
           ref={contentRef}
