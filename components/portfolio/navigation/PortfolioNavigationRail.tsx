@@ -20,8 +20,8 @@ export type PortfolioNavigationItem = {
 const DOT_SIZE = 'var(--logo-stroke-width)'
 const ACTIVE_COLOR = 'var(--color-resume-signal)'
 const RESTING_COLOR = 'var(--portfolio-ink)'
-const DEFAULT_PREVIEW_DRAW_DELAY_MS = 150
-const DEFAULT_PREVIEW_DRAW_DURATION_MS = 500
+const DEFAULT_PREVIEW_DRAW_DELAY_MS = 300
+const DEFAULT_PREVIEW_DRAW_DURATION_MS = 250
 const PREVIEW_CELL_COUNT = 16
 
 function NavigationDotButton({
