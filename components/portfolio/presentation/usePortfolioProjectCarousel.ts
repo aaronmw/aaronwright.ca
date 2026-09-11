@@ -10,7 +10,10 @@ import {
   useRef,
   useState,
 } from 'react'
-import { getLockedMouseDragAxis } from '../runtime/mouseDragAxisLock'
+import {
+  getLockedMouseDragAxis,
+  isPortfolioCarouselDragLockedTarget,
+} from '../runtime/mouseDragAxisLock'
 
 const NARRATIVE_HEADER_GAP_IN_LINES = 2
 
@@ -65,6 +68,7 @@ export function usePortfolioProjectCarousel({
       startIndex: initialSlideIndex,
       active: hasMedia,
       watchDrag: (_api, event) => {
+        if (isPortfolioCarouselDragLockedTarget(event.target)) return false
         if (event.type !== 'mousedown') return true
         if (isSelectableTextTarget(event.target)) return false
         return getLockedMouseDragAxis(event) === 'x'

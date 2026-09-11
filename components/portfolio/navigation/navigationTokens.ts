@@ -1,4 +1,6 @@
-export const NAVIGATION_RING_STROKE = 6;
+import { portfolioGeometry } from '../../../lib/portfolioTokens';
+
+export const NAVIGATION_RING_STROKE = portfolioGeometry.strokePx;
 export const NAVIGATION_RING_DIAMETER = NAVIGATION_RING_STROKE * 5;
 export const NAVIGATION_RING_RADIUS =
   (NAVIGATION_RING_DIAMETER - NAVIGATION_RING_STROKE) / 2;
@@ -11,7 +13,7 @@ export const NAVIGATION_SNAP_DISTANCE = 10;
 export const NAVIGATION_BREAKAWAY_DISTANCE = 50;
 export const NAVIGATION_RETURN_DELAY = 140;
 
-export const NAVIGATION_SVG_SIZE = 52;
+export const NAVIGATION_SVG_SIZE = portfolioGeometry.navigationSlotPx;
 export const NAVIGATION_SVG_CENTER = NAVIGATION_SVG_SIZE / 2;
 export const SECTION_NAVIGATION_ARROW_SIZE = 16;
 export const SECTION_NAVIGATION_CENTERED_STEP = 60;

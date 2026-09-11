@@ -1,6 +1,7 @@
 'use client'
 
 import {
+  memo,
   type ComponentProps,
   useEffect,
   useReducer,
@@ -15,8 +16,10 @@ import rehypeSanitize, { defaultSchema } from 'rehype-sanitize'
 import remarkGfm from 'remark-gfm'
 import type { Components } from 'react-markdown'
 import type { PortfolioProject } from '@/lib/portfolio'
+import { portfolioMotion } from '@/lib/portfolioTokens'
 import type { ResolvedProjectNarrative } from '../domain/narrative'
 import { OverscrollIndicator } from '@/components/OverscrollIndicator'
+import { FiveByFive } from './FiveByFive'
 
 type MarkdownLinkProps = AnchorHTMLAttributes<HTMLAnchorElement> & {
   node?: unknown
@@ -25,6 +28,8 @@ type MarkdownHeadingProps = HTMLAttributes<HTMLHeadingElement> & {
   node?: unknown
 }
 type MarkdownHeadingTag = 'h2' | 'h3' | 'h4' | 'h5' | 'h6'
+
+const PROJECT_HEADING_UNDERLINE_CHARACTER = '-'
 
 const PORTFOLIO_MARKDOWN_SCHEMA = {
   ...defaultSchema,
@@ -61,7 +66,7 @@ export function PortfolioLedgerFrame({
   return (
     <section
       {...props}
-      className={`portfolio-ledger-copy font-resume-mono tabular-nums text-left text-sm font-normal leading-[1.5] text-[var(--portfolio-ink)] [--project-body-color:var(--portfolio-ink)] [--project-color:var(--color-resume-signal)] ${className ?? ''}`}
+      className={`portfolio-ledger-copy font-resume-mono tabular-nums text-left font-normal text-portfolio-text [--project-color:var(--portfolio-accent)] ${className ?? ''}`}
     >
       {children}
     </section>
@@ -70,6 +75,25 @@ export function PortfolioLedgerFrame({
 
 export function PortfolioLedgerLabel({ children }: { children: ReactNode }) {
   return <span className="block font-normal uppercase">{children}</span>
+}
+
+export function ProjectHeadingUnderline({
+  title,
+  className,
+}: {
+  title: string
+  className?: string
+}) {
+  return (
+    <span
+      aria-hidden="true"
+      className={`block text-portfolio-text-dimmed ${className ?? ''}`}
+    >
+      {PROJECT_HEADING_UNDERLINE_CHARACTER.repeat(
+        Array.from(title.replaceAll('\u00ad', '')).length,
+      )}
+    </span>
+  )
 }
 
 export function ProjectInformation({
@@ -88,17 +112,14 @@ export function ProjectInformation({
   return (
     <PortfolioLedgerFrame
       aria-label={`${project.title} overview`}
-      className={`grid min-h-0 min-w-0 w-full grid-rows-[auto_minmax(0,1fr)] overflow-hidden ${expanded ? 'h-full max-w-[var(--resume-content-width)]' : 'max-h-full max-w-[calc(var(--portfolio-description-rail-width)-var(--portfolio-control-gutter-width)-var(--portfolio-default-spacing))] justify-self-center'}`}
+      className={`grid min-h-0 min-w-0 w-full grid-rows-[auto_minmax(0,1fr)] gap-y-[2lh] overflow-hidden ${expanded ? 'h-full max-w-[var(--resume-content-width)]' : 'max-h-full max-w-[calc(var(--portfolio-description-rail-width)-var(--portfolio-control-gutter-width)-var(--portfolio-default-spacing))] justify-self-center'}`}
     >
       <ProjectMetadata
         project={project}
         projectNumber={projectNumber}
         hasMultipleRoles={hasMultipleRoles}
       />
-      <NarrativePresence
-        project={project}
-        narrative={narrative}
-      />
+      <NarrativePresence project={project} narrative={narrative} />
     </PortfolioLedgerFrame>
   )
 }
@@ -123,30 +144,41 @@ export function ProjectMetadata({
     <header
       data-portfolio-project-metadata
       data-portfolio-selectable-text
-      className={`shrink-0 ${
+      className={`shrink-0 ${children ? 'portfolio-project-header' : ''} ${
         alignWithLogo
           ? 'pt-[calc(var(--portfolio-logo-control-inset)+(var(--portfolio-logo-size)-1lh)/2+2px)]'
           : ''
       }`}
     >
       <div
-        className={`flex flex-wrap justify-between gap-x-6 gap-y-2 ${children ? 'items-center' : 'items-baseline'}`}
+        className={
+          children
+            ? 'grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-x-6'
+            : 'min-w-0'
+        }
       >
-        <dl className="flex shrink-0 items-baseline gap-x-[1ch] whitespace-nowrap">
-          <dt className="sr-only">Project</dt>
-          <dd className="font-bold text-[var(--portfolio-ink-70)]">
-            {projectNumber}
-          </dd>
-          <dt className="sr-only">Company or product</dt>
-          <dd className="font-bold">{project.title}</dd>
-        </dl>
-        {project.rolesMarkdown || project.dates || children ? (
-          <div className="ml-auto flex max-w-full flex-wrap items-center justify-end gap-x-6 gap-y-2">
+        <div className="min-w-0">
+          <dl className="flex shrink-0 items-baseline gap-x-[2ch] whitespace-nowrap">
+            <dt className="sr-only">Project</dt>
+            <dd className="font-bold text-portfolio-text-dimmed">
+              {projectNumber}
+            </dd>
+            <dt className="sr-only">Company or product</dt>
+            <dd className="font-bold">
+              <span className="block uppercase">{project.title}</span>
+              <ProjectHeadingUnderline title={project.title} />
+            </dd>
+          </dl>
+          {project.rolesMarkdown || project.dates ? (
             <ProjectRoleDates
               rolesMarkdown={project.rolesMarkdown}
               dates={project.dates}
               hasMultipleRoles={hasMultipleRoles}
             />
+          ) : null}
+        </div>
+        {children ? (
+          <div className="col-start-2 row-start-1 justify-self-end">
             {children}
           </div>
         ) : null}
@@ -170,8 +202,8 @@ function ProjectRoleDates({
     <dl
       className={
         hasMultipleRoles
-          ? 'flex min-w-0 flex-col items-end justify-end text-right'
-          : 'flex min-w-0 flex-wrap items-baseline justify-end gap-x-[1ch] text-right'
+          ? 'mt-[2lh] flex min-w-0 flex-col items-start text-left text-portfolio-text-dimmed'
+          : 'mt-[2lh] flex min-w-0 flex-wrap items-baseline justify-start gap-x-[1ch] text-left text-portfolio-text-dimmed'
       }
     >
       {rolesMarkdown ? (
@@ -192,29 +224,19 @@ function ProjectRoleDates({
   )
 }
 
-export function ProjectNarrative({
+export const ProjectNarrative = memo(function ProjectNarrative({
   project,
   narrative,
-  wrapperClassName,
 }: {
   project: PortfolioProject
   narrative: ResolvedProjectNarrative
-  wrapperClassName?: string
 }) {
   return (
-    <OverscrollIndicator
-      wrapperClassName={wrapperClassName}
-      className="portfolio-themed-scrollbar overflow-x-hidden pr-3 [--project-color:var(--color-resume-signal)]"
-      contentClassName="relative min-h-full min-w-0"
-      indicatorColor="var(--portfolio-surface)"
-    >
-      <NarrativeContent
-        project={project}
-        narrative={narrative}
-      />
-    </OverscrollIndicator>
+    <div>
+      <NarrativeContent project={project} narrative={narrative} />
+    </div>
   )
-}
+})
 
 function NarrativePresence({
   project,
@@ -242,9 +264,13 @@ function NarrativePresence({
         dispatchTransition({ type: 'enter' }),
       )
     })
+    const duration = window.matchMedia('(prefers-reduced-motion: reduce)')
+      .matches
+      ? portfolioMotion.reduced
+      : portfolioMotion.narrative
     const timeout = window.setTimeout(() => {
       dispatchTransition({ type: 'complete' })
-    }, 280)
+    }, duration)
     return () => {
       cancelAnimationFrame(frame)
       cancelAnimationFrame(enterFrame)
@@ -256,22 +282,23 @@ function NarrativePresence({
 
   return (
     <OverscrollIndicator
+      bottomScrollControl={<FiveByFive variant="down" />}
+      persistentScrollbar
       ref={scrollRef}
-      className="portfolio-themed-scrollbar overflow-x-hidden pr-3 [--project-color:var(--color-resume-signal)]"
+      className="overflow-x-hidden [--project-color:var(--portfolio-accent)]"
       contentClassName="relative min-h-full min-w-0 overflow-clip"
-      indicatorColor="var(--portfolio-surface)"
     >
       {outgoing ? (
         <NarrativeContent
           project={project}
           narrative={outgoing}
-          className={`absolute inset-x-0 top-0 transition-opacity duration-[280ms] motion-reduce:duration-120 ${entered ? 'opacity-0' : 'opacity-100'}`}
+          className={`absolute inset-x-0 top-0 transition-opacity duration-[var(--portfolio-motion-narrative)] motion-reduce:duration-[var(--portfolio-motion-reduced)] ${entered ? 'opacity-0' : 'opacity-100'}`}
         />
       ) : null}
       <NarrativeContent
         project={project}
         narrative={rendered}
-        className={`transition-opacity duration-[280ms] motion-reduce:duration-120 ${outgoing && !entered ? 'opacity-0' : 'opacity-100'}`}
+        className={`transition-opacity duration-[var(--portfolio-motion-narrative)] motion-reduce:duration-[var(--portfolio-motion-reduced)] ${outgoing && !entered ? 'opacity-0' : 'opacity-100'}`}
       />
     </OverscrollIndicator>
   )
@@ -324,17 +351,17 @@ function NarrativeContent({
   return (
     <div
       data-portfolio-selectable-text
-      className={`min-w-0 pb-2 pt-[2lh] ${className ?? ''}`}
+      className={`min-w-0 pb-2 ${className ?? ''}`}
     >
       <div data-portfolio-slide-narrative-content>
         {narrative.titleMarkdown ? (
-          <h1 className="mb-[1lh] [font-size:inherit] font-bold leading-[inherit] tracking-normal text-balance">
+          <h1 className="mb-[1lh] font-bold">
             <PortfolioInlineMarkdown>
               {narrative.titleMarkdown}
             </PortfolioInlineMarkdown>
           </h1>
         ) : null}
-        <div className="portfolio-markdown portfolio-typewritten-copy prose max-w-none [font-size:inherit] font-normal leading-[inherit]">
+        <div className="portfolio-markdown prose max-w-none font-normal">
           <PortfolioMarkdown>{narrative.bodyMarkdown}</PortfolioMarkdown>
         </div>
       </div>

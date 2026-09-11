@@ -20,11 +20,24 @@ type PendingMouseDrag = {
 
 const AXIS_LOCK_MIN_DISTANCE = 8
 const AXIS_DOMINANCE_RATIO = 1.15
+const CAROUSEL_DRAG_LOCK_SELECTOR = '[data-portfolio-carousel-drag-lock]'
 
 const lockedMouseDownAxes = new WeakMap<Event, MouseDragAxis>()
 
 export function getLockedMouseDragAxis(event: Event) {
   return lockedMouseDownAxes.get(event) ?? null
+}
+
+export function isPortfolioCarouselDragLockedTarget(
+  target: EventTarget | null,
+) {
+  const element =
+    target instanceof Element
+      ? target
+      : target instanceof Node
+        ? target.parentElement
+        : null
+  return Boolean(element?.closest(CAROUSEL_DRAG_LOCK_SELECTOR))
 }
 
 export function installPortfolioMouseDragAxisLock({

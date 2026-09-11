@@ -1,9 +1,11 @@
 'use client'
 
 import {
+  useCallback,
   useEffect,
   useEffectEvent,
   useRef,
+  useMemo,
   useState,
   type RefObject,
 } from 'react'
@@ -66,34 +68,38 @@ export function usePortfolioViewerController({
     null,
   )
   const activeProject = portfolioSlides[activeProjectIndex]
-  const viewerSlides = activeProject
-    ? getPortfolioViewerSlides(activeProject)
-    : []
+  const viewerSlides = useMemo(
+    () => (activeProject ? getPortfolioViewerSlides(activeProject) : []),
+    [activeProject],
+  )
   const viewerIndex = viewerIntent
     ? getViewerSlideIndex(viewerSlides, viewerIntent.mediaId)
     : 0
 
-  function openViewer(intent: ViewerOpenIntent) {
-    const projectIndex = selectionRef.current.projectIndex
-    if (projectIndex < 0) return
-    const project = portfolioSlides[projectIndex]
-    const slides = projectSlides[project.slug]
-    const slideIndex = slides.findIndex(
-      slide =>
-        slide.kind === 'screenshot' && slide.screenshot.id === intent.mediaId,
-    )
-    if (
-      slideIndex < 0 ||
-      !isViewerScreenshotSlide(project, slides[slideIndex])
-    ) {
-      return
-    }
+  const openViewer = useCallback(
+    function openViewer(intent: ViewerOpenIntent) {
+      const projectIndex = selectionRef.current.projectIndex
+      if (projectIndex < 0) return
+      const project = portfolioSlides[projectIndex]
+      const slides = projectSlides[project.slug]
+      const slideIndex = slides.findIndex(
+        (slide) =>
+          slide.kind === 'screenshot' && slide.screenshot.id === intent.mediaId,
+      )
+      if (
+        slideIndex < 0 ||
+        !isViewerScreenshotSlide(project, slides[slideIndex])
+      ) {
+        return
+      }
 
-    selectHorizontal(projectIndex, slideIndex, 'silent', true)
-    updateRoute(projectIndex, slideIndex, 'push', true)
-    viewerHistoryEntryRef.current = true
-    setViewerIntent(intent)
-  }
+      selectHorizontal(projectIndex, slideIndex, 'silent', true)
+      updateRoute(projectIndex, slideIndex, 'push', true)
+      viewerHistoryEntryRef.current = true
+      setViewerIntent(intent)
+    },
+    [projectSlides, selectionRef, selectHorizontal, updateRoute],
+  )
 
   function openActiveViewerFromKeyboard() {
     const projectIndex = selectionRef.current.projectIndex
@@ -125,16 +131,20 @@ export function usePortfolioViewerController({
     const projectIndex = selectionRef.current.projectIndex
     if (projectIndex < 0) return
     const project = portfolioSlides[projectIndex]
-    const viewerSlide = getPortfolioViewerSlides(project)[nextViewerIndex]
+    const viewerSlide = viewerSlides[nextViewerIndex]
     if (!viewerSlide) return
     const slideIndex = projectSlides[project.slug].findIndex(
-      slide => slide.id === viewerSlide.id,
+      (slide) => slide.id === viewerSlide.id,
     )
     if (slideIndex < 0) return
-    setViewerIntent(intent =>
-      intent ? { ...intent, mediaId: viewerSlide.id } : intent,
+    setViewerIntent((intent) =>
+      intent && intent.mediaId !== viewerSlide.id
+        ? { ...intent, mediaId: viewerSlide.id }
+        : intent,
     )
-    selectHorizontal(projectIndex, slideIndex, 'silent', true)
+    if (selectionRef.current.slideIndexes[projectIndex] !== slideIndex) {
+      selectHorizontal(projectIndex, slideIndex, 'silent', true)
+    }
     updateRoute(projectIndex, slideIndex, 'replace', true)
   }
 
@@ -170,8 +180,14 @@ export function usePortfolioViewerController({
     const pendingClose = pendingViewerCloseRef.current
     if (pendingClose) {
       pendingViewerCloseRef.current = null
-      setActiveProjectIndex(pendingClose.projectIndex)
-      if (pendingClose.projectIndex >= 0) {
+      if (selectionRef.current.projectIndex !== pendingClose.projectIndex) {
+        setActiveProjectIndex(pendingClose.projectIndex)
+      }
+      if (
+        pendingClose.projectIndex >= 0 &&
+        selectionRef.current.slideIndexes[pendingClose.projectIndex] !==
+          pendingClose.slideIndex
+      ) {
         selectHorizontal(
           pendingClose.projectIndex,
           pendingClose.slideIndex,

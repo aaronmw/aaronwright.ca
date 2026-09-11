@@ -35,7 +35,7 @@ function getControlPosition(): CSSProperties {
   return {
     top: 'var(--portfolio-theme-control-edge-inset)',
     right:
-      'calc(var(--portfolio-default-spacing) - var(--portfolio-theme-control-inset) + env(safe-area-inset-right, 0px))',
+      'calc(var(--portfolio-navigation-control-edge-offset) + env(safe-area-inset-right, 0px))',
   }
 }
 
@@ -63,7 +63,7 @@ export function PortfolioThemeMenu({ hidden }: PortfolioThemeMenuProps) {
     >
       {open ? (
         <span
-          className="pointer-events-none fixed inset-0 -z-10 bg-black/50"
+          className="pointer-events-none fixed inset-0 z-[var(--portfolio-layer-scrim)] bg-portfolio-overlay"
           data-portfolio-theme-menu-scrim
           aria-hidden="true"
         />
@@ -81,13 +81,14 @@ export function PortfolioThemeMenu({ hidden }: PortfolioThemeMenuProps) {
         >
           <FiveByFive
             variant={preference}
-            className="text-resume-signal"
+            className="text-portfolio-accent"
           />
         </Button>
         <Popover
           placement="bottom end"
           offset={0}
-          className={`portfolio-theme-menu ${portfolioFont.className}`}
+          className={`portfolio-theme-menu portfolio-typography ${portfolioFont.className}`}
+          style={{ zIndex: 'var(--portfolio-layer-menu)' }}
           data-portfolio-theme-menu
         >
           <Menu
@@ -112,7 +113,7 @@ export function PortfolioThemeMenu({ hidden }: PortfolioThemeMenuProps) {
                     >
                       <FiveByFive
                         variant="dot"
-                        className={`transition-opacity duration-150 motion-reduce:transition-none ${
+                        className={`transition-opacity duration-[var(--portfolio-motion-feedback)] motion-reduce:transition-none ${
                           isSelected ? 'opacity-100' : 'opacity-0'
                         }`}
                       />
@@ -123,7 +124,7 @@ export function PortfolioThemeMenu({ hidden }: PortfolioThemeMenuProps) {
                     <span className="grid size-[var(--portfolio-control-size)] place-items-center">
                       <FiveByFive
                         variant={option.icon}
-                        className="text-resume-signal"
+                        className="text-portfolio-accent"
                       />
                     </span>
                   </>

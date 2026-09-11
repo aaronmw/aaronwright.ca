@@ -1,6 +1,6 @@
 'use client'
 
-import { type CSSProperties } from 'react'
+import { memo, useCallback, useMemo, type CSSProperties } from 'react'
 import type { EmblaCarouselType } from 'embla-carousel'
 import type { PortfolioProject } from '@/lib/portfolio'
 import { getProjectNarratives } from '../domain/narrative'
@@ -52,7 +52,7 @@ function ProjectCarouselMetadata({
       projectNumber={projectNumber}
       alignWithLogo={false}
     >
-      {project.url ? (
+      {slideCount > 1 || project.url ? (
         <PortfolioProjectControls
           activeSlideIndex={activeSlideIndex}
           projectTitle={project.title}
@@ -65,7 +65,7 @@ function ProjectCarouselMetadata({
   )
 }
 
-export function PortfolioProjectCarousel({
+export const PortfolioProjectCarousel = memo(function PortfolioProjectCarousel({
   project,
   projectIndex,
   projectNumber,
@@ -78,7 +78,7 @@ export function PortfolioProjectCarousel({
   registerMediaElement,
   onApi,
   onSelect,
-  onSelectSlide,
+  onSelectSlide: selectProjectSlide,
   onOpenViewer,
   onBackdropVisibilityChange,
 }: {
@@ -97,15 +97,31 @@ export function PortfolioProjectCarousel({
   ) => void
   onApi: (projectIndex: number, api: EmblaCarouselType | null) => void
   onSelect: (projectIndex: number, slideIndex: number) => void
-  onSelectSlide: (slideIndex: number) => void
+  onSelectSlide: (
+    projectIndex: number,
+    slideIndex: number,
+    mode: 'push' | 'replace',
+  ) => void
   onOpenViewer: (intent: ViewerOpenIntent) => void
   onBackdropVisibilityChange: (visible: boolean) => void
 }) {
-  const mediaSlides = slides.filter(
-    (slide): slide is Extract<ProjectSlide, { kind: 'screenshot' }> =>
-      slide.kind === 'screenshot',
+  const onSelectSlide = useCallback(
+    (slideIndex: number) =>
+      selectProjectSlide(projectIndex, slideIndex, 'push'),
+    [projectIndex, selectProjectSlide],
   )
-  const narratives = getProjectNarratives(project, slides)
+  const mediaSlides = useMemo(
+    () =>
+      slides.filter(
+        (slide): slide is Extract<ProjectSlide, { kind: 'screenshot' }> =>
+          slide.kind === 'screenshot',
+      ),
+    [slides],
+  )
+  const narratives = useMemo(
+    () => getProjectNarratives(project, slides),
+    [project, slides],
+  )
   const narrative = narratives[activeSlideIndex] ?? narratives[0]
   const sideBySide = isWideLayout && !isTouchInput
   const hasMedia = mediaSlides.length > 0
@@ -152,10 +168,10 @@ export function PortfolioProjectCarousel({
             } as ProjectVerticalAlignmentStyle
           }
         >
-          <div className="absolute inset-x-0 top-[var(--portfolio-project-narrative-content-top)] z-20 grid grid-cols-[var(--portfolio-description-rail-width)_minmax(0,1fr)_var(--portfolio-control-gutter-width)]">
+          <div className="pointer-events-none absolute inset-x-0 top-[var(--portfolio-project-narrative-content-top)] z-[var(--portfolio-layer-overlay)] grid grid-cols-[var(--portfolio-description-rail-width)_minmax(0,1fr)_var(--portfolio-control-gutter-width)]">
             <PortfolioLedgerFrame
               aria-label={`${project.title} overview`}
-              className="col-start-1 [padding-left:var(--portfolio-control-gutter-width)] [padding-right:var(--portfolio-default-spacing)] [transform:translateY(calc(-100%-2lh))]"
+              className="pointer-events-auto col-start-1 [padding-left:var(--portfolio-control-gutter-width)] [padding-right:var(--portfolio-default-spacing)] [transform:translateY(calc(-100%-2lh))]"
             >
               <ProjectCarouselMetadata
                 activeSlideIndex={activeSlideIndex}
@@ -171,26 +187,25 @@ export function PortfolioProjectCarousel({
             data-portfolio-carousel={project.slug}
             className="relative h-full min-h-0 min-w-0 overflow-hidden [touch-action:pan-y_pinch-zoom]"
           >
-            <div className="relative z-10 flex h-full min-h-0 min-w-0">
+            <div className="relative z-[var(--portfolio-layer-content)] flex h-full min-h-0 min-w-0">
               {mediaSlides.map((slide, slideIndex) => (
                 <article
                   key={slide.id}
                   data-portfolio-carousel-panel="canonical"
                   data-portfolio-carousel-index={slideIndex}
-                  className="grid h-full min-h-0 min-w-0 shrink-0 basis-full grid-cols-[var(--portfolio-description-rail-width)_minmax(0,1fr)_var(--portfolio-control-gutter-width)] overflow-hidden"
+                  className="grid h-full min-h-0 min-w-0 shrink-0 basis-full grid-cols-[var(--portfolio-description-rail-width)_minmax(0,1fr)_var(--portfolio-control-gutter-width)]"
                   aria-hidden={activeSlideIndex !== slideIndex}
                   inert={activeSlideIndex !== slideIndex}
                 >
-                  <PortfolioLedgerFrame className="relative col-start-1 h-full min-h-0 overflow-hidden">
-                    <div className="absolute bottom-[var(--portfolio-slide-navigation-reserved-height)] left-[var(--portfolio-control-gutter-width)] right-[var(--portfolio-default-spacing)] top-[calc(var(--portfolio-project-narrative-content-top)-2lh)] min-h-0">
+                  <PortfolioLedgerFrame className="relative col-start-1 h-full min-h-0">
+                    <div className="absolute left-[var(--portfolio-control-gutter-width)] right-[var(--portfolio-default-spacing)] top-[var(--portfolio-project-narrative-content-top)]">
                       <ProjectNarrative
                         project={project}
                         narrative={narratives[slideIndex] ?? narrative}
-                        wrapperClassName="h-full"
                       />
                     </div>
                   </PortfolioLedgerFrame>
-                  <div className="relative z-10 col-start-2 min-h-0 min-w-0">
+                  <div className="relative z-[var(--portfolio-layer-content)] col-start-2 min-h-0 min-w-0">
                     <ProjectPanel
                       slide={slide}
                       restingMediaPadding="var(--portfolio-default-spacing)"
@@ -210,8 +225,8 @@ export function PortfolioProjectCarousel({
           className="portfolio-safe-inline relative grid h-full min-h-0 grid-cols-[minmax(0,1fr)] grid-rows-[minmax(0,1fr)_minmax(0,2fr)] pt-10"
           style={
             {
-              'paddingLeft': MOBILE_SECTION_CONTENT_PADDING_LEFT,
-              'paddingRight': MOBILE_SECTION_CONTENT_PADDING_RIGHT,
+              paddingLeft: MOBILE_SECTION_CONTENT_PADDING_LEFT,
+              paddingRight: MOBILE_SECTION_CONTENT_PADDING_RIGHT,
               '--portfolio-project-narrative-content-top':
                 narrativeContentTop === null
                   ? '50%'
@@ -221,7 +236,7 @@ export function PortfolioProjectCarousel({
         >
           <div
             data-portfolio-stacked-text-region
-            className="pointer-events-none relative z-20 col-start-1 row-start-1 min-h-0 min-w-0"
+            className="pointer-events-none relative z-[var(--portfolio-layer-overlay)] col-start-1 row-start-1 min-h-0 min-w-0"
           >
             <PortfolioLedgerFrame className="pointer-events-auto absolute inset-x-0 mx-auto w-full max-w-[calc(var(--portfolio-description-rail-width)-var(--portfolio-control-gutter-width)-var(--portfolio-default-spacing))] top-[var(--portfolio-project-narrative-content-top)] [transform:translateY(calc(-100%-2lh))]">
               <ProjectCarouselMetadata
@@ -236,7 +251,7 @@ export function PortfolioProjectCarousel({
           <div
             ref={viewportRef}
             data-portfolio-carousel={project.slug}
-            className="relative z-10 col-start-1 row-span-2 row-start-1 min-h-0 min-w-0 overflow-hidden [touch-action:pan-y_pinch-zoom]"
+            className="relative z-[var(--portfolio-layer-content)] col-start-1 row-span-2 row-start-1 min-h-0 min-w-0 overflow-hidden [touch-action:pan-y_pinch-zoom]"
           >
             <div className="flex h-full min-h-0 min-w-0">
               {mediaSlides.map((slide, slideIndex) => (
@@ -248,12 +263,11 @@ export function PortfolioProjectCarousel({
                   aria-hidden={activeSlideIndex !== slideIndex}
                   inert={activeSlideIndex !== slideIndex}
                 >
-                  <PortfolioLedgerFrame className="relative row-start-1 mx-auto h-full min-h-0 w-full max-w-[calc(var(--portfolio-description-rail-width)-var(--portfolio-control-gutter-width)-var(--portfolio-default-spacing))] overflow-hidden">
-                    <div className="absolute inset-x-0 bottom-0 top-[calc(var(--portfolio-project-narrative-content-top)-2lh)] min-h-0">
+                  <PortfolioLedgerFrame className="relative row-start-1 mx-auto h-full min-h-0 w-full max-w-[calc(var(--portfolio-description-rail-width)-var(--portfolio-control-gutter-width)-var(--portfolio-default-spacing))]">
+                    <div className="absolute inset-x-0 top-[var(--portfolio-project-narrative-content-top)]">
                       <ProjectNarrative
                         project={project}
                         narrative={narratives[slideIndex] ?? narrative}
-                        wrapperClassName="h-full"
                       />
                     </div>
                   </PortfolioLedgerFrame>
@@ -278,4 +292,4 @@ export function PortfolioProjectCarousel({
       )}
     </section>
   )
-}
+})

@@ -1,5 +1,6 @@
 'use client'
 
+import { portfolioMotionSeconds } from '@/lib/portfolioTokens'
 import {
   useCallback,
   useEffect,
@@ -28,6 +29,7 @@ import { installPortfolioWheelAxisLock } from './runtime/wheelAxisLock'
 import {
   getLockedMouseDragAxis,
   installPortfolioMouseDragAxisLock,
+  isPortfolioCarouselDragLockedTarget,
 } from './runtime/mouseDragAxisLock'
 import { PortfolioBrowserView } from './presentation/PortfolioBrowserView'
 
@@ -61,6 +63,13 @@ function isSelectableTextTarget(target: EventTarget | null) {
   return targetMatches(target, '[data-portfolio-selectable-text]')
 }
 
+function isCarouselDragIgnoredTarget(target: EventTarget | null) {
+  return (
+    isSelectableTextTarget(target) ||
+    isPortfolioCarouselDragLockedTarget(target)
+  )
+}
+
 function nextFrame() {
   return new Promise<void>(resolve => requestAnimationFrame(() => resolve()))
 }
@@ -86,7 +95,6 @@ export function PortfolioBrowser({
     registerMediaElement,
     ensureMediaReady,
     preloadQueue,
-    isMediaReady,
   } = usePortfolioMediaReadiness()
   const {
     backgroundMediaQueue,
@@ -99,7 +107,6 @@ export function PortfolioBrowser({
     projects: portfolioSlides,
     initialProjectSlug,
     initialScreenshotSlug,
-    isMediaReady,
   })
   const {
     selection,
@@ -124,6 +131,7 @@ export function PortfolioBrowser({
       skipSnaps: false,
       startIndex: normalizedInitialProjectIndex + 1,
       watchDrag: (_api, event) => {
+        if (isPortfolioCarouselDragLockedTarget(event.target)) return false
         if (event.type !== 'mousedown') return true
         if (isSelectableTextTarget(event.target)) return false
         if (!targetMatches(event.target, '[data-portfolio-carousel]')) {
@@ -152,7 +160,7 @@ export function PortfolioBrowser({
     const removeMouseDragAxisLock = installPortfolioMouseDragAxisLock({
       root: viewport,
       targetSelector: '[data-portfolio-carousel]',
-      ignoreTarget: isSelectableTextTarget,
+      ignoreTarget: isCarouselDragIgnoredTarget,
     })
 
     return () => {
@@ -299,7 +307,9 @@ export function PortfolioBrowser({
       await new Promise<void>(resolve => {
         gsap.to(curtain, {
           autoAlpha: 0,
-          duration: reducedMotion ? 0.12 : 0.6,
+          duration: reducedMotion
+            ? portfolioMotionSeconds.reduced
+            : portfolioMotionSeconds.scroll,
           ease: 'power3.inOut',
           onComplete: resolve,
         })

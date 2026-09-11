@@ -746,6 +746,16 @@ test('viewer deep links restore with browser history', async ({
   await expect(page.locator('.portfolio-viewer')).toBeVisible()
 })
 
+test('viewer deep links retain their modal URL after carousel initialization', async ({ page }) => {
+  await page.goto('/work/freshbooks/client-first?modal=image')
+  await waitForPortfolio(page)
+  await expect(page.locator('.portfolio-viewer')).toHaveClass(/portfolio-viewer--open/)
+  await expect(page).toHaveURL(/\/work\/freshbooks\/client-first\?modal=image$/)
+  await page.keyboard.press('Escape')
+  await expect(page.locator('.portfolio-viewer')).toHaveCount(0)
+  await expect(page).toHaveURL(/\/work\/freshbooks\/client-first$/)
+})
+
 test('reduced motion keeps navigation usable and shortens viewer transitions', async ({
   page,
 }) => {

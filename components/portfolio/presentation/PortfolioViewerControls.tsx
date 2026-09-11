@@ -22,7 +22,7 @@ export function PortfolioViewerControls({
   onSelect: (index: number) => void
 }) {
   return (
-    <div className="pointer-events-none fixed inset-0 z-[1] text-[var(--portfolio-ink)]">
+    <div className="pointer-events-none fixed inset-0 z-[var(--portfolio-layer-viewer-controls)] text-portfolio-text">
       <div
         className="pointer-events-none fixed inset-0"
         data-portfolio-viewer-controls
@@ -33,13 +33,13 @@ export function PortfolioViewerControls({
               visual={
                 <FiveByFive
                   variant="left"
-                  className="bg-resume-signal text-white"
+                  className="text-portfolio-accent group-disabled:text-portfolio-text-dimmed"
                 />
               }
               iconClassName=""
-              className="portfolio-theme-surface pointer-events-auto fixed top-1/2 size-11 -translate-y-1/2 text-[var(--portfolio-ink)] disabled:pointer-events-none disabled:opacity-20"
+              className="group pointer-events-auto fixed top-1/2 size-[var(--portfolio-control-size)] -translate-y-1/2 bg-transparent text-portfolio-text disabled:pointer-events-none"
               style={{
-                left: 'max(var(--portfolio-navigation-control-edge-offset), env(safe-area-inset-left, 0px))',
+                left: 'calc(var(--portfolio-navigation-control-edge-offset) + env(safe-area-inset-left, 0px))',
               }}
               aria-label="Previous image"
               disabled={index === 0}
@@ -49,14 +49,14 @@ export function PortfolioViewerControls({
               visual={
                 <FiveByFive
                   variant="right"
-                  className="bg-resume-signal text-white"
+                  className="text-portfolio-accent group-disabled:text-portfolio-text-dimmed"
                 />
               }
               iconClassName=""
-              className="portfolio-theme-surface pointer-events-auto fixed top-1/2 size-11 -translate-y-1/2 text-[var(--portfolio-ink)] disabled:pointer-events-none disabled:opacity-20"
+              className="group pointer-events-auto fixed top-1/2 size-[var(--portfolio-control-size)] -translate-y-1/2 bg-transparent text-portfolio-text disabled:pointer-events-none"
               style={{
                 right:
-                  'max(var(--portfolio-navigation-control-edge-offset), env(safe-area-inset-right, 0px))',
+                  'calc(var(--portfolio-navigation-control-edge-offset) + env(safe-area-inset-right, 0px))',
               }}
               aria-label="Next image"
               disabled={index === slides.length - 1}
@@ -68,14 +68,14 @@ export function PortfolioViewerControls({
           visual={
             <FiveByFive
               variant="close"
-              className="bg-resume-signal text-white"
+              className="bg-portfolio-accent text-portfolio-white"
             />
           }
           iconClassName=""
-          className="portfolio-theme-surface pointer-events-auto fixed size-11 text-[var(--portfolio-ink)]"
+          className="pointer-events-auto fixed size-[var(--portfolio-control-size)] bg-transparent text-portfolio-text"
           style={{
             right:
-              'max(var(--portfolio-navigation-control-edge-offset), env(safe-area-inset-right, 0px))',
+              'calc(var(--portfolio-navigation-control-edge-offset) + env(safe-area-inset-right, 0px))',
             top: 'max(var(--portfolio-navigation-rail-edge-offset), env(safe-area-inset-top, 0px))',
           }}
           aria-label="Close enlarged image"

@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import type { PortfolioProject, PortfolioScreenshot } from '@/lib/portfolio'
 import {
   carouselMediaKey,
@@ -6,20 +7,19 @@ import {
   getProjectSlidesBySlug,
 } from '@/components/portfolio/domain/slides'
 
-export function usePortfolioModel({
+function createPortfolioModel({
   projects,
   initialProjectSlug,
   initialScreenshotSlug,
-  isMediaReady,
+  projectSlides,
 }: {
   projects: PortfolioProject[]
   initialProjectSlug?: string
   initialScreenshotSlug?: string
-  isMediaReady: (key: string) => boolean
+  projectSlides: ReturnType<typeof getProjectSlidesBySlug>
 }) {
-  const projectSlides = getProjectSlidesBySlug(projects)
   const initialProjectIndex = initialProjectSlug
-    ? projects.findIndex(project => project.slug === initialProjectSlug)
+    ? projects.findIndex((project) => project.slug === initialProjectSlug)
     : -1
   const normalizedInitialProjectIndex =
     initialProjectIndex >= 0 ? initialProjectIndex : -1
@@ -28,10 +28,10 @@ export function usePortfolioModel({
     initialProjectSlug,
     initialScreenshotSlug,
   )
-  const projectMediaKeys = projects.map(project =>
+  const projectMediaKeys = projects.map((project) =>
     getProjectMediaScreenshots(project).map(carouselMediaKey),
   )
-  const sectionEntryMediaKeys = projectMediaKeys.flatMap(keys =>
+  const sectionEntryMediaKeys = projectMediaKeys.flatMap((keys) =>
     keys[0] ? [keys[0]] : [],
   )
   const initialTargetScreenshot = (() => {
@@ -52,7 +52,7 @@ export function usePortfolioModel({
   const openingMediaKeys = (() => {
     const journeyKeys = projectMediaKeys
       .slice(0, normalizedInitialProjectIndex + 1)
-      .map(keys => keys[0])
+      .map((keys) => keys[0])
       .filter(Boolean)
 
     if (initialTargetScreenshot) {
@@ -68,11 +68,11 @@ export function usePortfolioModel({
         : []
     const activeScreenshotIndex = initialTargetScreenshot
       ? activeProjectMedia.findIndex(
-          screenshot => screenshot.id === initialTargetScreenshot.id,
+          (screenshot) => screenshot.id === initialTargetScreenshot.id,
         )
       : 0
     const adjacentKeys = [-1, 1]
-      .map(offset => activeProjectMedia[activeScreenshotIndex + offset])
+      .map((offset) => activeProjectMedia[activeScreenshotIndex + offset])
       .filter((screenshot): screenshot is PortfolioScreenshot =>
         Boolean(screenshot),
       )
@@ -93,12 +93,31 @@ export function usePortfolioModel({
     initialTargetScreenshot,
     normalizedInitialProjectIndex,
     openingMediaKeys,
-    projectCarouselsReady: projectMediaKeys.map(keys =>
-      keys.every(isMediaReady),
-    ),
-    projectMediaKeys,
     projectSlides,
-    sectionEntryMediaKeys,
-    sectionEntryMediaReady: sectionEntryMediaKeys.every(isMediaReady),
   }
+}
+
+export function usePortfolioModel({
+  projects,
+  initialProjectSlug,
+  initialScreenshotSlug,
+}: {
+  projects: PortfolioProject[]
+  initialProjectSlug?: string
+  initialScreenshotSlug?: string
+}) {
+  const projectSlides = useMemo(
+    () => getProjectSlidesBySlug(projects),
+    [projects],
+  )
+  return useMemo(
+    () =>
+      createPortfolioModel({
+        projects,
+        initialProjectSlug,
+        initialScreenshotSlug,
+        projectSlides,
+      }),
+    [projects, initialProjectSlug, initialScreenshotSlug, projectSlides],
+  )
 }

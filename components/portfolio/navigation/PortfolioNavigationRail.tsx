@@ -5,6 +5,13 @@ import {
   type CSSProperties,
   type PointerEvent,
 } from 'react'
+import {
+  Pressable,
+  Tooltip as AriaTooltip,
+  TooltipTrigger,
+} from 'react-aria-components'
+import { portfolioFont } from '@/lib/portfolioFonts'
+import { portfolioMotion } from '@/lib/portfolioTokens'
 import { FiveByFive } from '../presentation/FiveByFive'
 import {
   getNavigationMarkerOffset,
@@ -18,8 +25,8 @@ export type PortfolioNavigationItem = {
 }
 
 const DOT_SIZE = 'var(--logo-stroke-width)'
-const DEFAULT_PREVIEW_DRAW_DELAY_MS = 300
-const DEFAULT_PREVIEW_DRAW_DURATION_MS = 250
+const DEFAULT_PREVIEW_DRAW_DELAY_MS = portfolioMotion.navigationPreviewDelay
+const DEFAULT_PREVIEW_DRAW_DURATION_MS = portfolioMotion.navigationPreviewDraw
 const PREVIEW_CELL_COUNT = 16
 
 function NavigationDotButton({
@@ -28,6 +35,8 @@ function NavigationDotButton({
   active,
   ariaCurrent,
   label,
+  tooltip,
+  tooltipPlacement = 'right',
   previewDrawDelayMs,
   previewDrawDurationMs,
   style,
@@ -39,6 +48,8 @@ function NavigationDotButton({
   active: boolean
   ariaCurrent: 'true' | 'page' | undefined
   label: string
+  tooltip?: string
+  tooltipPlacement?: 'left' | 'right'
   previewDrawDelayMs: number
   previewDrawDurationMs: number
   style: CSSProperties
@@ -95,13 +106,13 @@ function NavigationDotButton({
     if (event.pointerType !== 'touch') setPreview(true)
   }
 
-  return (
+  const button = (
     <button
       type="button"
-      className={`absolute grid place-items-center border-0 bg-transparent p-0 outline-none focus-visible:z-[15] focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 ${
+      className={`absolute grid place-items-center border-0 bg-transparent p-0 outline-none focus-visible:z-[var(--portfolio-layer-focused-control)] focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 ${
         active
-          ? 'text-resume-signal'
-          : 'text-[var(--portfolio-ink)] hover:text-resume-signal focus-visible:text-resume-signal'
+          ? 'text-portfolio-accent'
+          : 'text-portfolio-text hover:text-portfolio-accent focus-visible:text-portfolio-accent'
       }`}
       style={style}
       aria-label={label}
@@ -117,7 +128,7 @@ function NavigationDotButton({
         onSelect(index)
       }}
     >
-      <span className="pointer-events-none absolute inset-0 grid place-items-center text-resume-signal">
+      <span className="pointer-events-none absolute inset-0 grid place-items-center text-portfolio-accent">
         <FiveByFive
           variant="outline"
           visibleCellCount={visiblePreviewCellCount}
@@ -134,20 +145,41 @@ function NavigationDotButton({
       />
     </button>
   )
+
+  if (!tooltip) return button
+
+  return (
+    <TooltipTrigger
+      delay={0}
+      closeDelay={0}
+    >
+      <Pressable>{button}</Pressable>
+      <AriaTooltip
+        placement={tooltipPlacement}
+        offset={12}
+        containerPadding={12}
+        shouldFlip
+        className={`${portfolioFont.className} portfolio-typography portfolio-navigation-tooltip`}
+        style={{ zIndex: 'var(--portfolio-layer-tooltip)' }}
+      >
+        <span className="portfolio-cap-trim">{tooltip}</span>
+      </AriaTooltip>
+    </TooltipTrigger>
+  )
 }
 
 function RailMarker() {
   return (
     <span
       data-portfolio-navigation-marker
-      className="pointer-events-none absolute z-10 grid place-items-center"
+      className="pointer-events-none absolute z-[var(--portfolio-layer-content)] grid place-items-center"
       style={{
         width: NAVIGATION_SVG_SIZE,
         height: NAVIGATION_SVG_SIZE,
       }}
       aria-hidden="true"
     >
-      <span className="size-[calc(var(--logo-stroke-width)*5)] bg-resume-signal" />
+      <span className="size-[var(--portfolio-logo-size)] bg-portfolio-accent" />
     </span>
   )
 }
@@ -184,7 +216,7 @@ function MaskedActiveDot({
   return (
     <span
       data-portfolio-active-dot-mask={axis}
-      className="pointer-events-none absolute inset-0 z-20 transition-[clip-path] duration-300 ease-out motion-reduce:transition-none"
+      className="pointer-events-none absolute inset-0 z-[var(--portfolio-layer-overlay)] transition-[clip-path] duration-[var(--portfolio-motion-navigation)] ease-out motion-reduce:transition-none"
       style={{ clipPath: getMarkerClipPath(axis, activeIndex, itemCount) }}
       aria-hidden="true"
     >
@@ -205,7 +237,7 @@ function MaskedActiveDot({
         }
       >
         <span
-          className={pending ? 'portfolio-pending-dot bg-white' : 'bg-white'}
+          className={pending ? 'portfolio-pending-dot bg-portfolio-white' : 'bg-portfolio-white'}
           style={{ width: DOT_SIZE, height: DOT_SIZE }}
         />
       </span>
@@ -232,13 +264,13 @@ export function PortfolioSlideRail({
     <div
       data-portfolio-slide-indicators
       data-interactive-pop="off"
-      className="pointer-events-auto relative h-[52px] font-portfolio-controls"
+      className="pointer-events-auto relative h-[var(--portfolio-navigation-content-size)] font-portfolio-controls"
       style={{
         width: items.length * NAVIGATION_SVG_SIZE,
       }}
     >
       <div
-        className="absolute inset-y-0 left-0 z-10 transition-transform duration-300 ease-out motion-reduce:transition-none"
+        className="absolute inset-y-0 left-0 z-[var(--portfolio-layer-content)] transition-transform duration-[var(--portfolio-motion-navigation)] ease-out motion-reduce:transition-none"
         style={{
           transform: `translateX(${getNavigationMarkerOffset(activeIndex)}px)`,
         }}
@@ -299,7 +331,7 @@ export function PortfolioSectionRail({
 }) {
   const height = items.length * NAVIGATION_SVG_SIZE
   const trackStyle = {
-    [side]: 0,
+    [side]: `env(safe-area-inset-${side}, 0px)`,
     width: 'var(--portfolio-navigation-track-size)',
   } as CSSProperties
 
@@ -308,7 +340,7 @@ export function PortfolioSectionRail({
       aria-label={`${side === 'left' ? 'Left' : 'Right'} section navigation`}
       data-portfolio-section-nav-zone={side}
       data-interactive-pop="off"
-      className={`fixed inset-y-0 z-40 font-portfolio-controls transition-opacity duration-200 motion-reduce:transition-none ${
+      className={`fixed inset-y-0 z-[var(--portfolio-layer-navigation)] font-portfolio-controls transition-opacity duration-[var(--portfolio-motion-state)] motion-reduce:transition-none ${
         hidden ? 'pointer-events-none opacity-0' : 'opacity-100'
       }`}
       style={trackStyle}
@@ -318,7 +350,7 @@ export function PortfolioSectionRail({
         style={{ width: NAVIGATION_SVG_SIZE, height }}
       >
         <div
-          className="absolute left-0 top-0 z-10 transition-transform duration-300 ease-out motion-reduce:transition-none"
+          className="absolute left-0 top-0 z-[var(--portfolio-layer-content)] transition-transform duration-[var(--portfolio-motion-navigation)] ease-out motion-reduce:transition-none"
           style={{
             transform: `translateY(${getNavigationMarkerOffset(activeIndex)}px)`,
           }}
@@ -345,6 +377,8 @@ export function PortfolioSectionRail({
               active={isActive}
               ariaCurrent={isActive ? 'page' : undefined}
               label={label}
+              tooltip={item.label}
+              tooltipPlacement={side === 'left' ? 'right' : 'left'}
               previewDrawDelayMs={previewDrawDelayMs}
               previewDrawDurationMs={previewDrawDurationMs}
               style={{

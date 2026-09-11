@@ -4,13 +4,17 @@ import { FaviconSync } from '@/components/FaviconSync';
 import { InteractivePopEffects } from '@/components/InteractivePopEffects';
 import { config } from '@fortawesome/fontawesome-svg-core';
 import type { Viewport } from 'next';
+import { portfolioPaletteStyle } from '@/lib/portfolioPalette';
+import { portfolioTokenStyle } from '@/lib/portfolioTokens';
+import { faviconDataUrl } from '@/lib/favicon';
+import { RESUME_SIGNAL_COLOR } from '@/components/portfolio/domain/theme';
 
 config.autoAddCss = false;
 
 export const metadata = {
   title: 'Aaron M. Wright',
   description: 'Aaron M. Wright',
-  icons: { icon: '/favicon.svg' },
+  icons: { icon: faviconDataUrl(RESUME_SIGNAL_COLOR) },
 };
 
 export const viewport: Viewport = {
@@ -25,7 +29,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html
+      lang="en"
+      style={{ ...portfolioPaletteStyle, ...portfolioTokenStyle }}
+      suppressHydrationWarning
+    >
       <body>
         {children}
         <FaviconSync />

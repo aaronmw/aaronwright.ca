@@ -25,7 +25,7 @@ export default function WorkLayout({
       />
       <PortfolioThemeProvider>
         <section
-          className={`${portfolioFont.className} ${portfolioFont.variable} portfolio-theme-root`}
+          className={`${portfolioFont.className} ${portfolioFont.variable} portfolio-theme-root portfolio-typography`}
           data-portfolio-theme-root
         >
           {children}

@@ -1,6 +1,11 @@
-export const RESUME_PAPER_COLOR = '#fffdfb'
-export const RESUME_INK_COLOR = '#000000'
-export const RESUME_SIGNAL_COLOR = '#ff0000'
+import {
+  portfolioAccentColor,
+  portfolioNeutralPalette,
+} from '../../../lib/portfolioPalette'
+
+export const RESUME_PAPER_COLOR = portfolioNeutralPalette[50]
+export const RESUME_INK_COLOR = portfolioNeutralPalette[950]
+export const RESUME_SIGNAL_COLOR = portfolioAccentColor
 export const TOP_SCREEN_COLOR = RESUME_PAPER_COLOR
 export const PROJECT_COLOR_START_HUE = 342
 export const PROJECT_COLOR_SATURATION = 78

@@ -47,7 +47,6 @@ export function PortfolioViewerOpenSurface({
   concealed,
   className,
   style,
-  restartControl,
   children,
   onOpen,
 }: {
@@ -56,7 +55,6 @@ export function PortfolioViewerOpenSurface({
   concealed: boolean
   className: string
   style?: CSSProperties
-  restartControl?: ReactNode
   children: ReactNode
   onOpen: (intent: ViewerOpenIntent) => void
 }) {
@@ -199,7 +197,7 @@ export function PortfolioViewerOpenSurface({
       ref={surfaceRef}
       data-portfolio-screenshot-id={screenshotId}
       data-portfolio-viewer-source={active ? 'active' : undefined}
-      className={`group/restart relative overflow-hidden bg-[var(--portfolio-surface)] ${className} ${
+      className={`relative overflow-hidden bg-[var(--portfolio-surface)] ${className} ${
         concealed ? 'invisible' : ''
       }`}
       style={{ ...style, touchAction: 'pan-x pan-y' }}
@@ -215,7 +213,6 @@ export function PortfolioViewerOpenSurface({
       <div className="pointer-events-none absolute inset-0 select-none">
         {children}
       </div>
-      {restartControl}
     </div>
   )
 }

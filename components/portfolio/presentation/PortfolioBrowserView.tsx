@@ -1,6 +1,11 @@
 'use client'
 
-import { useState, type CSSProperties, type RefObject } from 'react'
+import {
+  useCallback,
+  useState,
+  type CSSProperties,
+  type RefObject,
+} from 'react'
 import type { EmblaCarouselType } from 'embla-carousel'
 import type { EmblaViewportRefType } from 'embla-carousel-react'
 import { faRotateRight } from '@fortawesome/free-solid-svg-icons'
@@ -23,9 +28,9 @@ import { PortfolioLogoMark } from './PortfolioLogoMark'
 import { PortfolioViewer } from './PortfolioViewer'
 import { CircularIconButton, PortfolioHelperMessage } from './PortfolioControls'
 import { FiveByFive } from './FiveByFive'
-import { MOBILE_SECTION_CONTENT_PADDING_LEFT } from '../mobileLayout'
 
 const START_SCREEN_INDEX = -1
+const NOOP = () => undefined
 
 type WideLayoutStyle = CSSProperties & {
   '--portfolio-description-rail-half-width': string
@@ -91,7 +96,10 @@ type PortfolioBrowserViewActions = {
 
 const SECTION_ITEMS = [
   { id: 'work', label: 'Work' },
-  ...portfolioSlides.map(project => ({ id: project.id, label: project.title })),
+  ...portfolioSlides.map((project) => ({
+    id: project.id,
+    label: project.title,
+  })),
 ]
 
 function deriveViewState(
@@ -114,7 +122,7 @@ function deriveViewState(
       resolvedTheme,
     ),
     activeProjectHasMedia: activeSlides.some(
-      slide => slide.kind === 'screenshot',
+      (slide) => slide.kind === 'screenshot',
     ),
     activeSlideIndex,
     activeSlides,
@@ -149,7 +157,7 @@ function PortfolioHorizontalNavigation({
   return (
     <nav
       data-portfolio-underlying-horizontal-navigation
-      className={`pointer-events-none absolute inset-x-0 bottom-[var(--portfolio-frame-rule-size)] z-40 h-[calc(var(--portfolio-navigation-track-size)+env(safe-area-inset-bottom,0px))] transition-opacity duration-200 motion-reduce:transition-none ${
+      className={`pointer-events-none absolute inset-x-0 bottom-[var(--portfolio-frame-rule-size)] z-[var(--portfolio-layer-navigation)] h-[calc(var(--portfolio-navigation-track-size)+env(safe-area-inset-bottom,0px))] transition-opacity duration-[var(--portfolio-motion-state)] motion-reduce:transition-none ${
         introPhase === 'ready' && !viewerOpen
           ? 'opacity-100'
           : 'pointer-events-none opacity-0'
@@ -173,7 +181,7 @@ function PortfolioHorizontalNavigation({
         }}
       >
         <PortfolioSlideRail
-          items={activeSlides.map(slide => ({
+          items={activeSlides.map((slide) => ({
             id: slide.id,
             label:
               slide.kind === 'description'
@@ -181,7 +189,7 @@ function PortfolioHorizontalNavigation({
                 : `Show ${slide.screenshot.alt}`,
           }))}
           activeIndex={activeSlideIndex}
-          onSelect={index => {
+          onSelect={(index) => {
             if (activeProjectIndex < 0) return
             actions.setActiveSlide(activeProjectIndex, index, 'push')
           }}
@@ -189,22 +197,19 @@ function PortfolioHorizontalNavigation({
       </div>
       {!isTouchInput ? (
         <div
-          className={`pointer-events-auto absolute top-0 grid h-[var(--portfolio-navigation-track-size)] w-[var(--portfolio-navigation-track-size)] place-items-center transition-opacity duration-300 ease-out ${
+          className={`pointer-events-auto absolute top-0 grid h-[var(--portfolio-navigation-track-size)] w-[var(--portfolio-navigation-track-size)] place-items-center transition-opacity duration-[var(--portfolio-motion-navigation)] ease-out ${
             activeProjectIndex === START_SCREEN_INDEX || viewerOpen
               ? 'pointer-events-none opacity-0'
               : 'opacity-100'
           }`}
-          style={{ right: 0 }}
+          style={{ right: 'env(safe-area-inset-right, 0px)' }}
         >
           <CircularIconButton
             visual={
-              <FiveByFive
-                variant="up"
-                className="bg-resume-signal text-white"
-              />
+              <FiveByFive variant="up" className="text-portfolio-accent" />
             }
             iconClassName=""
-            className="font-portfolio-controls relative size-11 bg-transparent text-[var(--project-color)]"
+            className="font-portfolio-controls relative size-[var(--portfolio-control-size)] bg-transparent text-[var(--project-color)]"
             aria-label="Back to top"
             onClick={() => actions.setActiveProject(START_SCREEN_INDEX, 'push')}
           />
@@ -226,25 +231,25 @@ function PortfolioLoadingCurtain({
       ref={curtainRef}
       data-portfolio-loading-curtain
       data-phase={introPhase}
-      className={`portfolio-theme-surface fixed inset-0 z-[100] grid place-items-center ${
+      className={`portfolio-theme-surface fixed inset-0 z-[var(--portfolio-layer-loading)] grid place-items-center ${
         introPhase === 'ready' ? 'pointer-events-none' : 'pointer-events-auto'
       }`}
     >
       <div
         role={introPhase === 'error' ? 'alert' : undefined}
-        className={`flex max-w-md flex-col items-center gap-5 px-8 text-center transition-opacity duration-300 ${
+        className={`flex max-w-md flex-col items-center gap-5 px-8 text-center transition-opacity duration-[var(--portfolio-motion-loading)] ${
           introPhase === 'error' ? 'opacity-100' : 'opacity-0'
         }`}
         aria-hidden={introPhase === 'error' ? undefined : true}
       >
-        <p className="text-lg font-normal leading-relaxed text-[var(--portfolio-ink-80)]">
+        <p className="font-normal text-portfolio-text-dimmed">
           Portfolio media didn&apos;t finish loading.
         </p>
         <CircularIconButton
           icon={faRotateRight}
           iconClassName="size-6"
           ring
-          className="portfolio-theme-surface relative size-11 text-[var(--portfolio-ink)]"
+          className="portfolio-theme-surface relative size-[var(--portfolio-control-size)] text-portfolio-text"
           aria-label="Reload page"
           title="Reload page"
           onClick={() => window.location.reload()}
@@ -284,13 +289,13 @@ function PortfolioMediaBackdrop({
         data-portfolio-media-backdrop
         className={`size-[100vmin] transition-opacity motion-reduce:transition-none ${
           visible
-            ? 'opacity-100 duration-[450ms] ease-out'
-            : 'opacity-0 duration-150 ease-in'
+            ? 'opacity-100 duration-[var(--portfolio-motion-backdrop-enter)] ease-out'
+            : 'opacity-0 duration-[var(--portfolio-motion-backdrop-exit)] ease-in'
         } ${usesSideBySideProjectLayout ? 'col-start-2 place-self-center' : ''}`}
         style={{
           background: viewerOpen
-            ? 'radial-gradient(circle closest-side, color-mix(in srgb, var(--color-resume-signal) 20%, transparent) 0%, transparent 100%)'
-            : 'radial-gradient(circle closest-side, color-mix(in srgb, var(--color-resume-signal) 10%, transparent) 0%, transparent 100%)',
+            ? 'radial-gradient(circle closest-side, color-mix(in srgb, var(--portfolio-accent) 20%, transparent) 0%, transparent 100%)'
+            : 'radial-gradient(circle closest-side, color-mix(in srgb, var(--portfolio-accent) 10%, transparent) 0%, transparent 100%)',
         }}
       />
     </div>
@@ -318,18 +323,21 @@ function PortfolioIdentityLayers({
   return (
     <div
       data-portfolio-narrow-layout-logo
-      className="pointer-events-none fixed left-0 top-[var(--portfolio-header-edge-inset)] z-[35] flex justify-center"
-      style={{ width: MOBILE_SECTION_CONTENT_PADDING_LEFT }}
+      className="pointer-events-none fixed top-[var(--portfolio-header-edge-inset)] z-[var(--portfolio-layer-compact-identity)] flex justify-center"
+      style={{
+        left: 'env(safe-area-inset-left, 0px)',
+        width: 'var(--portfolio-navigation-track-size)',
+      }}
     >
       <button
         type="button"
         aria-label="Back to top"
         data-interactive-pop="off"
         data-portfolio-home-logo
-        className="pointer-events-auto grid size-11 shrink-0 place-items-center border-0 bg-transparent p-0 outline-none focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-current"
+        className="pointer-events-auto grid size-[var(--portfolio-control-size)] shrink-0 place-items-center border-0 bg-transparent p-0 outline-none focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-current"
         onClick={onSelectTop}
       >
-        <PortfolioLogoMark className="shrink-0 text-resume-signal" />
+        <PortfolioLogoMark className="shrink-0 text-portfolio-accent" />
       </button>
     </div>
   )
@@ -394,6 +402,18 @@ export function PortfolioBrowserView({
     usesSideBySideProjectLayout,
     viewerOpen,
   } = deriveViewState(model, resolvedTheme)
+  const setActiveProject = actions.setActiveProject
+  const projectColor = useCallback(
+    (projectIndex: number) => getProjectColor(projectIndex, resolvedTheme),
+    [resolvedTheme],
+  )
+  const selectStartProject = useCallback(
+    (index: number) => {
+      setActiveProject(index, 'push', false, 0)
+      keyboardSurfaceRef.current?.focus({ preventScroll: true })
+    },
+    [setActiveProject, keyboardSurfaceRef],
+  )
   const selectTop = () => {
     actions.setActiveProject(START_SCREEN_INDEX, 'push')
     keyboardSurfaceRef.current?.focus({ preventScroll: true })
@@ -403,7 +423,7 @@ export function PortfolioBrowserView({
     <main
       ref={keyboardSurfaceRef}
       tabIndex={-1}
-      className="portfolio-theme-surface relative isolate h-dvh overflow-hidden text-[var(--portfolio-ink)] outline-none"
+      className="portfolio-theme-surface relative isolate h-dvh overflow-hidden text-portfolio-text outline-none"
     >
       <PortfolioMediaBackdrop
         activeProjectHasMedia={activeProjectHasMedia}
@@ -414,16 +434,16 @@ export function PortfolioBrowserView({
       />
       <div
         data-portfolio-browser-chrome
-        className="absolute inset-0 z-10"
+        className="absolute inset-0 z-[var(--portfolio-layer-content)]"
       >
         <span
           data-portfolio-top-rule
-          className="pointer-events-none fixed inset-x-0 top-0 z-50 h-[var(--portfolio-frame-rule-size)] bg-resume-signal"
+          className="pointer-events-none fixed inset-x-0 top-0 z-[var(--portfolio-layer-frame)] h-[var(--portfolio-frame-rule-size)] bg-portfolio-accent"
           aria-hidden="true"
         />
         <span
           data-portfolio-bottom-rule
-          className="pointer-events-none fixed inset-x-0 bottom-0 z-50 h-[var(--portfolio-frame-rule-size)] bg-resume-signal"
+          className="pointer-events-none fixed inset-x-0 bottom-0 z-[var(--portfolio-layer-frame)] h-[var(--portfolio-frame-rule-size)] bg-portfolio-accent"
           aria-hidden="true"
         />
         <div
@@ -439,16 +459,11 @@ export function PortfolioBrowserView({
                 isTouchInput={model.isTouchInput}
                 isWideLayout={model.isWideLayout}
                 isTouchLandscapeLayout={model.isTouchLandscapeLayout}
-                getProjectColor={projectIndex =>
-                  getProjectColor(projectIndex, resolvedTheme)
-                }
-                setTitleRef={() => undefined}
-                onHoveredChange={() => undefined}
-                onPreview={() => undefined}
-                onSelect={index => {
-                  actions.setActiveProject(index, 'push', false, 0)
-                  keyboardSurfaceRef.current?.focus({ preventScroll: true })
-                }}
+                getProjectColor={projectColor}
+                setTitleRef={NOOP}
+                onHoveredChange={NOOP}
+                onPreview={NOOP}
+                onSelect={selectStartProject}
               />
             </div>
 
@@ -469,9 +484,7 @@ export function PortfolioBrowserView({
                   registerMediaElement={actions.registerMediaElement}
                   onApi={actions.registerHorizontalApi}
                   onSelect={actions.handleHorizontalSelect}
-                  onSelectSlide={slideIndex =>
-                    actions.setActiveSlide(projectIndex, slideIndex, 'push')
-                  }
+                  onSelectSlide={actions.setActiveSlide}
                   onOpenViewer={actions.openViewer}
                   onBackdropVisibilityChange={setMediaBackdropVisible}
                 />
@@ -498,7 +511,7 @@ export function PortfolioBrowserView({
           activeIndex={model.activeProjectIndex + 1}
           side="left"
           hidden={viewerOpen}
-          onSelect={index => {
+          onSelect={(index) => {
             const projectIndex = index - 1
             if (
               projectIndex >= 0 &&

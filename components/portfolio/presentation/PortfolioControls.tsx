@@ -10,6 +10,7 @@ import {
 import type { IconProp } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { gsap } from 'gsap'
+import { portfolioMotionSeconds } from '@/lib/portfolioTokens'
 import { FiveByFive } from './FiveByFive'
 
 const NAVIGATION_ACTIVE_SCALE = 1
@@ -28,10 +29,10 @@ function KeyboardKey({
   return (
     <kbd
       aria-label={ariaLabel}
-      className="relative mx-0.5 inline-grid h-[1.3125rem] min-w-[1.3125rem] place-items-center rounded-sm bg-[var(--portfolio-keycap-shadow)] px-[0.1875rem] pb-[0.1875rem] pt-[0.09375rem] align-middle"
+      className="relative mx-0.5 inline-grid h-[1.3125rem] min-w-[1.3125rem] place-items-center rounded-sm bg-portfolio-shaded px-[0.1875rem] pb-[0.1875rem] pt-[0.09375rem] align-middle"
     >
       <span
-        className={`grid h-[0.9375rem] min-w-[0.9375rem] -translate-y-px place-items-center rounded-xs bg-[var(--portfolio-inverse-surface)] text-[0.5rem] font-bold leading-none text-[var(--portfolio-inverse-ink)] ${
+        className={`grid h-[0.9375rem] min-w-[0.9375rem] -translate-y-px place-items-center rounded-xs bg-[var(--portfolio-inverse-surface)] text-[0.5rem] font-bold leading-none text-[var(--portfolio-inverse-text)] ${
           label ? 'px-[0.28125rem]' : 'px-0'
         }`}
         aria-hidden={ariaLabel ? true : undefined}
@@ -87,7 +88,7 @@ export function PortfolioHelperMessage({
     gsap.to(bubble, {
       y,
       opacity: isVisible ? 1 : 0,
-      duration: reducedMotion ? 0 : 0.3,
+      duration: reducedMotion ? 0 : portfolioMotionSeconds.helper,
       ease: isVisible ? 'expo.out' : 'power2.in',
       overwrite: 'auto',
     })
@@ -101,7 +102,7 @@ export function PortfolioHelperMessage({
       role="status"
       aria-live="polite"
       aria-hidden={isVisible ? undefined : true}
-      className="pointer-events-none fixed bottom-5 right-5 z-[110] max-w-[calc(100vw-2.5rem)] translate-y-16 rounded-full bg-[var(--portfolio-helper-surface)] px-4 py-2 text-sm font-normal leading-tight text-[var(--portfolio-ink)] opacity-0 backdrop-blur-md motion-reduce:translate-y-0"
+      className="pointer-events-none fixed bottom-5 right-5 z-[var(--portfolio-layer-helper)] max-w-[calc(100vw-2.5rem)] translate-y-16 rounded-full bg-portfolio-shaded px-4 py-2 font-normal text-portfolio-text opacity-0 motion-reduce:translate-y-0"
       style={{
         right: 'max(1.25rem, env(safe-area-inset-right, 0px))',
         bottom:
@@ -109,7 +110,7 @@ export function PortfolioHelperMessage({
       }}
     >
       {renderedKind === 'navigation' ? (
-        <span className="leading-6">
+        <span>
           Use{' '}
           <KeyboardKey
             visual={
@@ -152,7 +153,7 @@ export function PortfolioHelperMessage({
           sections
         </span>
       ) : (
-        <span className="leading-6">
+        <span>
           Press <KeyboardKey label="ESC" /> to close
         </span>
       )}
@@ -183,7 +184,7 @@ export function NavigationActiveRing({
     <div
       ref={elementRef}
       {...dataAttributes}
-      className={`pointer-events-none size-11 overflow-visible ${className}`}
+      className={`pointer-events-none size-[var(--portfolio-control-size)] overflow-visible ${className}`}
       style={{ color, ...style }}
       aria-hidden="true"
     >
@@ -191,7 +192,7 @@ export function NavigationActiveRing({
         ref={previewElementRef}
         {...previewDataAttributes}
         data-navigation-ring-pop-layer="true"
-        className="relative size-11"
+        className="relative size-[var(--portfolio-control-size)]"
       >
         <span
           className="absolute inset-0 grid place-items-center overflow-visible"
@@ -209,8 +210,8 @@ export function NavigationActiveRing({
           <span
             className="block"
             style={{
-              width: 'calc(var(--logo-stroke-width) * 5)',
-              height: 'calc(var(--logo-stroke-width) * 5)',
+              width: 'var(--portfolio-logo-size)',
+              height: 'var(--portfolio-logo-size)',
               border: 'var(--logo-stroke-width) solid currentColor',
             }}
           />
@@ -274,7 +275,7 @@ export function CircularIconButton({
       {visualRef || secondaryVisual ? (
         <span
           ref={visualRef}
-          className="relative z-10 block h-full w-full"
+          className="relative z-[var(--portfolio-layer-content)] block h-full w-full"
         >
           <span className="absolute inset-0 flex items-center justify-center">
             {iconVisual}
@@ -286,7 +287,7 @@ export function CircularIconButton({
           ) : null}
         </span>
       ) : (
-        <span className="relative z-10 flex h-full w-full items-center justify-center">
+        <span className="relative z-[var(--portfolio-layer-content)] flex h-full w-full items-center justify-center">
           {iconVisual}
         </span>
       )}

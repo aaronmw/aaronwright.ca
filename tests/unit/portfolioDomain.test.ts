@@ -23,6 +23,7 @@ import {
 import { getProjectNarratives } from '../../components/portfolio/domain/narrative'
 import {
   getPortfolioViewerSlides,
+  getViewerMediaTransform,
   getViewerSlideIndex,
 } from '../../components/portfolio/domain/viewer'
 import {
@@ -67,7 +68,7 @@ const projects: PortfolioProject[] = [
 
 describe('portfolio project order', () => {
   it('uses the curated section sequence', () => {
-    expect(portfolioSlides.map(project => project.slug)).toEqual([
+    expect(portfolioSlides.map((project) => project.slug)).toEqual([
       'about-me',
       'loopio',
       'freshbooks',
@@ -300,7 +301,10 @@ describe('portfolio viewer media', () => {
   it('filters text slides and keeps public media in canonical order', () => {
     expect(getPortfolioViewerSlides(projects[0])).toEqual([])
     const viewerSlides = getPortfolioViewerSlides(projects[1])
-    expect(viewerSlides.map(slide => slide.id)).toEqual(['overview', 'motion'])
+    expect(viewerSlides.map((slide) => slide.id)).toEqual([
+      'overview',
+      'motion',
+    ])
     expect(getViewerSlideIndex(viewerSlides, 'motion')).toBe(1)
     expect(getViewerSlideIndex(viewerSlides, 'missing')).toBe(0)
   })
@@ -315,10 +319,31 @@ describe('portfolio viewer media', () => {
         alt: 'Cover',
       },
     }
-    expect(getPortfolioViewerSlides(project).map(slide => slide.id)).toEqual([
+    expect(getPortfolioViewerSlides(project).map((slide) => slide.id)).toEqual([
       'cover',
       'overview',
       'motion',
     ])
+  })
+})
+
+describe('viewer transition geometry', () => {
+  it('fits the source image inside the expanded frame without changing its aspect ratio', () => {
+    expect(
+      getViewerMediaTransform(
+        { left: 100, top: 80, width: 300, height: 200 },
+        { left: 400, top: 40, width: 900, height: 600 },
+      ),
+    ).toEqual({ x: -300, y: 40, scale: 1 / 3 })
+  })
+
+  it('returns to the same source when an opening transform is interrupted', () => {
+    const target = { left: 100, top: 80, width: 300, height: 200 }
+    const resting = { left: 400, top: 40, width: 900, height: 600 }
+    const current = { x: -150, y: 20, scale: 2 / 3 }
+    const interrupted = { left: 250, top: 60, width: 600, height: 400 }
+    expect(getViewerMediaTransform(target, interrupted, current)).toEqual(
+      getViewerMediaTransform(target, resting),
+    )
   })
 })

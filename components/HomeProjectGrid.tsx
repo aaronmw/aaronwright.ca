@@ -35,24 +35,24 @@ function projectCellClass(index: number) {
 export function HomeProjectGrid() {
   return (
     <main
-      className={`${portfolioFont.className} ${portfolioFont.variable} min-h-dvh bg-resume-ink text-resume-paper`}
+      className={`${portfolioFont.className} ${portfolioFont.variable} portfolio-typography min-h-dvh bg-portfolio-surface text-portfolio-text`}
     >
-      <header className="flex min-h-20 items-center justify-between gap-8 border-b border-resume-paper/20 px-6 py-4 sm:px-8 lg:px-12">
+      <header className="flex min-h-20 items-center justify-between gap-8 border-b border-portfolio-shaded px-6 py-4 sm:px-8 lg:px-12">
         <div>
-          <h1 className="text-sm font-bold uppercase tracking-normal">
+          <h1 className="font-bold uppercase">
             Aaron M. Wright
           </h1>
-          <p className="mt-1 text-sm font-normal text-resume-paper/60">
+          <p className="mt-1 font-normal text-portfolio-text-dimmed">
             Product design · frontend systems
           </p>
         </div>
         <nav
-          className="flex items-center gap-6 text-sm font-bold"
+          className="flex items-center gap-6 font-bold"
           aria-label="Primary"
         >
           <Link
             href="/work"
-            className="outline-none transition-opacity hover:opacity-65 focus-visible:opacity-65"
+            className="outline-none transition-colors hover:text-portfolio-text-dimmed focus-visible:text-portfolio-text-dimmed"
           >
             Carousel
           </Link>
@@ -60,7 +60,7 @@ export function HomeProjectGrid() {
           {/* react-doctor-disable-next-line react-doctor/nextjs-no-a-element */}
           <a
             href="/resume.pdf"
-            className="outline-none transition-opacity hover:opacity-65 focus-visible:opacity-65"
+            className="outline-none transition-colors hover:text-portfolio-text-dimmed focus-visible:text-portfolio-text-dimmed"
           >
             Resume
           </a>
@@ -68,7 +68,7 @@ export function HomeProjectGrid() {
       </header>
 
       <section
-        className="grid grid-cols-1 gap-px bg-resume-paper/20 md:grid-cols-12"
+        className="grid grid-cols-1 gap-px bg-portfolio-shaded md:grid-cols-12"
         aria-label="Selected work"
       >
         {portfolioSlides.map((project, index) => {
@@ -77,7 +77,7 @@ export function HomeProjectGrid() {
           return (
             <article
               key={project.id}
-              className={`group relative min-h-[44dvh] overflow-hidden bg-black ${projectCellClass(index)}`}
+              className={`group relative min-h-[44dvh] overflow-hidden bg-portfolio-black ${projectCellClass(index)}`}
             >
               <Link
                 href={`/work/${project.slug}`}
@@ -92,12 +92,12 @@ export function HomeProjectGrid() {
                       unoptimized
                       loading={index === 0 ? 'eager' : undefined}
                       sizes={index === 0 ? '100vw' : '(min-width: 768px) 50vw, 100vw'}
-                      className="-z-20 object-cover opacity-75 saturate-[0.8] transition-[transform,opacity,filter] duration-500 ease-out group-hover:scale-[1.025] group-hover:opacity-90 group-hover:saturate-100 group-focus-within:scale-[1.025] group-focus-within:opacity-90 group-focus-within:saturate-100 motion-reduce:transition-none"
+                      className="z-[var(--portfolio-layer-card-media)] object-cover opacity-75 saturate-[0.8] transition-[transform,opacity,filter] duration-[var(--portfolio-motion-thumbnail)] ease-out group-hover:scale-[1.025] group-hover:opacity-90 group-hover:saturate-100 group-focus-within:scale-[1.025] group-focus-within:opacity-90 group-focus-within:saturate-100 motion-reduce:transition-none"
                     />
-                    <span className="absolute inset-0 -z-10 bg-gradient-to-t from-black via-black/15 to-black/10 transition-colors duration-500 group-hover:from-black/85 group-focus-within:from-black/85 motion-reduce:transition-none" />
+                    <span className="absolute inset-0 z-[var(--portfolio-layer-card-shade)] bg-gradient-to-t from-portfolio-black via-portfolio-black/15 to-portfolio-black/10 transition-colors duration-[var(--portfolio-motion-thumbnail)] group-hover:from-portfolio-black/85 group-focus-within:from-portfolio-black/85 motion-reduce:transition-none" />
                   </>
                 ) : null}
-                <span className="pointer-events-none absolute inset-2 border border-transparent transition-colors duration-200 group-focus-within:border-resume-signal" />
+                <span className="pointer-events-none absolute inset-2 border border-transparent transition-colors duration-[var(--portfolio-motion-state)] group-focus-within:border-portfolio-accent" />
 
                 <PortfolioLedgerFrame className="w-full max-w-[40rem]">
                   <div className="grid grid-cols-[min-content_minmax(0,1fr)]">
@@ -113,7 +113,7 @@ export function HomeProjectGrid() {
                       <PortfolioLedgerLabel>
                         Company / product
                       </PortfolioLedgerLabel>
-                      <h2 className="mt-1 [font-size:inherit] font-normal leading-[inherit] tracking-normal">
+                      <h2 className="mt-1 font-bold">
                         {project.title}
                       </h2>
                     </div>

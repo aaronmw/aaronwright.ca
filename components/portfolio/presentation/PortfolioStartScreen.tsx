@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import {
+  memo,
   useLayoutEffect,
   useRef,
   useState,
@@ -13,7 +14,11 @@ import {
   MOBILE_SECTION_CONTENT_PADDING_LEFT,
   MOBILE_SECTION_CONTENT_PADDING_RIGHT,
 } from '@/components/portfolio/mobileLayout'
-import { PortfolioInlineMarkdown, PortfolioLedgerFrame } from './PortfolioText'
+import {
+  PortfolioInlineMarkdown,
+  PortfolioLedgerFrame,
+  ProjectHeadingUnderline,
+} from './PortfolioText'
 
 const MOBILE_SECTION_CONTENT_INSETS: CSSProperties = {
   paddingLeft: MOBILE_SECTION_CONTENT_PADDING_LEFT,
@@ -62,7 +67,7 @@ function useStartScreenContentAlignment(enabled: boolean) {
       const nextShouldBottomAlign =
         availableHeight < contentSection.scrollHeight + verticalPadding * 2
 
-      setShouldBottomAlign(current =>
+      setShouldBottomAlign((current) =>
         current === nextShouldBottomAlign ? current : nextShouldBottomAlign,
       )
     }
@@ -124,16 +129,16 @@ function PortfolioStartHeader({
       >
         {!isWideLayout ? (
           <div
-            className="flex shrink-0 items-center text-[var(--portfolio-ink)]"
+            className="flex shrink-0 items-center text-portfolio-text"
             data-portfolio-start-title
           >
-            <h1 className="whitespace-nowrap text-base font-bold italic leading-[var(--portfolio-header-line-height)]">
+            <h1 className="whitespace-nowrap font-bold italic">
               Aaron M. Wright
             </h1>
           </div>
         ) : null}
         <address
-          className={`min-w-0 font-resume-mono text-base font-normal leading-[var(--portfolio-header-line-height)] text-[var(--portfolio-ink)] not-italic ${
+          className={`min-w-0 font-resume-mono font-normal text-portfolio-text not-italic ${
             isWideLayout ? 'ml-auto' : 'w-full sm:ml-auto sm:w-auto'
           }`}
         >
@@ -158,10 +163,7 @@ function PortfolioStartHeader({
               >
                 aaron@aaronwright.ca
               </a>
-              <a
-                className={CONTACT_LINK_CLASS_NAME}
-                href="tel:+16477469426"
-              >
+              <a className={CONTACT_LINK_CLASS_NAME} href="tel:+16477469426">
                 +1-647-746-9426
               </a>
               <Link
@@ -233,7 +235,7 @@ function PortfolioProjectIndex({
               type="button"
               data-interactive-pop="off"
               data-portfolio-start-section-index={index + 1}
-              className="portfolio-start-index-item group grid w-full touch-manipulation items-baseline pb-[1lh] text-left text-[var(--portfolio-ink)] outline-none transition-colors duration-200 ease-out hover:text-resume-signal focus-visible:text-resume-signal focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-resume-signal motion-reduce:transition-none"
+              className="portfolio-start-index-item group grid w-full touch-manipulation items-baseline pb-[1lh] text-left text-portfolio-text outline-none transition-colors duration-[var(--portfolio-motion-state)] ease-out hover:text-portfolio-accent focus-visible:text-portfolio-accent focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-portfolio-accent motion-reduce:transition-none"
               style={
                 {
                   '--project-color': getProjectColor(index),
@@ -244,15 +246,15 @@ function PortfolioProjectIndex({
                 onHoveredChange(true)
                 onPreview(index, true)
               }}
-              onPointerDown={event => {
+              onPointerDown={(event) => {
                 if (event.button !== 0) return
                 onHoveredChange(true)
                 onPreview(index, true)
               }}
               onPointerLeave={() => onPreview(index, false)}
-              onClick={event => onSelect(index, event.detail === 0)}
+              onClick={(event) => onSelect(index, event.detail === 0)}
             >
-              <span className="min-w-0 whitespace-nowrap text-center text-[var(--portfolio-ink-70)] transition-colors duration-200 ease-out group-hover:text-[var(--portfolio-ink)] group-focus-visible:text-[var(--portfolio-ink)] motion-reduce:transition-none">
+              <span className="min-w-0 whitespace-nowrap text-center text-portfolio-text-dimmed transition-colors duration-[var(--portfolio-motion-state)] ease-out group-hover:text-portfolio-text group-focus-visible:text-portfolio-text motion-reduce:transition-none">
                 {pending ? (
                   <FontAwesomeIcon
                     icon={faSpinner}
@@ -262,20 +264,26 @@ function PortfolioProjectIndex({
                   String(index + 1).padStart(2, '0')
                 )}
               </span>
-              <span className="min-w-0 pl-[1ch]">
+              <span className="min-w-0 pl-[2ch]">
                 <span
-                  ref={node => setTitleRef(index, node)}
-                  className="min-w-0 font-bold"
+                  ref={(node) => setTitleRef(index, node)}
+                  className="min-w-0 font-bold uppercase"
                 >
                   {project.title}
                 </span>
-                <span className="portfolio-start-index-summary-stacked mt-[0.5lh] max-w-[54ch] font-normal text-[var(--portfolio-ink-70)] transition-colors duration-200 ease-out group-hover:text-[var(--portfolio-ink)] group-focus-visible:text-[var(--portfolio-ink)] motion-reduce:transition-none">
+                <span className="font-bold">
+                  <ProjectHeadingUnderline
+                    title={project.title}
+                    className="transition-colors duration-[var(--portfolio-motion-state)] ease-out group-hover:text-portfolio-text group-focus-visible:text-portfolio-text motion-reduce:transition-none"
+                  />
+                </span>
+                <span className="portfolio-start-index-summary-stacked mt-[0.5lh] max-w-[54ch] font-normal text-portfolio-text-dimmed transition-colors duration-[var(--portfolio-motion-state)] ease-out group-hover:text-portfolio-text group-focus-visible:text-portfolio-text motion-reduce:transition-none">
                   <PortfolioInlineMarkdown>
                     {project.blurb}
                   </PortfolioInlineMarkdown>
                 </span>
               </span>
-              <span className="portfolio-start-index-summary-column min-w-0 text-[var(--portfolio-ink-70)] transition-colors duration-200 ease-out group-hover:text-[var(--portfolio-ink)] group-focus-visible:text-[var(--portfolio-ink)] motion-reduce:transition-none">
+              <span className="portfolio-start-index-summary-column min-w-0 text-portfolio-text-dimmed transition-colors duration-[var(--portfolio-motion-state)] ease-out group-hover:text-portfolio-text group-focus-visible:text-portfolio-text motion-reduce:transition-none">
                 <PortfolioInlineMarkdown>
                   {project.blurb}
                 </PortfolioInlineMarkdown>
@@ -288,7 +296,7 @@ function PortfolioProjectIndex({
   )
 }
 
-export function PortfolioStartScreen({
+export const PortfolioStartScreen = memo(function PortfolioStartScreen({
   projects,
   pendingProjectIndex,
   isTouchInput,
@@ -367,4 +375,4 @@ export function PortfolioStartScreen({
       />
     </section>
   )
-}
+})

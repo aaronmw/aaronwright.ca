@@ -1,8 +1,10 @@
 'use client'
 
 import { gsap } from 'gsap'
+import { portfolioMotionSeconds } from '@/lib/portfolioTokens'
 import { useEffect, useRef, useState } from 'react'
 import type { ControllerRef } from 'yet-another-react-lightbox'
+import { getViewerMediaTransform } from '../domain/viewer'
 import type {
   PortfolioViewerSlide,
   ViewerOpenIntent,
@@ -90,19 +92,6 @@ function getViewerMedia(mediaId: string) {
   return stage ? findMediaFrame(stage) : null
 }
 
-function getMediaTransform(from: ViewerSourceRect, media: HTMLElement) {
-  const mediaRect = media.getBoundingClientRect()
-  const scale = Math.min(
-    from.width / mediaRect.width,
-    from.height / mediaRect.height,
-  )
-  return {
-    x: from.left - mediaRect.left,
-    y: from.top - mediaRect.top,
-    scale,
-  }
-}
-
 export function usePortfolioViewerTransition({
   index,
   intent,
@@ -119,9 +108,11 @@ export function usePortfolioViewerTransition({
   const controllerRef = useRef<ControllerRef>(null)
   const zoomRef = useRef<ZoomController>(null)
   const activeIndexRef = useRef(index)
+  const notifiedIndexRef = useRef<number | null>(null)
   const timelineRef = useRef<gsap.core.Timeline | null>(null)
   const openFrameRef = useRef<number | null>(null)
   const closeFrameRef = useRef<number | null>(null)
+  const closingRef = useRef(false)
   const [phase, setPhase] = useState<'opening' | 'open' | 'closing'>('opening')
 
   useEffect(() => {
@@ -176,6 +167,7 @@ export function usePortfolioViewerTransition({
       getVisibleSourceMediaRect(intent.mediaId) ?? intent.sourceRect
     const destinationRect = media?.getBoundingClientRect() ?? null
     const backdropRect = backdrop?.getBoundingClientRect()
+    const sourceCenter = navigation ? getUnderlyingNavigationCenter() : null
     const backdropX = backdropRect
       ? window.innerWidth / 2 - (backdropRect.left + backdropRect.width / 2)
       : 0
@@ -209,55 +201,108 @@ export function usePortfolioViewerTransition({
     if (reducedMotion || !media || !sourceRect || !destinationRect) {
       if (backdrop) timeline.set(backdrop, { x: backdropX }, 0)
       if (media) gsap.set(media, { opacity: 0 })
-      if (chrome) timeline.to(chrome, { opacity: 0, duration: 0.12 }, 0)
-      if (media) timeline.to(media, { opacity: 1, duration: 0.12 }, 0)
+      if (chrome)
+        timeline.to(
+          chrome,
+          { opacity: 0, duration: portfolioMotionSeconds.viewerFade },
+          0,
+        )
+      if (media)
+        timeline.to(
+          media,
+          { opacity: 1, duration: portfolioMotionSeconds.viewerFade },
+          0,
+        )
       if (navigation) {
-        timeline.to(navigation, { opacity: 1, duration: 0.12 }, 0)
+        timeline.to(
+          navigation,
+          { opacity: 1, duration: portfolioMotionSeconds.viewerFade },
+          0,
+        )
       }
-      timeline.call(applyInitialZoom, [], 0.12)
-      if (controls) timeline.to(controls, { opacity: 1, duration: 0.1 }, 0.14)
+      timeline.call(applyInitialZoom, [], portfolioMotionSeconds.viewerFade)
+      if (controls)
+        timeline.to(
+          controls,
+          {
+            opacity: 1,
+            duration: portfolioMotionSeconds.viewerControlsReducedEnter,
+          },
+          portfolioMotionSeconds.viewerControlsEnterDelay,
+        )
       return
     }
 
     gsap.set(media, {
-      ...getMediaTransform(sourceRect, media),
+      ...getViewerMediaTransform(sourceRect, destinationRect),
       opacity: 1,
       transformOrigin: '0 0',
       willChange: 'transform',
     })
     if (chrome) {
-      timeline.to(chrome, { opacity: 0, duration: 0.24, ease: 'power2.out' }, 0)
+      timeline.to(
+        chrome,
+        {
+          opacity: 0,
+          duration: portfolioMotionSeconds.viewerChrome,
+          ease: 'power2.out',
+        },
+        0,
+      )
     }
     if (backdrop) {
       timeline.to(
         backdrop,
-        { x: backdropX, duration: 0.36, ease: 'power3.inOut' },
+        {
+          x: backdropX,
+          duration: portfolioMotionSeconds.viewerTransform,
+          ease: 'power3.inOut',
+        },
         0,
       )
     }
     if (navigation) {
-      const sourceCenter = getUnderlyingNavigationCenter()
       gsap.set(navigation, {
         x: sourceCenter === null ? 0 : sourceCenter - window.innerWidth / 2,
         opacity: 1,
         willChange: 'transform',
       })
-      timeline.to(navigation, { x: 0, duration: 0.36, ease: 'power3.inOut' }, 0)
+      timeline.to(
+        navigation,
+        {
+          x: 0,
+          duration: portfolioMotionSeconds.viewerTransform,
+          ease: 'power3.inOut',
+        },
+        0,
+      )
     }
     timeline.to(
       media,
-      { x: 0, y: 0, scale: 1, duration: 0.36, ease: 'power3.inOut' },
+      {
+        x: 0,
+        y: 0,
+        scale: 1,
+        duration: portfolioMotionSeconds.viewerTransform,
+        ease: 'power3.inOut',
+      },
       0,
     )
     timeline.call(applyInitialZoom)
     if (controls) {
-      timeline.to(controls, { opacity: 1, duration: 0.14, ease: 'power2.out' })
+      timeline.to(controls, {
+        opacity: 1,
+        duration: portfolioMotionSeconds.viewerControlsEnter,
+        ease: 'power2.out',
+      })
     }
   }
 
   function animateOpen() {
+    if (closingRef.current) return
     let attempts = 0
     const beginWhenReady = () => {
+      if (closingRef.current) return
       const media = getViewerMedia(intent.mediaId)
       if (!media && attempts < 4) {
         attempts += 1
@@ -271,7 +316,12 @@ export function usePortfolioViewerTransition({
   }
 
   function requestClose() {
-    if (phase === 'closing') return
+    if (closingRef.current) return
+    closingRef.current = true
+    if (openFrameRef.current !== null) {
+      window.cancelAnimationFrame(openFrameRef.current)
+      openFrameRef.current = null
+    }
     setPhase('closing')
     const root = getViewerRoot()
     const backdrop = getMediaBackdrop()
@@ -292,6 +342,7 @@ export function usePortfolioViewerTransition({
     const navigation = root.querySelector<HTMLElement>(
       '[data-portfolio-viewer-slide-navigation]',
     )
+    const targetCenter = navigation ? getUnderlyingNavigationCenter() : null
     const beginImageClose = () => {
       zoomRef.current?.changeZoom(1, true)
       closeFrameRef.current = window.requestAnimationFrame(() => {
@@ -302,21 +353,41 @@ export function usePortfolioViewerTransition({
           ? getVisibleSourceMediaRect(currentSlide.id)
           : intent.sourceRect
         const sourceRect = media?.getBoundingClientRect() ?? null
-        const timeline = gsap.timeline({
-          onComplete: () => {
-            if (chrome) gsap.set(chrome, { clearProps: 'opacity,willChange' })
-            onClose()
-          },
+        const transform = media ? getComputedStyle(media).transform : 'none'
+        const matrix = new DOMMatrixReadOnly(
+          transform === 'none' ? undefined : transform,
+        )
+        const mediaTransform =
+          sourceRect && targetRect
+            ? getViewerMediaTransform(targetRect, sourceRect, {
+                x: matrix.m41,
+                y: matrix.m42,
+                scale: matrix.a,
+              })
+            : null
+        const timeline = controlsTimeline
+        timeline.eventCallback('onComplete', () => {
+          if (chrome) gsap.set(chrome, { clearProps: 'opacity,willChange' })
+          onClose()
         })
-        timelineRef.current = timeline
 
         if (chrome) gsap.set(chrome, { willChange: 'opacity' })
         if (backdrop) gsap.set(backdrop, { willChange: 'transform' })
 
-        if (reducedMotion || !media || !sourceRect || !targetRect) {
+        if (reducedMotion || !media || !mediaTransform) {
           if (backdrop) timeline.set(backdrop, { x: 0 }, 0)
-          if (media) timeline.to(media, { opacity: 0, duration: 0.12 }, 0)
-          if (chrome) timeline.to(chrome, { opacity: 1, duration: 0.12 }, 0)
+          if (media)
+            timeline.to(
+              media,
+              { opacity: 0, duration: portfolioMotionSeconds.viewerFade },
+              0,
+            )
+          if (chrome)
+            timeline.to(
+              chrome,
+              { opacity: 1, duration: portfolioMotionSeconds.viewerFade },
+              0,
+            )
           return
         }
 
@@ -324,8 +395,8 @@ export function usePortfolioViewerTransition({
         timeline.to(
           media,
           {
-            ...getMediaTransform(targetRect, media),
-            duration: 0.36,
+            ...mediaTransform,
+            duration: portfolioMotionSeconds.viewerTransform,
             ease: 'power3.inOut',
           },
           0,
@@ -333,15 +404,23 @@ export function usePortfolioViewerTransition({
         if (backdrop) {
           timeline.to(
             backdrop,
-            { x: 0, duration: 0.36, ease: 'power3.inOut' },
+            {
+              x: 0,
+              duration: portfolioMotionSeconds.viewerTransform,
+              ease: 'power3.inOut',
+            },
             0,
           )
         }
         if (chrome) {
           timeline.to(
             chrome,
-            { opacity: 1, duration: 0.24, ease: 'power2.in' },
-            0.12,
+            {
+              opacity: 1,
+              duration: portfolioMotionSeconds.viewerChrome,
+              ease: 'power2.in',
+            },
+            portfolioMotionSeconds.viewerFade,
           )
         }
       })
@@ -352,16 +431,21 @@ export function usePortfolioViewerTransition({
     if (controls) {
       controlsTimeline.to(controls, {
         opacity: 0,
-        duration: reducedMotion ? 0.08 : 0.12,
+        duration: reducedMotion
+          ? portfolioMotionSeconds.viewerControlsReducedExit
+          : portfolioMotionSeconds.viewerControlsExit,
         ease: 'power2.in',
       })
     }
     if (navigation) {
-      const targetCenter = getUnderlyingNavigationCenter()
       if (reducedMotion) {
         controlsTimeline.to(
           navigation,
-          { opacity: 0, duration: 0.08, ease: 'power2.in' },
+          {
+            opacity: 0,
+            duration: portfolioMotionSeconds.viewerControlsReducedExit,
+            ease: 'power2.in',
+          },
           0,
         )
       } else {
@@ -369,7 +453,7 @@ export function usePortfolioViewerTransition({
           navigation,
           {
             x: targetCenter === null ? 0 : targetCenter - window.innerWidth / 2,
-            duration: 0.36,
+            duration: portfolioMotionSeconds.viewerTransform,
             ease: 'power3.inOut',
           },
           0,
@@ -380,8 +464,12 @@ export function usePortfolioViewerTransition({
   }
 
   function handleView(nextIndex: number) {
+    if (notifiedIndexRef.current === nextIndex) return
+    notifiedIndexRef.current = nextIndex
+    if (activeIndexRef.current !== nextIndex) {
+      zoomRef.current?.changeZoom(1, true)
+    }
     activeIndexRef.current = nextIndex
-    zoomRef.current?.changeZoom(1, true)
     onView(nextIndex)
   }
 

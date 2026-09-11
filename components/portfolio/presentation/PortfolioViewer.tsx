@@ -3,6 +3,7 @@
 import Lightbox, { type RenderSlideProps } from 'yet-another-react-lightbox'
 import Zoom from 'yet-another-react-lightbox/plugins/zoom'
 import type { PortfolioProject } from '@/lib/portfolio'
+import { portfolioMotion } from '@/lib/portfolioTokens'
 import { viewerMediaKey } from '../domain/slides'
 import type { PortfolioViewerSlide, ViewerOpenIntent } from '../domain/viewer'
 import type { PortfolioMediaElement } from '../usePortfolioMediaReadiness'
@@ -74,8 +75,13 @@ export function PortfolioViewer({
         closeOnPullDown: false,
         closeOnPullUp: false,
       }}
-      carousel={{ finite: true, preload: 2, padding: 0, spacing: 0 }}
-      animation={{ fade: 0, swipe: 260, navigation: 220, zoom: 180 }}
+      carousel={{ finite: true, preload: 1, padding: 0, spacing: 0 }}
+      animation={{
+        fade: 0,
+        swipe: portfolioMotion.viewerSwipe,
+        navigation: portfolioMotion.viewerNavigation,
+        zoom: portfolioMotion.viewerZoom,
+      }}
       toolbar={{ buttons: [] }}
       zoom={{
         ref: zoomRef,
