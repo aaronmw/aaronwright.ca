@@ -17,7 +17,7 @@ import type { ViewerOpenIntent } from '../domain/viewer'
 
 const CAROUSEL_MEDIA_CLASS =
   'object-contain transition-[filter,padding] [transition-duration:var(--portfolio-motion-media-filter),var(--portfolio-motion-media-padding)] [transition-timing-function:ease-in-out,var(--ease-out)] motion-reduce:transition-none'
-const MEDIA_FRAME_INSET = 'calc(var(--portfolio-default-spacing) * 2)'
+const MEDIA_FRAME_INSET = 'calc(var(--portfolio-media-frame-width) * 2)'
 const MISSING_MEDIA_SRC = `data:image/svg+xml,${encodeURIComponent(
   `<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="1000"><rect width="1000" height="1000" fill="${portfolioAccentColor}"/></svg>`,
 )}`
@@ -59,7 +59,7 @@ function PhoneFrameBackdrop({ clipPathId }: { clipPathId: string }) {
   return (
     <span
       aria-hidden="true"
-      className="pointer-events-none absolute [inset:var(--portfolio-default-spacing)]"
+      className="pointer-events-none absolute [inset:var(--portfolio-media-frame-width)]"
     >
       <svg
         viewBox="0 0 880 1772"
@@ -83,7 +83,7 @@ function PhoneFrameBackdrop({ clipPathId }: { clipPathId: string }) {
           stroke="currentColor"
           vectorEffect="non-scaling-stroke"
           style={{
-            strokeWidth: 'calc(var(--portfolio-default-spacing) * 2)',
+            strokeWidth: 'calc(var(--portfolio-media-frame-width) * 2)',
           }}
         />
       </svg>
@@ -110,7 +110,7 @@ function VideoScrubber({
   return (
     <div
       data-portfolio-carousel-drag-lock
-      className="pointer-events-auto absolute left-[var(--portfolio-default-spacing)] right-[var(--portfolio-default-spacing)] z-[var(--portfolio-layer-media-controls)] h-[calc(var(--portfolio-logo-size)+var(--portfolio-default-spacing)/2)] opacity-0 transition-opacity duration-[var(--portfolio-motion-feedback)] ease-out [top:calc(100%_-_var(--portfolio-default-spacing))] focus-within:opacity-100 hover:opacity-100 [@media(hover:hover)]:peer-hover/video:opacity-100 motion-reduce:transition-none"
+      className="pointer-events-auto absolute left-[var(--portfolio-media-frame-width)] right-[var(--portfolio-media-frame-width)] z-[var(--portfolio-layer-media-controls)] h-[calc(var(--portfolio-logo-size)+var(--portfolio-media-frame-width)/2)] opacity-0 transition-opacity duration-[var(--portfolio-motion-feedback)] ease-out [top:calc(100%_-_var(--portfolio-media-frame-width))] focus-within:opacity-100 hover:opacity-100 [@media(hover:hover)]:peer-hover/video:opacity-100 motion-reduce:transition-none"
       style={
         {
           '--portfolio-video-progress': `${progress}%`,
@@ -188,6 +188,7 @@ function ViewerScreenshot({
 export function ProjectPanel({
   slide,
   restingMediaPadding,
+  reserveNavigationSpace = true,
   isActive,
   concealedScreenshotId,
   registerMediaElement,
@@ -195,6 +196,7 @@ export function ProjectPanel({
 }: {
   slide: Extract<ProjectSlide, { kind: 'screenshot' }>
   restingMediaPadding: string
+  reserveNavigationSpace?: boolean
   isActive: boolean
   concealedScreenshotId?: string
   registerMediaElement: (
@@ -204,7 +206,9 @@ export function ProjectPanel({
   onOpenViewer: (intent: ViewerOpenIntent) => void
 }) {
   return (
-    <div className="relative grid h-full min-h-0 min-w-0 place-items-center overflow-hidden pb-[var(--portfolio-slide-navigation-reserved-height)] [--portfolio-media-bottom-padding:0px]">
+    <div
+      className={`relative grid h-full min-h-0 min-w-0 place-items-center overflow-hidden [--portfolio-media-bottom-padding:0px] ${reserveNavigationSpace ? 'pb-[var(--portfolio-slide-navigation-reserved-height)]' : ''}`}
+    >
       <ViewerScreenshot
         active={isActive}
         screenshotId={slide.screenshot.id}
@@ -229,6 +233,7 @@ export function ProjectPanel({
 
 export function ScreenshotMedia({
   screenshot,
+  initialAspectRatio,
   mediaKey,
   registerMediaElement,
   priority,
@@ -237,6 +242,7 @@ export function ScreenshotMedia({
   className,
 }: {
   screenshot: PortfolioScreenshot
+  initialAspectRatio?: number
   mediaKey: string
   registerMediaElement: (
     key: string,
@@ -247,7 +253,9 @@ export function ScreenshotMedia({
   sizes: string
   className: string
 }) {
-  const [aspectRatio, setAspectRatio] = useState<number | null>(null)
+  const [aspectRatio, setAspectRatio] = useState<number | null>(
+    initialAspectRatio ?? null,
+  )
   const [failedMediaSrc, setFailedMediaSrc] = useState<string | null>(null)
   const [replayHoverSuppressed, setReplayHoverSuppressed] = useState(false)
   const [videoCurrentTime, setVideoCurrentTime] = useState(0)
@@ -315,7 +323,7 @@ export function ScreenshotMedia({
   }
 
   const progressBarOverhang = hasVideoScrubber
-    ? 'calc(var(--portfolio-logo-size) / 2)'
+    ? 'calc(var(--portfolio-logo-size) - var(--portfolio-media-frame-width) / 2)'
     : '0px'
 
   const frameStyle: MediaFrameStyle = aspectRatio
@@ -327,8 +335,8 @@ export function ScreenshotMedia({
     : { width: '100%', height: '100%' }
 
   const frameClassName = usesPhoneFrame
-    ? `relative [padding:var(--portfolio-default-spacing)] ${aspectRatio ? '' : 'invisible'}`
-    : 'relative bg-portfolio-shaded [padding:var(--portfolio-default-spacing)]'
+    ? `relative [padding:var(--portfolio-media-frame-width)] ${aspectRatio ? '' : 'invisible'}`
+    : 'relative bg-portfolio-shaded [padding:var(--portfolio-media-frame-width)]'
 
   const phoneFrameBackdrop = usesPhoneFrame ? (
     <PhoneFrameBackdrop clipPathId={phoneFrameClipPathId} />

@@ -40,6 +40,7 @@ export function getViewerMediaTransform(
 export type ViewerOpenIntent = {
   mediaId: string
   sourceRect: ViewerSourceRect | null
+  sourceAspectRatio?: number
   activationKind: ViewerActivationKind
   focalPoint?: ViewerPoint
   initialPinchScale?: number

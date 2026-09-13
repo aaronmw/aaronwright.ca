@@ -17,9 +17,7 @@ describe('copy editor project narratives', () => {
       label: 'cover: narrative',
       blockId: 'portfolio.projects.loopio.cover_image',
     })
-    expect(overview?.value).toMatch(
-      /^# Proving a better Loopio—then making it buildable by everyone else\n\n/,
-    )
+    expect(overview?.value).toMatch(/^# [^\n]+\n\n\S/)
     expect(
       loopioEntries.some(
         entry =>

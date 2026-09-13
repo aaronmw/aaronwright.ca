@@ -139,10 +139,12 @@ export function usePortfolioViewerTransition({
   function applyInitialZoom() {
     const initialScale = Math.min(4, Math.max(1, intent.initialPinchScale ?? 1))
     if (initialScale <= 1) return
-    const focalPoint = intent.focalPoint
+    // Double-tap opens a centred view; its tap position belongs to the thumbnail.
+    const focalPoint =
+      intent.activationKind === 'double-tap' ? undefined : intent.focalPoint
     zoomRef.current?.changeZoom(
       initialScale,
-      true,
+      intent.activationKind !== 'double-tap',
       focalPoint ? focalPoint.x - window.innerWidth / 2 : 0,
       focalPoint ? focalPoint.y - window.innerHeight / 2 : 0,
     )
@@ -165,7 +167,11 @@ export function usePortfolioViewerTransition({
     ).matches
     const sourceRect =
       getVisibleSourceMediaRect(intent.mediaId) ?? intent.sourceRect
-    const destinationRect = media?.getBoundingClientRect() ?? null
+    const destinationRect = media?.style.getPropertyValue(
+      '--portfolio-media-aspect-ratio',
+    )
+      ? media.getBoundingClientRect()
+      : null
     const backdropRect = backdrop?.getBoundingClientRect()
     const sourceCenter = navigation ? getUnderlyingNavigationCenter() : null
     const backdropX = backdropRect
@@ -300,12 +306,15 @@ export function usePortfolioViewerTransition({
 
   function animateOpen() {
     if (closingRef.current) return
-    let attempts = 0
+    const readyDeadline = performance.now() + 1000
     const beginWhenReady = () => {
       if (closingRef.current) return
       const media = getViewerMedia(intent.mediaId)
-      if (!media && attempts < 4) {
-        attempts += 1
+      // Metadata must have committed the frame's aspect ratio before measuring it.
+      const hasDimensions = media?.style.getPropertyValue(
+        '--portfolio-media-aspect-ratio',
+      )
+      if (!hasDimensions && performance.now() < readyDeadline) {
         openFrameRef.current = window.requestAnimationFrame(beginWhenReady)
         return
       }

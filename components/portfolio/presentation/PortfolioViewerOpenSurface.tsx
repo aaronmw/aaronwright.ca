@@ -71,9 +71,14 @@ export function PortfolioViewerOpenSurface({
   ) {
     const surface = surfaceRef.current
     if (!active || !surface) return
+    const sourceAspectRatio = Number(
+      surface.querySelector<HTMLElement>('[data-portfolio-media-frame]')
+        ?.style.getPropertyValue('--portfolio-media-aspect-ratio'),
+    )
     onOpen({
       mediaId: screenshotId,
       sourceRect: snapshotSourceRect(surface),
+      sourceAspectRatio: sourceAspectRatio > 0 ? sourceAspectRatio : undefined,
       activationKind,
       focalPoint,
       initialPinchScale,

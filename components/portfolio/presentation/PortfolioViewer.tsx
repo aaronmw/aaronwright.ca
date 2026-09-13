@@ -51,6 +51,9 @@ export function PortfolioViewer({
       >
         <ScreenshotMedia
           screenshot={slide.screenshot}
+          initialAspectRatio={
+            slide.id === intent.mediaId ? intent.sourceAspectRatio : undefined
+          }
           mediaKey={viewerMediaKey(slide.screenshot)}
           registerMediaElement={registerMediaElement}
           priority

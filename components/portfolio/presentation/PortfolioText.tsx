@@ -87,7 +87,7 @@ export function ProjectHeadingUnderline({
   return (
     <span
       aria-hidden="true"
-      className={`block text-portfolio-text-dimmed ${className ?? ''}`}
+      className={`-mb-[0.5lh] block text-portfolio-text-dimmed ${className ?? ''}`}
     >
       {PROJECT_HEADING_UNDERLINE_CHARACTER.repeat(
         Array.from(title.replaceAll('\u00ad', '')).length,
@@ -101,23 +101,29 @@ export function ProjectInformation({
   projectNumber,
   narrative,
   expanded,
+  alignWithLogo = true,
+  onSelectSlide,
 }: {
   project: PortfolioProject
   projectNumber: string
   narrative: ResolvedProjectNarrative
   expanded: boolean
+  alignWithLogo?: boolean
+  onSelectSlide: (slideIndex: number) => void
 }) {
   const hasMultipleRoles = project.rolesMarkdown?.includes('→') ?? false
 
   return (
     <PortfolioLedgerFrame
       aria-label={`${project.title} overview`}
-      className={`grid min-h-0 min-w-0 w-full grid-rows-[auto_minmax(0,1fr)] gap-y-[2lh] overflow-hidden ${expanded ? 'h-full max-w-[var(--resume-content-width)]' : 'max-h-full max-w-[calc(var(--portfolio-description-rail-width)-var(--portfolio-control-gutter-width)-var(--portfolio-default-spacing))] justify-self-center'}`}
+      className={`grid min-h-0 min-w-0 w-full grid-rows-[auto_minmax(0,1fr)] gap-y-[2lh] overflow-hidden max-[30rem]:gap-y-[1lh] ${expanded ? 'h-full max-w-[var(--resume-content-width)]' : 'max-h-full max-w-[calc(var(--portfolio-description-rail-width)-var(--portfolio-control-gutter-width)-var(--portfolio-default-spacing))] justify-self-center'}`}
     >
       <ProjectMetadata
         project={project}
         projectNumber={projectNumber}
         hasMultipleRoles={hasMultipleRoles}
+        alignWithLogo={alignWithLogo}
+        onSelectSlide={onSelectSlide}
       />
       <NarrativePresence project={project} narrative={narrative} />
     </PortfolioLedgerFrame>
@@ -129,12 +135,14 @@ export function ProjectMetadata({
   projectNumber,
   hasMultipleRoles: hasMultipleRolesOverride,
   alignWithLogo = true,
+  onSelectSlide,
   children,
 }: {
   project: PortfolioProject
   projectNumber: string
   hasMultipleRoles?: boolean
   alignWithLogo?: boolean
+  onSelectSlide: (slideIndex: number) => void
   children?: ReactNode
 }) {
   const hasMultipleRoles =
@@ -153,36 +161,42 @@ export function ProjectMetadata({
       <div
         className={
           children
-            ? 'grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-x-6'
+            ? 'flex min-w-0 flex-wrap items-start gap-x-6 gap-y-[1lh]'
             : 'min-w-0'
         }
       >
-        <div className="min-w-0">
-          <dl className="flex shrink-0 items-baseline gap-x-[2ch] whitespace-nowrap">
-            <dt className="sr-only">Project</dt>
-            <dd className="font-bold text-portfolio-text-dimmed">
-              {projectNumber}
-            </dd>
-            <dt className="sr-only">Company or product</dt>
-            <dd className="font-bold">
+        <dl className="flex shrink-0 items-baseline gap-x-[2ch] whitespace-nowrap">
+          <dt className="sr-only">Project</dt>
+          <dd className="font-bold text-portfolio-text-dimmed">
+            {projectNumber}
+          </dd>
+          <dt className="sr-only">Company or product</dt>
+          <dd className="font-bold">
+            <button
+              type="button"
+              data-interactive-pop="off"
+              aria-label={`Show first ${project.title} slide`}
+              className="portfolio-prose-link portfolio-prose-link--faux-underlined block border-0 bg-transparent p-0 text-left outline-none focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-portfolio-accent"
+              onClick={() => onSelectSlide(0)}
+            >
               <span className="block uppercase">{project.title}</span>
               <ProjectHeadingUnderline title={project.title} />
-            </dd>
-          </dl>
-          {project.rolesMarkdown || project.dates ? (
-            <ProjectRoleDates
-              rolesMarkdown={project.rolesMarkdown}
-              dates={project.dates}
-              hasMultipleRoles={hasMultipleRoles}
-            />
-          ) : null}
-        </div>
+            </button>
+          </dd>
+        </dl>
         {children ? (
-          <div className="col-start-2 row-start-1 justify-self-end">
+          <div className="ml-auto min-w-0 w-max max-w-full shrink-0">
             {children}
           </div>
         ) : null}
       </div>
+      {project.rolesMarkdown || project.dates ? (
+        <ProjectRoleDates
+          rolesMarkdown={project.rolesMarkdown}
+          dates={project.dates}
+          hasMultipleRoles={hasMultipleRoles}
+        />
+      ) : null}
     </header>
   )
 }
@@ -202,14 +216,14 @@ function ProjectRoleDates({
     <dl
       className={
         hasMultipleRoles
-          ? 'mt-[2lh] flex min-w-0 flex-col items-start text-left text-portfolio-text-dimmed'
-          : 'mt-[2lh] flex min-w-0 flex-wrap items-baseline justify-start gap-x-[1ch] text-left text-portfolio-text-dimmed'
+          ? 'mt-[2lh] flex min-w-0 flex-col items-start text-left text-portfolio-text-dimmed max-[30rem]:mt-[1lh]'
+          : 'mt-[2lh] flex min-w-0 flex-wrap items-baseline justify-start gap-x-[1ch] text-left text-portfolio-text-dimmed max-[30rem]:mt-[1lh]'
       }
     >
       {rolesMarkdown ? (
         <>
           <dt className="sr-only">Role</dt>
-          <dd className="shrink-0 whitespace-nowrap">
+          <dd className="shrink-0 whitespace-nowrap max-[30rem]:max-w-full max-[30rem]:whitespace-normal">
             <PortfolioInlineMarkdown>{rolesMarkdown}</PortfolioInlineMarkdown>
           </dd>
         </>

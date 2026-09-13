@@ -155,6 +155,7 @@ export function usePortfolioProjectCarousel({
   }, [active])
 
   useLayoutEffect(() => {
+    if (!sideBySide) return
     const root = alignmentRootRef.current
     if (!root) return
 
@@ -166,11 +167,7 @@ export function usePortfolioProjectCarousel({
     const metadataNode = root.querySelector<HTMLElement>(
       '[data-portfolio-project-metadata]',
     )
-    const stackedTextRegion = root.querySelector<HTMLElement>(
-      '[data-portfolio-stacked-text-region]',
-    )
     if (narrativeNodes.length === 0 || !metadataNode) return
-    if (!sideBySide && !stackedTextRegion) return
 
     const updateAlignment = () => {
       const rootStyle = window.getComputedStyle(root)
@@ -188,16 +185,9 @@ export function usePortfolioProjectCarousel({
         ...narrativeNodes.map(node => node.getBoundingClientRect().height),
       )
       const metadataHeight = metadataNode.getBoundingClientRect().height
-      const centeredTop = sideBySide
-        ? (root.clientHeight - tallestNarrativeHeight) / 2
-        : ((stackedTextRegion?.clientHeight ?? 0) -
-            (metadataHeight + narrativeGap + tallestNarrativeHeight)) /
-            2 +
-          metadataHeight +
-          narrativeGap
-      const minimumTop = sideBySide
-        ? topRuleHeight + defaultSpacing + metadataHeight + narrativeGap
-        : metadataHeight + narrativeGap
+      const centeredTop = (root.clientHeight - tallestNarrativeHeight) / 2
+      const minimumTop =
+        topRuleHeight + defaultSpacing + metadataHeight + narrativeGap
       const nextTop = Math.round(Math.max(centeredTop, minimumTop) * 100) / 100
 
       setNarrativeContentTop(current =>
@@ -208,7 +198,6 @@ export function usePortfolioProjectCarousel({
     const resizeObserver = new ResizeObserver(updateAlignment)
     resizeObserver.observe(root)
     resizeObserver.observe(metadataNode)
-    if (stackedTextRegion) resizeObserver.observe(stackedTextRegion)
     narrativeNodes.forEach(node => resizeObserver.observe(node))
     updateAlignment()
 

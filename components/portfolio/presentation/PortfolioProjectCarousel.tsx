@@ -3,6 +3,7 @@
 import { memo, useCallback, useMemo, type CSSProperties } from 'react'
 import type { EmblaCarouselType } from 'embla-carousel'
 import type { PortfolioProject } from '@/lib/portfolio'
+import { OverscrollIndicator } from '@/components/OverscrollIndicator'
 import { getProjectNarratives } from '../domain/narrative'
 import type { ProjectSlide } from '../domain/slides'
 import type { PortfolioMediaElement } from '../usePortfolioMediaReadiness'
@@ -12,6 +13,7 @@ import {
   MOBILE_SECTION_CONTENT_PADDING_RIGHT,
 } from '../mobileLayout'
 import { ProjectPanel } from './PortfolioMedia'
+import { FiveByFive } from './FiveByFive'
 import { PortfolioProjectControls } from './PortfolioProjectControls'
 import {
   PortfolioLedgerFrame,
@@ -51,6 +53,7 @@ function ProjectCarouselMetadata({
       project={project}
       projectNumber={projectNumber}
       alignWithLogo={false}
+      onSelectSlide={onSelectSlide}
     >
       {slideCount > 1 || project.url ? (
         <PortfolioProjectControls
@@ -123,7 +126,7 @@ export const PortfolioProjectCarousel = memo(function PortfolioProjectCarousel({
     [project, slides],
   )
   const narrative = narratives[activeSlideIndex] ?? narratives[0]
-  const sideBySide = isWideLayout && !isTouchInput
+  const sideBySide = isWideLayout
   const hasMedia = mediaSlides.length > 0
   const { alignmentRootRef, narrativeContentTop, viewportRef } =
     usePortfolioProjectCarousel({
@@ -147,11 +150,19 @@ export const PortfolioProjectCarousel = memo(function PortfolioProjectCarousel({
       style={layoutStyle}
     >
       {!hasMedia ? (
-        <div className="portfolio-safe-inline grid h-full place-items-center py-16">
+        <div
+          className={`portfolio-safe-inline grid h-full min-h-0 grid-rows-[minmax(0,1fr)] place-items-center ${sideBySide ? 'py-16' : 'pt-[var(--portfolio-header-text-edge-inset)] pb-[calc(var(--portfolio-frame-rule-size)+var(--portfolio-navigation-control-edge-offset)+env(safe-area-inset-bottom,0px))]'}`}
+          style={sideBySide ? undefined : {
+            paddingLeft: MOBILE_SECTION_CONTENT_PADDING_LEFT,
+            paddingRight: MOBILE_SECTION_CONTENT_PADDING_RIGHT,
+          }}
+        >
           <ProjectInformation
             project={project}
             projectNumber={projectNumber}
             narrative={narrative}
+            alignWithLogo={sideBySide}
+            onSelectSlide={onSelectSlide}
             expanded
           />
         </div>
@@ -221,59 +232,62 @@ export const PortfolioProjectCarousel = memo(function PortfolioProjectCarousel({
         </div>
       ) : (
         <div
-          ref={alignmentRootRef}
-          className="portfolio-safe-inline relative grid h-full min-h-0 grid-cols-[minmax(0,1fr)] grid-rows-[minmax(0,1fr)_minmax(0,2fr)] pt-10"
-          style={
-            {
-              paddingLeft: MOBILE_SECTION_CONTENT_PADDING_LEFT,
-              paddingRight: MOBILE_SECTION_CONTENT_PADDING_RIGHT,
-              '--portfolio-project-narrative-content-top':
-                narrativeContentTop === null
-                  ? '50%'
-                  : `${narrativeContentTop}px`,
-            } as ProjectVerticalAlignmentStyle
-          }
+          className="portfolio-safe-inline relative grid h-full min-h-0 grid-cols-[minmax(0,1fr)] grid-rows-[auto_minmax(0,1fr)] gap-y-[2lh] pt-[var(--portfolio-header-text-edge-inset)] pb-[var(--portfolio-slide-navigation-reserved-height)] max-[30rem]:gap-y-[1lh]"
+          style={{
+            paddingLeft: MOBILE_SECTION_CONTENT_PADDING_LEFT,
+            paddingRight: MOBILE_SECTION_CONTENT_PADDING_RIGHT,
+          }}
         >
-          <div
-            data-portfolio-stacked-text-region
-            className="pointer-events-none relative z-[var(--portfolio-layer-overlay)] col-start-1 row-start-1 min-h-0 min-w-0"
+          <PortfolioLedgerFrame
+            aria-label={`${project.title} overview`}
+            className="relative z-[var(--portfolio-layer-overlay)] mx-auto w-full max-w-[calc(var(--portfolio-description-rail-width)-var(--portfolio-control-gutter-width)-var(--portfolio-default-spacing))] max-[30rem]:max-w-none"
           >
-            <PortfolioLedgerFrame className="pointer-events-auto absolute inset-x-0 mx-auto w-full max-w-[calc(var(--portfolio-description-rail-width)-var(--portfolio-control-gutter-width)-var(--portfolio-default-spacing))] top-[var(--portfolio-project-narrative-content-top)] [transform:translateY(calc(-100%-2lh))]">
-              <ProjectCarouselMetadata
-                activeSlideIndex={activeSlideIndex}
-                project={project}
-                projectNumber={projectNumber}
-                slideCount={slides.length}
-                onSelectSlide={onSelectSlide}
-              />
-            </PortfolioLedgerFrame>
-          </div>
+            <ProjectCarouselMetadata
+              activeSlideIndex={activeSlideIndex}
+              project={project}
+              projectNumber={projectNumber}
+              slideCount={slides.length}
+              onSelectSlide={onSelectSlide}
+            />
+          </PortfolioLedgerFrame>
           <div
             ref={viewportRef}
             data-portfolio-carousel={project.slug}
-            className="relative z-[var(--portfolio-layer-content)] col-start-1 row-span-2 row-start-1 min-h-0 min-w-0 overflow-hidden [touch-action:pan-y_pinch-zoom]"
+            className="relative z-[var(--portfolio-layer-content)] min-h-0 min-w-0 overflow-hidden [touch-action:pan-y_pinch-zoom]"
           >
-            <div className="flex h-full min-h-0 min-w-0">
+            <div className="flex h-full min-h-0 min-w-0 gap-x-[var(--portfolio-default-spacing)]">
               {mediaSlides.map((slide, slideIndex) => (
                 <article
                   key={slide.id}
                   data-portfolio-carousel-panel="canonical"
                   data-portfolio-carousel-index={slideIndex}
-                  className="grid h-full min-h-0 min-w-0 shrink-0 basis-full grid-rows-[minmax(0,1fr)_minmax(0,2fr)]"
+                  className="grid h-full min-h-0 min-w-0 shrink-0 basis-full grid-rows-[minmax(0,2fr)_minmax(0,1fr)] min-[30rem]:grid-rows-2"
                   aria-hidden={activeSlideIndex !== slideIndex}
                   inert={activeSlideIndex !== slideIndex}
                 >
-                  <PortfolioLedgerFrame className="relative row-start-1 mx-auto h-full min-h-0 w-full max-w-[calc(var(--portfolio-description-rail-width)-var(--portfolio-control-gutter-width)-var(--portfolio-default-spacing))]">
-                    <div className="absolute inset-x-0 top-[var(--portfolio-project-narrative-content-top)]">
+                  <PortfolioLedgerFrame
+                    data-portfolio-stacked-text-region
+                    className="row-start-1 mx-auto h-full min-h-0 min-w-0 w-full max-w-[calc(var(--portfolio-description-rail-width)-var(--portfolio-control-gutter-width)-var(--portfolio-default-spacing))] overflow-hidden max-[30rem]:max-w-none"
+                  >
+                    <OverscrollIndicator
+                      aria-label={`${project.title} slide ${slideIndex + 1} text`}
+                      role="region"
+                      tabIndex={0}
+                      bottomScrollControl={<FiveByFive variant="down" />}
+                      persistentScrollbar
+                      wrapperClassName="h-full"
+                      className="overflow-x-hidden outline-none [touch-action:pan-y_pinch-zoom] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-portfolio-accent"
+                    >
                       <ProjectNarrative
                         project={project}
                         narrative={narratives[slideIndex] ?? narrative}
                       />
-                    </div>
+                    </OverscrollIndicator>
                   </PortfolioLedgerFrame>
                   <div className="relative row-start-2 min-h-0 min-w-0">
                     <ProjectPanel
                       slide={slide}
+                      reserveNavigationSpace={false}
                       restingMediaPadding={
                         isTouchInput
                           ? '0rem'

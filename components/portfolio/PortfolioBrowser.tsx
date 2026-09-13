@@ -43,7 +43,7 @@ const START_SCREEN_INDEX = -1
 
 const TEXT_ENTRY_SELECTOR =
   'input, textarea, select, [contenteditable], [role="textbox"], [role="spinbutton"]'
-const ARROW_NAVIGATION_SELECTOR = `${TEXT_ENTRY_SELECTOR}, [role="menu"], [role="listbox"], [role="tree"], [role="grid"], [role="tablist"], [role="radiogroup"], [role="slider"], [aria-haspopup="menu"]`
+const ARROW_NAVIGATION_SELECTOR = `${TEXT_ENTRY_SELECTOR}, [data-portfolio-native-wheel-scroll], [role="menu"], [role="listbox"], [role="tree"], [role="grid"], [role="tablist"], [role="radiogroup"], [role="slider"], [aria-haspopup="menu"]`
 const ACTIVATION_SELECTOR = `${TEXT_ENTRY_SELECTOR}, button, a, summary, [role="button"], [role="link"], [role="menuitem"], [role="menuitemcheckbox"], [role="menuitemradio"], [role="option"], [role="tab"], [role="checkbox"], [role="radio"], [role="switch"]`
 const ACTIVE_SLIDE_INDICATOR_SELECTOR =
   '[data-portfolio-slide-indicator-index][aria-current="true"]'
@@ -131,7 +131,12 @@ export function PortfolioBrowser({
       skipSnaps: false,
       startIndex: normalizedInitialProjectIndex + 1,
       watchDrag: (_api, event) => {
-        if (isPortfolioCarouselDragLockedTarget(event.target)) return false
+        if (
+          isPortfolioCarouselDragLockedTarget(event.target) ||
+          targetMatches(event.target, NATIVE_WHEEL_SCROLL_SELECTOR)
+        ) {
+          return false
+        }
         if (event.type !== 'mousedown') return true
         if (isSelectableTextTarget(event.target)) return false
         if (!targetMatches(event.target, '[data-portfolio-carousel]')) {
@@ -211,7 +216,10 @@ export function PortfolioBrowser({
   })
 
   const handleKeyDown = useEffectEvent((event: KeyboardEvent) => {
-    if (viewerIntent) return
+    if (
+      viewerIntent ||
+      targetMatches(event.target, '[data-portfolio-contact-dialog]')
+    ) return
     if (event.metaKey || event.ctrlKey || event.altKey) return
 
     if (event.key === '0') {

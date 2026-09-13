@@ -4,6 +4,7 @@ import {
   CSSProperties,
   forwardRef,
   HTMLAttributes,
+  PointerEvent,
   ReactNode,
   UIEventHandler,
   useCallback,
@@ -135,16 +136,14 @@ export const OverscrollIndicator = forwardRef<
     autoScrollFrameRef.current = null
   }
 
-  const startAutoScroll = () => {
+  const startAutoScroll = (event: PointerEvent<HTMLDivElement>) => {
     const viewport = viewportRef.current
-    const supportsHover = window.matchMedia(
-      '(hover: hover) and (pointer: fine)',
-    ).matches
+    // Follow the pointer in use, including a mouse on a touch-first device.
+    if (!viewport || event.pointerType === 'touch' || event.buttons !== 0) return
+
     const reducedMotion = window.matchMedia(
       '(prefers-reduced-motion: reduce)',
     ).matches
-
-    if (!viewport || !supportsHover) return
 
     stopAutoScroll()
     let previousTime = performance.now()

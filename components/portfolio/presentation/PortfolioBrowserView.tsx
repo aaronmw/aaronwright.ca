@@ -13,6 +13,7 @@ import { portfolioSlides } from '@/lib/portfolio'
 import type { ProjectSlide } from '../domain/slides'
 import type { PortfolioViewerSlide, ViewerOpenIntent } from '../domain/viewer'
 import { getProjectColor } from '../domain/portfolioColors'
+import { MOBILE_SECTION_CONTENT_CENTER } from '../mobileLayout'
 import type { PortfolioMediaElement } from '../usePortfolioMediaReadiness'
 import {
   PortfolioSectionRail,
@@ -107,7 +108,7 @@ function deriveViewState(
   resolvedTheme: Parameters<typeof getProjectColor>[1],
 ) {
   const viewerOpen = Boolean(model.viewerIntent)
-  const usesSideBySideProjectLayout = model.isWideLayout && !model.isTouchInput
+  const usesSideBySideProjectLayout = model.isWideLayout
   const activeProject = portfolioSlides[model.activeProjectIndex]
   const activeSlides = activeProject
     ? model.projectSlides[activeProject.slug]
@@ -177,7 +178,7 @@ function PortfolioHorizontalNavigation({
         style={{
           left: usesSideBySideProjectLayout
             ? 'calc(50% + (var(--portfolio-description-rail-width) - var(--portfolio-control-gutter-width)) / 2)'
-            : '50%',
+            : MOBILE_SECTION_CONTENT_CENTER,
         }}
       >
         <PortfolioSlideRail
@@ -456,7 +457,6 @@ export function PortfolioBrowserView({
               <PortfolioStartScreen
                 projects={portfolioSlides}
                 pendingProjectIndex={null}
-                isTouchInput={model.isTouchInput}
                 isWideLayout={model.isWideLayout}
                 isTouchLandscapeLayout={model.isTouchLandscapeLayout}
                 getProjectColor={projectColor}
