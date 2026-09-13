@@ -1,6 +1,7 @@
 'use client'
 
 import {
+  Fragment,
   memo,
   type ComponentProps,
   useEffect,
@@ -50,12 +51,29 @@ const INLINE_MARKDOWN_COMPONENTS = {
 
 const PORTFOLIO_MARKDOWN_COMPONENTS = {
   a: MarkdownLink,
+  ul({ children }) {
+    return <ul role="list">{children}</ul>
+  },
   h1: createMarkdownHeading('h2'),
   h2: createMarkdownHeading('h3'),
   h3: createMarkdownHeading('h4'),
   h4: createMarkdownHeading('h5'),
   h5: createMarkdownHeading('h6'),
   h6: createMarkdownHeading('h6'),
+} satisfies Components
+
+const FIVE_BY_FIVE_MARKDOWN_COMPONENTS = {
+  ...PORTFOLIO_MARKDOWN_COMPONENTS,
+  li({ children }) {
+    return (
+      <li>
+        <span className="portfolio-list-bullet">
+          <FiveByFive variant="dot" />
+        </span>
+        <div className="min-w-0">{children}</div>
+      </li>
+    )
+  },
 } satisfies Components
 
 export function PortfolioLedgerFrame({
@@ -224,14 +242,21 @@ function ProjectRoleDates({
         <>
           <dt className="sr-only">Role</dt>
           <dd className="shrink-0 whitespace-nowrap max-[30rem]:max-w-full max-[30rem]:whitespace-normal">
-            <PortfolioInlineMarkdown>{rolesMarkdown}</PortfolioInlineMarkdown>
+            {rolesMarkdown.split('→').map((role, index) => (
+              <Fragment key={role}>
+                {index > 0 ? ' → ' : null}
+                <span className="whitespace-nowrap">
+                  <PortfolioInlineMarkdown>{role.trim()}</PortfolioInlineMarkdown>
+                </span>
+              </Fragment>
+            ))}
           </dd>
         </>
       ) : null}
       {dates ? (
         <>
           <dt className="sr-only">Dates</dt>
-          <dd className="shrink-0 whitespace-nowrap">{dates}</dd>
+          <dd className="w-full shrink-0 whitespace-nowrap">{dates}</dd>
         </>
       ) : null}
     </dl>
@@ -375,8 +400,12 @@ function NarrativeContent({
             </PortfolioInlineMarkdown>
           </h1>
         ) : null}
-        <div className="portfolio-markdown prose max-w-none font-normal">
-          <PortfolioMarkdown>{narrative.bodyMarkdown}</PortfolioMarkdown>
+        <div
+          className={`portfolio-markdown prose max-w-none font-normal ${project.slug === 'about-me' ? 'portfolio-markdown--compact-lists' : ''}`}
+        >
+          <PortfolioMarkdown fiveByFiveBullets={project.slug === 'about-me'}>
+            {narrative.bodyMarkdown}
+          </PortfolioMarkdown>
         </div>
       </div>
     </div>
@@ -423,12 +452,22 @@ function createMarkdownHeading(Tag: MarkdownHeadingTag) {
   return MarkdownHeading
 }
 
-export function PortfolioMarkdown({ children }: { children: string }) {
+export function PortfolioMarkdown({
+  children,
+  fiveByFiveBullets = false,
+}: {
+  children: string
+  fiveByFiveBullets?: boolean
+}) {
   return (
     <ReactMarkdown
       remarkPlugins={[remarkGfm]}
       rehypePlugins={PORTFOLIO_REHYPE_PLUGINS}
-      components={PORTFOLIO_MARKDOWN_COMPONENTS}
+      components={
+        fiveByFiveBullets
+          ? FIVE_BY_FIVE_MARKDOWN_COMPONENTS
+          : PORTFOLIO_MARKDOWN_COMPONENTS
+      }
     >
       {children}
     </ReactMarkdown>

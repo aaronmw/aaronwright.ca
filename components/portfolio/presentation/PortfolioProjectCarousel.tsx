@@ -17,11 +17,11 @@ import { FiveByFive } from './FiveByFive'
 import { PortfolioProjectControls } from './PortfolioProjectControls'
 import {
   PortfolioLedgerFrame,
-  ProjectInformation,
   ProjectMetadata,
   ProjectNarrative,
 } from './PortfolioText'
 import { usePortfolioProjectCarousel } from './usePortfolioProjectCarousel'
+import { PortfolioTextCarousel } from './PortfolioTextCarousel'
 
 type WideLayoutStyle = CSSProperties & {
   '--portfolio-description-rail-half-width': string
@@ -132,7 +132,7 @@ export const PortfolioProjectCarousel = memo(function PortfolioProjectCarousel({
     usePortfolioProjectCarousel({
       active,
       activeSlideIndex,
-      hasMedia,
+      enabled: hasMedia || (!sideBySide && slides.length > 1),
       projectId: project.id,
       projectIndex,
       sideBySide,
@@ -150,22 +150,16 @@ export const PortfolioProjectCarousel = memo(function PortfolioProjectCarousel({
       style={layoutStyle}
     >
       {!hasMedia ? (
-        <div
-          className={`portfolio-safe-inline grid h-full min-h-0 grid-rows-[minmax(0,1fr)] place-items-center ${sideBySide ? 'py-16' : 'pt-[var(--portfolio-header-text-edge-inset)] pb-[calc(var(--portfolio-frame-rule-size)+var(--portfolio-navigation-control-edge-offset)+env(safe-area-inset-bottom,0px))]'}`}
-          style={sideBySide ? undefined : {
-            paddingLeft: MOBILE_SECTION_CONTENT_PADDING_LEFT,
-            paddingRight: MOBILE_SECTION_CONTENT_PADDING_RIGHT,
-          }}
-        >
-          <ProjectInformation
-            project={project}
-            projectNumber={projectNumber}
-            narrative={narrative}
-            alignWithLogo={sideBySide}
-            onSelectSlide={onSelectSlide}
-            expanded
-          />
-        </div>
+        <PortfolioTextCarousel
+          project={project}
+          projectNumber={projectNumber}
+          slides={slides}
+          narratives={narratives}
+          activeSlideIndex={activeSlideIndex}
+          sideBySide={sideBySide}
+          viewportRef={viewportRef}
+          onSelectSlide={onSelectSlide}
+        />
       ) : sideBySide ? (
         <div
           ref={alignmentRootRef}

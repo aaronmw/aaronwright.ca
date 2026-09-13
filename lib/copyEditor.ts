@@ -184,6 +184,16 @@ function projectEntries() {
       entries.push(overviewEntry)
     }
 
+    if (project.detailsMarkdown) {
+      entries.push({
+        id: `${prefix}.detailsMarkdown`,
+        group: project.title,
+        label: 'Supporting lists',
+        value: cleanEditableCopy(project.detailsMarkdown),
+        rows: 16,
+      })
+    }
+
     project.screenshots.forEach((screenshot, screenshotIndex) => {
       const screenshotPrefix = `${prefix}.screenshots.${screenshot.slug}`
       const screenshotMedia = {

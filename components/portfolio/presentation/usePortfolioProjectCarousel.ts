@@ -32,7 +32,7 @@ function isSelectableTextTarget(target: EventTarget | null) {
 export function usePortfolioProjectCarousel({
   active,
   activeSlideIndex,
-  hasMedia,
+  enabled,
   projectId,
   projectIndex,
   sideBySide,
@@ -42,7 +42,7 @@ export function usePortfolioProjectCarousel({
 }: {
   active: boolean
   activeSlideIndex: number
-  hasMedia: boolean
+  enabled: boolean
   projectId: string
   projectIndex: number
   sideBySide: boolean
@@ -66,7 +66,7 @@ export function usePortfolioProjectCarousel({
       loop: false,
       skipSnaps: false,
       startIndex: initialSlideIndex,
-      active: hasMedia,
+      active: enabled,
       watchDrag: (_api, event) => {
         if (isPortfolioCarouselDragLockedTarget(event.target)) return false
         if (event.type !== 'mousedown') return true
@@ -78,15 +78,22 @@ export function usePortfolioProjectCarousel({
   )
   const notifyApi = useEffectEvent(onApi)
   const notifySelect = useEffectEvent(onSelect)
+  const restoreSelection = useEffectEvent((api: EmblaCarouselType) => {
+    api.scrollTo(activeSlideIndex, true)
+  })
   const notifyBackdropVisibility = useEffectEvent((visible: boolean) => {
     if (active) onBackdropVisibilityChange(visible)
   })
 
   useEffect(() => {
+    if (!emblaApi || !enabled) return
+    // Retain the selected text panel when returning from the two-column layout.
+    // This synchronizes local Embla position, not React or parent state.
+    // react-doctor-disable-next-line react-doctor/no-pass-live-state-to-parent
+    restoreSelection(emblaApi)
     // The Embla instance is registered in a ref-backed API map and removed in cleanup.
     // react-doctor-disable-next-line react-doctor/no-pass-live-state-to-parent
-    notifyApi(projectIndex, emblaApi ?? null)
-    if (!emblaApi) return
+    notifyApi(projectIndex, emblaApi)
 
     const handleSelect = () => {
       const selectedIndex = emblaApi.selectedScrollSnap()
@@ -144,7 +151,7 @@ export function usePortfolioProjectCarousel({
       emblaApi.off('settle', handleSettle)
       notifyApi(projectIndex, null)
     }
-  }, [emblaApi, projectIndex])
+  }, [emblaApi, enabled, projectIndex])
 
   useEffect(() => {
     if (active) {

@@ -26,8 +26,11 @@
   --color-portfolio-accent: var(--portfolio-accent);
   --color-portfolio-red: var(--portfolio-accent);
   --color-resume-signal: var(--portfolio-accent);
-  --font-portfolio-controls: var(--font-courier-prime);
-  --font-resume-mono: var(--font-courier-prime);
+  --font-portfolio-controls: var(
+    --portfolio-dev-font-family,
+    var(--font-ibm-plex-mono)
+  );
+  --font-resume-mono: var(--portfolio-dev-font-family, var(--font-ibm-plex-mono));
   --color-portfolio-white: var(--portfolio-neutral-50);
   --color-portfolio-black: var(--portfolio-neutral-950);
   --color-portfolio-text: var(--portfolio-text);
@@ -46,12 +49,30 @@ body {
   min-height: 100%;
   margin: 0;
   background: var(--portfolio-neutral-950);
-  letter-spacing: var(--tracking-wider);
+  letter-spacing: var(--portfolio-dev-tracking, 0em);
 }
 
 .portfolio-typography {
-  font-size: var(--text-sm);
-  line-height: var(--leading-relaxed);
+  font-size: var(--portfolio-dev-font-size, 13px);
+  line-height: var(--portfolio-dev-line-height, 2);
+  font-weight: var(--portfolio-dev-font-weight, 400);
+}
+
+/* Dev previews also reach portaled menus, tooltips, and contact details. */
+html[data-portfolio-dev-font] .portfolio-typography {
+  font-family: var(--portfolio-dev-font-family);
+}
+
+html[data-portfolio-dev-typography] .portfolio-typography,
+html[data-portfolio-dev-typography] .portfolio-typography .font-normal {
+  font-weight: var(--portfolio-dev-font-weight);
+}
+
+.portfolio-typography
+  :is(p, li, h1, h2, h3, h4, h5, h6, [role='paragraph']):not(
+    [data-portfolio-dev-tools] *
+  ) {
+  text-wrap: var(--portfolio-dev-text-wrap, pretty);
 }
 
 /* Opt in for standalone uppercase labels centered against controls or icons. */
@@ -75,7 +96,7 @@ html[data-portfolio-theme='dark'] {
 html[data-portfolio-theme='light'] {
   --portfolio-surface: var(--portfolio-neutral-50);
   --portfolio-text: var(--portfolio-neutral-950);
-  --portfolio-text-dimmed: var(--portfolio-neutral-600);
+  --portfolio-text-dimmed: var(--portfolio-neutral-500);
   --portfolio-shaded: var(--portfolio-neutral-200);
   --portfolio-surface-translucent: color-mix(
     in srgb,
@@ -568,7 +589,8 @@ button {
     --portfolio-media-frame-width: calc(var(--portfolio-default-spacing) / 2);
   }
 
-  .portfolio-start-header {
+  .portfolio-start-header,
+  .portfolio-project-header {
     padding-right: calc(
       var(--portfolio-navigation-track-size) -
         var(--portfolio-stacked-content-right-inset)
@@ -647,6 +669,34 @@ button {
 .portfolio-markdown :where(li p) {
   margin-bottom: 0;
   margin-top: 0;
+}
+
+.portfolio-markdown--compact-lists :where(ul) {
+  display: grid;
+  row-gap: 0.25lh;
+  list-style: none;
+  padding-inline-start: 0;
+}
+
+.portfolio-markdown--compact-lists :where(ul > li) {
+  display: grid;
+  grid-template-columns: var(--portfolio-logo-size) minmax(0, 1fr);
+  column-gap: calc(var(--portfolio-logo-size) / 2);
+  margin-block: 0;
+  padding: 0;
+}
+
+.portfolio-list-bullet {
+  display: none;
+}
+
+.portfolio-markdown--compact-lists :where(ul > li > .portfolio-list-bullet) {
+  display: grid;
+  place-items: center start;
+  inline-size: 1lh;
+  block-size: 1lh;
+  color: var(--portfolio-accent);
+  transform: translateY(-0.125em);
 }
 
 .portfolio-markdown :where(code)::before,

@@ -3,12 +3,9 @@ import { notFound, redirect } from 'next/navigation'
 import { PortfolioBrowser } from '@/components/portfolio/PortfolioBrowser'
 import { getProjectColorBySlug } from '@/components/portfolio/domain/portfolioColors'
 import { TOP_SCREEN_COLOR } from '@/components/portfolio/domain/theme'
+import { getProjectSlides } from '@/components/portfolio/domain/slides'
 import { faviconDataUrl } from '@/lib/favicon'
-import {
-  getPortfolioProject,
-  getPortfolioScreenshot,
-  portfolioSlides,
-} from '@/lib/portfolio'
+import { getPortfolioProject, portfolioSlides } from '@/lib/portfolio'
 import { parsePortfolioNarrative } from '@/lib/portfolioNarrative'
 
 type SlidePageProps = {
@@ -49,6 +46,9 @@ export function generateStaticParams() {
       workSlug: project.slug,
       screenshotSlug: [screenshot.slug],
     })),
+    ...getProjectSlides(project)
+      .filter(slide => slide.kind === 'details')
+      .map(slide => ({ workSlug: project.slug, screenshotSlug: [slide.slug] })),
   ])
 }
 
@@ -60,14 +60,16 @@ export async function generateMetadata({ params }: SlidePageProps) {
     return {}
   }
 
-  const screenshot =
+  const slide =
     screenshotSlug.length === 1
-      ? getPortfolioScreenshot(project, screenshotSlug[0])
+      ? getProjectSlides(project).find(
+          slide => slide.kind !== 'description' && slide.slug === screenshotSlug[0],
+        )
       : undefined
 
   return {
-    title: screenshot
-      ? `${project.title}: ${screenshot.slug} | Aaron M. Wright`
+    title: slide
+      ? `${project.title}: ${slide.slug} | Aaron M. Wright`
       : `${project.title} | Aaron M. Wright`,
     description: plainTextFromMarkdown(
       parsePortfolioNarrative(project.overviewMarkdown).bodyMarkdown,
@@ -96,24 +98,26 @@ export default async function SlidePage({
     redirect('/work/about-me')
   }
 
-  const screenshot =
+  const slide =
     screenshotSlug.length === 1
-      ? getPortfolioScreenshot(project, screenshotSlug[0])
+      ? getProjectSlides(project).find(
+          slide => slide.kind !== 'description' && slide.slug === screenshotSlug[0],
+        )
       : undefined
 
-  if (screenshotSlug.length === 1 && !screenshot) {
+  if (screenshotSlug.length === 1 && !slide) {
     notFound()
   }
 
   const viewerMedia =
-    screenshot ??
+    (slide?.kind === 'screenshot' ? slide.screenshot : undefined) ??
     (screenshotSlug.length === 0 ? project.cover_image : undefined)
 
   return (
     <Suspense>
       <PortfolioBrowser
         initialProjectSlug={project.slug}
-        initialScreenshotSlug={screenshot?.slug}
+        initialScreenshotSlug={slide?.slug}
         initialViewerOpen={
           (modal === 'image' || zoom === 'image') && Boolean(viewerMedia)
         }

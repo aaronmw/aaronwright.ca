@@ -87,7 +87,7 @@ export function PortfolioBrowser({
   const verticalViewportElementRef = useRef<HTMLElement>(null)
   const initialRevealStartedRef = useRef(false)
   const [introPhase, setIntroPhase] = useState<PortfolioIntroPhase>('loading')
-  const { isTouchInput, isTouchLandscapeLayout, isWideLayout } =
+  const { isTouchInput, isTouchLandscapeLayout, isWideLayout, isWideTextLayout } =
     usePortfolioLayout()
 
   const {
@@ -218,7 +218,10 @@ export function PortfolioBrowser({
   const handleKeyDown = useEffectEvent((event: KeyboardEvent) => {
     if (
       viewerIntent ||
-      targetMatches(event.target, '[data-portfolio-contact-dialog]')
+      targetMatches(
+        event.target,
+        '[data-portfolio-contact-dialog], [data-portfolio-dev-tools]',
+      )
     ) return
     if (event.metaKey || event.ctrlKey || event.altKey) return
 
@@ -354,6 +357,7 @@ export function PortfolioBrowser({
         isTouchInput,
         isTouchLandscapeLayout,
         isWideLayout,
+        isWideTextLayout,
         projectSlides,
         viewerIntent,
         viewerIndex,

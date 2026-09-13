@@ -39,7 +39,7 @@ export function parsePortfolioRoute(
   const screenshotSlug = segments[2]
   const slideIndex = screenshotSlug
     ? slides.findIndex(
-        slide => slide.kind === 'screenshot' && slide.slug === screenshotSlug,
+        slide => slide.kind !== 'description' && slide.slug === screenshotSlug,
       )
     : 0
 
@@ -117,6 +117,10 @@ export function slideNavigationTitle(
 
   if (slide.kind === 'description') {
     return `${project.title} • Index`
+  }
+
+  if (slide.kind === 'details') {
+    return `${project.title} • Details`
   }
 
   const altMatch = slide.screenshot.alt.match(/^(\d+\s+of\s+\d+):\s*(.+)$/i)

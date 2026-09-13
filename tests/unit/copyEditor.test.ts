@@ -5,6 +5,20 @@ import {
 } from '../../lib/copyEditor'
 
 describe('copy editor project narratives', () => {
+  it('offers the revised About Me biography and all three supporting lists as originals', () => {
+    const biography = copyEditorEntries.find(
+      entry => entry.id === 'portfolio.projects.about-me.overviewMarkdown',
+    )
+    const details = copyEditorEntries.find(
+      entry => entry.id === 'portfolio.projects.about-me.detailsMarkdown',
+    )
+
+    expect(biography?.value.split(/\n\s*\n/)).toHaveLength(5)
+    expect(details?.value.match(/^## /gm)).toHaveLength(3)
+    expect(details?.value.match(/^- /gm)).toHaveLength(15)
+    expect(details).not.toHaveProperty('media')
+  })
+
   it('exposes the overview as one Markdown narrative field', () => {
     const loopioEntries = copyEditorEntries.filter(
       entry => entry.group === 'Loopio',

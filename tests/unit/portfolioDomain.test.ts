@@ -186,6 +186,33 @@ describe('portfolio routes', () => {
     ).toBeNull()
   })
 
+  it('round-trips the About Me text panels without treating them as viewer media', () => {
+    const about = portfolioSlides.find(project => project.slug === 'about-me')!
+    const slides = getProjectSlides(about)
+    const projectSlides = getProjectSlidesBySlug([about])
+
+    expect(slides.map(slide => slide.kind)).toEqual(['description', 'details'])
+    expect(projectUrl(about, slides[0])).toBe('/work/about-me')
+    expect(projectUrl(about, slides[1])).toBe('/work/about-me/details')
+    expect(getInitialSlideIndexes([about], 'about-me', 'details')).toEqual([1])
+    slides.forEach((slide, index) => {
+      expect(parsePortfolioRoute(
+        projectUrl(about, slide), '?modal=image', [about], projectSlides,
+      )).toEqual({
+        projectIndex: 0,
+        slideIndex: index,
+        viewerOpen: false,
+      })
+      expect(isViewerScreenshotSlide(about, slide)).toBe(false)
+      expect(getSlideMediaKey(about, slide, true)).toBeUndefined()
+    })
+    expect(getPortfolioViewerSlides(about)).toEqual([])
+    expect(pageTitle(about, slides[1])).toBe(
+      'About Me: details | Aaron M. Wright',
+    )
+    expect(slideNavigationTitle(about, slides[1])).toBe('About Me • Details')
+  })
+
   it('serializes URLs, document titles, and navigation labels', () => {
     const overview = slidesBySlug['project-two'][0]
     const motion = slidesBySlug['project-two'][1]
@@ -248,6 +275,18 @@ describe('project narrative resolution', () => {
         titleMarkdown: 'Slide two',
         bodyMarkdown: 'Specific notes',
       },
+    ])
+  })
+
+  it('keeps the biography separate and preserves all supporting section headings', () => {
+    const textProject: PortfolioProject = {
+      ...projects[0],
+      overviewMarkdown: 'Biography paragraph.',
+      detailsMarkdown: '## Situations\n\n- One\n\n## Collaboration\n\n- Two\n\n## Contributions\n\n- Three',
+    }
+    expect(getProjectNarratives(textProject, getProjectSlides(textProject))).toEqual([
+      { sourceId: 'project:about-me', bodyMarkdown: 'Biography paragraph.' },
+      { sourceId: 'slide:about-me-details', bodyMarkdown: textProject.detailsMarkdown },
     ])
   })
 })

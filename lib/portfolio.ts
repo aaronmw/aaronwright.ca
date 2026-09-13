@@ -16,6 +16,7 @@ export type PortfolioProject = {
   blurb: string
   url?: string
   overviewMarkdown: string
+  detailsMarkdown?: string
   rolesMarkdown?: string
   dates?: string
   cover_image?: PortfolioScreenshot
@@ -116,6 +117,9 @@ function transformPortfolioProjectMarkdown(
     ...project,
     blurb: transformPortfolioMarkdown(project.blurb),
     overviewMarkdown: transformPortfolioMarkdown(project.overviewMarkdown),
+    detailsMarkdown: project.detailsMarkdown
+      ? transformPortfolioMarkdown(project.detailsMarkdown)
+      : undefined,
     rolesMarkdown: project.rolesMarkdown
       ? transformPortfolioMarkdown(project.rolesMarkdown)
       : undefined,
@@ -144,7 +148,7 @@ const rawPortfolioSlides = [
     slug: 'loopio',
     title: 'Loopio',
     blurb:
-      'Our "What If?" prototype got serious traction and went on to replace the original Loopio product. Then I built, documented, and championed a shared system for teams to build upon.',
+      'I designed and prototyped a new Loopio experience that went on to replace the original product. Then I built, documented, and championed a shared system for teams to build upon.',
     overviewMarkdown: LOOPIO_OVERVIEW,
     rolesMarkdown: 'Principal Designer → Sr. UX Engineer',
     dates: '2018–2022',
@@ -264,29 +268,40 @@ I also led the writing and building of documentation so developers and designers
     blurb:
       'Twenty-five years across **product design** and **frontend development**, now focused on helping other people do excellent work.',
     overviewMarkdown: `
-I’ve spent the past 27 years working somewhere between product design and frontend engineering. I’ve designed products, built design systems and frontend foundations, improved workflows, taught interaction design, mentored designers and engineers, and spent an inordinate amount of time removing friction that other people had apparently just learned to live with.
+I’m a product designer and frontend engineer with a particular fondness for fixing things people have learned to work around. Sometimes that means rethinking a complicated interface. Sometimes it means building a shared component or a tool that saves everyone a few hours.
 
-I got into this whole web development game back in 1999. I’d just finished the 7th grade when my family relocated three hours away from where I’d grown up. Stuck in a new town and staring down a full summer of nothin’ to do, I decided I’d tinker with the family computer.
+I started building for the web in 1999, after discovering Microsoft FrontPage on the family computer. Within days, I’d published a homepage with all the requisite GIFs and marquees. Before long, I was building tools to do homework and trading websites for computer parts. I’m still motivated by that same satisfaction: making something useful, then watching someone use it.
 
-My brother had sent home a copy of Microsoft Office 2000 from university for my dad to use for bookkeeping. Most of the included applications were already familiar to me, but FrontPage stood out. I still vividly remember poking around its interface, confounded. It looked a lot like Word, but not exactly. The page had no boundaries—just a sea of white. I dove right in.
+At FreshBooks and Loopio, that curiosity grew into work on substantial product redesigns and the systems supporting them. At Loopio, I moved from designing and prototyping a new experience to building and documenting the React components other teams needed to extend it. I like being able to follow an idea through those different kinds of work.
 
-After a few hours of poking around and searching online, I’d cracked the secret of this FrontPage app: it was a word processor that published _to the Internet_. I made a Tripod account and immediately built myself a homepage, complete with GIFs, custom fonts, and marquees—the staples. Days after discovering FrontPage, I’d published my first site for the world to see, with its own URL. I was hooked.
+Teaching has become another favourite part of what I do. I taught interaction design in the York/Sheridan and Sheridan design programs, and I’ve mentored designers and engineers throughout my career. I enjoy helping someone work through a difficult problem and come away better equipped for the next one.
 
-I eventually found my way into Code View. Initially vexed by the screens of gibberish, I started to recognize my own prose amongst the strange characters. Through trial and error, I began building a mental model of the relationship between the page and the code behind it.
+These days, I’m especially interested in how better tools and practices can give teams more room to think. That includes finding useful applications for AI, alongside the scripts, plugins, and shared systems I’ve always enjoyed building. I care about raising the bar while making good work easier to do.
+`,
+    detailsMarkdown: `
+## Situations I know well
 
-It wasn’t long before I was building tools to do my homework—and my friends’ homework. Then I started building sites in exchange for web hosting and computer parts. That turned into more formal work building websites and apps and getting paid in real, spendable money.
+- A successful product has outgrown the interface and frontend it started with.
+- A redesign needs to improve familiar workflows without leaving existing customers behind.
+- Different teams keep solving the same interface problems in different ways.
+- Engineers are adopting unfamiliar tools while still being expected to deliver.
+- Repetitive work has become so routine that people have stopped questioning it.
 
-All these years later, I’m definitely more familiar with the tools, but I’m still just as curious and passionate about building things and watching other people use them. Along the way, I’ve also taken a fancy to teaching. I taught interaction design first in the joint York/Sheridan Design program, and later in Sheridan’s own program after the schools went separate ways.
+## What I’m like to work with
 
-By the time AI hit the scene, I’d already spent years building custom scripts and tools to expedite the boring bits. AI didn’t invent that instinct; it did greatly extend what was possible.
+- I like making ideas tangible early, through sketches, prototypes, or working code.
+- I’m comfortable moving between design critique and implementation details.
+- I enjoy teaching through real problems and working examples.
+- I notice everyday friction and tend to build something about it.
+- I get a lot of satisfaction from making someone else’s work easier.
 
-What interested me wasn’t only the speed. It was the opportunity to rethink how people move from an idea to a working product—and what designers and engineers could accomplish together once some of the old boundaries started to wobble.
+## Where I’m most useful
 
-Today, I do my best work helping other people do theirs: running critiques, teaching and mentoring, building better systems and practices, smoothing friction between design and engineering, and finding useful ways to bring AI into the work.
-
-I care about raising the bar without making the work heavier—making excellent work clearer, easier, and more satisfying for everyone involved.
-
-If you’re building at the seam between design and engineering or figuring out what AI should actually change about the way your team works, let’s talk!
+- Making complex product workflows clearer and easier to navigate.
+- Turning a promising design direction into a working prototype people can evaluate.
+- Building design systems with the components, documentation, and examples teams need to use them.
+- Helping designers and engineers develop their judgment through critique and mentoring.
+- Improving how a team works through practical tooling, automation, and AI.
 `,
     screenshots: [],
   },

@@ -20,6 +20,12 @@ export function getProjectNarratives(
   }
 
   return slides.map(slide => {
+    if (slide.kind === 'details') {
+      return {
+        sourceId: `slide:${slide.id}`,
+        bodyMarkdown: project.detailsMarkdown ?? '',
+      }
+    }
     if (slide.kind === 'screenshot' && slide.screenshot.description?.trim()) {
       const parsed = parseSlideNarrative(slide.screenshot.description)
       current = {

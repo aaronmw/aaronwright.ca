@@ -9,6 +9,11 @@ export type ProjectSlide =
     }
   | {
       id: string
+      kind: 'details'
+      slug: 'details'
+    }
+  | {
+      id: string
       kind: 'screenshot'
       slug: string
       screenshot: PortfolioScreenshot
@@ -49,7 +54,15 @@ export function getProjectSlides(project: PortfolioProject): ProjectSlide[] {
       kind: 'description',
       slug: 'description',
     },
-    ...screenshotSlides,
+    ...(project.detailsMarkdown
+      ? [
+          {
+            id: `${project.id}-details`,
+            kind: 'details' as const,
+            slug: 'details' as const,
+          },
+        ]
+      : []),
   ]
 }
 

@@ -1,6 +1,8 @@
 import { useSyncExternalStore } from 'react'
 
 const WIDE_LAYOUT_MEDIA_QUERY = '(min-aspect-ratio: 5/4) and (min-width: 43rem)'
+// Two reading columns need more width than a text-and-image layout.
+const WIDE_TEXT_LAYOUT_MEDIA_QUERY = '(min-width: 64rem)'
 const TOUCH_INPUT_MEDIA_QUERY = '(hover: none) and (pointer: coarse)'
 
 function subscribeToMediaQuery(query: string, callback: () => void) {
@@ -22,6 +24,14 @@ function subscribeToTouchInput(callback: () => void) {
   return subscribeToMediaQuery(TOUCH_INPUT_MEDIA_QUERY, callback)
 }
 
+function subscribeToWideTextLayout(callback: () => void) {
+  return subscribeToMediaQuery(WIDE_TEXT_LAYOUT_MEDIA_QUERY, callback)
+}
+
+function getWideTextLayoutSnapshot() {
+  return window.matchMedia(WIDE_TEXT_LAYOUT_MEDIA_QUERY).matches
+}
+
 function getWideLayoutSnapshot() {
   return window.matchMedia(WIDE_LAYOUT_MEDIA_QUERY).matches
 }
@@ -31,6 +41,11 @@ function getTouchInputSnapshot() {
 }
 
 export function usePortfolioLayout() {
+  const isWideTextLayout = useSyncExternalStore(
+    subscribeToWideTextLayout,
+    getWideTextLayoutSnapshot,
+    getServerSnapshot,
+  )
   const isWideLayout = useSyncExternalStore(
     subscribeToWideLayout,
     getWideLayoutSnapshot,
@@ -46,5 +61,6 @@ export function usePortfolioLayout() {
     isTouchInput,
     isTouchLandscapeLayout: isWideLayout && isTouchInput,
     isWideLayout,
+    isWideTextLayout,
   }
 }

@@ -135,13 +135,19 @@ function PortfolioProjectIndex({
                   {project.title}
                 </span>
                 <ProjectHeadingUnderline title={project.title} />
-                <span className="portfolio-start-index-summary-stacked mt-[0.5lh] max-w-[54ch] font-normal text-portfolio-text-dimmed transition-colors duration-[var(--portfolio-motion-state)] ease-out group-hover:text-portfolio-text group-focus-visible:text-portfolio-text motion-reduce:transition-none">
+                <span
+                  role="paragraph"
+                  className="portfolio-start-index-summary-stacked mt-[0.5lh] max-w-[54ch] font-normal text-portfolio-text-dimmed transition-colors duration-[var(--portfolio-motion-state)] ease-out group-hover:text-portfolio-text group-focus-visible:text-portfolio-text motion-reduce:transition-none"
+                >
                   <PortfolioInlineMarkdown>
                     {project.blurb}
                   </PortfolioInlineMarkdown>
                 </span>
               </span>
-              <span className="portfolio-start-index-summary-column min-w-0 text-portfolio-text-dimmed transition-colors duration-[var(--portfolio-motion-state)] ease-out group-hover:text-portfolio-text group-focus-visible:text-portfolio-text motion-reduce:transition-none">
+              <span
+                role="paragraph"
+                className="portfolio-start-index-summary-column min-w-0 text-portfolio-text-dimmed transition-colors duration-[var(--portfolio-motion-state)] ease-out group-hover:text-portfolio-text group-focus-visible:text-portfolio-text motion-reduce:transition-none"
+              >
                 <PortfolioInlineMarkdown>
                   {project.blurb}
                 </PortfolioInlineMarkdown>

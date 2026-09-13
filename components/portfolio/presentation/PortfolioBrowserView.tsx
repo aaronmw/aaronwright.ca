@@ -62,6 +62,7 @@ type PortfolioBrowserViewModel = {
   isTouchInput: boolean
   isTouchLandscapeLayout: boolean
   isWideLayout: boolean
+  isWideTextLayout: boolean
   projectSlides: Record<string, ProjectSlide[]>
   viewerIntent: ViewerOpenIntent | null
   viewerIndex: number
@@ -108,8 +109,10 @@ function deriveViewState(
   resolvedTheme: Parameters<typeof getProjectColor>[1],
 ) {
   const viewerOpen = Boolean(model.viewerIntent)
-  const usesSideBySideProjectLayout = model.isWideLayout
   const activeProject = portfolioSlides[model.activeProjectIndex]
+  const usesSideBySideProjectLayout = activeProject?.detailsMarkdown
+    ? model.isWideTextLayout
+    : model.isWideLayout
   const activeSlides = activeProject
     ? model.projectSlides[activeProject.slug]
     : []
@@ -185,9 +188,9 @@ function PortfolioHorizontalNavigation({
           items={activeSlides.map((slide) => ({
             id: slide.id,
             label:
-              slide.kind === 'description'
-                ? `Show ${activeProject?.title ?? 'Portfolio'} description`
-                : `Show ${slide.screenshot.alt}`,
+              slide.kind === 'screenshot'
+                ? `Show ${slide.screenshot.alt}`
+                : `Show ${activeProject?.title ?? 'Portfolio'} ${slide.kind}`,
           }))}
           activeIndex={activeSlideIndex}
           onSelect={(index) => {
@@ -478,7 +481,11 @@ export function PortfolioBrowserView({
                   slides={slides}
                   activeSlideIndex={model.activeSlideIndexes[projectIndex] ?? 0}
                   active={model.activeProjectIndex === projectIndex}
-                  isWideLayout={model.isWideLayout}
+                  isWideLayout={
+                    project.detailsMarkdown
+                      ? model.isWideTextLayout
+                      : model.isWideLayout
+                  }
                   isTouchInput={model.isTouchInput}
                   layoutStyle={WIDE_LAYOUT_STYLE}
                   registerMediaElement={actions.registerMediaElement}
@@ -547,7 +554,11 @@ export function PortfolioBrowserView({
           activeProjectColor={activeProjectColor}
           activeProjectIndex={model.activeProjectIndex}
           activeSlideIndex={activeSlideIndex}
-          activeSlides={activeSlides}
+          activeSlides={
+            usesSideBySideProjectLayout && !activeProjectHasMedia
+              ? []
+              : activeSlides
+          }
           introPhase={model.introPhase}
           isTouchInput={model.isTouchInput}
           usesSideBySideProjectLayout={usesSideBySideProjectLayout}
