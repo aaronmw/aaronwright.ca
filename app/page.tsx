@@ -1,11 +1,7 @@
-import type { Metadata } from 'next';
+import { getPortfolioMetadata } from '@/lib/seo';
 import { HomeProjectGrid } from '@/components/HomeProjectGrid';
 
-export const metadata: Metadata = {
-  title: 'Aaron M. Wright',
-  description:
-    'Selected product design and frontend systems work by Aaron M. Wright.',
-};
+export const metadata = getPortfolioMetadata('/work');
 
 export default function Home() {
   return <HomeProjectGrid />;

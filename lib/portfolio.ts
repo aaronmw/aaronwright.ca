@@ -1,3 +1,5 @@
+import type { SeoCopy } from './siteMetadata'
+
 export type PortfolioScreenshot = {
   id: string
   slug: string
@@ -13,6 +15,7 @@ export type PortfolioProject = {
   id: string
   slug: string
   title: string
+  seo: SeoCopy
   blurb: string
   url?: string
   overviewMarkdown: string
@@ -153,6 +156,10 @@ const rawPortfolioSlides = [
     id: 'loopio',
     slug: 'loopio',
     title: 'Loopio',
+    seo: {
+      title: 'Loopio: Product Redesign & Design Systems',
+      description: 'How Aaron M. Wright helped redesign Loopio’s core product, then built and documented reusable React components to support its engineering teams.',
+    },
     blurb:
       'I designed and prototyped a new Loopio experience that went on to replace the original product. Then I built, documented, and championed a shared system for teams to build upon.',
     overviewMarkdown: LOOPIO_OVERVIEW,
@@ -212,6 +219,10 @@ This is where I pivoted roles from leading the design of the system, to building
     id: 'freshbooks',
     slug: 'freshbooks',
     title: 'FreshBooks',
+    seo: {
+      title: 'FreshBooks: Product Redesign',
+      description: 'Aaron M. Wright’s work on the FreshBooks redesign: clearer workflows, reusable interaction patterns, and a careful transition for existing customers.',
+    },
     blurb:
       'A ground-up product redesign shaped around approachable workflows, shared patterns, and a safer path through change.',
     overviewMarkdown: FRESHBOOKS_OVERVIEW,
@@ -271,6 +282,10 @@ I also led the writing and building of documentation so developers and designers
     id: 'about-me',
     slug: 'about-me',
     title: 'About Me',
+    seo: {
+      title: 'About Aaron M. Wright',
+      description: 'Meet Aaron M. Wright, a product designer and frontend engineer whose work spans product redesigns, design systems, teaching, and practical tools.',
+    },
     blurb:
       'Twenty-five years across **product design** and **frontend development**, now focused on helping other people do excellent work.',
     overviewMarkdown: `
@@ -315,6 +330,10 @@ These days, I’m especially interested in how better tools and practices can gi
     id: 'aarons-toolbox',
     slug: 'aarons-toolbox',
     title: "Aaron's Toolbox",
+    seo: {
+      title: 'Aaron’s Toolbox: Figma Plugin',
+      description: 'A Figma plugin by Aaron M. Wright that automates repetitive tasks and helps designers clean, organize, and manipulate their work.',
+    },
     blurb:
       'One **Figma plugin** with built-in tools for cleaning, remixing, and organizing design work.',
     url: 'https://www.figma.com/community/plugin/1616614645120502242/aarons-toolbox',
@@ -406,6 +425,10 @@ The Distributor is helpful for laying out large numbers of nodes, and it's also 
     id: 'informal-systems',
     slug: 'informal-systems',
     title: 'Informal Systems',
+    seo: {
+      title: 'Informal Systems: Content Tools',
+      description: 'How Aaron M. Wright built a Contentful editing workflow that let content owners update their websites while keeping design consistent.',
+    },
     blurb:
       'A CMS-backed workflow that let content owners update the site without waiting on developers.',
     overviewMarkdown: `
@@ -460,6 +483,10 @@ I built a \`ContentfulSpotCopy\` component that accepts a \`path\` and a \`rende
     id: 'nextphrase',
     slug: 'nextphrase',
     title: 'Next\u00adPhrase',
+    seo: {
+      title: 'NextPhrase: Web Party Game',
+      description: 'A mobile-friendly party game designed and built by Aaron M. Wright, exploring interaction design, animation, and progressive web app development.',
+    },
     blurb: 'My own version of my favourite party game.',
     url: 'https://nextphrase.app',
     overviewMarkdown: `

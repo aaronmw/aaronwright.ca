@@ -39,6 +39,7 @@ const projects: PortfolioProject[] = [
     id: 'about-me',
     slug: 'about-me',
     title: 'About Me',
+    seo: { title: 'About Aaron M. Wright', description: 'About Aaron.' },
     blurb: '',
     overviewMarkdown: '',
     screenshots: [],
@@ -47,6 +48,7 @@ const projects: PortfolioProject[] = [
     id: 'project-two',
     slug: 'project-two',
     title: 'Project Two',
+    seo: { title: 'Project Two', description: 'A second project.' },
     blurb: '',
     overviewMarkdown: '',
     screenshots: [
@@ -207,8 +209,8 @@ describe('portfolio routes', () => {
       expect(getSlideMediaKey(about, slide, true)).toBeUndefined()
     })
     expect(getPortfolioViewerSlides(about)).toEqual([])
-    expect(pageTitle(about, slides[1])).toBe(
-      'About Me: details | Aaron M. Wright',
+    expect(pageTitle(about)).toBe(
+      'About Aaron M. Wright',
     )
     expect(slideNavigationTitle(about, slides[1])).toBe('About Me • Details')
   })
@@ -224,9 +226,9 @@ describe('portfolio routes', () => {
     expect(viewerUrl(projects[1], overview)).toBe(
       '/work/project-two/overview?modal=image',
     )
-    expect(pageTitle()).toBe('Work | Aaron M. Wright')
-    expect(pageTitle(projects[1], motion)).toBe(
-      'Project Two: motion | Aaron M. Wright',
+    expect(pageTitle()).toBe('Aaron M. Wright | Product Designer & Frontend Engineer')
+    expect(pageTitle(projects[1])).toBe(
+      'Project Two | Aaron M. Wright',
     )
     expect(slideNavigationTitle(projects[1], overview)).toBe(
       'Project Two • Index',
@@ -242,6 +244,7 @@ describe('project narrative resolution', () => {
     id: 'notes',
     slug: 'notes',
     title: 'Notes',
+    seo: { title: 'Notes', description: 'Project notes.' },
     blurb: '',
     overviewMarkdown: '# Project headline\n\nProject introduction',
     screenshots: [

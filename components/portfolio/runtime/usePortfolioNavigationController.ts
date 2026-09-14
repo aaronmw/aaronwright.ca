@@ -51,7 +51,7 @@ export function usePortfolioNavigationController({
       viewerOpen && project && slide ? viewerUrl(project, slide) : path
     const current = `${window.location.pathname}${window.location.search}`
     if (current !== url) window.history[`${mode}State`]({}, '', url)
-    document.title = pageTitle(project, slide)
+    document.title = pageTitle(project)
   }
 
   function registerHorizontalApi(

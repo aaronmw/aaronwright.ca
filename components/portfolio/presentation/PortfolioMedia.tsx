@@ -3,6 +3,7 @@ import type { CSSProperties, ReactNode } from 'react'
 import { useCallback, useId, useRef, useState } from 'react'
 import type { PortfolioScreenshot } from '@/lib/portfolio'
 import { portfolioAccentColor } from '@/lib/portfolioPalette'
+import { PHONE_FRAME_PATH, PHONE_FRAME_PATH_SCALE, PHONE_FRAME_SIZE } from '@/lib/phoneFrame'
 import type { PortfolioMediaElement } from '@/components/portfolio/usePortfolioMediaReadiness'
 import {
   carouselMediaKey,
@@ -21,9 +22,6 @@ const MEDIA_FRAME_INSET = 'calc(var(--portfolio-media-frame-width) * 2)'
 const MISSING_MEDIA_SRC = `data:image/svg+xml,${encodeURIComponent(
   `<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="1000"><rect width="1000" height="1000" fill="${portfolioAccentColor}"/></svg>`,
 )}`
-const PHONE_FRAME_PATH =
-  'M82 0H360C403 0 438 35 438 78V828C438 871 403 906 360 906H82C39 906 4 871 4 828V78C4 35 39 0 82 0Z'
-const PHONE_FRAME_PATH_SCALE = 'scale(0.002262443439 0.001103752759)'
 
 type MediaFrameStyle = CSSProperties & {
   '--portfolio-media-aspect-ratio'?: number
@@ -62,7 +60,7 @@ function PhoneFrameBackdrop({ clipPathId }: { clipPathId: string }) {
       className="pointer-events-none absolute [inset:var(--portfolio-media-frame-width)]"
     >
       <svg
-        viewBox="0 0 442 906"
+        viewBox={`0 0 ${PHONE_FRAME_SIZE.width} ${PHONE_FRAME_SIZE.height}`}
         preserveAspectRatio="none"
         className="h-full w-full overflow-visible text-portfolio-shaded"
       >

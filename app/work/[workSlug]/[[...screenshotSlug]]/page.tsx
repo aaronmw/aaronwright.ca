@@ -3,7 +3,7 @@ import { notFound, redirect } from 'next/navigation'
 import { PortfolioBrowser } from '@/components/portfolio/PortfolioBrowser'
 import { getProjectSlides } from '@/components/portfolio/domain/slides'
 import { getPortfolioProject, portfolioSlides } from '@/lib/portfolio'
-import { parsePortfolioNarrative } from '@/lib/portfolioNarrative'
+import { getPortfolioMetadata } from '@/lib/seo'
 
 type SlidePageProps = {
   params: Promise<{
@@ -14,18 +14,6 @@ type SlidePageProps = {
     modal?: string
     zoom?: string
   }>
-}
-
-function plainTextFromMarkdown(markdown: string) {
-  return markdown
-    .trim()
-    .split('\n')[0]
-    .replace(/!?\[([^\]]*)\]\((?:[^()]|\([^()]*\))*\)/g, '$1')
-    .replace(/<[^>]+>/g, '')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/[*_~`]/g, '')
-    .replace(/\s+/g, ' ')
-    .trim()
 }
 
 export function generateStaticParams() {
@@ -51,27 +39,17 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: SlidePageProps) {
   const { workSlug, screenshotSlug = [] } = await params
-  const project = getPortfolioProject(workSlug)
-
-  if (!project || screenshotSlug.length > 1) {
-    return {}
+  if (
+    workSlug === 'about-me' &&
+    screenshotSlug.length === 1 &&
+    screenshotSlug[0] === 'overview'
+  ) {
+    redirect('/work/about-me')
   }
-
-  const slide =
-    screenshotSlug.length === 1
-      ? getProjectSlides(project).find(
-          slide => slide.kind !== 'description' && slide.slug === screenshotSlug[0],
-        )
-      : undefined
-
-  return {
-    title: slide
-      ? `${project.title}: ${slide.slug} | Aaron M. Wright`
-      : `${project.title} | Aaron M. Wright`,
-    description: plainTextFromMarkdown(
-      parsePortfolioNarrative(project.overviewMarkdown).bodyMarkdown,
-    ),
-  }
+  const path = [workSlug, ...screenshotSlug].map(encodeURIComponent).join('/')
+  const metadata = getPortfolioMetadata(`/work/${path}`)
+  if (!metadata) notFound()
+  return metadata
 }
 
 export default async function SlidePage({

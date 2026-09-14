@@ -80,9 +80,11 @@ function mediaMarkdown(media) {
 }
 
 const portfolio = loadTypeScriptModule('lib/portfolio.ts')
+const siteMetadata = loadTypeScriptModule('lib/siteMetadata.ts')
 const portfolioNarrative = loadTypeScriptModule('lib/portfolioNarrative.ts')
 const { copyEditorEntries } = loadTypeScriptModule('lib/copyEditor.ts', {
   './portfolio': portfolio,
+  './siteMetadata': siteMetadata,
   './portfolioNarrative': portfolioNarrative,
 })
 
@@ -129,6 +131,6 @@ for (const [group, blocks] of groups) {
 }
 
 fs.writeFileSync(
-  path.join(projectRoot, 'rewrite-source.md'),
+  path.resolve(projectRoot, process.argv[2] ?? 'rewrite-source.md'),
   `${lines.join('\n').trim()}\n`,
 )

@@ -3,15 +3,16 @@ import '@fortawesome/fontawesome-svg-core/styles.css';
 import { FaviconSync } from '@/components/FaviconSync';
 import { InteractivePopEffects } from '@/components/InteractivePopEffects';
 import { config } from '@fortawesome/fontawesome-svg-core';
-import type { Viewport } from 'next';
+import type { Metadata, Viewport } from 'next';
+import { HOME_SEO, SITE_URL } from '@/lib/siteMetadata';
 import { portfolioPaletteStyle } from '@/lib/portfolioPalette';
 import { portfolioTokenStyle } from '@/lib/portfolioTokens';
 
 config.autoAddCss = false;
 
-export const metadata = {
-  title: 'Aaron M. Wright',
-  description: 'Aaron M. Wright',
+export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
+  ...HOME_SEO,
   icons: {
     icon: { url: '/favicon.svg', type: 'image/svg+xml' },
     shortcut: '/favicon.ico',

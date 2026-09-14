@@ -1,7 +1,7 @@
 import type { MetadataRoute } from 'next'
 import { portfolioSlides } from '@/lib/portfolio'
 
-const SITE_URL = 'https://aaronwright.ca'
+import { SITE_URL } from '@/lib/siteMetadata'
 
 export default function sitemap(): MetadataRoute.Sitemap {
   return [

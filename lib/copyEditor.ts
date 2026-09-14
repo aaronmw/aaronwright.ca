@@ -1,4 +1,5 @@
 import { portfolioSlides } from './portfolio'
+import { HOME_SEO, SITE_NAME } from './siteMetadata'
 import {
   composePortfolioNarrative,
   parsePortfolioNarrative,
@@ -24,7 +25,7 @@ const siteEntries: CopyEditorEntry[] = [
     id: 'site.home.name',
     group: 'Site and navigation',
     label: 'Site name',
-    value: 'Aaron M. Wright',
+    value: SITE_NAME,
     rows: 2,
   },
   {
@@ -49,19 +50,17 @@ const siteEntries: CopyEditorEntry[] = [
     rows: 2,
   },
   {
-    id: 'site.metadata.homeDescription',
+    id: 'site.metadata.workTitle',
     group: 'Site and navigation',
-    label: 'Homepage search description',
-    value:
-      'Selected product design and frontend systems work by Aaron M. Wright.',
+    label: 'Portfolio search and share title',
+    value: HOME_SEO.title,
     rows: 3,
   },
   {
     id: 'site.metadata.workDescription',
     group: 'Site and navigation',
-    label: 'Work page search description',
-    value:
-      'Selected product design and development work by Aaron M. Wright, including Figma tools, content systems, web apps, and AI-assisted projects.',
+    label: 'Portfolio search and share description',
+    value: HOME_SEO.description,
     rows: 4,
   },
 ]
@@ -112,6 +111,21 @@ function projectEntries() {
   return portfolioSlides.flatMap<CopyEditorEntry>(project => {
     const prefix = `portfolio.projects.${project.slug}`
     const entries: CopyEditorEntry[] = [
+      {
+        id: `${prefix}.seo.title`,
+        group: project.title,
+        label: 'Search and share title',
+        value: project.seo.title,
+        control: 'input',
+        rows: 2,
+      },
+      {
+        id: `${prefix}.seo.description`,
+        group: project.title,
+        label: 'Search and share description',
+        value: project.seo.description,
+        rows: 4,
+      },
       {
         id: `${prefix}.title`,
         group: project.title,
@@ -244,6 +258,15 @@ function projectEntries() {
 
 export function migrateCopyEditorDraftValues(values: Record<string, string>) {
   const migrated = { ...values }
+  // The old homepage now redirects to the portfolio; retain drafts for its one description.
+  if (
+    typeof migrated['site.metadata.workDescription'] !== 'string' &&
+    typeof migrated['site.metadata.homeDescription'] === 'string'
+  ) {
+    migrated['site.metadata.workDescription'] =
+      migrated['site.metadata.homeDescription']
+  }
+  delete migrated['site.metadata.homeDescription']
 
   portfolioSlides.forEach(project => {
     const prefix = `portfolio.projects.${project.slug}`

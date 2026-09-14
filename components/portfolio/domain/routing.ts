@@ -1,4 +1,5 @@
 import type { PortfolioProject } from '@/lib/portfolio'
+import { portfolioSeoCopy } from '@/lib/siteMetadata'
 import type { PortfolioSelection, ProjectSlide } from './slides'
 
 function isProjectFirstSlide(project: PortfolioProject, slide: ProjectSlide) {
@@ -78,18 +79,8 @@ export function viewerUrl(project: PortfolioProject, slide: ProjectSlide) {
   return `${projectUrl(project, slide)}?modal=image`
 }
 
-export function pageTitle(project?: PortfolioProject, slide?: ProjectSlide) {
-  if (!project || !slide) {
-    return 'Work | Aaron M. Wright'
-  }
-
-  if (
-    isProjectFirstSlide(project, slide)
-  ) {
-    return `${project.title} | Aaron M. Wright`
-  }
-
-  return `${project.title}: ${slide.slug} | Aaron M. Wright`
+export function pageTitle(project?: PortfolioProject) {
+  return portfolioSeoCopy(project).title
 }
 
 function titleCaseLabel(value: string) {
