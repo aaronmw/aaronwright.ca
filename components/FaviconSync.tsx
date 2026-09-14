@@ -1,24 +1,25 @@
 'use client';
 
 import { useEffect } from 'react';
-import { usePathname } from 'next/navigation';
 import { faviconDataUrl } from '@/lib/favicon';
 
 function setFavicon(href: string) {
-  let link = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
-  if (!link) {
-    link = document.createElement('link');
+  const links = document.querySelectorAll<HTMLLinkElement>('link[rel="icon"]');
+  if (links.length === 0) {
+    const link = document.createElement('link');
     link.rel = 'icon';
+    link.href = href;
     document.head.appendChild(link);
+    return;
   }
-  link.href = href;
+  for (const link of Array.from(links)) {
+    if (link.href !== href) {
+      link.href = href;
+    }
+  }
 }
 
 export function FaviconSync() {
-  const pathname = usePathname();
-
-  // The cleanup cancels both RAFs and disconnects the theme observer.
-  // react-doctor-disable-next-line react-doctor/effect-needs-cleanup
   useEffect(() => {
     const root = document.documentElement;
     const update = () => {
@@ -30,22 +31,13 @@ export function FaviconSync() {
       attributes: true,
       attributeFilter: ['data-portfolio-theme'],
     });
-    let secondRafId: number | undefined;
+    // Production metadata can arrive after hydration or route navigation.
+    observer.observe(document.head, { childList: true });
 
     update();
-    // Reapply after Next.js refreshes the document metadata on navigation.
-    const firstRafId = requestAnimationFrame(() => {
-      secondRafId = requestAnimationFrame(update);
-    });
 
-    return () => {
-      cancelAnimationFrame(firstRafId);
-      if (secondRafId !== undefined) {
-        cancelAnimationFrame(secondRafId);
-      }
-      observer.disconnect();
-    };
-  }, [pathname]);
+    return () => observer.disconnect();
+  }, []);
 
   return null;
 }
