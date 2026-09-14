@@ -6,14 +6,17 @@ import { config } from '@fortawesome/fontawesome-svg-core';
 import type { Viewport } from 'next';
 import { portfolioPaletteStyle } from '@/lib/portfolioPalette';
 import { portfolioTokenStyle } from '@/lib/portfolioTokens';
-import { faviconDataUrl } from '@/lib/favicon';
 
 config.autoAddCss = false;
 
 export const metadata = {
   title: 'Aaron M. Wright',
   description: 'Aaron M. Wright',
-  icons: { icon: faviconDataUrl() },
+  icons: {
+    icon: { url: '/favicon.svg', type: 'image/svg+xml' },
+    shortcut: '/favicon.ico',
+    apple: '/apple-touch-icon.png',
+  },
 };
 
 export const viewport: Viewport = {
