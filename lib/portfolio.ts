@@ -133,7 +133,7 @@ function transformPortfolioProjectMarkdown(
 const LOOPIO_OVERVIEW = `
 # A blank canvas re-imagining of Loopio's core offering
 
-Loopio's core RFP workflow had outgrown the frontend beneath it. I partnered with Thomas Cheng to turn a redesign proposal into a working product, then carried that momentum into a tested, documented design system other teams could leverage and safely extend themselves.
+Loopio's core RFP workflow had outgrown the frontend beneath it. I partnered with [Thomas Cheng](https://www.linkedin.com/in/thomascheng81/) to turn a redesign proposal into a working product, then carried that momentum into a tested, documented design system other teams could leverage and safely extend themselves.
 `
 
 const FRESHBOOKS_OVERVIEW = `
