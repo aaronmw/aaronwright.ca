@@ -18,8 +18,7 @@ import {
 import { FiveByFive } from './FiveByFive'
 import { PortfolioLogoMark } from './PortfolioLogoMark'
 
-const CONTACT_LINK_CLASS_NAME =
-  'portfolio-contact-link underline decoration-1 underline-offset-[0.18em]'
+const CONTACT_LINK_CLASS_NAME = 'portfolio-prose-link'
 const CONTROL_CLASS_NAME =
   'portfolio-prose-link shrink-0 border-0 bg-transparent p-0 outline-none focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-portfolio-accent'
 

@@ -207,20 +207,6 @@ html[data-portfolio-route='work'],
   transition: background-color var(--portfolio-motion-theme) ease-out;
 }
 
-.portfolio-contact-link {
-  color: inherit;
-  text-decoration-color: var(--portfolio-text-dimmed);
-  transition:
-    color var(--portfolio-motion-theme) ease-out,
-    text-decoration-color var(--portfolio-motion-theme) ease-out;
-}
-
-.portfolio-contact-link:hover,
-.portfolio-contact-link:focus-visible {
-  color: var(--portfolio-text);
-  text-decoration-color: var(--portfolio-text);
-}
-
 .portfolio-icon-shadow {
   filter: drop-shadow(1px 1px 0 var(--portfolio-navigation-shadow));
 }
@@ -355,10 +341,6 @@ html[data-portfolio-route='work'],
   .portfolio-theme-root,
   .portfolio-theme-surface,
   .portfolio-theme-panel {
-    transition: none;
-  }
-
-  .portfolio-contact-link {
     transition: none;
   }
 
