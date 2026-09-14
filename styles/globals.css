@@ -44,6 +44,10 @@
   text-transform: uppercase;
 }
 
+[data-portfolio-desktop-name] {
+  text-transform: none;
+}
+
 html,
 body {
   min-height: 100%;
