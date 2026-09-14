@@ -1,10 +1,7 @@
 import { Suspense } from 'react'
 import { notFound, redirect } from 'next/navigation'
 import { PortfolioBrowser } from '@/components/portfolio/PortfolioBrowser'
-import { getProjectColorBySlug } from '@/components/portfolio/domain/portfolioColors'
-import { TOP_SCREEN_COLOR } from '@/components/portfolio/domain/theme'
 import { getProjectSlides } from '@/components/portfolio/domain/slides'
-import { faviconDataUrl } from '@/lib/favicon'
 import { getPortfolioProject, portfolioSlides } from '@/lib/portfolio'
 import { parsePortfolioNarrative } from '@/lib/portfolioNarrative'
 
@@ -74,11 +71,6 @@ export async function generateMetadata({ params }: SlidePageProps) {
     description: plainTextFromMarkdown(
       parsePortfolioNarrative(project.overviewMarkdown).bodyMarkdown,
     ),
-    icons: {
-      icon: faviconDataUrl(
-        getProjectColorBySlug(project.slug) ?? TOP_SCREEN_COLOR,
-      ),
-    },
   }
 }
 

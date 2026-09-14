@@ -1,4 +1,4 @@
-import { portfolioNeutralPalette } from './portfolioPalette'
+import { portfolioAccentColor, portfolioNeutralPalette } from './portfolioPalette'
 
 const LOGO_COORDS = [
   [1, 1],
@@ -18,12 +18,13 @@ const LOGO_COORDS = [
   [5, 5],
 ]
 
-export function faviconDataUrl(color: string) {
+export function faviconDataUrl(theme: 'light' | 'dark' = 'dark') {
+  const background = portfolioNeutralPalette[theme === 'light' ? 50 : 950]
   const squares = LOGO_COORDS.map(
     ([x, y]) =>
-      `<rect x="${x}" y="${y}" width="1" height="1" fill="${color}"/>`,
+      `<rect x="${x}" y="${y}" width="1" height="1" fill="${portfolioAccentColor}"/>`,
   ).join('')
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 7 7"><rect width="7" height="7" fill="${portfolioNeutralPalette[950]}"/>${squares}</svg>`
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 7 7"><rect width="7" height="7" fill="${background}"/>${squares}</svg>`
 
   return `data:image/svg+xml,${encodeURIComponent(svg)}`
 }

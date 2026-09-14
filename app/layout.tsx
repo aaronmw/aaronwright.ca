@@ -7,14 +7,13 @@ import type { Viewport } from 'next';
 import { portfolioPaletteStyle } from '@/lib/portfolioPalette';
 import { portfolioTokenStyle } from '@/lib/portfolioTokens';
 import { faviconDataUrl } from '@/lib/favicon';
-import { RESUME_SIGNAL_COLOR } from '@/components/portfolio/domain/theme';
 
 config.autoAddCss = false;
 
 export const metadata = {
   title: 'Aaron M. Wright',
   description: 'Aaron M. Wright',
-  icons: { icon: faviconDataUrl(RESUME_SIGNAL_COLOR) },
+  icons: { icon: faviconDataUrl() },
 };
 
 export const viewport: Viewport = {

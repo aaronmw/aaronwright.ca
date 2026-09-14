@@ -2,22 +2,7 @@
 
 import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
-import { getProjectColorBySlug } from '@/components/portfolio/domain/portfolioColors';
-import { TOP_SCREEN_COLOR } from '@/components/portfolio/domain/theme';
 import { faviconDataUrl } from '@/lib/favicon';
-import { colorStore } from '@/stores/colorStore';
-
-function getRouteColor(pathname: string) {
-  const [rootSegment, projectSlug] = pathname.split('/').filter(Boolean);
-
-  if (rootSegment !== 'work') {
-    return undefined;
-  }
-
-  return projectSlug
-    ? (getProjectColorBySlug(projectSlug) ?? TOP_SCREEN_COLOR)
-    : TOP_SCREEN_COLOR;
-}
 
 function setFavicon(href: string) {
   let link = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
@@ -32,27 +17,33 @@ function setFavicon(href: string) {
 export function FaviconSync() {
   const pathname = usePathname();
 
-  // The cleanup cancels both RAFs and invokes the optional store unsubscribe.
+  // The cleanup cancels both RAFs and disconnects the theme observer.
   // react-doctor-disable-next-line react-doctor/effect-needs-cleanup
   useEffect(() => {
-    const routeColor = getRouteColor(pathname);
-    const update = () =>
-      setFavicon(faviconDataUrl(routeColor ?? colorStore.getColor()));
+    const root = document.documentElement;
+    const update = () => {
+      const theme = root.dataset.portfolioTheme === 'light' ? 'light' : 'dark';
+      setFavicon(faviconDataUrl(theme));
+    };
+    const observer = new MutationObserver(update);
+    observer.observe(root, {
+      attributes: true,
+      attributeFilter: ['data-portfolio-theme'],
+    });
     let secondRafId: number | undefined;
 
     update();
+    // Reapply after Next.js refreshes the document metadata on navigation.
     const firstRafId = requestAnimationFrame(() => {
       secondRafId = requestAnimationFrame(update);
     });
-    const unsubscribe =
-      routeColor === undefined ? colorStore.subscribe(update) : undefined;
 
     return () => {
       cancelAnimationFrame(firstRafId);
       if (secondRafId !== undefined) {
         cancelAnimationFrame(secondRafId);
       }
-      unsubscribe?.();
+      observer.disconnect();
     };
   }, [pathname]);
 
