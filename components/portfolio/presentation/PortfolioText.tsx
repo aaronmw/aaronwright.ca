@@ -96,7 +96,7 @@ export function ProjectHeadingUnderline({
   return (
     <span
       aria-hidden="true"
-      className={`-mb-[0.5lh] block text-portfolio-text-dimmed ${className ?? ''}`}
+      className={`-mb-[0.5lh] block font-normal text-portfolio-text-dimmed ${className ?? ''}`}
     >
       {PROJECT_HEADING_UNDERLINE_CHARACTER.repeat(
         Array.from(title.replaceAll('\u00ad', '')).length,
