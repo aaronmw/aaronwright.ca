@@ -24,6 +24,7 @@
 
 @theme inline {
   --color-portfolio-accent: var(--portfolio-accent);
+  --color-portfolio-accent-decoration: var(--portfolio-accent-decoration);
   --color-portfolio-red: var(--portfolio-accent);
   --color-resume-signal: var(--portfolio-accent);
   --font-portfolio-controls: var(
@@ -86,8 +87,11 @@ html[data-portfolio-dev-typography] .portfolio-typography .font-normal {
 
 :root,
 html[data-portfolio-theme='dark'] {
+  /* Foreground accent for text and functional controls. */
+  --portfolio-accent: var(--portfolio-red-500);
   --portfolio-surface: var(--portfolio-neutral-950);
   --portfolio-text: var(--portfolio-neutral-50);
+  --portfolio-text-body: var(--portfolio-neutral-300);
   --portfolio-text-dimmed: var(--portfolio-neutral-400);
   --portfolio-shaded: var(--portfolio-neutral-800);
   --portfolio-surface-translucent: color-mix(
@@ -98,8 +102,10 @@ html[data-portfolio-theme='dark'] {
 }
 
 html[data-portfolio-theme='light'] {
+  --portfolio-accent: var(--portfolio-red-600);
   --portfolio-surface: var(--portfolio-neutral-50);
   --portfolio-text: var(--portfolio-neutral-950);
+  --portfolio-text-body: var(--portfolio-neutral-700);
   --portfolio-text-dimmed: var(--portfolio-neutral-500);
   --portfolio-shaded: var(--portfolio-neutral-200);
   --portfolio-surface-translucent: color-mix(
@@ -528,7 +534,7 @@ button {
 
 .portfolio-navigation-tooltip {
   align-items: center;
-  background: var(--portfolio-accent);
+  background: var(--portfolio-accent-decoration);
   color: var(--portfolio-neutral-50);
   display: inline-flex;
   font-weight: 700;
@@ -623,16 +629,20 @@ button {
 }
 
 .portfolio-markdown {
-  --tw-prose-body: var(--portfolio-text);
+  --tw-prose-body: var(--portfolio-text-body);
   --tw-prose-headings: var(--portfolio-text);
-  --tw-prose-links: var(--project-color, var(--portfolio-accent));
+  --tw-prose-links: var(--portfolio-accent);
   --tw-prose-bold: var(--portfolio-text);
-  --tw-prose-counters: var(--project-color, var(--portfolio-accent));
-  --tw-prose-bullets: var(--project-color, var(--portfolio-accent));
+  --tw-prose-counters: var(--portfolio-accent);
+  --tw-prose-bullets: var(--portfolio-accent-decoration);
   --tw-prose-code: var(--portfolio-text);
   --tw-prose-hr: var(--portfolio-shaded);
   --tw-prose-quotes: var(--portfolio-text);
-  --tw-prose-quote-borders: var(--project-color, var(--portfolio-accent));
+  --tw-prose-quote-borders: var(--portfolio-accent-decoration);
+  color: var(--portfolio-text-body);
+}
+
+.portfolio-markdown :where(b, em, i, abbr):not(:where(a *)) {
   color: var(--portfolio-text);
 }
 
@@ -675,14 +685,14 @@ button {
   margin-top: 0;
 }
 
-.portfolio-markdown--compact-lists :where(ul) {
+.portfolio-list {
   display: grid;
   row-gap: 0.25lh;
   list-style: none;
   padding-inline-start: 0;
 }
 
-.portfolio-markdown--compact-lists :where(ul > li) {
+.portfolio-list > li {
   display: grid;
   grid-template-columns: var(--portfolio-logo-size) minmax(0, 1fr);
   column-gap: calc(var(--portfolio-logo-size) / 2);
@@ -694,12 +704,12 @@ button {
   display: none;
 }
 
-.portfolio-markdown--compact-lists :where(ul > li > .portfolio-list-bullet) {
+.portfolio-list > li > .portfolio-list-bullet {
   display: grid;
   place-items: center start;
   inline-size: 1lh;
   block-size: 1lh;
-  color: var(--portfolio-accent);
+  color: var(--portfolio-accent-decoration);
   transform: translateY(-0.125em);
 }
 

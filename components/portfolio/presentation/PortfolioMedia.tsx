@@ -22,8 +22,8 @@ const MISSING_MEDIA_SRC = `data:image/svg+xml,${encodeURIComponent(
   `<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="1000"><rect width="1000" height="1000" fill="${portfolioAccentColor}"/></svg>`,
 )}`
 const PHONE_FRAME_PATH =
-  'M141 1H739C812 1 871 60 871 133V1637C871 1711 811 1771 737 1771H143C69 1771 9 1711 9 1637V133C9 60 68 1 141 1Z'
-const PHONE_FRAME_PATH_SCALE = 'scale(0.001136363636 0.000564334086)'
+  'M82 0H360C403 0 438 35 438 78V828C438 871 403 906 360 906H82C39 906 4 871 4 828V78C4 35 39 0 82 0Z'
+const PHONE_FRAME_PATH_SCALE = 'scale(0.002262443439 0.001103752759)'
 
 type MediaFrameStyle = CSSProperties & {
   '--portfolio-media-aspect-ratio'?: number
@@ -62,7 +62,7 @@ function PhoneFrameBackdrop({ clipPathId }: { clipPathId: string }) {
       className="pointer-events-none absolute [inset:var(--portfolio-media-frame-width)]"
     >
       <svg
-        viewBox="0 0 880 1772"
+        viewBox="0 0 442 906"
         preserveAspectRatio="none"
         className="h-full w-full overflow-visible text-portfolio-shaded"
       >
@@ -110,14 +110,14 @@ function VideoScrubber({
   return (
     <div
       data-portfolio-carousel-drag-lock
-      className="pointer-events-auto absolute left-[var(--portfolio-media-frame-width)] right-[var(--portfolio-media-frame-width)] z-[var(--portfolio-layer-media-controls)] h-[calc(var(--portfolio-logo-size)+var(--portfolio-media-frame-width)/2)] opacity-0 transition-opacity duration-[var(--portfolio-motion-feedback)] ease-out [top:calc(100%_-_var(--portfolio-media-frame-width))] focus-within:opacity-100 hover:opacity-100 [@media(hover:hover)]:peer-hover/video:opacity-100 motion-reduce:transition-none"
+      className="pointer-events-auto absolute left-[var(--portfolio-media-frame-width)] right-[var(--portfolio-media-frame-width)] z-[var(--portfolio-layer-media-controls)] h-[calc(var(--portfolio-logo-size)+var(--portfolio-media-frame-width)/2)] opacity-0 transition-opacity duration-[var(--portfolio-motion-feedback)] ease-out [top:calc(100%_-_var(--portfolio-media-frame-width))] focus-within:opacity-100 hover:opacity-100 [@media(hover:hover)]:group-hover/video:opacity-100 motion-reduce:transition-none"
       style={
         {
           '--portfolio-video-progress': `${progress}%`,
         } as VideoScrubberStyle
       }
     >
-      <div className="absolute inset-x-0 bottom-0 h-[var(--portfolio-logo-size)] bg-portfolio-accent">
+      <div className="absolute inset-x-0 bottom-0 h-[var(--portfolio-logo-size)] bg-portfolio-accent-decoration">
         <input
           type="range"
           min={0}
@@ -354,12 +354,13 @@ export function ScreenshotMedia({
       <div className="absolute inset-0 grid place-items-center [container-type:size] [padding:var(--portfolio-media-padding,var(--portfolio-default-spacing))] [padding-top:var(--portfolio-media-top-padding,calc(var(--portfolio-media-padding,var(--portfolio-default-spacing))+var(--logo-stroke-width)))] [padding-bottom:var(--portfolio-media-bottom-padding,var(--portfolio-media-padding,var(--portfolio-default-spacing)))]">
         <div
           data-portfolio-media-frame
-          className={frameClassName}
-          style={frameStyle}
+          className={`group/video pointer-events-auto ${frameClassName}`}
+          // Include the scrubber's overhang in the grid's centred footprint.
+          style={{ ...frameStyle, marginBottom: progressBarOverhang }}
         >
           {phoneFrameBackdrop}
           <div
-            className={`${mediaFrameClassName} peer/video ${hasReplayControl && !replayHoverSuppressed ? 'group/restart' : ''}`}
+            className={`${mediaFrameClassName} ${hasReplayControl && !replayHoverSuppressed ? 'group/restart' : ''}`}
             style={mediaFrameStyle}
             onMouseLeave={
               hasReplayControl
@@ -427,7 +428,7 @@ export function ScreenshotMedia({
                 visual={
                   <FiveByFive
                     variant="left"
-                    className="text-portfolio-accent"
+                    className="text-portfolio-accent-decoration"
                   />
                 }
                 iconClassName=""

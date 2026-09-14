@@ -81,7 +81,7 @@ export function PortfolioThemeMenu({ hidden }: PortfolioThemeMenuProps) {
         >
           <FiveByFive
             variant={preference}
-            className="text-portfolio-accent"
+            className="text-portfolio-accent-decoration"
           />
         </Button>
         <Popover
@@ -124,7 +124,7 @@ export function PortfolioThemeMenu({ hidden }: PortfolioThemeMenuProps) {
                     <span className="grid size-[var(--portfolio-control-size)] place-items-center">
                       <FiveByFive
                         variant={option.icon}
-                        className="text-portfolio-accent"
+                        className="text-portfolio-accent-decoration"
                       />
                     </span>
                   </>

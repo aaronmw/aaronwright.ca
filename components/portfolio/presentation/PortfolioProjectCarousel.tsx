@@ -205,7 +205,6 @@ export const PortfolioProjectCarousel = memo(function PortfolioProjectCarousel({
                   <PortfolioLedgerFrame className="relative col-start-1 h-full min-h-0">
                     <div className="absolute left-[var(--portfolio-control-gutter-width)] right-[var(--portfolio-default-spacing)] top-[var(--portfolio-project-narrative-content-top)]">
                       <ProjectNarrative
-                        project={project}
                         narrative={narratives[slideIndex] ?? narrative}
                       />
                     </div>
@@ -273,7 +272,6 @@ export const PortfolioProjectCarousel = memo(function PortfolioProjectCarousel({
                       className="overflow-x-hidden outline-none [touch-action:pan-y_pinch-zoom] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-portfolio-accent"
                     >
                       <ProjectNarrative
-                        project={project}
                         narrative={narratives[slideIndex] ?? narrative}
                       />
                     </OverscrollIndicator>

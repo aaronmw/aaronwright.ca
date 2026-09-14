@@ -92,10 +92,7 @@ export function PortfolioTextCarousel({
                     wrapperClassName={sideBySide ? undefined : 'h-full'}
                     className="overflow-x-hidden outline-none [touch-action:pan-y_pinch-zoom] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-portfolio-accent"
                   >
-                    <ProjectNarrative
-                      project={project}
-                      narrative={narratives[slideIndex]}
-                    />
+                    <ProjectNarrative narrative={narratives[slideIndex]} />
                   </OverscrollIndicator>
                 </article>
               )

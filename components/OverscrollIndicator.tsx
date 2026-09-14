@@ -269,7 +269,7 @@ export const OverscrollIndicator = forwardRef<
           <span className="absolute inset-0 rounded-full bg-portfolio-shaded">
             <span
               ref={scrollbarThumbRef}
-              className="absolute inset-x-0 top-0 min-h-6 rounded-full bg-[var(--portfolio-accent)]"
+              className="absolute inset-x-0 top-0 min-h-6 rounded-full bg-portfolio-accent-decoration"
             />
           </span>
         </div>
@@ -282,7 +282,7 @@ export const OverscrollIndicator = forwardRef<
           onPointerEnter={startAutoScroll}
           onPointerLeave={stopAutoScroll}
           onPointerCancel={stopAutoScroll}
-          className={`col-start-1 row-start-2 grid size-[var(--portfolio-control-size)] place-items-center justify-self-center text-[var(--portfolio-accent)] transition-opacity duration-[var(--portfolio-motion-feedback)] ease-[var(--ease-out)] motion-reduce:transition-none ${
+          className={`col-start-1 row-start-2 grid size-[var(--portfolio-control-size)] place-items-center justify-self-center text-portfolio-accent-decoration transition-opacity duration-[var(--portfolio-motion-feedback)] ease-[var(--ease-out)] motion-reduce:transition-none ${
             visibility.bottom
               ? 'pointer-events-auto opacity-100'
               : 'pointer-events-none opacity-0'

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import colors from 'tailwindcss/colors'
 import { portfolioSlides } from '../../lib/portfolio'
 import {
   PORTFOLIO_THEME_STORAGE_KEY,
@@ -33,14 +34,14 @@ describe('portfolio appearance preference', () => {
 })
 
 describe('portfolio project colors by appearance', () => {
-  it('uses resume red for every project and interaction state', () => {
+  it('uses decorative red-600 for every project color', () => {
     for (const theme of ['dark', 'light'] as const) {
       expect(
         portfolioSlides.map((_, index) => getProjectColor(index, theme)),
-      ).toEqual(portfolioSlides.map(() => '#ff0000'))
+      ).toEqual(portfolioSlides.map(() => colors.red[600]))
       expect(
         portfolioSlides.map((_, index) => getActiveProjectColor(index, theme)),
-      ).toEqual(portfolioSlides.map(() => '#ff0000'))
+      ).toEqual(portfolioSlides.map(() => colors.red[600]))
     }
   })
 })

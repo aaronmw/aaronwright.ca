@@ -21,6 +21,7 @@ import { portfolioMotion } from '@/lib/portfolioTokens'
 import type { ResolvedProjectNarrative } from '../domain/narrative'
 import { OverscrollIndicator } from '@/components/OverscrollIndicator'
 import { FiveByFive } from './FiveByFive'
+import { PortfolioList, PortfolioListItem } from './PortfolioList'
 
 type MarkdownLinkProps = AnchorHTMLAttributes<HTMLAnchorElement> & {
   node?: unknown
@@ -34,6 +35,7 @@ const PROJECT_HEADING_UNDERLINE_CHARACTER = '-'
 
 const PORTFOLIO_MARKDOWN_SCHEMA = {
   ...defaultSchema,
+  tagNames: [...(defaultSchema.tagNames ?? []), 'abbr'],
   attributes: {
     ...defaultSchema.attributes,
     abbr: [...(defaultSchema.attributes?.abbr ?? []), 'title'],
@@ -51,8 +53,11 @@ const INLINE_MARKDOWN_COMPONENTS = {
 
 const PORTFOLIO_MARKDOWN_COMPONENTS = {
   a: MarkdownLink,
-  ul({ children }) {
-    return <ul role="list">{children}</ul>
+  ul({ node: _node, ...props }) {
+    return <PortfolioList {...props} />
+  },
+  li({ node: _node, ...props }) {
+    return <PortfolioListItem {...props} />
   },
   h1: createMarkdownHeading('h2'),
   h2: createMarkdownHeading('h3'),
@@ -60,20 +65,6 @@ const PORTFOLIO_MARKDOWN_COMPONENTS = {
   h4: createMarkdownHeading('h5'),
   h5: createMarkdownHeading('h6'),
   h6: createMarkdownHeading('h6'),
-} satisfies Components
-
-const FIVE_BY_FIVE_MARKDOWN_COMPONENTS = {
-  ...PORTFOLIO_MARKDOWN_COMPONENTS,
-  li({ children }) {
-    return (
-      <li>
-        <span className="portfolio-list-bullet">
-          <FiveByFive variant="dot" />
-        </span>
-        <div className="min-w-0">{children}</div>
-      </li>
-    )
-  },
 } satisfies Components
 
 export function PortfolioLedgerFrame({
@@ -143,7 +134,7 @@ export function ProjectInformation({
         alignWithLogo={alignWithLogo}
         onSelectSlide={onSelectSlide}
       />
-      <NarrativePresence project={project} narrative={narrative} />
+      <NarrativePresence narrative={narrative} />
     </PortfolioLedgerFrame>
   )
 }
@@ -264,24 +255,20 @@ function ProjectRoleDates({
 }
 
 export const ProjectNarrative = memo(function ProjectNarrative({
-  project,
   narrative,
 }: {
-  project: PortfolioProject
   narrative: ResolvedProjectNarrative
 }) {
   return (
     <div>
-      <NarrativeContent project={project} narrative={narrative} />
+      <NarrativeContent narrative={narrative} />
     </div>
   )
 })
 
 function NarrativePresence({
-  project,
   narrative,
 }: {
-  project: PortfolioProject
   narrative: ResolvedProjectNarrative
 }) {
   const sourceIdRef = useRef(narrative.sourceId)
@@ -329,13 +316,11 @@ function NarrativePresence({
     >
       {outgoing ? (
         <NarrativeContent
-          project={project}
           narrative={outgoing}
           className={`absolute inset-x-0 top-0 transition-opacity duration-[var(--portfolio-motion-narrative)] motion-reduce:duration-[var(--portfolio-motion-reduced)] ${entered ? 'opacity-0' : 'opacity-100'}`}
         />
       ) : null}
       <NarrativeContent
-        project={project}
         narrative={rendered}
         className={`transition-opacity duration-[var(--portfolio-motion-narrative)] motion-reduce:duration-[var(--portfolio-motion-reduced)] ${outgoing && !entered ? 'opacity-0' : 'opacity-100'}`}
       />
@@ -379,11 +364,9 @@ function narrativeTransitionReducer(
 }
 
 function NarrativeContent({
-  project,
   narrative,
   className,
 }: {
-  project: PortfolioProject
   narrative: ResolvedProjectNarrative
   className?: string
 }) {
@@ -400,12 +383,8 @@ function NarrativeContent({
             </PortfolioInlineMarkdown>
           </h1>
         ) : null}
-        <div
-          className={`portfolio-markdown prose max-w-none font-normal ${project.slug === 'about-me' ? 'portfolio-markdown--compact-lists' : ''}`}
-        >
-          <PortfolioMarkdown fiveByFiveBullets={project.slug === 'about-me'}>
-            {narrative.bodyMarkdown}
-          </PortfolioMarkdown>
+        <div className="portfolio-markdown prose max-w-none font-normal">
+          <PortfolioMarkdown>{narrative.bodyMarkdown}</PortfolioMarkdown>
         </div>
       </div>
     </div>
@@ -452,22 +431,12 @@ function createMarkdownHeading(Tag: MarkdownHeadingTag) {
   return MarkdownHeading
 }
 
-export function PortfolioMarkdown({
-  children,
-  fiveByFiveBullets = false,
-}: {
-  children: string
-  fiveByFiveBullets?: boolean
-}) {
+export function PortfolioMarkdown({ children }: { children: string }) {
   return (
     <ReactMarkdown
       remarkPlugins={[remarkGfm]}
       rehypePlugins={PORTFOLIO_REHYPE_PLUGINS}
-      components={
-        fiveByFiveBullets
-          ? FIVE_BY_FIVE_MARKDOWN_COMPONENTS
-          : PORTFOLIO_MARKDOWN_COMPONENTS
-      }
+      components={PORTFOLIO_MARKDOWN_COMPONENTS}
     >
       {children}
     </ReactMarkdown>

@@ -26,9 +26,15 @@ export type PortfolioProject = {
 const MARKDOWN_ACRONYMS = {
   AI: 'Artificial Intelligence',
   CMS: 'Content Management System',
+  GIF: 'Graphics Interchange Format',
+  GIFs: 'Graphics Interchange Format images',
+  HTML: 'Hypertext Markup Language',
+  ID: 'Identifier',
   PWA: 'Progressive Web App',
+  RFP: 'Request for Proposal',
   UI: 'User Interface',
   UX: 'User Experience',
+  WYSIWYG: 'What You See Is What You Get',
 } as const
 
 const MARKDOWN_ACRONYM_PATTERN = new RegExp(

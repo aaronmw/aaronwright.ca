@@ -33,7 +33,7 @@ export function PortfolioViewerControls({
               visual={
                 <FiveByFive
                   variant="left"
-                  className="text-portfolio-accent group-disabled:text-portfolio-text-dimmed"
+                  className="text-portfolio-accent-decoration group-disabled:text-portfolio-text-dimmed"
                 />
               }
               iconClassName=""
@@ -49,7 +49,7 @@ export function PortfolioViewerControls({
               visual={
                 <FiveByFive
                   variant="right"
-                  className="text-portfolio-accent group-disabled:text-portfolio-text-dimmed"
+                  className="text-portfolio-accent-decoration group-disabled:text-portfolio-text-dimmed"
                 />
               }
               iconClassName=""
@@ -68,7 +68,7 @@ export function PortfolioViewerControls({
           visual={
             <FiveByFive
               variant="close"
-              className="bg-portfolio-accent text-portfolio-white"
+              className="bg-portfolio-accent-decoration text-portfolio-white"
             />
           }
           iconClassName=""

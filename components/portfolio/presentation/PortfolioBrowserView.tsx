@@ -210,7 +210,7 @@ function PortfolioHorizontalNavigation({
         >
           <CircularIconButton
             visual={
-              <FiveByFive variant="up" className="text-portfolio-accent" />
+              <FiveByFive variant="up" className="text-portfolio-accent-decoration" />
             }
             iconClassName=""
             className="font-portfolio-controls relative size-[var(--portfolio-control-size)] bg-transparent text-[var(--project-color)]"
@@ -298,8 +298,8 @@ function PortfolioMediaBackdrop({
         } ${usesSideBySideProjectLayout ? 'col-start-2 place-self-center' : ''}`}
         style={{
           background: viewerOpen
-            ? 'radial-gradient(circle closest-side, color-mix(in srgb, var(--portfolio-accent) 20%, transparent) 0%, transparent 100%)'
-            : 'radial-gradient(circle closest-side, color-mix(in srgb, var(--portfolio-accent) 10%, transparent) 0%, transparent 100%)',
+            ? 'radial-gradient(circle closest-side, color-mix(in srgb, var(--portfolio-accent-decoration) 20%, transparent) 0%, transparent 100%)'
+            : 'radial-gradient(circle closest-side, color-mix(in srgb, var(--portfolio-accent-decoration) 10%, transparent) 0%, transparent 100%)',
         }}
       />
     </div>
@@ -341,7 +341,7 @@ function PortfolioIdentityLayers({
         className="pointer-events-auto grid size-[var(--portfolio-control-size)] shrink-0 place-items-center border-0 bg-transparent p-0 outline-none focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-current"
         onClick={onSelectTop}
       >
-        <PortfolioLogoMark className="shrink-0 text-portfolio-accent" />
+        <PortfolioLogoMark className="shrink-0 text-portfolio-accent-decoration" />
       </button>
     </div>
   )
@@ -442,12 +442,12 @@ export function PortfolioBrowserView({
       >
         <span
           data-portfolio-top-rule
-          className="pointer-events-none fixed inset-x-0 top-0 z-[var(--portfolio-layer-frame)] h-[var(--portfolio-frame-rule-size)] bg-portfolio-accent"
+          className="pointer-events-none fixed inset-x-0 top-0 z-[var(--portfolio-layer-frame)] h-[var(--portfolio-frame-rule-size)] bg-portfolio-accent-decoration"
           aria-hidden="true"
         />
         <span
           data-portfolio-bottom-rule
-          className="pointer-events-none fixed inset-x-0 bottom-0 z-[var(--portfolio-layer-frame)] h-[var(--portfolio-frame-rule-size)] bg-portfolio-accent"
+          className="pointer-events-none fixed inset-x-0 bottom-0 z-[var(--portfolio-layer-frame)] h-[var(--portfolio-frame-rule-size)] bg-portfolio-accent-decoration"
           aria-hidden="true"
         />
         <div

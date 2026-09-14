@@ -109,7 +109,7 @@ export function PortfolioContactInfo() {
                         left: 'calc(var(--portfolio-navigation-control-edge-offset) + env(safe-area-inset-left, 0px))',
                       }}
                     >
-                      <PortfolioLogoMark className="text-portfolio-accent" />
+                      <PortfolioLogoMark className="text-portfolio-accent-decoration" />
                     </Button>
                     <Heading
                       slot="title"
@@ -127,7 +127,7 @@ export function PortfolioContactInfo() {
                         right: 'calc(var(--portfolio-navigation-control-edge-offset) + env(safe-area-inset-right, 0px))',
                       }}
                     >
-                      <FiveByFive variant="x" className="text-portfolio-accent" />
+                      <FiveByFive variant="x" className="text-portfolio-accent-decoration" />
                     </Button>
                   </header>
                   <OverscrollIndicator
@@ -148,11 +148,11 @@ export function PortfolioContactInfo() {
           </Modal>
           <span
             aria-hidden="true"
-            className="pointer-events-none absolute inset-x-0 top-0 h-[var(--portfolio-frame-rule-size)] bg-portfolio-accent"
+            className="pointer-events-none absolute inset-x-0 top-0 h-[var(--portfolio-frame-rule-size)] bg-portfolio-accent-decoration"
           />
           <span
             aria-hidden="true"
-            className="pointer-events-none absolute inset-x-0 bottom-0 h-[var(--portfolio-frame-rule-size)] bg-portfolio-accent"
+            className="pointer-events-none absolute inset-x-0 bottom-0 h-[var(--portfolio-frame-rule-size)] bg-portfolio-accent-decoration"
           />
         </ModalOverlay>
       </DialogTrigger>

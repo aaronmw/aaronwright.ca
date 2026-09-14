@@ -20,7 +20,7 @@ export function PortfolioDesktopIdentity({
         className="pointer-events-auto grid size-[var(--portfolio-control-size)] shrink-0 place-items-center border-0 bg-transparent p-0 outline-none focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-current"
         onClick={onSelectTop}
       >
-        <PortfolioLogoMark className="text-portfolio-accent" />
+        <PortfolioLogoMark className="text-portfolio-accent-decoration" />
       </button>
       <h1
         className={`portfolio-cap-trim ml-[calc(var(--portfolio-logo-surround)-var(--portfolio-logo-control-inset))] whitespace-nowrap font-bold italic text-portfolio-text transition-opacity duration-[var(--portfolio-motion-identity)] motion-reduce:transition-none ${
