@@ -2,19 +2,17 @@
 
 import type { EmblaViewportRefType } from 'embla-carousel-react'
 import type { PortfolioProject } from '@/lib/portfolio'
-import { OverscrollIndicator } from '@/components/OverscrollIndicator'
 import type { ResolvedProjectNarrative } from '../domain/narrative'
 import type { ProjectSlide } from '../domain/slides'
 import {
   MOBILE_SECTION_CONTENT_PADDING_LEFT,
   MOBILE_SECTION_CONTENT_PADDING_RIGHT,
 } from '../mobileLayout'
-import { FiveByFive } from './FiveByFive'
 import { PortfolioProjectControls } from './PortfolioProjectControls'
 import {
   PortfolioLedgerFrame,
   ProjectMetadata,
-  ProjectNarrative,
+  ProjectNarrativeScroll,
 } from './PortfolioText'
 
 export function PortfolioTextCarousel({
@@ -83,17 +81,11 @@ export function PortfolioTextCarousel({
                   aria-hidden={hidden}
                   inert={hidden}
                 >
-                  <OverscrollIndicator
-                    aria-label={`${project.title} ${slide.kind === 'description' ? 'biography' : 'working style and strengths'}`}
-                    role="region"
-                    tabIndex={0}
-                    bottomScrollControl={<FiveByFive variant="down" />}
-                    persistentScrollbar
-                    wrapperClassName={sideBySide ? undefined : 'h-full'}
-                    className="overflow-x-hidden outline-none [touch-action:pan-y_pinch-zoom] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-portfolio-accent"
-                  >
-                    <ProjectNarrative narrative={narratives[slideIndex]} />
-                  </OverscrollIndicator>
+                  <ProjectNarrativeScroll
+                    label={`${project.title} ${slide.kind === 'description' ? 'biography' : 'working style and strengths'}`}
+                    narrative={narratives[slideIndex]}
+                    wrapperClassName={sideBySide ? '' : 'h-full'}
+                  />
                 </article>
               )
             })}

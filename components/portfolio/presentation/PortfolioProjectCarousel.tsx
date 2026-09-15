@@ -3,7 +3,6 @@
 import { memo, useCallback, useMemo, type CSSProperties } from 'react'
 import type { EmblaCarouselType } from 'embla-carousel'
 import type { PortfolioProject } from '@/lib/portfolio'
-import { OverscrollIndicator } from '@/components/OverscrollIndicator'
 import { getProjectNarratives } from '../domain/narrative'
 import type { ProjectSlide } from '../domain/slides'
 import type { PortfolioMediaElement } from '../usePortfolioMediaReadiness'
@@ -13,12 +12,11 @@ import {
   MOBILE_SECTION_CONTENT_PADDING_RIGHT,
 } from '../mobileLayout'
 import { ProjectPanel } from './PortfolioMedia'
-import { FiveByFive } from './FiveByFive'
 import { PortfolioProjectControls } from './PortfolioProjectControls'
 import {
   PortfolioLedgerFrame,
   ProjectMetadata,
-  ProjectNarrative,
+  ProjectNarrativeScroll,
 } from './PortfolioText'
 import { usePortfolioProjectCarousel } from './usePortfolioProjectCarousel'
 import { PortfolioTextCarousel } from './PortfolioTextCarousel'
@@ -203,8 +201,9 @@ export const PortfolioProjectCarousel = memo(function PortfolioProjectCarousel({
                   inert={activeSlideIndex !== slideIndex}
                 >
                   <PortfolioLedgerFrame className="relative col-start-1 h-full min-h-0">
-                    <div className="absolute left-[var(--portfolio-control-gutter-width)] right-[var(--portfolio-default-spacing)] top-[var(--portfolio-project-narrative-content-top)]">
-                      <ProjectNarrative
+                    <div className="absolute left-[var(--portfolio-control-gutter-width)] right-[var(--portfolio-default-spacing)] top-[var(--portfolio-project-narrative-content-top)] bottom-[calc(var(--portfolio-frame-rule-size)+var(--portfolio-default-spacing)+env(safe-area-inset-bottom,0px))] min-h-0">
+                      <ProjectNarrativeScroll
+                        label={`${project.title} slide ${slideIndex + 1} text`}
                         narrative={narratives[slideIndex] ?? narrative}
                       />
                     </div>
@@ -262,19 +261,10 @@ export const PortfolioProjectCarousel = memo(function PortfolioProjectCarousel({
                     data-portfolio-stacked-text-region
                     className="row-start-1 mx-auto h-full min-h-0 min-w-0 w-full max-w-[calc(var(--portfolio-description-rail-width)-var(--portfolio-control-gutter-width)-var(--portfolio-default-spacing))] overflow-hidden max-[30rem]:max-w-none"
                   >
-                    <OverscrollIndicator
-                      aria-label={`${project.title} slide ${slideIndex + 1} text`}
-                      role="region"
-                      tabIndex={0}
-                      bottomScrollControl={<FiveByFive variant="down" />}
-                      persistentScrollbar
-                      wrapperClassName="h-full"
-                      className="overflow-x-hidden outline-none [touch-action:pan-y_pinch-zoom] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-portfolio-accent"
-                    >
-                      <ProjectNarrative
-                        narrative={narratives[slideIndex] ?? narrative}
-                      />
-                    </OverscrollIndicator>
+                    <ProjectNarrativeScroll
+                      label={`${project.title} slide ${slideIndex + 1} text`}
+                      narrative={narratives[slideIndex] ?? narrative}
+                    />
                   </PortfolioLedgerFrame>
                   <div className="relative row-start-2 min-h-0 min-w-0">
                     <ProjectPanel

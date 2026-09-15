@@ -266,6 +266,30 @@ export const ProjectNarrative = memo(function ProjectNarrative({
   )
 })
 
+export function ProjectNarrativeScroll({
+  narrative,
+  label,
+  wrapperClassName = 'h-full',
+}: {
+  narrative: ResolvedProjectNarrative
+  label: string
+  wrapperClassName?: string
+}) {
+  return (
+    <OverscrollIndicator
+      aria-label={label}
+      role="region"
+      tabIndex={0}
+      bottomScrollControl={<FiveByFive variant="down" />}
+      persistentScrollbar
+      wrapperClassName={wrapperClassName}
+      className="overflow-x-hidden outline-none [touch-action:pan-y_pinch-zoom] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-portfolio-accent"
+    >
+      <ProjectNarrative narrative={narrative} />
+    </OverscrollIndicator>
+  )
+}
+
 function NarrativePresence({
   narrative,
 }: {

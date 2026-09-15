@@ -450,10 +450,11 @@ export function PortfolioBrowserView({
           className="pointer-events-none fixed inset-x-0 bottom-0 z-[var(--portfolio-layer-frame)] h-[var(--portfolio-frame-rule-size)] bg-portfolio-accent-decoration"
           aria-hidden="true"
         />
+        {/* Embla moves slides with transforms; focus must not scroll its viewport. */}
         <div
           ref={verticalViewportRef}
           data-portfolio-vertical-carousel
-          className="h-dvh overflow-hidden [touch-action:pan-x_pinch-zoom]"
+          className="h-dvh overflow-clip [touch-action:pan-x_pinch-zoom]"
         >
           <div className="flex h-dvh flex-col">
             <div className="h-dvh min-h-0 shrink-0 basis-full">
