@@ -1,3 +1,4 @@
+import { PortfolioName } from '@/components/PortfolioName'
 import { PortfolioLogoMark } from './PortfolioLogoMark'
 
 export function PortfolioDesktopIdentity({
@@ -22,14 +23,12 @@ export function PortfolioDesktopIdentity({
       >
         <PortfolioLogoMark className="text-portfolio-accent-decoration" />
       </button>
-      <h1
-        className={`portfolio-cap-trim ml-[calc(var(--portfolio-logo-surround)-var(--portfolio-logo-control-inset))] whitespace-nowrap font-bold italic text-portfolio-text transition-opacity duration-[var(--portfolio-motion-identity)] motion-reduce:transition-none ${
+      <PortfolioName
+        className={`portfolio-cap-trim ml-[calc(var(--portfolio-logo-surround)-var(--portfolio-logo-control-inset))] whitespace-nowrap italic text-portfolio-text transition-opacity duration-[var(--portfolio-motion-identity)] motion-reduce:transition-none ${
           activeProjectIndex === -1 ? 'opacity-100' : 'opacity-0'
         }`}
         data-portfolio-desktop-name
-      >
-        Aaron M. Wright
-      </h1>
+      />
     </div>
   )
 }

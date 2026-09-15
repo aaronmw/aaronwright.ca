@@ -1,5 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
+import { PortfolioName } from '@/components/PortfolioName'
 import type { PortfolioProject, PortfolioScreenshot } from '@/lib/portfolio'
 import { portfolioSlides } from '@/lib/portfolio'
 import { portfolioFont } from '@/lib/portfolioFonts'
@@ -39,9 +40,7 @@ export function HomeProjectGrid() {
     >
       <header className="flex min-h-20 items-center justify-between gap-8 border-b border-portfolio-shaded px-6 py-4 sm:px-8 lg:px-12">
         <div>
-          <h1 className="font-bold uppercase">
-            Aaron M. Wright
-          </h1>
+          <PortfolioName />
           <p className="mt-1 font-normal text-portfolio-text-dimmed">
             Product design · frontend systems
           </p>

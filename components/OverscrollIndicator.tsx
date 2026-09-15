@@ -23,6 +23,8 @@ type OverscrollIndicatorProps = Omit<
   indicatorHeight?: CSSProperties['height']
   onScroll?: UIEventHandler<HTMLDivElement>
   persistentScrollbar?: boolean
+  // Let a containing carousel handle gestures when this region fits in full.
+  scrollContainment?: 'always' | 'when-overflowing'
   wrapperClassName?: string
 }
 
@@ -33,6 +35,26 @@ type IndicatorVisibility = {
 
 const EDGE_EPSILON_PX = 1
 const AUTO_SCROLL_PX_PER_SECOND = 24
+
+function getOverflowMaskImage(
+  visibility: IndicatorVisibility,
+  indicatorHeight: CSSProperties['height'],
+) {
+  if (!visibility.top && !visibility.bottom) return 'none'
+
+  const fadeHeight =
+    typeof indicatorHeight === 'number'
+      ? `${indicatorHeight}px`
+      : indicatorHeight
+
+  return `linear-gradient(to bottom, ${
+    visibility.top ? `transparent 0, black ${fadeHeight}` : 'black 0'
+  }, ${
+    visibility.bottom
+      ? `black calc(100% - ${fadeHeight}), transparent 100%`
+      : 'black 100%'
+  })`
+}
 
 export const OverscrollIndicator = forwardRef<
   HTMLDivElement,
@@ -46,6 +68,7 @@ export const OverscrollIndicator = forwardRef<
     indicatorHeight = 50,
     onScroll,
     persistentScrollbar = false,
+    scrollContainment = 'always',
     style,
     wrapperClassName = '',
     ...viewportProps
@@ -195,14 +218,21 @@ export const OverscrollIndicator = forwardRef<
     resizeObserver.observe(viewport)
     resizeObserver.observe(content)
 
-    const handleNativeWheel = (event: WheelEvent) => event.stopPropagation()
+    const handleNativeWheel = (event: WheelEvent) => {
+      if (
+        scrollContainment === 'always' ||
+        viewport.scrollHeight - viewport.clientHeight > EDGE_EPSILON_PX
+      ) {
+        event.stopPropagation()
+      }
+    }
     viewport.addEventListener('wheel', handleNativeWheel, { passive: true })
 
     return () => {
       resizeObserver.disconnect()
       viewport.removeEventListener('wheel', handleNativeWheel)
     }
-  }, [updateIndicators])
+  }, [updateIndicators, scrollContainment])
 
   useLayoutEffect(
     () => () => {
@@ -213,20 +243,9 @@ export const OverscrollIndicator = forwardRef<
     [],
   )
 
-  const fadeHeight =
-    typeof indicatorHeight === 'number'
-      ? `${indicatorHeight}px`
-      : indicatorHeight
-  const maskImage =
-    visibility.top || visibility.bottom
-      ? `linear-gradient(to bottom, ${
-          visibility.top ? `transparent 0, black ${fadeHeight}` : 'black 0'
-        }, ${
-          visibility.bottom
-            ? `black calc(100% - ${fadeHeight}), transparent 100%`
-            : 'black 100%'
-        })`
-      : 'none'
+  const hasOverflow = visibility.top || visibility.bottom
+  const containsScroll = scrollContainment === 'always' || hasOverflow
+  const maskImage = getOverflowMaskImage(visibility, indicatorHeight)
 
   return (
     <div
@@ -240,7 +259,7 @@ export const OverscrollIndicator = forwardRef<
       <div
         {...viewportProps}
         ref={setViewportRef}
-        data-portfolio-native-wheel-scroll
+        data-portfolio-native-wheel-scroll={containsScroll || undefined}
         className={`col-start-1 row-start-1 h-full w-full overflow-y-scroll overscroll-y-contain ${
           persistentScrollbar
             ? 'portfolio-scrollbar-none pr-[calc(var(--logo-stroke-width)*3)]'

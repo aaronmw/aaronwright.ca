@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSpinner } from '@fortawesome/free-solid-svg-icons'
 import type { PortfolioProject } from '@/lib/portfolio'
 import { OverscrollIndicator } from '@/components/OverscrollIndicator'
+import { PortfolioName } from '@/components/PortfolioName'
 import {
   MOBILE_SECTION_CONTENT_PADDING_LEFT,
   MOBILE_SECTION_CONTENT_PADDING_RIGHT,
@@ -15,7 +16,7 @@ import {
 import { FiveByFive } from './FiveByFive'
 import { PortfolioContactInfo } from './PortfolioContactInfo'
 
-const MOBILE_SECTION_CONTENT_INSETS: CSSProperties = {
+const START_SCREEN_CONTENT_INSETS: CSSProperties = {
   paddingLeft: MOBILE_SECTION_CONTENT_PADDING_LEFT,
   paddingRight: MOBILE_SECTION_CONTENT_PADDING_RIGHT,
 }
@@ -25,22 +26,12 @@ type ProjectColorStyle = CSSProperties & {
 }
 
 function PortfolioStartHeader({
-  isTouchLandscapeLayout,
   isWideLayout,
 }: {
-  isTouchLandscapeLayout: boolean
   isWideLayout: boolean
 }) {
   return (
-    <div
-      className={`portfolio-start-header ${
-        isTouchLandscapeLayout
-          ? 'min-w-0'
-          : isWideLayout
-            ? 'portfolio-wide-content-inset absolute inset-x-0 top-[var(--portfolio-contact-edge-inset)] [--portfolio-wide-content-inset-right:var(--portfolio-header-control-reserved-width)]'
-            : 'min-w-0'
-      }`}
-    >
+    <div className="portfolio-start-header min-w-0">
       <div
         data-portfolio-start-header-content
         className="mx-auto flex w-full items-start justify-between gap-x-[1ch]"
@@ -51,9 +42,7 @@ function PortfolioStartHeader({
           data-portfolio-start-title
           aria-hidden={isWideLayout || undefined}
         >
-          <h1 className="font-bold italic min-[30rem]:whitespace-nowrap">
-            Aaron M. Wright
-          </h1>
+          <PortfolioName className="italic min-[30rem]:whitespace-nowrap" />
         </div>
         <PortfolioContactInfo />
       </div>
@@ -181,7 +170,7 @@ export const PortfolioStartScreen = memo(function PortfolioStartScreen({
   onPreview: (index: number, previewing: boolean) => void
   onSelect: (index: number, keyboardTriggered: boolean) => void
 }) {
-  const usesScrollingMenu = !isWideLayout || isTouchLandscapeLayout
+  const alwaysContainMenuScroll = !isWideLayout || isTouchLandscapeLayout
   const projectIndex = (
     <PortfolioProjectIndex
       getProjectColor={getProjectColor}
@@ -196,31 +185,23 @@ export const PortfolioStartScreen = memo(function PortfolioStartScreen({
 
   return (
     <section
-      className={`relative h-dvh min-h-0 snap-start snap-always ${
-        usesScrollingMenu
-          ? 'portfolio-safe-inline grid grid-rows-[auto_minmax(0,1fr)] gap-y-[1lh] overflow-hidden pt-[var(--portfolio-header-text-edge-inset)] pb-[calc(var(--portfolio-frame-rule-size)+var(--portfolio-navigation-control-edge-offset)+env(safe-area-inset-bottom,0px))]'
-          : 'portfolio-wide-content-inset flex flex-col justify-center py-16'
-      }`}
-      style={usesScrollingMenu ? MOBILE_SECTION_CONTENT_INSETS : undefined}
+      className="portfolio-safe-inline relative grid h-dvh min-h-0 snap-start snap-always grid-rows-[auto_minmax(0,1fr)] gap-y-[1lh] overflow-hidden pt-[var(--portfolio-header-text-edge-inset)] pb-[calc(var(--portfolio-frame-rule-size)+var(--portfolio-navigation-control-edge-offset)+env(safe-area-inset-bottom,0px))]"
+      style={START_SCREEN_CONTENT_INSETS}
     >
-      <PortfolioStartHeader
-        isTouchLandscapeLayout={isTouchLandscapeLayout}
-        isWideLayout={isWideLayout}
-      />
-      {usesScrollingMenu ? (
-        <OverscrollIndicator
-          aria-label="Portfolio menu"
-          role="region"
-          tabIndex={0}
-          bottomScrollControl={<FiveByFive variant="down" />}
-          persistentScrollbar
-          wrapperClassName="mx-auto h-full w-full max-w-[var(--resume-content-width)]"
-          contentClassName="flex min-h-full flex-col justify-center"
-          className="overflow-x-hidden outline-none [touch-action:pan-y_pinch-zoom] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-portfolio-accent"
-        >
-          {projectIndex}
-        </OverscrollIndicator>
-      ) : projectIndex}
+      <PortfolioStartHeader isWideLayout={isWideLayout} />
+      <OverscrollIndicator
+        aria-label="Portfolio menu"
+        role="region"
+        tabIndex={0}
+        bottomScrollControl={<FiveByFive variant="down" />}
+        persistentScrollbar
+        scrollContainment={alwaysContainMenuScroll ? 'always' : 'when-overflowing'}
+        wrapperClassName="mx-auto h-full w-full max-w-[var(--resume-content-width)]"
+        contentClassName="flex min-h-full flex-col justify-center"
+        className="overflow-x-hidden outline-none [touch-action:pan-y_pinch-zoom] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-portfolio-accent"
+      >
+        {projectIndex}
+      </OverscrollIndicator>
     </section>
   )
 })
