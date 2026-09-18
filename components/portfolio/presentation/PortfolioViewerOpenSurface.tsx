@@ -131,7 +131,7 @@ export function PortfolioViewerOpenSurface({
       openViewerFromEffect(
         'touch-pinch',
         opening.focalPoint,
-        Math.min(4, opening.initialPinchScale),
+        opening.initialPinchScale,
       )
     }
 
@@ -153,7 +153,6 @@ export function PortfolioViewerOpenSurface({
       openViewerFromEffect(
         'double-tap',
         { x: doubleTapPoint.clientX, y: doubleTapPoint.clientY },
-        2,
       )
     }
 

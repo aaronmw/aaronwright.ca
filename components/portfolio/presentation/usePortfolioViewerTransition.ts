@@ -137,14 +137,17 @@ export function usePortfolioViewerTransition({
   }, [])
 
   function applyInitialZoom() {
-    const initialScale = Math.min(4, Math.max(1, intent.initialPinchScale ?? 1))
+    const zoom = zoomRef.current
+    if (!zoom) return
+    const initialScale = Math.min(
+      zoom.maxZoom,
+      Math.max(1, intent.initialPinchScale ?? 1),
+    )
     if (initialScale <= 1) return
-    // Double-tap opens a centred view; its tap position belongs to the thumbnail.
-    const focalPoint =
-      intent.activationKind === 'double-tap' ? undefined : intent.focalPoint
-    zoomRef.current?.changeZoom(
+    const focalPoint = intent.focalPoint
+    zoom.changeZoom(
       initialScale,
-      intent.activationKind !== 'double-tap',
+      true,
       focalPoint ? focalPoint.x - window.innerWidth / 2 : 0,
       focalPoint ? focalPoint.y - window.innerHeight / 2 : 0,
     )
