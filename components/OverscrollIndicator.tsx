@@ -25,6 +25,7 @@ type OverscrollIndicatorProps = Omit<
   persistentScrollbar?: boolean
   // Let a containing carousel handle gestures when this region fits in full.
   scrollContainment?: 'always' | 'when-overflowing'
+  touchScrollChaining?: boolean
   wrapperClassName?: string
 }
 
@@ -69,6 +70,7 @@ export const OverscrollIndicator = forwardRef<
     onScroll,
     persistentScrollbar = false,
     scrollContainment = 'always',
+    touchScrollChaining = false,
     style,
     wrapperClassName = '',
     ...viewportProps
@@ -260,6 +262,7 @@ export const OverscrollIndicator = forwardRef<
         {...viewportProps}
         ref={setViewportRef}
         data-portfolio-native-wheel-scroll={containsScroll || undefined}
+        data-portfolio-touch-scroll-chain={touchScrollChaining || undefined}
         className={`col-start-1 row-start-1 h-full w-full overflow-y-scroll overscroll-y-contain ${
           persistentScrollbar
             ? 'portfolio-scrollbar-none pr-[calc(var(--logo-stroke-width)*3)]'

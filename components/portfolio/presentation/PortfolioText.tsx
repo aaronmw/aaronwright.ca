@@ -282,6 +282,7 @@ export function ProjectNarrativeScroll({
       tabIndex={0}
       bottomScrollControl={<FiveByFive variant="down" />}
       persistentScrollbar
+      touchScrollChaining
       wrapperClassName={wrapperClassName}
       className="overflow-x-hidden outline-none [touch-action:pan-y_pinch-zoom] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-portfolio-accent"
     >
@@ -334,6 +335,7 @@ function NarrativePresence({
     <OverscrollIndicator
       bottomScrollControl={<FiveByFive variant="down" />}
       persistentScrollbar
+      touchScrollChaining
       ref={scrollRef}
       className="overflow-x-hidden [--project-color:var(--portfolio-accent)]"
       contentClassName="relative min-h-full min-w-0 overflow-clip"

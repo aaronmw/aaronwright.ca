@@ -26,6 +26,7 @@ import {
 import { usePortfolioViewerController } from './runtime/usePortfolioViewerController'
 import type { PortfolioIntroPhase } from './runtime/types'
 import { installPortfolioWheelAxisLock } from './runtime/wheelAxisLock'
+import { installPortfolioTouchScrollChain } from './runtime/touchScrollChain'
 import {
   getLockedMouseDragAxis,
   installPortfolioMouseDragAxisLock,
@@ -167,10 +168,15 @@ export function PortfolioBrowser({
       targetSelector: '[data-portfolio-carousel]',
       ignoreTarget: isCarouselDragIgnoredTarget,
     })
+    const removeTouchScrollChain = installPortfolioTouchScrollChain(
+      viewport,
+      isPortfolioCarouselDragLockedTarget,
+    )
 
     return () => {
       removeWheelAxisLock()
       removeMouseDragAxisLock()
+      removeTouchScrollChain()
     }
   }, [verticalApi])
 

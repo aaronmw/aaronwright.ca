@@ -195,6 +195,7 @@ export const PortfolioStartScreen = memo(function PortfolioStartScreen({
         tabIndex={0}
         bottomScrollControl={<FiveByFive variant="down" />}
         persistentScrollbar
+        touchScrollChaining
         scrollContainment={alwaysContainMenuScroll ? 'always' : 'when-overflowing'}
         wrapperClassName="mx-auto h-full w-full max-w-[var(--resume-content-width)]"
         contentClassName="flex min-h-full flex-col justify-center"
