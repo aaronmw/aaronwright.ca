@@ -224,10 +224,7 @@ export function PortfolioBrowser({
   const handleKeyDown = useEffectEvent((event: KeyboardEvent) => {
     if (
       viewerIntent ||
-      targetMatches(
-        event.target,
-        '[data-portfolio-contact-dialog], [data-portfolio-dev-tools]',
-      )
+      targetMatches(event.target, '[data-portfolio-contact-dialog]')
     ) return
     if (event.metaKey || event.ctrlKey || event.altKey) return
 

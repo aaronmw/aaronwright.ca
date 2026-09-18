@@ -83,7 +83,7 @@ export function usePortfolioViewerController({
       const project = portfolioSlides[projectIndex]
       const slides = projectSlides[project.slug]
       const slideIndex = slides.findIndex(
-        (slide) =>
+        slide =>
           slide.kind === 'screenshot' && slide.screenshot.id === intent.mediaId,
       )
       if (
@@ -134,10 +134,10 @@ export function usePortfolioViewerController({
     const viewerSlide = viewerSlides[nextViewerIndex]
     if (!viewerSlide) return
     const slideIndex = projectSlides[project.slug].findIndex(
-      (slide) => slide.id === viewerSlide.id,
+      slide => slide.id === viewerSlide.id,
     )
     if (slideIndex < 0) return
-    setViewerIntent((intent) =>
+    setViewerIntent(intent =>
       intent && intent.mediaId !== viewerSlide.id
         ? { ...intent, mediaId: viewerSlide.id }
         : intent,
@@ -171,8 +171,14 @@ export function usePortfolioViewerController({
             `[data-portfolio-screenshot-id="${CSS.escape(closedMediaId)}"][data-portfolio-viewer-source="active"]`,
           )
         : null
-      source?.focus?.({ preventScroll: true })
-      keyboardSurfaceRef.current?.focus({ preventScroll: true })
+      const target =
+        source?.querySelector<HTMLElement>('[data-portfolio-media-action]') ??
+        keyboardSurfaceRef.current
+      // The lightbox normally restores the opener. Only move focus again when
+      // media navigation changed the source, or the viewer opened from a URL.
+      if (target && document.activeElement !== target) {
+        target.focus({ preventScroll: true })
+      }
     })
   }
 

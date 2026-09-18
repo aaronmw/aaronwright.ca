@@ -5,10 +5,8 @@ import {
   useEffectEvent,
   useRef,
   useState,
-  type CSSProperties,
-  type ReactNode,
+  type MouseEventHandler,
 } from 'react'
-import { createTouchDoubleTapRecognizer } from '../domain/touchDoubleTap'
 import {
   beginTouchPinch,
   createTrackpadPinchState,
@@ -41,28 +39,18 @@ function touchPoints(touches: TouchList): TouchPoint[] {
   }))
 }
 
-export function PortfolioViewerOpenSurface({
+export function usePortfolioViewerOpenSurface({
   active,
   screenshotId,
-  concealed,
-  className,
-  style,
-  children,
   onOpen,
 }: {
   active: boolean
   screenshotId: string
-  concealed: boolean
-  className: string
-  style?: CSSProperties
-  children: ReactNode
   onOpen: (intent: ViewerOpenIntent) => void
 }) {
   const surfaceRef = useRef<HTMLDivElement>(null)
-  const [doubleTapRecognizer] = useState(createTouchDoubleTapRecognizer)
   const touchPinchRef = useRef<TouchPinchState | null>(null)
   const [trackpadPinchState] = useState(createTrackpadPinchState)
-  const lastTouchAtRef = useRef(-1)
 
   function openViewer(
     activationKind: ViewerActivationKind,
@@ -92,38 +80,13 @@ export function PortfolioViewerOpenSurface({
     if (!surface) return
 
     const handleTouchStart = (event: TouchEvent) => {
-      lastTouchAtRef.current = performance.now()
       const points = touchPoints(event.touches)
-
-      if (points.length >= 2) {
-        doubleTapRecognizer.reset()
-        touchPinchRef.current = beginTouchPinch(points)
-        return
-      }
-
-      touchPinchRef.current = null
-      if (points.length === 1) {
-        doubleTapRecognizer.start(
-          {
-            identifier: points[0].identifier,
-            clientX: points[0].x,
-            clientY: points[0].y,
-          },
-          performance.now(),
-        )
-      }
+      touchPinchRef.current =
+        points.length >= 2 ? beginTouchPinch(points) : null
     }
 
     const handleTouchMove = (event: TouchEvent) => {
       const points = touchPoints(event.touches)
-      doubleTapRecognizer.move(
-        points.map(point => ({
-          identifier: point.identifier,
-          clientX: point.x,
-          clientY: point.y,
-        })),
-      )
-
       const opening = updateTouchPinch(touchPinchRef.current, points)
       if (!opening) return
       event.preventDefault()
@@ -136,29 +99,11 @@ export function PortfolioViewerOpenSurface({
     }
 
     const handleTouchEnd = (event: TouchEvent) => {
-      lastTouchAtRef.current = performance.now()
       if (event.touches.length < 2) touchPinchRef.current = null
-
-      const doubleTapPoint = doubleTapRecognizer.end(
-        Array.from(event.changedTouches).map(touch => ({
-          identifier: touch.identifier,
-          clientX: touch.clientX,
-          clientY: touch.clientY,
-        })),
-        performance.now(),
-      )
-      if (!doubleTapPoint) return
-      event.preventDefault()
-      event.stopPropagation()
-      openViewerFromEffect(
-        'double-tap',
-        { x: doubleTapPoint.clientX, y: doubleTapPoint.clientY },
-      )
     }
 
     const handleTouchCancel = () => {
       touchPinchRef.current = null
-      doubleTapRecognizer.reset()
     }
 
     const handleWheel = (event: WheelEvent) => {
@@ -194,29 +139,15 @@ export function PortfolioViewerOpenSurface({
       surface.removeEventListener('touchcancel', handleTouchCancel)
       surface.removeEventListener('wheel', handleWheel)
     }
-  }, [doubleTapRecognizer, trackpadPinchState])
+  }, [trackpadPinchState])
 
-  return (
-    <div
-      ref={surfaceRef}
-      data-portfolio-screenshot-id={screenshotId}
-      data-portfolio-viewer-source={active ? 'active' : undefined}
-      className={`relative overflow-hidden bg-[var(--portfolio-surface)] ${className} ${
-        concealed ? 'invisible' : ''
-      }`}
-      style={{ ...style, touchAction: 'pan-x pan-y' }}
-      onDoubleClick={event => {
-        if (performance.now() - lastTouchAtRef.current <= 500 || !active) {
-          return
-        }
-        event.preventDefault()
-        event.stopPropagation()
-        openViewer('double-click', { x: event.clientX, y: event.clientY })
-      }}
-    >
-      <div className="pointer-events-none absolute inset-0 select-none">
-        {children}
-      </div>
-    </div>
-  )
+  const onClick: MouseEventHandler<HTMLButtonElement> = event =>
+    openViewer(
+      event.detail === 0 ? 'keyboard' : 'click',
+      event.detail === 0
+        ? undefined
+        : { x: event.clientX, y: event.clientY },
+    )
+
+  return { surfaceRef, onClick }
 }

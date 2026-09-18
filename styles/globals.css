@@ -27,11 +27,8 @@
   --color-portfolio-accent-decoration: var(--portfolio-accent-decoration);
   --color-portfolio-red: var(--portfolio-accent);
   --color-resume-signal: var(--portfolio-accent);
-  --font-portfolio-controls: var(
-    --portfolio-dev-font-family,
-    var(--font-ibm-plex-mono)
-  );
-  --font-resume-mono: var(--portfolio-dev-font-family, var(--font-ibm-plex-mono));
+  --font-portfolio-controls: var(--font-ibm-plex-mono);
+  --font-resume-mono: var(--font-ibm-plex-mono);
   --color-portfolio-white: var(--portfolio-neutral-50);
   --color-portfolio-black: var(--portfolio-neutral-950);
   --color-portfolio-text: var(--portfolio-text);
@@ -52,30 +49,17 @@ body {
   min-height: 100%;
   margin: 0;
   background: var(--portfolio-neutral-950);
-  letter-spacing: var(--portfolio-dev-tracking, 0em);
+  letter-spacing: 0em;
 }
 
 .portfolio-typography {
-  font-size: var(--portfolio-dev-font-size, 13px);
-  line-height: var(--portfolio-dev-line-height, 2);
-  font-weight: var(--portfolio-dev-font-weight, 400);
+  font-size: 13px;
+  line-height: 2;
+  font-weight: 400;
 }
 
-/* Dev previews also reach portaled menus, tooltips, and contact details. */
-html[data-portfolio-dev-font] .portfolio-typography {
-  font-family: var(--portfolio-dev-font-family);
-}
-
-html[data-portfolio-dev-typography] .portfolio-typography,
-html[data-portfolio-dev-typography] .portfolio-typography .font-normal {
-  font-weight: var(--portfolio-dev-font-weight);
-}
-
-.portfolio-typography
-  :is(p, li, h1, h2, h3, h4, h5, h6, [role='paragraph']):not(
-    [data-portfolio-dev-tools] *
-  ) {
-  text-wrap: var(--portfolio-dev-text-wrap, pretty);
+.portfolio-typography :is(p, li, h1, h2, h3, h4, h5, h6, [role='paragraph']) {
+  text-wrap: pretty;
 }
 
 /* Opt in for standalone uppercase labels centered against controls or icons. */
@@ -131,6 +115,11 @@ html[data-portfolio-route='work'] body,
 .portfolio-theme-root {
   background-color: var(--portfolio-surface);
   color: var(--portfolio-text);
+}
+
+html[data-portfolio-route='work'],
+html[data-portfolio-route='work'] body {
+  overflow: hidden;
 }
 
 html[data-portfolio-route='work'],

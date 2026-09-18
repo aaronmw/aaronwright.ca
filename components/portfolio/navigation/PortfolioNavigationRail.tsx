@@ -109,7 +109,7 @@ function NavigationDotButton({
   const button = (
     <button
       type="button"
-      className={`absolute grid place-items-center border-0 bg-transparent p-0 outline-none focus-visible:z-[var(--portfolio-layer-focused-control)] focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 ${
+      className={`group/navigation-dot absolute grid place-items-center border-0 bg-transparent p-0 outline-none focus-visible:z-[var(--portfolio-layer-focused-control)] focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 ${
         active
           ? 'text-portfolio-accent-decoration'
           : 'text-portfolio-text hover:text-portfolio-accent-decoration focus-visible:text-portfolio-accent-decoration'
@@ -135,7 +135,7 @@ function NavigationDotButton({
         />
       </span>
       <span
-        className={item.pending ? 'portfolio-pending-dot' : ''}
+        className={`${active ? '' : 'opacity-50 group-hover/navigation-dot:opacity-100 group-focus-visible/navigation-dot:opacity-100'} ${item.pending ? 'portfolio-pending-dot' : ''}`}
         style={{
           width: DOT_SIZE,
           height: DOT_SIZE,
@@ -179,7 +179,10 @@ function RailMarker() {
       }}
       aria-hidden="true"
     >
-      <span className="size-[var(--portfolio-logo-size)] bg-portfolio-accent-decoration" />
+      <FiveByFive
+        variant="outline"
+        className="text-portfolio-accent-decoration"
+      />
     </span>
   )
 }
@@ -237,7 +240,7 @@ function MaskedActiveDot({
         }
       >
         <span
-          className={pending ? 'portfolio-pending-dot bg-portfolio-surface' : 'bg-portfolio-surface'}
+          className={pending ? 'portfolio-pending-dot bg-white' : 'bg-white'}
           style={{ width: DOT_SIZE, height: DOT_SIZE }}
         />
       </span>

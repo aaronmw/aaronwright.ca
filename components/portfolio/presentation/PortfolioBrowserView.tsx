@@ -364,6 +364,7 @@ function PortfolioViewerLayer({
       slides={model.viewerSlides}
       index={model.viewerIndex}
       intent={model.viewerIntent}
+      isTouchInput={model.isTouchInput}
       registerMediaElement={actions.registerMediaElement}
       onView={actions.handleViewerView}
       onSelect={actions.handleViewerView}

@@ -16,6 +16,7 @@ export function PortfolioViewer({
   slides,
   index,
   intent,
+  isTouchInput,
   registerMediaElement,
   onView,
   onSelect,
@@ -25,6 +26,7 @@ export function PortfolioViewer({
   slides: PortfolioViewerSlide[]
   index: number
   intent: ViewerOpenIntent
+  isTouchInput: boolean
   registerMediaElement: (
     key: string,
     element: PortfolioMediaElement | null,
@@ -42,7 +44,7 @@ export function PortfolioViewer({
     zoomRef,
   } = usePortfolioViewerTransition({ index, intent, slides, onClose, onView })
 
-  function renderSlide({ slide }: RenderSlideProps) {
+  function renderSlide({ slide, offset, zoom = 1 }: RenderSlideProps) {
     if (slide.type !== 'portfolio-media') return null
     return (
       <div
@@ -59,6 +61,21 @@ export function PortfolioViewer({
           priority
           sizes="100vw"
           className="object-contain"
+          action={{
+            label: zoom > 1 ? 'Fit media to screen' : 'Zoom in',
+            zoomed: zoom > 1,
+            disabled: phase !== 'open' || offset !== 0,
+            onClick: event => {
+              const controller = zoomRef.current
+              if (!controller || controller.disabled) return
+              controller.changeZoom(
+                controller.zoom > 1 ? 1 : controller.maxZoom,
+                false,
+                event.detail === 0 ? 0 : event.clientX - window.innerWidth / 2,
+                event.detail === 0 ? 0 : event.clientY - window.innerHeight / 2,
+              )
+            },
+          }}
         />
       </div>
     )
@@ -71,6 +88,7 @@ export function PortfolioViewer({
       index={index}
       slides={slides}
       plugins={[Zoom]}
+      noScroll={{ disabled: true }}
       className={`portfolio-viewer portfolio-viewer--${phase} ${phase === 'closing' ? 'pointer-events-none' : ''}`}
       controller={{
         ref: controllerRef,
@@ -88,9 +106,11 @@ export function PortfolioViewer({
       toolbar={{ buttons: [] }}
       zoom={{
         ref: zoomRef,
-        maxZoom: 2,
+        maxZoom: isTouchInput ? 4 : 2,
         supports: ['portfolio-media'],
-        doubleClickMaxStops: 1,
+        // The media button owns clicks; the plugin still owns pan and pinch.
+        doubleClickDelay: 0,
+        doubleTapDelay: 0,
         pinchZoomV4: true,
         scrollToZoom: false,
       }}

@@ -70,7 +70,7 @@ const projects: PortfolioProject[] = [
 
 describe('portfolio project order', () => {
   it('uses the curated section sequence', () => {
-    expect(portfolioSlides.map((project) => project.slug)).toEqual([
+    expect(portfolioSlides.map(project => project.slug)).toEqual([
       'about-me',
       'loopio',
       'freshbooks',
@@ -198,9 +198,14 @@ describe('portfolio routes', () => {
     expect(projectUrl(about, slides[1])).toBe('/work/about-me/details')
     expect(getInitialSlideIndexes([about], 'about-me', 'details')).toEqual([1])
     slides.forEach((slide, index) => {
-      expect(parsePortfolioRoute(
-        projectUrl(about, slide), '?modal=image', [about], projectSlides,
-      )).toEqual({
+      expect(
+        parsePortfolioRoute(
+          projectUrl(about, slide),
+          '?modal=image',
+          [about],
+          projectSlides,
+        ),
+      ).toEqual({
         projectIndex: 0,
         slideIndex: index,
         viewerOpen: false,
@@ -209,9 +214,7 @@ describe('portfolio routes', () => {
       expect(getSlideMediaKey(about, slide, true)).toBeUndefined()
     })
     expect(getPortfolioViewerSlides(about)).toEqual([])
-    expect(pageTitle(about)).toBe(
-      'About Aaron M. Wright',
-    )
+    expect(pageTitle(about)).toBe('About Aaron M. Wright')
     expect(slideNavigationTitle(about, slides[1])).toBe('About Me • Details')
   })
 
@@ -226,10 +229,10 @@ describe('portfolio routes', () => {
     expect(viewerUrl(projects[1], overview)).toBe(
       '/work/project-two/overview?modal=image',
     )
-    expect(pageTitle()).toBe('Aaron M. Wright | Product Designer & Frontend Engineer')
-    expect(pageTitle(projects[1])).toBe(
-      'Project Two | Aaron M. Wright',
+    expect(pageTitle()).toBe(
+      'Aaron M. Wright | Product Designer & Frontend Engineer',
     )
+    expect(pageTitle(projects[1])).toBe('Project Two | Aaron M. Wright')
     expect(slideNavigationTitle(projects[1], overview)).toBe(
       'Project Two • Index',
     )
@@ -285,11 +288,17 @@ describe('project narrative resolution', () => {
     const textProject: PortfolioProject = {
       ...projects[0],
       overviewMarkdown: 'Biography paragraph.',
-      detailsMarkdown: '## Situations\n\n- One\n\n## Collaboration\n\n- Two\n\n## Contributions\n\n- Three',
+      detailsMarkdown:
+        '## Situations\n\n- One\n\n## Collaboration\n\n- Two\n\n## Contributions\n\n- Three',
     }
-    expect(getProjectNarratives(textProject, getProjectSlides(textProject))).toEqual([
+    expect(
+      getProjectNarratives(textProject, getProjectSlides(textProject)),
+    ).toEqual([
       { sourceId: 'project:about-me', bodyMarkdown: 'Biography paragraph.' },
-      { sourceId: 'slide:about-me-details', bodyMarkdown: textProject.detailsMarkdown },
+      {
+        sourceId: 'slide:about-me-details',
+        bodyMarkdown: textProject.detailsMarkdown,
+      },
     ])
   })
 })
@@ -343,10 +352,7 @@ describe('portfolio viewer media', () => {
   it('filters text slides and keeps public media in canonical order', () => {
     expect(getPortfolioViewerSlides(projects[0])).toEqual([])
     const viewerSlides = getPortfolioViewerSlides(projects[1])
-    expect(viewerSlides.map((slide) => slide.id)).toEqual([
-      'overview',
-      'motion',
-    ])
+    expect(viewerSlides.map(slide => slide.id)).toEqual(['overview', 'motion'])
     expect(getViewerSlideIndex(viewerSlides, 'motion')).toBe(1)
     expect(getViewerSlideIndex(viewerSlides, 'missing')).toBe(0)
   })
@@ -361,7 +367,7 @@ describe('portfolio viewer media', () => {
         alt: 'Cover',
       },
     }
-    expect(getPortfolioViewerSlides(project).map((slide) => slide.id)).toEqual([
+    expect(getPortfolioViewerSlides(project).map(slide => slide.id)).toEqual([
       'cover',
       'overview',
       'motion',
@@ -376,16 +382,62 @@ describe('viewer transition geometry', () => {
         { left: 100, top: 80, width: 300, height: 200 },
         { left: 400, top: 40, width: 900, height: 600 },
       ),
-    ).toEqual({ x: -300, y: 40, scale: 1 / 3 })
+    ).toEqual({ x: -300, y: 40, scaleX: 1 / 3, scaleY: 1 / 3 })
   })
 
   it('returns to the same source when an opening transform is interrupted', () => {
     const target = { left: 100, top: 80, width: 300, height: 200 }
     const resting = { left: 400, top: 40, width: 900, height: 600 }
-    const current = { x: -150, y: 20, scale: 2 / 3 }
-    const interrupted = { left: 250, top: 60, width: 600, height: 400 }
+    const current = { x: -150, y: 20, scaleX: 2 / 3, scaleY: 0.6 }
+    const interrupted = { left: 250, top: 60, width: 600, height: 360 }
     expect(getViewerMediaTransform(target, interrupted, current)).toEqual(
       getViewerMediaTransform(target, resting),
     )
+  })
+
+  it('lands the border and image on their own bounds, preserving the thumbnail inset', () => {
+    const frame = {
+      left: 30,
+      top: 234.5390625,
+      width: 333,
+      height: 382.9140625,
+    }
+    const image = {
+      left: 45,
+      top: 249.5390625,
+      width: 303,
+      height: 352.9140625,
+    }
+    const thumbnail = {
+      left: 126.8828125,
+      top: 590.328125,
+      width: 172.234375,
+      height: 195.671875,
+    }
+    const thumbnailImage = {
+      left: 141.8828125,
+      top: 605.328125,
+      width: 142.234375,
+      height: 165.671875,
+    }
+    const borderTransform = getViewerMediaTransform(thumbnail, frame)
+    const imageTransform = getViewerMediaTransform(thumbnailImage, image)
+    const borderLeft = frame.left + borderTransform.x
+    const borderTop = frame.top + borderTransform.y
+    const imageLeft = image.left + imageTransform.x
+    const imageTop = image.top + imageTransform.y
+
+    expect(imageLeft - borderLeft).toBeCloseTo(15)
+    expect(imageTop - borderTop).toBeCloseTo(15)
+    expect(
+      borderLeft +
+        frame.width * borderTransform.scaleX -
+        (imageLeft + image.width * imageTransform.scaleX),
+    ).toBeCloseTo(15)
+    expect(
+      borderTop +
+        frame.height * borderTransform.scaleY -
+        (imageTop + image.height * imageTransform.scaleY),
+    ).toBeCloseTo(15)
   })
 })

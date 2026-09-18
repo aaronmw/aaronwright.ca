@@ -46,7 +46,7 @@ async function dragGesture(
 
 async function openOverviewViewer(page: Page, testInfo: TestInfo) {
   const source = page.locator(
-    '[data-portfolio-screenshot-id="aarons-toolbox-overview"][data-portfolio-viewer-source="active"]',
+    '[data-portfolio-screenshot-id="aarons-toolbox-overview"][data-portfolio-viewer-source="active"] [data-portfolio-media-action]',
   )
 
   if (testInfo.project.name.includes('iphone')) {
@@ -55,12 +55,10 @@ async function openOverviewViewer(page: Page, testInfo: TestInfo) {
     const x = box!.x + box!.width / 2
     const y = box!.y + box!.height / 2
     await page.touchscreen.tap(x, y)
-    await page.waitForTimeout(80)
-    await page.touchscreen.tap(x, y)
     return
   }
 
-  await source.dblclick()
+  await source.click()
 }
 
 test('deep links restore both Embla axes and their active markers', async ({
@@ -710,9 +708,7 @@ test('zoomed viewer drags pan and media changes reset zoom', async ({
   const zoomWrapper = page.locator('.yarl__slide_current .yarl__slide_wrapper')
   const box = await stage.boundingBox()
   expect(box).not.toBeNull()
-  await stage.dblclick({
-    position: { x: box!.width / 2, y: box!.height / 2 },
-  })
+  await stage.getByRole('button', { name: 'Zoom in', exact: true }).click()
   await expect(zoomWrapper).toHaveAttribute('style', /scale\(2\)/)
 
   await dragGesture(

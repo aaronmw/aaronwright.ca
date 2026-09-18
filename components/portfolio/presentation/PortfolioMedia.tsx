@@ -1,5 +1,5 @@
 import Image from 'next/image'
-import type { CSSProperties, ReactNode } from 'react'
+import type { CSSProperties } from 'react'
 import { useCallback, useId, useRef, useState } from 'react'
 import type { PortfolioScreenshot } from '@/lib/portfolio'
 import { portfolioAccentColor } from '@/lib/portfolioPalette'
@@ -13,7 +13,11 @@ import {
 } from '@/components/portfolio/domain/slides'
 import { CircularIconButton } from './PortfolioControls'
 import { FiveByFive } from './FiveByFive'
-import { PortfolioViewerOpenSurface } from './PortfolioViewerOpenSurface'
+import { usePortfolioViewerOpenSurface } from './usePortfolioViewerOpenSurface'
+import {
+  PortfolioMediaAction,
+  type PortfolioMediaActionProps,
+} from './PortfolioMediaAction'
 import type { ViewerOpenIntent } from '../domain/viewer'
 
 const CAROUSEL_MEDIA_CLASS =
@@ -56,6 +60,8 @@ function restartVideo(video: HTMLVideoElement) {
 function PhoneFrameBackdrop({ clipPathId }: { clipPathId: string }) {
   return (
     <span
+      data-portfolio-media-layer="border"
+      data-portfolio-media-layer-resize
       aria-hidden="true"
       className="pointer-events-none absolute [inset:var(--portfolio-media-frame-width)]"
     >
@@ -107,6 +113,7 @@ function VideoScrubber({
 
   return (
     <div
+      data-portfolio-media-layer="controls"
       data-portfolio-carousel-drag-lock
       className="pointer-events-auto absolute left-[var(--portfolio-media-frame-width)] right-[var(--portfolio-media-frame-width)] z-[var(--portfolio-layer-media-controls)] h-[calc(var(--portfolio-logo-size)+var(--portfolio-media-frame-width)/2)] opacity-0 transition-opacity duration-[var(--portfolio-motion-feedback)] ease-out [top:calc(100%_-_var(--portfolio-media-frame-width))] focus-within:opacity-100 hover:opacity-100 [@media(hover:hover)]:group-hover/video:opacity-100 motion-reduce:transition-none"
       style={
@@ -126,7 +133,6 @@ function VideoScrubber({
           aria-label={label}
           className="portfolio-video-scrubber-input peer absolute inset-y-0 left-0 right-0 z-[var(--portfolio-layer-overlay)] m-0 w-auto cursor-ew-resize appearance-none bg-transparent p-0 opacity-0 disabled:cursor-default"
           onChange={event => onScrub(Number(event.currentTarget.value))}
-          onDoubleClick={event => event.stopPropagation()}
         />
         <span
           aria-hidden="true"
@@ -144,42 +150,6 @@ function VideoScrubber({
         </span>
       </div>
     </div>
-  )
-}
-
-function ViewerScreenshot({
-  active,
-  screenshotId,
-  concealed,
-  className,
-  restingMediaPadding,
-  onOpenViewer,
-  children,
-}: {
-  active: boolean
-  screenshotId: string
-  concealed: boolean
-  className: string
-  restingMediaPadding: string
-  onOpenViewer: (intent: ViewerOpenIntent) => void
-  children: ReactNode
-}) {
-  return (
-    <PortfolioViewerOpenSurface
-      active={active}
-      screenshotId={screenshotId}
-      concealed={concealed}
-      className={className}
-      onOpen={onOpenViewer}
-      style={
-        {
-          '--portfolio-media-padding': restingMediaPadding,
-          'backgroundColor': 'transparent',
-        } as CSSProperties
-      }
-    >
-      {children}
-    </PortfolioViewerOpenSurface>
   )
 }
 
@@ -203,34 +173,53 @@ export function ProjectPanel({
   ) => void
   onOpenViewer: (intent: ViewerOpenIntent) => void
 }) {
+  const concealed = concealedScreenshotId === slide.screenshot.id
+  const { surfaceRef, onClick } = usePortfolioViewerOpenSurface({
+    active: isActive,
+    screenshotId: slide.screenshot.id,
+    onOpen: onOpenViewer,
+  })
+
   return (
     <div
       className={`relative grid h-full min-h-0 min-w-0 place-items-center overflow-hidden [--portfolio-media-bottom-padding:0px] ${reserveNavigationSpace ? 'pb-[var(--portfolio-slide-navigation-reserved-height)]' : ''}`}
     >
-      <ViewerScreenshot
-        active={isActive}
-        screenshotId={slide.screenshot.id}
-        concealed={concealedScreenshotId === slide.screenshot.id}
-        restingMediaPadding={restingMediaPadding}
-        onOpenViewer={onOpenViewer}
-        className="relative h-full min-h-0 w-full min-w-0"
+      <div
+        ref={surfaceRef}
+        data-portfolio-screenshot-id={slide.screenshot.id}
+        data-portfolio-viewer-source={isActive ? 'active' : undefined}
+        className={`relative h-full min-h-0 w-full min-w-0 overflow-hidden ${concealed ? 'invisible' : ''}`}
+        style={
+          {
+            '--portfolio-media-padding': restingMediaPadding,
+            touchAction: 'pan-x pan-y',
+          } as CSSProperties
+        }
       >
-        <ScreenshotMedia
-          screenshot={slide.screenshot}
-          mediaKey={carouselMediaKey(slide.screenshot)}
-          registerMediaElement={registerMediaElement}
-          priority={isActive}
-          showReplayControl={isActive}
-          sizes="(min-aspect-ratio: 5/4) 70vw, 100vw"
-          className={getCarouselMediaClass(false)}
-        />
-      </ViewerScreenshot>
+        <div className="pointer-events-none absolute inset-0 select-none">
+          <ScreenshotMedia
+            screenshot={slide.screenshot}
+            mediaKey={carouselMediaKey(slide.screenshot)}
+            registerMediaElement={registerMediaElement}
+            priority={isActive}
+            showReplayControl={isActive}
+            sizes="(min-aspect-ratio: 5/4) 70vw, 100vw"
+            className={getCarouselMediaClass(false)}
+            action={{
+              label: `Enlarge ${slide.screenshot.alt}`,
+              onClick,
+              disabled: !isActive || concealed,
+            }}
+          />
+        </div>
+      </div>
     </div>
   )
 }
 
 export function ScreenshotMedia({
   screenshot,
+  action,
   initialAspectRatio,
   mediaKey,
   registerMediaElement,
@@ -240,6 +229,7 @@ export function ScreenshotMedia({
   className,
 }: {
   screenshot: PortfolioScreenshot
+  action: PortfolioMediaActionProps
   initialAspectRatio?: number
   mediaKey: string
   registerMediaElement: (
@@ -334,11 +324,19 @@ export function ScreenshotMedia({
 
   const frameClassName = usesPhoneFrame
     ? `relative [padding:var(--portfolio-media-frame-width)] ${aspectRatio ? '' : 'invisible'}`
-    : 'relative bg-portfolio-shaded [padding:var(--portfolio-media-frame-width)]'
+    : 'relative [padding:var(--portfolio-media-frame-width)]'
 
-  const phoneFrameBackdrop = usesPhoneFrame ? (
+  // Animate the border and the media independently: a fixed-width border changes
+  // the outer aspect ratio between the thumbnail and the enlarged image.
+  const frameBackdrop = usesPhoneFrame ? (
     <PhoneFrameBackdrop clipPathId={phoneFrameClipPathId} />
-  ) : null
+  ) : (
+    <span
+      data-portfolio-media-layer="border"
+      aria-hidden="true"
+      className="pointer-events-none absolute inset-0 bg-portfolio-shaded"
+    />
+  )
 
   const mediaFrameStyle: CSSProperties | undefined = usesPhoneFrame
     ? { clipPath: `url(#${phoneFrameClipPathId})` }
@@ -346,6 +344,7 @@ export function ScreenshotMedia({
   const mediaFrameClassName = usesPhoneFrame
     ? 'relative h-full w-full'
     : 'relative h-full w-full bg-[var(--portfolio-surface)]'
+  const mediaAction = <PortfolioMediaAction {...action} />
 
   if (isVideoScreenshot(screenshot)) {
     return (
@@ -356,8 +355,9 @@ export function ScreenshotMedia({
           // Include the scrubber's overhang in the grid's centred footprint.
           style={{ ...frameStyle, marginBottom: progressBarOverhang }}
         >
-          {phoneFrameBackdrop}
+          {frameBackdrop}
           <div
+            data-portfolio-media-layer="content"
             className={`${mediaFrameClassName} ${hasReplayControl && !replayHoverSuppressed ? 'group/restart' : ''}`}
             style={mediaFrameStyle}
             onMouseLeave={
@@ -389,12 +389,6 @@ export function ScreenshotMedia({
                 draggable={false}
                 loop
                 muted
-                onClick={event => {
-                  if (!screenshot.restartable || event.detail > 1) return
-                  restartVideo(event.currentTarget)
-                  setVideoCurrentTime(0)
-                  if (hasReplayControl) setReplayHoverSuppressed(true)
-                }}
                 onCanPlay={event => updateVideoDuration(event.currentTarget)}
                 onDragStart={event => event.preventDefault()}
                 onDurationChange={event =>
@@ -412,9 +406,10 @@ export function ScreenshotMedia({
                 }}
                 playsInline
                 preload={priority ? 'auto' : 'metadata'}
-                className={`absolute inset-0 h-full w-full select-none object-contain ${screenshot.restartable ? 'pointer-events-auto cursor-pointer' : ''} ${className}`}
+                className={`absolute inset-0 h-full w-full select-none object-contain ${className}`}
               />
             )}
+            {mediaAction}
             {hasReplayControl ? (
               <span
                 aria-hidden="true"
@@ -462,8 +457,9 @@ export function ScreenshotMedia({
         className={frameClassName}
         style={frameStyle}
       >
-        {phoneFrameBackdrop}
+        {frameBackdrop}
         <div
+          data-portfolio-media-layer="content"
           className={mediaFrameClassName}
           style={mediaFrameStyle}
         >
@@ -481,6 +477,7 @@ export function ScreenshotMedia({
             sizes={sizes}
             className={`select-none object-contain ${className}`}
           />
+          {mediaAction}
         </div>
       </div>
     </div>

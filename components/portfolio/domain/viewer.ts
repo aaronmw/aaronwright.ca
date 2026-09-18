@@ -3,12 +3,7 @@ import type { PortfolioProject, PortfolioScreenshot } from '@/lib/portfolio'
 import { getProjectMediaScreenshots } from './slides'
 
 export type ViewerActivationKind =
-  | 'double-click'
-  | 'double-tap'
-  | 'keyboard'
-  | 'touch-pinch'
-  | 'trackpad-pinch'
-  | 'deep-link'
+  'click' | 'keyboard' | 'touch-pinch' | 'trackpad-pinch' | 'deep-link'
 
 export type ViewerPoint = {
   x: number
@@ -25,15 +20,16 @@ export type ViewerSourceRect = {
 export function getViewerMediaTransform(
   target: ViewerSourceRect,
   measured: ViewerSourceRect,
-  current = { x: 0, y: 0, scale: 1 },
+  current = { x: 0, y: 0, scaleX: 1, scaleY: 1 },
 ) {
   // Recover the resting box when closing partway through the opening transform.
-  const width = measured.width / current.scale
-  const height = measured.height / current.scale
+  const width = measured.width / current.scaleX
+  const height = measured.height / current.scaleY
   return {
     x: target.left - (measured.left - current.x),
     y: target.top - (measured.top - current.y),
-    scale: Math.min(target.width / width, target.height / height),
+    scaleX: target.width / width,
+    scaleY: target.height / height,
   }
 }
 
@@ -61,7 +57,7 @@ declare module 'yet-another-react-lightbox' {
 export function getPortfolioViewerSlides(
   project: PortfolioProject,
 ): PortfolioViewerSlide[] {
-  return getProjectMediaScreenshots(project).map((screenshot) => ({
+  return getProjectMediaScreenshots(project).map(screenshot => ({
     type: 'portfolio-media',
     id: screenshot.id,
     screenshot,
@@ -72,6 +68,6 @@ export function getViewerSlideIndex(
   slides: PortfolioViewerSlide[],
   mediaId: string,
 ) {
-  const index = slides.findIndex((slide) => slide.id === mediaId)
+  const index = slides.findIndex(slide => slide.id === mediaId)
   return index < 0 ? 0 : index
 }
