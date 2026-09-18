@@ -88,9 +88,9 @@ export function PortfolioViewer({
       toolbar={{ buttons: [] }}
       zoom={{
         ref: zoomRef,
-        maxZoom: 4,
+        maxZoom: 2,
         supports: ['portfolio-media'],
-        doubleClickMaxStops: 2,
+        doubleClickMaxStops: 1,
         pinchZoomV4: true,
         scrollToZoom: false,
       }}

@@ -710,12 +710,17 @@ button {
 .portfolio-prose-link {
   color: var(--portfolio-accent);
   font-weight: 700;
+  transition: color var(--portfolio-motion-link) ease-out;
+}
+
+.portfolio-markdown a,
+.portfolio-prose-link,
+.portfolio-prose-link--label-only:not(:disabled) .portfolio-prose-link-label {
   text-decoration: underline;
   text-decoration-color: currentColor;
   text-decoration-skip-ink: auto;
-  text-decoration-thickness: 0.07em;
-  text-underline-offset: 0.18em;
-  transition: color var(--portfolio-motion-link) ease-out;
+  text-decoration-thickness: 0.12em;
+  text-underline-offset: 0.3em;
 }
 
 .portfolio-markdown a:hover,
@@ -735,14 +740,6 @@ button {
 .portfolio-prose-link--label-only,
 .portfolio-prose-link--faux-underlined {
   text-decoration: none;
-}
-
-.portfolio-prose-link--label-only:not(:disabled) .portfolio-prose-link-label {
-  text-decoration: underline;
-  text-decoration-color: currentColor;
-  text-decoration-skip-ink: auto;
-  text-decoration-thickness: 0.07em;
-  text-underline-offset: 0.18em;
 }
 
 @media (prefers-reduced-motion: reduce) {
