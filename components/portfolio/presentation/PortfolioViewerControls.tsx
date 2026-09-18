@@ -22,9 +22,9 @@ export function PortfolioViewerControls({
   onSelect: (index: number) => void
 }) {
   return (
-    <div className="pointer-events-none fixed inset-0 z-[var(--portfolio-layer-viewer-controls)] text-portfolio-text">
+    <>
       <div
-        className="pointer-events-none fixed inset-0"
+        className="pointer-events-none fixed inset-0 z-[var(--portfolio-layer-viewer-controls)] text-portfolio-text"
         data-portfolio-viewer-controls
       >
         {slides.length > 1 ? (
@@ -85,7 +85,7 @@ export function PortfolioViewerControls({
       {slides.length > 1 ? (
         <nav
           data-portfolio-viewer-slide-navigation
-          className="pointer-events-auto fixed inset-x-0 bottom-[var(--portfolio-frame-rule-size)] grid h-[calc(var(--portfolio-navigation-track-size)+env(safe-area-inset-bottom,0px))] place-items-center pb-[env(safe-area-inset-bottom,0px)] font-portfolio-controls"
+          className="pointer-events-auto absolute inset-x-0 bottom-[var(--portfolio-frame-rule-size)] grid h-[calc(var(--portfolio-navigation-track-size)+env(safe-area-inset-bottom,0px))] place-items-center pb-[env(safe-area-inset-bottom,0px)] font-portfolio-controls"
           aria-label={`${project.title} screens`}
         >
           <PortfolioSlideRail
@@ -98,6 +98,6 @@ export function PortfolioViewerControls({
           />
         </nav>
       ) : null}
-    </div>
+    </>
   )
 }

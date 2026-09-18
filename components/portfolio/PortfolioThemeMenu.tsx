@@ -12,7 +12,6 @@ import {
 import { portfolioFont } from '@/lib/portfolioFonts'
 import { usePortfolioTheme } from './PortfolioThemeProvider'
 import type { PortfolioThemePreference } from './domain/appearance'
-import { FiveByFive } from './presentation/FiveByFive'
 import { PortfolioIcon, type PortfolioIconName } from './presentation/PortfolioIcon'
 
 type PortfolioThemeMenuProps = {
@@ -45,9 +44,13 @@ export function PortfolioThemeMenu({ hidden }: PortfolioThemeMenuProps) {
   const [open, setOpen] = useState(false)
   if (hidden) return null
 
-  const triggerLabel = `Appearance: ${
-    THEME_OPTIONS.find(option => option.value === preference)?.label ?? 'System'
-  }`
+  const activeOption =
+    THEME_OPTIONS.find(option => option.value === preference) ?? THEME_OPTIONS[0]
+  const menuOptions = [
+    activeOption,
+    ...THEME_OPTIONS.filter(option => option.value !== activeOption.value),
+  ]
+  const triggerLabel = `Appearance: ${activeOption.label}`
   const handleSelection = (keys: Selection) => {
     if (keys === 'all') return
     const selected = Array.from(keys)[0]
@@ -88,6 +91,8 @@ export function PortfolioThemeMenu({ hidden }: PortfolioThemeMenuProps) {
         <Popover
           placement="bottom end"
           offset={0}
+          containerPadding={0}
+          shouldFlip={false}
           className={`portfolio-theme-menu portfolio-typography ${portfolioFont.className}`}
           style={{ zIndex: 'var(--portfolio-layer-menu)' }}
           data-portfolio-theme-menu
@@ -98,7 +103,7 @@ export function PortfolioThemeMenu({ hidden }: PortfolioThemeMenuProps) {
             selectedKeys={new Set([preference])}
             onSelectionChange={handleSelection}
           >
-            {THEME_OPTIONS.map(option => (
+            {menuOptions.map(option => (
               <MenuItem
                 key={option.value}
                 id={option.value}
@@ -106,30 +111,15 @@ export function PortfolioThemeMenu({ hidden }: PortfolioThemeMenuProps) {
                 data-portfolio-theme-option={option.value}
                 textValue={option.label}
               >
-                {({ isSelected }) => (
-                  <>
-                    <span
-                      className="portfolio-theme-menu-check"
-                      aria-hidden="true"
-                    >
-                      <FiveByFive
-                        variant="dot"
-                        className={`transition-opacity duration-[var(--portfolio-motion-feedback)] motion-reduce:transition-none ${
-                          isSelected ? 'opacity-100' : 'opacity-0'
-                        }`}
-                      />
-                    </span>
-                    <span className="portfolio-theme-menu-label">
-                      {option.label}
-                    </span>
-                    <span className="grid size-[var(--portfolio-control-size)] place-items-center">
-                      <PortfolioIcon
-                        name={option.icon}
-                        className="text-portfolio-accent-decoration"
-                      />
-                    </span>
-                  </>
-                )}
+                <span className="portfolio-theme-menu-label">
+                  {option.label}
+                </span>
+                <span className="grid size-[var(--portfolio-control-size)] place-items-center">
+                  <PortfolioIcon
+                    name={option.icon}
+                    className="text-portfolio-accent-decoration"
+                  />
+                </span>
               </MenuItem>
             ))}
           </Menu>
