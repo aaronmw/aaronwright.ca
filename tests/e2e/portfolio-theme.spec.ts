@@ -12,6 +12,40 @@ async function openThemeMenu(page: Page) {
   await expect(page.locator('[data-portfolio-theme-menu]')).toBeVisible()
 }
 
+test('pointer opening keeps the appearance menu open until a choice is made', async ({
+  page,
+}, testInfo) => {
+  await page.goto('/work')
+  await waitForPortfolio(page)
+  const trigger = page.locator('[data-portfolio-theme-trigger]')
+  const menu = page.locator('[data-portfolio-theme-menu]')
+
+  if (testInfo.project.use.hasTouch) {
+    await trigger.tap()
+  } else {
+    await trigger.hover()
+    await page.mouse.down()
+    await expect(menu).toBeVisible()
+    // Let the overlapping first row appear before releasing the opening press.
+    await expect(menu).toHaveCSS('opacity', '1')
+    await page.mouse.up()
+  }
+
+  await expect(trigger).toHaveAttribute('aria-expanded', 'true')
+  await expect(menu).toBeVisible()
+  await expect(page.locator('html')).toHaveAttribute(
+    'data-portfolio-theme-preference',
+    'system',
+  )
+
+  const light = page.getByRole('menuitemradio', { name: 'Light', exact: true })
+  if (testInfo.project.use.hasTouch) await light.tap()
+  else await light.click()
+  await expect(menu).toHaveCount(0)
+  await expect(page.locator('html')).toHaveAttribute('data-portfolio-theme', 'light')
+  expect(await page.evaluate(() => localStorage.getItem('portfolio-theme'))).toBe('light')
+})
+
 test('System follows live color-scheme changes', async ({ page }) => {
   await page.emulateMedia({ colorScheme: 'light' })
   await page.goto('/work')

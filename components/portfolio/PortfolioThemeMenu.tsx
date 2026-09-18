@@ -107,6 +107,8 @@ export function PortfolioThemeMenu({ hidden }: PortfolioThemeMenuProps) {
               <MenuItem
                 key={option.value}
                 id={option.value}
+                // The current row overlaps the launcher and receives its mouse-up.
+                shouldCloseOnSelect={option.value !== preference}
                 className="portfolio-theme-menu-item"
                 data-portfolio-theme-option={option.value}
                 textValue={option.label}
