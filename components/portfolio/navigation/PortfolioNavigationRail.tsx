@@ -239,7 +239,7 @@ function MaskedActiveDot({
         }
       >
         <span
-          className={pending ? 'portfolio-pending-dot bg-white' : 'bg-white'}
+          className={pending ? 'portfolio-pending-dot bg-portfolio-text' : 'bg-portfolio-text'}
           style={{ width: DOT_SIZE, height: DOT_SIZE }}
         />
       </span>

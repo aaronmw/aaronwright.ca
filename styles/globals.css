@@ -397,7 +397,7 @@ button {
   opacity: 1;
 }
 
-/* The ordinary rail's clipped white overlay would cover the inverted active
+/* The ordinary rail's clipped overlay would cover the inverted active
    dot. In the viewer, the real button dot supplies every state instead. */
 [data-portfolio-viewer-slide-navigation] [data-portfolio-active-dot-mask] {
   display: none;
