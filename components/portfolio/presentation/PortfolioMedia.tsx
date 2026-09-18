@@ -13,6 +13,7 @@ import {
 } from '@/components/portfolio/domain/slides'
 import { CircularIconButton } from './PortfolioControls'
 import { FiveByFive } from './FiveByFive'
+import { PortfolioIcon } from './PortfolioIcon'
 import { usePortfolioViewerOpenSurface } from './usePortfolioViewerOpenSurface'
 import {
   PortfolioMediaAction,
@@ -419,8 +420,8 @@ export function ScreenshotMedia({
             {hasReplayControl ? (
               <CircularIconButton
                 visual={
-                  <FiveByFive
-                    variant="left"
+                  <PortfolioIcon
+                    name="replay"
                     className="text-portfolio-accent-decoration"
                   />
                 }

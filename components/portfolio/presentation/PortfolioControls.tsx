@@ -11,7 +11,7 @@ import type { IconProp } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { gsap } from 'gsap'
 import { portfolioMotionSeconds } from '@/lib/portfolioTokens'
-import { FiveByFive } from './FiveByFive'
+import { PortfolioIcon } from './PortfolioIcon'
 
 const NAVIGATION_ACTIVE_SCALE = 1
 
@@ -114,36 +114,36 @@ export function PortfolioHelperMessage({
           Use{' '}
           <KeyboardKey
             visual={
-              <FiveByFive
-                variant="left"
-                cellSize="2px"
+              <PortfolioIcon
+                name="left"
+                size="keyboard"
               />
             }
             ariaLabel="left arrow"
           />
           <KeyboardKey
             visual={
-              <FiveByFive
-                variant="right"
-                cellSize="2px"
+              <PortfolioIcon
+                name="right"
+                size="keyboard"
               />
             }
             ariaLabel="right arrow"
           />
           <KeyboardKey
             visual={
-              <FiveByFive
-                variant="up"
-                cellSize="2px"
+              <PortfolioIcon
+                name="up"
+                size="keyboard"
               />
             }
             ariaLabel="up arrow"
           />
           <KeyboardKey
             visual={
-              <FiveByFive
-                variant="down"
-                cellSize="2px"
+              <PortfolioIcon
+                name="down"
+                size="keyboard"
               />
             }
             ariaLabel="down arrow"

@@ -28,7 +28,7 @@ import { PortfolioStartScreen } from './PortfolioStartScreen'
 import { PortfolioLogoMark } from './PortfolioLogoMark'
 import { PortfolioViewer } from './PortfolioViewer'
 import { CircularIconButton, PortfolioHelperMessage } from './PortfolioControls'
-import { FiveByFive } from './FiveByFive'
+import { PortfolioIcon } from './PortfolioIcon'
 
 const START_SCREEN_INDEX = -1
 const NOOP = () => undefined
@@ -210,7 +210,7 @@ function PortfolioHorizontalNavigation({
         >
           <CircularIconButton
             visual={
-              <FiveByFive variant="up" className="text-portfolio-accent-decoration" />
+              <PortfolioIcon name="up" className="text-portfolio-accent-decoration" />
             }
             iconClassName=""
             className="font-portfolio-controls relative size-[var(--portfolio-control-size)] bg-transparent text-[var(--project-color)]"

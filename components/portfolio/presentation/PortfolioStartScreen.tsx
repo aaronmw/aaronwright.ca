@@ -13,7 +13,7 @@ import {
   PortfolioLedgerFrame,
   ProjectHeadingUnderline,
 } from './PortfolioText'
-import { FiveByFive } from './FiveByFive'
+import { PortfolioIcon } from './PortfolioIcon'
 import { PortfolioContactInfo } from './PortfolioContactInfo'
 
 const START_SCREEN_CONTENT_INSETS: CSSProperties = {
@@ -193,7 +193,7 @@ export const PortfolioStartScreen = memo(function PortfolioStartScreen({
         aria-label="Portfolio menu"
         role="region"
         tabIndex={0}
-        bottomScrollControl={<FiveByFive variant="down" />}
+        bottomScrollControl={<PortfolioIcon name="down" />}
         persistentScrollbar
         touchScrollChaining
         scrollContainment={alwaysContainMenuScroll ? 'always' : 'when-overflowing'}

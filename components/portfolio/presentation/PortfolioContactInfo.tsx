@@ -15,7 +15,7 @@ import {
   MOBILE_SECTION_CONTENT_PADDING_LEFT,
   MOBILE_SECTION_CONTENT_PADDING_RIGHT,
 } from '../mobileLayout'
-import { FiveByFive } from './FiveByFive'
+import { PortfolioIcon } from './PortfolioIcon'
 import { PortfolioLogoMark } from './PortfolioLogoMark'
 
 const CONTACT_LINK_CLASS_NAME = 'portfolio-prose-link'
@@ -126,7 +126,7 @@ export function PortfolioContactInfo() {
                         right: 'calc(var(--portfolio-navigation-control-edge-offset) + env(safe-area-inset-right, 0px))',
                       }}
                     >
-                      <FiveByFive variant="x" className="text-portfolio-accent-decoration" />
+                      <PortfolioIcon name="close" className="text-portfolio-accent-decoration" />
                     </Button>
                   </header>
                   <OverscrollIndicator
@@ -134,7 +134,7 @@ export function PortfolioContactInfo() {
                     role="region"
                     tabIndex={0}
                     persistentScrollbar
-                    bottomScrollControl={<FiveByFive variant="down" />}
+                    bottomScrollControl={<PortfolioIcon name="down" />}
                     wrapperClassName="mx-auto h-full w-full max-w-[var(--resume-content-width)]"
                     contentClassName="flex min-h-full flex-col justify-center"
                     className="overflow-x-hidden outline-none focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-portfolio-accent"

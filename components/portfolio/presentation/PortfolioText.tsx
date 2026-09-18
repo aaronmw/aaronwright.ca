@@ -20,7 +20,7 @@ import type { PortfolioProject } from '@/lib/portfolio'
 import { portfolioMotion } from '@/lib/portfolioTokens'
 import type { ResolvedProjectNarrative } from '../domain/narrative'
 import { OverscrollIndicator } from '@/components/OverscrollIndicator'
-import { FiveByFive } from './FiveByFive'
+import { PortfolioIcon } from './PortfolioIcon'
 import { PortfolioList, PortfolioListItem } from './PortfolioList'
 
 type MarkdownLinkProps = AnchorHTMLAttributes<HTMLAnchorElement> & {
@@ -280,7 +280,7 @@ export function ProjectNarrativeScroll({
       aria-label={label}
       role="region"
       tabIndex={0}
-      bottomScrollControl={<FiveByFive variant="down" />}
+      bottomScrollControl={<PortfolioIcon name="down" />}
       persistentScrollbar
       touchScrollChaining
       wrapperClassName={wrapperClassName}
@@ -333,7 +333,7 @@ function NarrativePresence({
 
   return (
     <OverscrollIndicator
-      bottomScrollControl={<FiveByFive variant="down" />}
+      bottomScrollControl={<PortfolioIcon name="down" />}
       persistentScrollbar
       touchScrollChaining
       ref={scrollRef}

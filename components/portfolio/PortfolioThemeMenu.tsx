@@ -12,7 +12,8 @@ import {
 import { portfolioFont } from '@/lib/portfolioFonts'
 import { usePortfolioTheme } from './PortfolioThemeProvider'
 import type { PortfolioThemePreference } from './domain/appearance'
-import { FiveByFive, type FiveByFiveVariant } from './presentation/FiveByFive'
+import { FiveByFive } from './presentation/FiveByFive'
+import { PortfolioIcon, type PortfolioIconName } from './presentation/PortfolioIcon'
 
 type PortfolioThemeMenuProps = {
   hidden: boolean
@@ -22,7 +23,7 @@ type PortfolioThemeMenuProps = {
 }
 
 const THEME_OPTIONS: Array<{
-  icon: Extract<FiveByFiveVariant, 'system' | 'light' | 'dark'>
+  icon: Extract<PortfolioIconName, 'system' | 'light' | 'dark'>
   label: string
   value: PortfolioThemePreference
 }> = [
@@ -79,8 +80,8 @@ export function PortfolioThemeMenu({ hidden }: PortfolioThemeMenuProps) {
           data-portfolio-theme-icon={preference}
           data-portfolio-theme-menu-open={open ? '' : undefined}
         >
-          <FiveByFive
-            variant={preference}
+          <PortfolioIcon
+            name={preference}
             className="text-portfolio-accent-decoration"
           />
         </Button>
@@ -122,8 +123,8 @@ export function PortfolioThemeMenu({ hidden }: PortfolioThemeMenuProps) {
                       {option.label}
                     </span>
                     <span className="grid size-[var(--portfolio-control-size)] place-items-center">
-                      <FiveByFive
-                        variant={option.icon}
+                      <PortfolioIcon
+                        name={option.icon}
                         className="text-portfolio-accent-decoration"
                       />
                     </span>

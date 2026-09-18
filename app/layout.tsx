@@ -37,6 +37,13 @@ export default function RootLayout({
       style={{ ...portfolioPaletteStyle, ...portfolioTokenStyle }}
       suppressHydrationWarning
     >
+      <head>
+        <link
+          rel="stylesheet"
+          href="https://kit.fontawesome.com/44d855bf5c.css"
+          crossOrigin="anonymous"
+        />
+      </head>
       <body>
         {children}
         <FaviconSync />

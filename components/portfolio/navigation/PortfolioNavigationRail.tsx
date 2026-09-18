@@ -135,11 +135,10 @@ function NavigationDotButton({
         />
       </span>
       <span
-        className={`${active ? '' : 'opacity-50 group-hover/navigation-dot:opacity-100 group-focus-visible/navigation-dot:opacity-100'} ${item.pending ? 'portfolio-pending-dot' : ''}`}
+        className={`portfolio-navigation-dot ${active ? '' : 'opacity-50 group-hover/navigation-dot:opacity-100 group-focus-visible/navigation-dot:opacity-100'} ${item.pending ? 'portfolio-pending-dot' : ''}`}
         style={{
           width: DOT_SIZE,
           height: DOT_SIZE,
-          background: 'currentColor',
         }}
         aria-hidden="true"
       />

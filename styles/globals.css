@@ -198,6 +198,13 @@ html[data-portfolio-route='work'],
   filter: drop-shadow(1px 1px 0 var(--portfolio-navigation-shadow));
 }
 
+/* Font Awesome's 1.25em canvas must fit inside the shared square icon slot. */
+[data-portfolio-icon] > .portfolio-icon-glyph {
+  width: var(--portfolio-icon-size);
+  font-size: calc(var(--portfolio-icon-size) / 1.25);
+  line-height: 1;
+}
+
 .portfolio-theme-control {
   position: fixed;
   z-index: var(--portfolio-layer-appearance);
@@ -240,10 +247,11 @@ html[data-portfolio-route='work'],
 .portfolio-theme-trigger:hover,
 :is(button:enabled, [data-overflow-scroll-control]):hover
   :is(
-    [data-five-by-five='up'],
-    [data-five-by-five='down'],
-    [data-five-by-five='left'],
-    [data-five-by-five='right']
+    [data-portfolio-icon='up'],
+    [data-portfolio-icon='down'],
+    [data-portfolio-icon='left'],
+    [data-portfolio-icon='right'],
+    [data-portfolio-icon='replay']
   ) {
   opacity: 0.7;
 }
@@ -251,10 +259,11 @@ html[data-portfolio-route='work'],
 @media (prefers-reduced-motion: no-preference) {
   :is(button, [data-overflow-scroll-control])
     :is(
-      [data-five-by-five='up'],
-      [data-five-by-five='down'],
-      [data-five-by-five='left'],
-      [data-five-by-five='right']
+      [data-portfolio-icon='up'],
+      [data-portfolio-icon='down'],
+      [data-portfolio-icon='left'],
+      [data-portfolio-icon='right'],
+      [data-portfolio-icon='replay']
     ) {
     transition: opacity var(--portfolio-motion-theme) ease-out;
   }
@@ -385,6 +394,28 @@ button {
 @keyframes portfolio-pending-dot {
   50% {
     opacity: 0.25;
+  }
+}
+
+.portfolio-navigation-dot {
+  background: currentColor;
+}
+
+/* Image overlays need an edge even where inverting mid-gray adds no contrast. */
+[data-portfolio-viewer-slide-navigation] .portfolio-navigation-dot {
+  box-shadow: 0 0 0 1px var(--portfolio-surface);
+}
+
+@supports (backdrop-filter: invert(1)) or (-webkit-backdrop-filter: invert(1)) {
+  /* Backdrop filtering crosses the viewer's transparent stacking contexts.
+     Wait until its opacity transition ends, and retain the accent selection. */
+  .portfolio-viewer--open
+    [data-portfolio-viewer-slide-navigation]
+    [data-portfolio-slide-indicator-index]:not([aria-current])
+    .portfolio-navigation-dot {
+    background: transparent;
+    -webkit-backdrop-filter: invert(1);
+    backdrop-filter: invert(1);
   }
 }
 

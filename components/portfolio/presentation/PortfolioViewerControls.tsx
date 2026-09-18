@@ -4,7 +4,7 @@ import type { PortfolioProject } from '@/lib/portfolio'
 import type { PortfolioViewerSlide } from '../domain/viewer'
 import { PortfolioSlideRail } from '../navigation/PortfolioNavigationRail'
 import { CircularIconButton } from './PortfolioControls'
-import { FiveByFive } from './FiveByFive'
+import { PortfolioIcon } from './PortfolioIcon'
 
 export function PortfolioViewerControls({
   controllerRef,
@@ -31,8 +31,8 @@ export function PortfolioViewerControls({
           <>
             <CircularIconButton
               visual={
-                <FiveByFive
-                  variant="left"
+                <PortfolioIcon
+                  name="left"
                   className="text-portfolio-accent-decoration group-disabled:text-portfolio-text-dimmed"
                 />
               }
@@ -47,8 +47,8 @@ export function PortfolioViewerControls({
             />
             <CircularIconButton
               visual={
-                <FiveByFive
-                  variant="right"
+                <PortfolioIcon
+                  name="right"
                   className="text-portfolio-accent-decoration group-disabled:text-portfolio-text-dimmed"
                 />
               }
@@ -66,9 +66,9 @@ export function PortfolioViewerControls({
         ) : null}
         <CircularIconButton
           visual={
-            <FiveByFive
-              variant="close"
-              className="bg-portfolio-accent-decoration text-portfolio-white"
+            <PortfolioIcon
+              name="close"
+              className="text-portfolio-accent-decoration"
             />
           }
           iconClassName=""
