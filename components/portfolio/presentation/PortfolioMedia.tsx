@@ -1,6 +1,6 @@
 import Image from 'next/image'
 import type { CSSProperties } from 'react'
-import { useCallback, useId, useRef, useState } from 'react'
+import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import type { PortfolioScreenshot } from '@/lib/portfolio'
 import { portfolioAccentColor } from '@/lib/portfolioPalette'
 import { PHONE_FRAME_PATH, PHONE_FRAME_PATH_SCALE, PHONE_FRAME_SIZE } from '@/lib/phoneFrame'
@@ -21,8 +21,6 @@ import {
 } from './PortfolioMediaAction'
 import type { ViewerOpenIntent } from '../domain/viewer'
 
-const CAROUSEL_MEDIA_CLASS =
-  'object-contain transition-[filter,padding] [transition-duration:var(--portfolio-motion-media-filter),var(--portfolio-motion-media-padding)] [transition-timing-function:ease-in-out,var(--ease-out)] motion-reduce:transition-none'
 const MEDIA_FRAME_INSET = 'calc(var(--portfolio-media-frame-width) * 2)'
 const MISSING_MEDIA_SRC = `data:image/svg+xml,${encodeURIComponent(
   `<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="1000"><rect width="1000" height="1000" fill="${portfolioAccentColor}"/></svg>`,
@@ -47,10 +45,6 @@ function getMediaAspectRatio(element: PortfolioMediaElement) {
       : element.videoHeight
 
   return width && height ? width / height : null
-}
-
-function getCarouselMediaClass(shouldBlur: boolean) {
-  return `${CAROUSEL_MEDIA_CLASS} ${shouldBlur ? 'blur-[20px]' : 'blur-0'}`
 }
 
 function restartVideo(video: HTMLVideoElement) {
@@ -159,6 +153,7 @@ export function ProjectPanel({
   restingMediaPadding,
   reserveNavigationSpace = true,
   isActive,
+  playbackActive,
   concealedScreenshotId,
   registerMediaElement,
   onOpenViewer,
@@ -167,6 +162,7 @@ export function ProjectPanel({
   restingMediaPadding: string
   reserveNavigationSpace?: boolean
   isActive: boolean
+  playbackActive: boolean
   concealedScreenshotId?: string
   registerMediaElement: (
     key: string,
@@ -203,9 +199,10 @@ export function ProjectPanel({
             mediaKey={carouselMediaKey(slide.screenshot)}
             registerMediaElement={registerMediaElement}
             priority={isActive}
+            playbackActive={playbackActive}
             showReplayControl={isActive}
             sizes="(min-aspect-ratio: 5/4) 70vw, 100vw"
-            className={getCarouselMediaClass(false)}
+            className="object-contain"
             action={{
               label: `Enlarge ${slide.screenshot.alt}`,
               onClick,
@@ -225,6 +222,7 @@ export function ScreenshotMedia({
   mediaKey,
   registerMediaElement,
   priority,
+  playbackActive,
   showReplayControl = false,
   sizes,
   className,
@@ -238,6 +236,7 @@ export function ScreenshotMedia({
     element: PortfolioMediaElement | null,
   ) => void
   priority?: boolean
+  playbackActive: boolean
   showReplayControl?: boolean
   sizes: string
   className: string
@@ -260,6 +259,20 @@ export function ScreenshotMedia({
   const renderedAlt = mediaLoadFailed
     ? `Missing portfolio media: ${screenshot.alt}`
     : screenshot.alt
+
+  useEffect(() => {
+    const video = mediaElementRef.current
+    if (!(video instanceof HTMLVideoElement)) return
+
+    if (playbackActive) {
+      void video.play().catch(() => undefined)
+    } else {
+      video.pause()
+    }
+
+    // Pausing preserves playback position and interrupts any pending play call.
+    return () => video.pause()
+  }, [playbackActive, screenshot.src, mediaLoadFailed])
 
   const updateAspectRatio = (element: PortfolioMediaElement) => {
     const nextAspectRatio = getMediaAspectRatio(element)
@@ -386,7 +399,7 @@ export function ScreenshotMedia({
                 ref={setMediaRef}
                 src={screenshot.src}
                 aria-label={renderedAlt}
-                autoPlay
+                autoPlay={playbackActive}
                 draggable={false}
                 loop
                 muted

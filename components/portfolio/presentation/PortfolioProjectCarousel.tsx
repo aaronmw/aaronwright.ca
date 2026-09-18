@@ -73,6 +73,7 @@ export const PortfolioProjectCarousel = memo(function PortfolioProjectCarousel({
   slides,
   activeSlideIndex,
   active,
+  playbackActive,
   isWideLayout,
   isTouchInput,
   layoutStyle,
@@ -89,6 +90,7 @@ export const PortfolioProjectCarousel = memo(function PortfolioProjectCarousel({
   slides: ProjectSlide[]
   activeSlideIndex: number
   active: boolean
+  playbackActive: boolean
   isWideLayout: boolean
   isTouchInput: boolean
   layoutStyle: WideLayoutStyle
@@ -213,6 +215,7 @@ export const PortfolioProjectCarousel = memo(function PortfolioProjectCarousel({
                       slide={slide}
                       restingMediaPadding="var(--portfolio-default-spacing)"
                       isActive={activeSlideIndex === slideIndex}
+                      playbackActive={playbackActive && activeSlideIndex === slideIndex}
                       registerMediaElement={registerMediaElement}
                       onOpenViewer={onOpenViewer}
                     />
@@ -276,6 +279,7 @@ export const PortfolioProjectCarousel = memo(function PortfolioProjectCarousel({
                           : 'var(--portfolio-default-spacing)'
                       }
                       isActive={activeSlideIndex === slideIndex}
+                      playbackActive={playbackActive && activeSlideIndex === slideIndex}
                       registerMediaElement={registerMediaElement}
                       onOpenViewer={onOpenViewer}
                     />

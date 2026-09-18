@@ -59,6 +59,7 @@ export function PortfolioViewer({
           mediaKey={viewerMediaKey(slide.screenshot)}
           registerMediaElement={registerMediaElement}
           priority
+          playbackActive={offset === 0 && phase !== 'closing'}
           sizes="100vw"
           className="object-contain"
           action={{

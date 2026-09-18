@@ -483,6 +483,11 @@ export function PortfolioBrowserView({
                   slides={slides}
                   activeSlideIndex={model.activeSlideIndexes[projectIndex] ?? 0}
                   active={model.activeProjectIndex === projectIndex}
+                  playbackActive={
+                    model.activeProjectIndex === projectIndex &&
+                    model.introPhase === 'ready' &&
+                    !viewerOpen
+                  }
                   isWideLayout={
                     project.detailsMarkdown
                       ? model.isWideTextLayout

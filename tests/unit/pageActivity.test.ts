@@ -28,6 +28,47 @@ function createPageActivity(initiallyActive: boolean) {
 describe('portfolio page activity', () => {
   afterEach(() => {
     vi.useRealTimers()
+    vi.unstubAllGlobals()
+  })
+
+  it('starts loading a visible page without focus or a user gesture', async () => {
+    vi.stubGlobal('document', {
+      visibilityState: 'visible',
+      hasFocus: () => false,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    })
+    vi.stubGlobal('window', new EventTarget())
+    let ready = false
+    const loading = waitForPageActivity().then(() => {
+      ready = true
+    })
+
+    await Promise.resolve()
+    expect(ready).toBe(true)
+    await loading
+  })
+
+  it('resumes loading when a hidden page becomes visible without focus', async () => {
+    const page = Object.assign(new EventTarget(), {
+      visibilityState: 'hidden',
+      hasFocus: () => false,
+    })
+    vi.stubGlobal('document', page)
+    vi.stubGlobal('window', new EventTarget())
+    let ready = false
+    const loading = waitForPageActivity().then(() => {
+      ready = true
+    })
+
+    await Promise.resolve()
+    expect(ready).toBe(false)
+
+    page.visibilityState = 'visible'
+    page.dispatchEvent(new Event('visibilitychange'))
+    await Promise.resolve()
+    expect(ready).toBe(true)
+    await loading
   })
 
   it('waits until the page becomes active', async () => {

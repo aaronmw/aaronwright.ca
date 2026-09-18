@@ -288,10 +288,10 @@ export const OverscrollIndicator = forwardRef<
           aria-hidden="true"
           className="pointer-events-none relative z-[var(--portfolio-layer-content)] col-start-1 row-start-1 h-full w-[var(--logo-stroke-width)] justify-self-end opacity-0 transition-opacity duration-[var(--portfolio-motion-feedback)] ease-[var(--ease-out)] motion-reduce:transition-none"
         >
-          <span className="absolute inset-0 rounded-full bg-portfolio-shaded">
+          <span className="absolute inset-0 bg-portfolio-shaded">
             <span
               ref={scrollbarThumbRef}
-              className="absolute inset-x-0 top-0 min-h-6 rounded-full bg-portfolio-accent-decoration"
+              className="absolute inset-x-0 top-0 min-h-6 bg-portfolio-accent-decoration"
             />
           </span>
         </div>

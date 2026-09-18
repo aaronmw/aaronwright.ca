@@ -4,23 +4,18 @@ export type PageActivity = {
 }
 
 export function isBrowserPageActive() {
-  const hasFocus =
-    typeof document.hasFocus !== 'function' || document.hasFocus()
-
-  return document.visibilityState === 'visible' && hasFocus
+  // Visible pages must load before a tap or keyboard focus. Only background
+  // visibility should suspend media loading and its timeout budget.
+  return document.visibilityState === 'visible'
 }
 
 const browserPageActivity: PageActivity = {
   isActive: isBrowserPageActive,
   subscribe: listener => {
     document.addEventListener('visibilitychange', listener)
-    window.addEventListener('focus', listener)
-    window.addEventListener('blur', listener)
 
     return () => {
       document.removeEventListener('visibilitychange', listener)
-      window.removeEventListener('focus', listener)
-      window.removeEventListener('blur', listener)
     }
   },
 }
