@@ -77,19 +77,20 @@ selection, while the other two recorded none. All raw samples remain in the JSON
 
 The earlier six regressions were reduced to the single 3.2 ms threshold excess
 above. No tolerance, assertion, required outcome, or skip policy was relaxed.
-The proposed baseline replacement is for the corrected interaction protocol and
+The accepted baseline replacement is for the corrected interaction protocol and
 the explicitly requested image-only/on-demand-video loading contract, with that
-remaining desktop-frame tradeoff disclosed. **Baseline approval is pending.**
-The previously accepted baseline remains unchanged; this commit records the work
-and its reviewable evidence, not permission to bypass the deployment gate.
+remaining desktop-frame tradeoff disclosed. **Aaron authorized proceeding with
+deployment after reviewing this remaining tradeoff.** The complete final run is
+now the accepted baseline; the previous baseline remains in the historical
+reports. The normal release check must still pass for the unchanged tested sources.
 
 ## Pride gate
 
-I am proud of the requested loader and the concrete loading/layout fixes. I would
-stand behind the implementation in production with the disclosed performance
-tradeoff accepted. The full functional matrix passes, failed runs remain visible,
-and the release gate still blocks until the reviewed baseline is accepted.
+I am proud of the requested loader and the concrete loading/layout fixes, and I
+would stand behind the implementation in production with the disclosed
+performance tradeoff. The full functional matrix passes, failed runs remain
+visible, and baseline acceptance preserves the normal release gate.
 
-**Verdict: ready with noted risks.** Aaron requested committing and deploying the
-complete work, so the audit is recorded with the local commit. Publishing remains
-pending the explicit baseline decision requested with these final measurements.
+**Verdict: ready with noted risks.** Aaron confirmed proceeding with deployment
+after the baseline question. The baseline acceptance and this audit are committed
+before pushing and publishing the release.
