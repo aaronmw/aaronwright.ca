@@ -28,7 +28,7 @@ import type { PortfolioIntroPhase } from './runtime/types'
 import { installPortfolioWheelAxisLock } from './runtime/wheelAxisLock'
 import { installPortfolioTouchScrollChain } from './runtime/touchScrollChain'
 import {
-  getLockedMouseDragAxis,
+  getPortfolioMouseIntent,
   installPortfolioMouseDragAxisLock,
   isPortfolioCarouselDragLockedTarget,
 } from './runtime/mouseDragAxisLock'
@@ -92,13 +92,13 @@ export function PortfolioBrowser({
     usePortfolioLayout()
 
   const {
-    failure: mediaFailure,
+    imageProgress,
     registerMediaElement,
     ensureMediaReady,
     preloadQueue,
   } = usePortfolioMediaReadiness()
   const {
-    backgroundMediaQueue,
+    imagePreloadQueue,
     initialSlideIndexes,
     initialTargetScreenshot,
     normalizedInitialProjectIndex,
@@ -132,6 +132,7 @@ export function PortfolioBrowser({
       skipSnaps: false,
       startIndex: normalizedInitialProjectIndex + 1,
       watchDrag: (_api, event) => {
+        if (getPortfolioMouseIntent(event) === 'click') return true
         if (
           isPortfolioCarouselDragLockedTarget(event.target) ||
           targetMatches(event.target, NATIVE_WHEEL_SCROLL_SELECTOR)
@@ -143,7 +144,7 @@ export function PortfolioBrowser({
         if (!targetMatches(event.target, '[data-portfolio-carousel]')) {
           return true
         }
-        return getLockedMouseDragAxis(event) === 'y'
+        return getPortfolioMouseIntent(event) === 'y'
       },
     },
     verticalPlugins,
@@ -291,11 +292,15 @@ export function PortfolioBrowser({
     if (!verticalApi || initialRevealStartedRef.current) return
     initialRevealStartedRef.current = true
 
+    // Start required media first, then preload images with bounded concurrency.
+    // The curtain only waits for the opening scene, not the whole portfolio.
+    const openingReady = ensureMediaReady(openingMediaKeys)
+    void preloadQueue(imagePreloadQueue, 1)
     try {
       await Promise.all([
         document.fonts.ready.catch(() => undefined),
         nextFrame().then(nextFrame),
-        ensureMediaReady(openingMediaKeys),
+        openingReady,
       ])
     } catch {
       setIntroPhase('error')
@@ -342,7 +347,6 @@ export function PortfolioBrowser({
         activationKind: 'deep-link',
       })
     }
-    void preloadQueue(backgroundMediaQueue, 2).catch(() => undefined)
   })
 
   useLayoutEffect(() => {
@@ -356,7 +360,8 @@ export function PortfolioBrowser({
       model={{
         activeProjectIndex: selection.projectIndex,
         activeSlideIndexes: selection.slideIndexes,
-        introPhase: mediaFailure ? 'error' : introPhase,
+        introPhase,
+        imageProgress,
         isTouchInput,
         isTouchLandscapeLayout,
         isWideLayout,

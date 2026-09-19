@@ -342,13 +342,13 @@ export function PortfolioSectionRail({
       aria-label={`${side === 'left' ? 'Left' : 'Right'} section navigation`}
       data-portfolio-section-nav-zone={side}
       data-interactive-pop="off"
-      className={`fixed inset-y-0 z-[var(--portfolio-layer-navigation)] font-portfolio-controls transition-opacity duration-[var(--portfolio-motion-state)] motion-reduce:transition-none ${
-        hidden ? 'pointer-events-none opacity-0' : 'opacity-100'
+      className={`pointer-events-none fixed inset-y-0 z-[var(--portfolio-layer-navigation)] font-portfolio-controls transition-opacity duration-[var(--portfolio-motion-state)] motion-reduce:transition-none ${
+        hidden ? 'opacity-0' : 'opacity-100'
       }`}
       style={trackStyle}
     >
       <div
-        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+        className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 ${hidden ? '' : 'pointer-events-auto'}`}
         style={{ width: NAVIGATION_SVG_SIZE, height }}
       >
         <div

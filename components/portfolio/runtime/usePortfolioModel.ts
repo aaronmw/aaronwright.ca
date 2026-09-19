@@ -5,9 +5,10 @@ import {
   getInitialSlideIndexes,
   getProjectMediaScreenshots,
   getProjectSlidesBySlug,
+  isVideoScreenshot,
 } from '@/components/portfolio/domain/slides'
 
-function createPortfolioModel({
+export function createPortfolioModel({
   projects,
   initialProjectSlug,
   initialScreenshotSlug,
@@ -19,7 +20,7 @@ function createPortfolioModel({
   projectSlides: ReturnType<typeof getProjectSlidesBySlug>
 }) {
   const initialProjectIndex = initialProjectSlug
-    ? projects.findIndex((project) => project.slug === initialProjectSlug)
+    ? projects.findIndex(project => project.slug === initialProjectSlug)
     : -1
   const normalizedInitialProjectIndex =
     initialProjectIndex >= 0 ? initialProjectIndex : -1
@@ -28,12 +29,15 @@ function createPortfolioModel({
     initialProjectSlug,
     initialScreenshotSlug,
   )
-  const projectMediaKeys = projects.map((project) =>
-    getProjectMediaScreenshots(project).map(carouselMediaKey),
+  const projectImageKeys = projects.map(project =>
+    getProjectMediaScreenshots(project)
+      .filter(screenshot => !isVideoScreenshot(screenshot))
+      .map(carouselMediaKey),
   )
-  const sectionEntryMediaKeys = projectMediaKeys.flatMap((keys) =>
-    keys[0] ? [keys[0]] : [],
-  )
+  const sectionEntryImageKeys = projects.flatMap(project => {
+    const first = getProjectMediaScreenshots(project)[0]
+    return first && !isVideoScreenshot(first) ? [carouselMediaKey(first)] : []
+  })
   const initialTargetScreenshot = (() => {
     if (normalizedInitialProjectIndex < 0) {
       return undefined
@@ -50,10 +54,14 @@ function createPortfolioModel({
       : undefined
   })()
   const openingMediaKeys = (() => {
-    const journeyKeys = projectMediaKeys
+    const journeyKeys = projects
       .slice(0, normalizedInitialProjectIndex + 1)
-      .map((keys) => keys[0])
-      .filter(Boolean)
+      .flatMap(project => {
+        const first = getProjectMediaScreenshots(project)[0]
+        return first && !isVideoScreenshot(first)
+          ? [carouselMediaKey(first)]
+          : []
+      })
 
     if (initialTargetScreenshot) {
       journeyKeys.push(carouselMediaKey(initialTargetScreenshot))
@@ -61,34 +69,35 @@ function createPortfolioModel({
 
     return Array.from(new Set(journeyKeys))
   })()
-  const backgroundMediaQueue = (() => {
+  const imagePreloadQueue = (() => {
     const activeProjectMedia =
       normalizedInitialProjectIndex >= 0
         ? getProjectMediaScreenshots(projects[normalizedInitialProjectIndex])
         : []
     const activeScreenshotIndex = initialTargetScreenshot
       ? activeProjectMedia.findIndex(
-          (screenshot) => screenshot.id === initialTargetScreenshot.id,
+          screenshot => screenshot.id === initialTargetScreenshot.id,
         )
       : 0
     const adjacentKeys = [-1, 1]
-      .map((offset) => activeProjectMedia[activeScreenshotIndex + offset])
-      .filter((screenshot): screenshot is PortfolioScreenshot =>
-        Boolean(screenshot),
+      .map(offset => activeProjectMedia[activeScreenshotIndex + offset])
+      .filter(
+        (screenshot): screenshot is PortfolioScreenshot =>
+          Boolean(screenshot) && !isVideoScreenshot(screenshot),
       )
       .map(carouselMediaKey)
 
     return Array.from(
       new Set([
         ...adjacentKeys,
-        ...sectionEntryMediaKeys,
-        ...projectMediaKeys.flat(),
+        ...sectionEntryImageKeys,
+        ...projectImageKeys.flat(),
       ]),
     )
   })()
 
   return {
-    backgroundMediaQueue,
+    imagePreloadQueue,
     initialSlideIndexes,
     initialTargetScreenshot,
     normalizedInitialProjectIndex,

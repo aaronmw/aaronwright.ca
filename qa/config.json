@@ -1,0 +1,56 @@
+{
+  "version": 1,
+  "repetitions": 3,
+  "profiles": [
+    {
+      "id": "desktop",
+      "width": 1440,
+      "height": 900,
+      "touch": false,
+      "cpu": 1,
+      "latency": 0,
+      "downloadMbps": 0
+    },
+    {
+      "id": "small-laptop-slow",
+      "width": 1280,
+      "height": 720,
+      "touch": false,
+      "cpu": 4,
+      "latency": 150,
+      "downloadMbps": 1.6
+    },
+    {
+      "id": "phone-portrait-slow",
+      "width": 390,
+      "height": 844,
+      "touch": true,
+      "cpu": 4,
+      "latency": 150,
+      "downloadMbps": 1.6
+    },
+    {
+      "id": "phone-landscape-slow",
+      "width": 844,
+      "height": 390,
+      "touch": true,
+      "cpu": 4,
+      "latency": 150,
+      "downloadMbps": 1.6
+    }
+  ],
+  "tasks": [
+    "cold-entry",
+    "choose-project",
+    "horizontal-gesture",
+    "image-viewer",
+    "vertical-navigation",
+    "appearance"
+  ],
+  "regression": {
+    "durationMs": { "ratio": 1.3, "allowance": 300 },
+    "maxLongTaskMs": { "ratio": 1.3, "allowance": 50 },
+    "maxLongFrameMs": { "ratio": 1.3, "allowance": 50 },
+    "frameGapP95Ms": { "ratio": 1.3, "allowance": 10 }
+  }
+}

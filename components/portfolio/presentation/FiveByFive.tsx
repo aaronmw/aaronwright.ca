@@ -1,6 +1,23 @@
 import type { CSSProperties } from 'react'
 
+export const FIVE_BY_FIVE_CELL_COUNT = 25
+
+const GRID_CELLS = Array.from(
+  { length: FIVE_BY_FIVE_CELL_COUNT },
+  (_, index) => [index % 5, Math.floor(index / 5)] as const,
+)
+
+export function createFiveByFiveRevealOrder(random = Math.random) {
+  const order = GRID_CELLS.map((_, index) => index)
+  for (let index = order.length - 1; index > 0; index -= 1) {
+    const other = Math.floor(random() * (index + 1))
+    ;[order[index], order[other]] = [order[other], order[index]]
+  }
+  return order
+}
+
 const VARIANT_CELLS = {
+  fill: GRID_CELLS,
   outline: [
     [0, 0],
     [1, 0],
@@ -50,11 +67,6 @@ const VARIANT_CELLS = {
   dot: [[2, 2]],
 } as const
 
-const GRID_CELLS = Array.from(
-  { length: 25 },
-  (_, index) => [index % 5, Math.floor(index / 5)] as const,
-)
-
 const ENABLED_CELLS = Object.fromEntries(
   Object.entries(VARIANT_CELLS).map(([variant, cells]) => [
     variant,
@@ -68,12 +80,16 @@ export function FiveByFive({
   variant,
   cellSize = 'var(--logo-stroke-width)',
   visibleCellCount,
+  revealOrder,
+  unrevealedClassName = 'bg-current opacity-0',
   className,
   style,
 }: {
   variant: FiveByFiveVariant
   cellSize?: string
   visibleCellCount?: number
+  revealOrder?: readonly number[]
+  unrevealedClassName?: string
   className?: string
   style?: CSSProperties
 }) {
@@ -91,15 +107,18 @@ export function FiveByFive({
       }}
       aria-hidden="true"
     >
-      {GRID_CELLS.map(([column, row]) => {
+      {GRID_CELLS.map(([column, row], index) => {
         const cellKey = `${column}-${row}`
         const drawIndex =
-          variant === 'outline'
+          revealOrder?.indexOf(index) ??
+          (variant === 'outline'
             ? outlineCells.findIndex(
                 ([outlineColumn, outlineRow]) =>
                   outlineColumn === column && outlineRow === row,
               )
-            : -1
+            : variant === 'fill'
+              ? index
+              : -1)
         const progressivelyRevealed =
           drawIndex >= 0 && visibleCellCount !== undefined
         const visible = !progressivelyRevealed || drawIndex < visibleCellCount
@@ -111,7 +130,7 @@ export function FiveByFive({
               enabledCells.has(cellKey)
                 ? visible
                   ? 'bg-current'
-                  : 'bg-current opacity-0'
+                  : unrevealedClassName
                 : 'bg-transparent'
             }
           />

@@ -177,6 +177,13 @@ export function usePortfolioViewerTransition({
   const closingRef = useRef(false)
   const [phase, setPhase] = useState<'opening' | 'open' | 'closing'>('opening')
 
+  useEffect(() => {
+    // A dragged slide can remove the focused media button. Chromium then
+    // drops focus onto body, outside the lightbox's keyboard listener.
+    // Preserve focus on persistent controls, but recover it when it was lost.
+    if (document.activeElement === document.body) controllerRef.current?.focus()
+  }, [index])
+
   function stopAnimations(freeze = false) {
     const animations = animationsRef.current
     // Read every animated value before cancelling or writing styles. A close

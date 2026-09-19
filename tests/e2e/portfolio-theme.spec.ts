@@ -42,8 +42,13 @@ test('pointer opening keeps the appearance menu open until a choice is made', as
   if (testInfo.project.use.hasTouch) await light.tap()
   else await light.click()
   await expect(menu).toHaveCount(0)
-  await expect(page.locator('html')).toHaveAttribute('data-portfolio-theme', 'light')
-  expect(await page.evaluate(() => localStorage.getItem('portfolio-theme'))).toBe('light')
+  await expect(page.locator('html')).toHaveAttribute(
+    'data-portfolio-theme',
+    'light',
+  )
+  expect(
+    await page.evaluate(() => localStorage.getItem('portfolio-theme')),
+  ).toBe('light')
 })
 
 test('System follows live color-scheme changes', async ({ page }) => {
@@ -63,8 +68,7 @@ test('System follows live color-scheme changes', async ({ page }) => {
 
 test('React Aria menu persists selection and restores trigger focus', async ({
   page,
-}, testInfo) => {
-  test.skip(testInfo.project.name.includes('iphone'))
+}) => {
   await page.goto('/work')
   await waitForPortfolio(page)
   const trigger = page.locator('[data-portfolio-theme-trigger]')
@@ -93,8 +97,7 @@ test('React Aria menu persists selection and restores trigger focus', async ({
 
 test('React Aria menu supports Home, End, Escape, and outside dismissal', async ({
   page,
-}, testInfo) => {
-  test.skip(testInfo.project.name.includes('iphone'))
+}) => {
   await page.goto('/work')
   await waitForPortfolio(page)
   const trigger = page.locator('[data-portfolio-theme-trigger]')
@@ -120,8 +123,7 @@ test('React Aria menu supports Home, End, Escape, and outside dismissal', async 
 
 test('theme menu keeps arrow navigation local without trapping section numbers', async ({
   page,
-}, testInfo) => {
-  test.skip(testInfo.project.name.includes('iphone'))
+}) => {
   await page.goto('/work')
   await waitForPortfolio(page)
 
@@ -144,8 +146,7 @@ test('theme menu keeps arrow navigation local without trapping section numbers',
 
 test('viewer hides the appearance control and restores it on close', async ({
   page,
-}, testInfo) => {
-  test.skip(testInfo.project.name.includes('iphone'))
+}) => {
   await page.goto('/work/aarons-toolbox/overview')
   await waitForPortfolio(page)
   await expect(page.locator('[data-portfolio-theme-trigger]')).toBeVisible()

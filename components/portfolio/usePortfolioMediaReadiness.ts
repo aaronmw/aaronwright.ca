@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { startTransition, useCallback, useEffect, useRef, useState } from 'react';
 import {
   isBrowserPageActive,
   waitForPageActivity,
@@ -9,9 +9,10 @@ import {
 
 export type PortfolioMediaElement = HTMLImageElement | HTMLVideoElement;
 
-type MediaFailure = {
-  key: string;
-  error: Error;
+export type ImagePreloadProgress = {
+  loaded: number;
+  failed: number;
+  total: number;
 };
 
 const MEDIA_ATTEMPT_TIMEOUT_MS = 8000;
@@ -23,6 +24,8 @@ function delay(duration: number) {
 }
 
 function waitForImage(image: HTMLImageElement) {
+  const source = image.dataset.portfolioImageSrc;
+  if (source && !image.getAttribute('src')) image.src = source;
   image.loading = 'eager';
   image.decoding = 'async';
 
@@ -52,6 +55,8 @@ function waitForImage(image: HTMLImageElement) {
 }
 
 function waitForVideo(video: HTMLVideoElement) {
+  const source = video.dataset.portfolioVideoSrc;
+  if (source && !video.getAttribute('src')) video.src = source;
   video.preload = 'auto';
 
   if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
@@ -89,7 +94,7 @@ function cloneMediaElement(
     image.referrerPolicy = element.referrerPolicy;
     image.sizes = imageSizes ?? element.sizes;
     image.srcset = element.srcset;
-    image.src = element.src;
+    image.src = element.src || element.dataset.portfolioImageSrc || '';
     return image;
   }
 
@@ -97,7 +102,11 @@ function cloneMediaElement(
   video.crossOrigin = element.crossOrigin;
   video.muted = true;
   video.playsInline = true;
-  video.src = element.currentSrc || element.src;
+  video.src =
+    element.currentSrc ||
+    element.src ||
+    element.dataset.portfolioVideoSrc ||
+    '';
   return video;
 }
 
@@ -109,15 +118,19 @@ export function usePortfolioMediaReadiness() {
   const readyKeysRef = useRef(new Set<string>());
   const inFlightRef = useRef(new Map<string, Promise<void>>());
   const mountedRef = useRef(true);
-  const [failure, setFailure] = useState<MediaFailure | null>(null);
+  const [imageProgress, setImageProgress] = useState<ImagePreloadProgress>({
+    loaded: 0,
+    failed: 0,
+    total: 0,
+  });
 
-  useEffect(
-    () => () => {
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
       mountedRef.current = false;
       elementWaitersRef.current.clear();
-    },
-    [],
-  );
+    };
+  }, []);
 
   const registerMediaElement = useCallback(function registerMediaElement(
     key: string,
@@ -241,18 +254,6 @@ export function usePortfolioMediaReadiness() {
             .then(() => {
               readyKeysRef.current.add(key);
             })
-            .catch((error) => {
-              const normalizedError =
-                error instanceof Error
-                  ? error
-                  : new Error(`Portfolio media failed: ${key}`);
-
-              if (mountedRef.current) {
-                setFailure({ key, error: normalizedError });
-              }
-
-              throw normalizedError;
-            })
             .finally(() => {
               inFlightRef.current.delete(key);
             });
@@ -267,16 +268,34 @@ export function usePortfolioMediaReadiness() {
 
   const preloadQueue = useCallback(
     async function preloadQueue(keys: string[], concurrency = 2) {
-      const queue = Array.from(new Set(keys)).filter(
-        (key) => key && !readyKeysRef.current.has(key),
-      );
+      const uniqueKeys = Array.from(new Set(keys)).filter(Boolean);
+      const queue = uniqueKeys.filter((key) => !readyKeysRef.current.has(key));
+      const progress = {
+        loaded: uniqueKeys.length - queue.length,
+        failed: 0,
+        total: uniqueKeys.length,
+      };
+      const publishProgress = () => {
+        if (mountedRef.current) {
+          startTransition(() => setImageProgress({ ...progress }));
+        }
+      };
+      publishProgress();
       let cursor = 0;
 
       const worker = async () => {
-        while (cursor < queue.length) {
+        while (mountedRef.current && cursor < queue.length) {
           const key = queue[cursor];
           cursor += 1;
-          await ensureMediaReady(key);
+          try {
+            await ensureMediaReady(key);
+            progress.loaded += 1;
+          } catch {
+            // A failed background image must not stop the remaining queue or
+            // prevent browsing. Opening-media failures are handled by reveal.
+            progress.failed += 1;
+          }
+          publishProgress();
         }
       };
 
@@ -288,7 +307,7 @@ export function usePortfolioMediaReadiness() {
   );
 
   return {
-    failure,
+    imageProgress,
     registerMediaElement,
     ensureMediaReady,
     preloadQueue,

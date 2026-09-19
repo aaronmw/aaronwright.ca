@@ -5,6 +5,8 @@ export type PortfolioScreenshot = {
   slug: string
   src: string
   alt: string
+  width?: number
+  height?: number
   description?: string
   animated?: boolean
   clipToPhoneFrame?: boolean
@@ -352,6 +354,8 @@ There are few things from which I derive more satisfaction than my Figma plugins
         id: 'aarons-toolbox-overview',
         slug: 'overview',
         src: '/portfolio/aarons-toolbox/aarons-toolbox-community-preview.mp4',
+        width: 1920,
+        height: 1080,
         alt: "1 of 6: Aaron's Toolbox overview",
       },
       {
@@ -503,6 +507,8 @@ I've learned a LOT building this game over and over, including the architectural
         id: 'nextphrase-intro',
         slug: 'intro',
         src: '/portfolio/nextphrase/intro-video.webm',
+        width: 442,
+        height: 906,
         alt: 'NextPhrase app walkthrough',
         clipToPhoneFrame: true,
       },

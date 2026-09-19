@@ -21,6 +21,7 @@ import {
   viewerMediaKey,
 } from '../../components/portfolio/domain/slides'
 import { getProjectNarratives } from '../../components/portfolio/domain/narrative'
+import { createPortfolioModel } from '../../components/portfolio/runtime/usePortfolioModel'
 import {
   getPortfolioViewerSlides,
   getViewerMediaTransform,
@@ -67,6 +68,46 @@ const projects: PortfolioProject[] = [
     ],
   },
 ]
+
+describe('portfolio image preloading', () => {
+  it('preloads images once, without fetching videos on the home screen', () => {
+    const model = createPortfolioModel({
+      projects,
+      projectSlides: getProjectSlidesBySlug(projects),
+    })
+    expect(model.imagePreloadQueue).toEqual(['carousel:overview'])
+    expect(model.openingMediaKeys).toEqual([])
+  })
+
+  it('only loads video for an explicitly opened video slide, not an earlier project', () => {
+    const videoFirst = {
+      ...projects[1],
+      screenshots: [...projects[1].screenshots].reverse(),
+    }
+    const afterVideo = {
+      ...projects[0],
+      id: 'after-video',
+      slug: 'after-video',
+    }
+    const sequence = [videoFirst, afterVideo]
+    const projectSlides = getProjectSlidesBySlug(sequence)
+    const later = createPortfolioModel({
+      projects: sequence,
+      projectSlides,
+      initialProjectSlug: 'after-video',
+    })
+    expect(later.openingMediaKeys).toEqual([])
+    expect(later.imagePreloadQueue).toEqual(['carousel:overview'])
+    const activeVideo = createPortfolioModel({
+      projects: sequence,
+      projectSlides,
+      initialProjectSlug: videoFirst.slug,
+      initialScreenshotSlug: 'motion',
+    })
+    expect(activeVideo.openingMediaKeys).toEqual(['carousel:motion'])
+    expect(activeVideo.imagePreloadQueue).toEqual(['carousel:overview'])
+  })
+})
 
 describe('portfolio project order', () => {
   it('uses the curated section sequence', () => {

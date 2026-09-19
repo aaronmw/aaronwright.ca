@@ -11,7 +11,7 @@ import {
   useState,
 } from 'react'
 import {
-  getLockedMouseDragAxis,
+  getPortfolioMouseIntent,
   isPortfolioCarouselDragLockedTarget,
 } from '../runtime/mouseDragAxisLock'
 
@@ -67,11 +67,17 @@ export function usePortfolioProjectCarousel({
       skipSnaps: false,
       startIndex: initialSlideIndex,
       active: enabled,
-      watchDrag: (_api, event) => {
+      watchDrag: (api, event) => {
+        if (getPortfolioMouseIntent(event) === 'click') return true
         if (isPortfolioCarouselDragLockedTarget(event.target)) return false
         if (event.type !== 'mousedown') return true
+        // The wheel plugin dispatches its own mousedown on this track. Its
+        // axis is already locked by the outer wheel handler; it never enters
+        // the physical mouse-drag classifier (which requires buttons === 1).
+        if (!event.isTrusted && event.target === api.containerNode())
+          return true
         if (isSelectableTextTarget(event.target)) return false
-        return getLockedMouseDragAxis(event) === 'x'
+        return getPortfolioMouseIntent(event) === 'x'
       },
     },
     plugins,

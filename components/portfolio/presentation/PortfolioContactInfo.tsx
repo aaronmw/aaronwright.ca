@@ -1,6 +1,5 @@
 'use client'
 
-import Link from 'next/link'
 import {
   Button,
   Dialog,
@@ -56,14 +55,14 @@ function ContactDetails({ layout }: { layout: 'inline' | 'stacked' }) {
           >
             +1-647-746-9426
           </a>
-          <Link
+          <a
             className={CONTACT_LINK_CLASS_NAME}
             href="/resume.pdf"
             target="_blank"
             rel="noreferrer"
           >
             Résumé PDF
-          </Link>
+          </a>
         </p>
       </div>
     </address>

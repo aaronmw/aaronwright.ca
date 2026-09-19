@@ -1,0 +1,95 @@
+{
+  "schema": 1,
+  "id": "2026-09-18T23-30-54-294Z",
+  "createdAt": "2026-09-18T23:30:54.294Z",
+  "commit": "403614450e2c7e01650fce50058c4676ad0033f0",
+  "sourceHash": "625a1558847193949d2c771dcd959b18a5b1768b9b3a2ac16a43400910c16980",
+  "configHash": "bc610b23f28378dd7f22d202b84ee1e54f60f22a5150cfb0aae924370a6ecbd8",
+  "environment": {
+    "platform": "darwin",
+    "arch": "arm64",
+    "cpu": "Apple M1 Pro",
+    "cores": 10,
+    "browserVersion": "151.0.7922.34",
+    "node": "v22.23.2"
+  },
+  "checks": {
+    "unit": true,
+    "browser": false
+  },
+  "samples": [
+    {
+      "profile": "desktop",
+      "repetition": 1,
+      "task": "cold-entry",
+      "durationMs": 1572.4000000953674,
+      "maxLongTaskMs": 58,
+      "maxLongFrameMs": 324.10000014305115,
+      "frameGapP95Ms": 16.69999999999999,
+      "framesSampled": 126,
+      "frameGapsOver50Ms": 1
+    },
+    {
+      "profile": "desktop",
+      "repetition": 2,
+      "task": "cold-entry",
+      "durationMs": 1474,
+      "maxLongTaskMs": 50,
+      "maxLongFrameMs": 284.7000000476837,
+      "frameGapP95Ms": 10.299999999999955,
+      "framesSampled": 127,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "desktop",
+      "repetition": 3,
+      "task": "cold-entry",
+      "durationMs": 1421.3999998569489,
+      "maxLongTaskMs": 55,
+      "maxLongFrameMs": 230.29999995231628,
+      "frameGapP95Ms": 10.300000000000182,
+      "framesSampled": 125,
+      "frameGapsOver50Ms": 2
+    }
+  ],
+  "errors": [
+    "desktop/1/choose-project: Timeout 30000ms exceeded while waiting on the predicate",
+    "desktop/2/choose-project: Timeout 30000ms exceeded while waiting on the predicate",
+    "desktop/3/choose-project: locator.evaluate: Target page, context or browser has been closed\nCall log:\n\u001b[2m  - waiting for locator('[data-portfolio-viewer-source=\"active\"][data-portfolio-screenshot-id^=\"aarons-toolbox\"]').locator('img').first()\u001b[22m\n",
+    "QA interrupted"
+  ],
+  "failures": [
+    "Unit or cross-browser checks did not pass.",
+    "desktop/1/choose-project: Timeout 30000ms exceeded while waiting on the predicate",
+    "desktop/2/choose-project: Timeout 30000ms exceeded while waiting on the predicate",
+    "desktop/3/choose-project: locator.evaluate: Target page, context or browser has been closed\nCall log:\n\u001b[2m  - waiting for locator('[data-portfolio-viewer-source=\"active\"][data-portfolio-screenshot-id^=\"aarons-toolbox\"]').locator('img').first()\u001b[22m\n",
+    "QA interrupted",
+    "Incomplete sample matrix.",
+    "Missing repetitions: desktop/choose-project",
+    "Missing repetitions: desktop/horizontal-gesture",
+    "Missing repetitions: desktop/image-viewer",
+    "Missing repetitions: desktop/vertical-navigation",
+    "Missing repetitions: desktop/appearance",
+    "Missing repetitions: small-laptop-slow/cold-entry",
+    "Missing repetitions: small-laptop-slow/choose-project",
+    "Missing repetitions: small-laptop-slow/horizontal-gesture",
+    "Missing repetitions: small-laptop-slow/image-viewer",
+    "Missing repetitions: small-laptop-slow/vertical-navigation",
+    "Missing repetitions: small-laptop-slow/appearance",
+    "Missing repetitions: phone-portrait-slow/cold-entry",
+    "Missing repetitions: phone-portrait-slow/choose-project",
+    "Missing repetitions: phone-portrait-slow/horizontal-gesture",
+    "Missing repetitions: phone-portrait-slow/image-viewer",
+    "Missing repetitions: phone-portrait-slow/vertical-navigation",
+    "Missing repetitions: phone-portrait-slow/appearance",
+    "Missing repetitions: phone-landscape-slow/cold-entry",
+    "Missing repetitions: phone-landscape-slow/choose-project",
+    "Missing repetitions: phone-landscape-slow/horizontal-gesture",
+    "Missing repetitions: phone-landscape-slow/image-viewer",
+    "Missing repetitions: phone-landscape-slow/vertical-navigation",
+    "Missing repetitions: phone-landscape-slow/appearance",
+    "No accepted baseline. Review a complete run, then use pnpm qa:baseline <report>."
+  ],
+  "status": "blocked",
+  "buildId": "kA-5L_3he5w7m9BfJ5e9i"
+}

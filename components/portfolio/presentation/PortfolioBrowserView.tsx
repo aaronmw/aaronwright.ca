@@ -14,7 +14,10 @@ import type { ProjectSlide } from '../domain/slides'
 import type { PortfolioViewerSlide, ViewerOpenIntent } from '../domain/viewer'
 import { getProjectColor } from '../domain/portfolioColors'
 import { MOBILE_SECTION_CONTENT_CENTER } from '../mobileLayout'
-import type { PortfolioMediaElement } from '../usePortfolioMediaReadiness'
+import type {
+  ImagePreloadProgress,
+  PortfolioMediaElement,
+} from '../usePortfolioMediaReadiness'
 import {
   PortfolioSectionRail,
   PortfolioSlideRail,
@@ -29,6 +32,8 @@ import { PortfolioLogoMark } from './PortfolioLogoMark'
 import { PortfolioViewer } from './PortfolioViewer'
 import { CircularIconButton, PortfolioHelperMessage } from './PortfolioControls'
 import { PortfolioIcon } from './PortfolioIcon'
+import { createFiveByFiveRevealOrder } from './FiveByFive'
+import { PortfolioImageLoader } from './PortfolioImageLoader'
 
 const START_SCREEN_INDEX = -1
 const NOOP = () => undefined
@@ -45,7 +50,7 @@ type ProjectColorStyle = CSSProperties & { '--project-color': string }
 
 const WIDE_LAYOUT_STYLE: WideLayoutStyle = {
   '--portfolio-description-rail-half-width':
-    'min(calc(50vw - 2rem), calc(3.5rem + max(16rem, 24ch)))',
+    'min(calc(25vw - var(--portfolio-control-gutter-width) / 2), calc(3.5rem + max(16rem, 24ch)))',
   '--portfolio-description-rail-width':
     'calc(var(--portfolio-description-rail-half-width) + var(--portfolio-description-rail-half-width))',
   '--portfolio-control-gutter-width': 'var(--portfolio-header-content-inset)',
@@ -59,6 +64,7 @@ type PortfolioBrowserViewModel = {
   activeProjectIndex: number
   activeSlideIndexes: number[]
   introPhase: PortfolioIntroPhase
+  imageProgress: ImagePreloadProgress
   isTouchInput: boolean
   isTouchLandscapeLayout: boolean
   isWideLayout: boolean
@@ -226,39 +232,50 @@ function PortfolioHorizontalNavigation({
 function PortfolioLoadingCurtain({
   curtainRef,
   introPhase,
+  imageProgress,
+  revealOrder,
 }: {
   curtainRef: RefObject<HTMLDivElement | null>
   introPhase: PortfolioIntroPhase
+  imageProgress: ImagePreloadProgress
+  revealOrder: readonly number[]
 }) {
   return (
     <div
       ref={curtainRef}
+      aria-hidden={
+        introPhase === 'ready' || introPhase === 'revealing' ? true : undefined
+      }
       data-portfolio-loading-curtain
       data-phase={introPhase}
       className={`portfolio-theme-surface fixed inset-0 z-[var(--portfolio-layer-loading)] grid place-items-center ${
         introPhase === 'ready' ? 'pointer-events-none' : 'pointer-events-auto'
       }`}
     >
-      <div
-        role={introPhase === 'error' ? 'alert' : undefined}
-        className={`flex max-w-md flex-col items-center gap-5 px-8 text-center transition-opacity duration-[var(--portfolio-motion-loading)] ${
-          introPhase === 'error' ? 'opacity-100' : 'opacity-0'
-        }`}
-        aria-hidden={introPhase === 'error' ? undefined : true}
-      >
-        <p className="font-normal text-portfolio-text-dimmed">
-          Portfolio media didn&apos;t finish loading.
-        </p>
-        <CircularIconButton
-          icon={faRotateRight}
-          iconClassName="size-6"
-          ring
-          className="portfolio-theme-surface relative size-[var(--portfolio-control-size)] text-portfolio-text"
-          aria-label="Reload page"
-          title="Reload page"
-          onClick={() => window.location.reload()}
+      {introPhase === 'error' ? (
+        <div
+          role="alert"
+          className="flex max-w-md flex-col items-center gap-5 px-8 text-center"
+        >
+          <p className="font-normal text-portfolio-text-dimmed">
+            Portfolio media didn&apos;t finish loading.
+          </p>
+          <CircularIconButton
+            icon={faRotateRight}
+            iconClassName="size-6"
+            ring
+            className="portfolio-theme-surface relative size-[var(--portfolio-control-size)] text-portfolio-text"
+            aria-label="Reload page"
+            title="Reload page"
+            onClick={() => window.location.reload()}
+          />
+        </div>
+      ) : (
+        <PortfolioImageLoader
+          progress={imageProgress}
+          revealOrder={revealOrder}
         />
-      </div>
+      )}
     </div>
   )
 }
@@ -398,6 +415,12 @@ export function PortfolioBrowserView({
 }) {
   const { resolvedTheme } = usePortfolioTheme()
   const [mediaBackdropVisible, setMediaBackdropVisible] = useState(true)
+  // Initial progress is zero on server and client, so the empty grid hydrates
+  // identically. Keep one random order through the curtain and background phase.
+  const [loaderRevealOrder] = useState(createFiveByFiveRevealOrder)
+  const imagePreloadFinished =
+    model.imageProgress.loaded + model.imageProgress.failed ===
+    model.imageProgress.total
   const {
     activeProject,
     activeProjectColor,
@@ -483,6 +506,7 @@ export function PortfolioBrowserView({
                   slides={slides}
                   activeSlideIndex={model.activeSlideIndexes[projectIndex] ?? 0}
                   active={model.activeProjectIndex === projectIndex}
+                  renderingReady={model.introPhase === 'ready'}
                   playbackActive={
                     model.activeProjectIndex === projectIndex &&
                     model.introPhase === 'ready' &&
@@ -554,7 +578,27 @@ export function PortfolioBrowserView({
         <PortfolioLoadingCurtain
           curtainRef={curtainRef}
           introPhase={model.introPhase}
+          imageProgress={model.imageProgress}
+          revealOrder={loaderRevealOrder}
         />
+        {model.introPhase === 'ready' &&
+        !viewerOpen &&
+        model.imageProgress.total > 0 ? (
+          <div
+            aria-hidden={imagePreloadFinished ? true : undefined}
+            className={`pointer-events-none fixed z-[var(--portfolio-layer-navigation)] grid size-[var(--portfolio-navigation-track-size)] place-items-center transition-opacity duration-[var(--portfolio-motion-loading)] motion-reduce:transition-none ${imagePreloadFinished ? 'opacity-0 delay-[var(--portfolio-motion-loading)]' : 'opacity-100'}`}
+            style={{
+              left: 'env(safe-area-inset-left, 0px)',
+              bottom:
+                'calc(var(--portfolio-frame-rule-size) + env(safe-area-inset-bottom, 0px))',
+            }}
+          >
+            <PortfolioImageLoader
+              progress={model.imageProgress}
+              revealOrder={loaderRevealOrder}
+            />
+          </div>
+        ) : null}
         <PortfolioHorizontalNavigation
           actions={actions}
           activeProject={activeProject}

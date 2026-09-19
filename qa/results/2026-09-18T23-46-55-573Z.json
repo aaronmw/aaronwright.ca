@@ -1,0 +1,878 @@
+{
+  "schema": 1,
+  "id": "2026-09-18T23-46-55-573Z",
+  "createdAt": "2026-09-18T23:46:55.573Z",
+  "commit": "403614450e2c7e01650fce50058c4676ad0033f0",
+  "sourceHash": "1b2029a5084445c179890fdb9d98bbb0349d28c5e1f4c3c65da555fd89284d65",
+  "configHash": "9eb669b111151d43221ee505361638a2c0b21285d0d21935dcf3eed7432b390f",
+  "mode": "release",
+  "environment": {
+    "platform": "darwin",
+    "osRelease": "25.6.0",
+    "arch": "arm64",
+    "cpu": "Apple M1 Pro",
+    "cores": 10,
+    "browserVersion": "151.0.7922.34",
+    "node": "v22.23.2"
+  },
+  "checks": {
+    "unit": true,
+    "browser": false
+  },
+  "samples": [
+    {
+      "profile": "desktop",
+      "repetition": 1,
+      "task": "cold-entry",
+      "durationMs": 1607.2999999523163,
+      "maxLongTaskMs": 61,
+      "maxLongFrameMs": 352.39999985694885,
+      "frameGapP95Ms": 10.400000000000091,
+      "framesSampled": 127,
+      "frameGapsOver50Ms": 2
+    },
+    {
+      "profile": "desktop",
+      "repetition": 1,
+      "task": "choose-project",
+      "durationMs": 1602.0999999046326,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 53.09999990463257,
+      "frameGapP95Ms": 9.900000000000091,
+      "framesSampled": 186,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "desktop",
+      "repetition": 1,
+      "task": "image-viewer",
+      "durationMs": 1770.2999999523163,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 9.599999999999909,
+      "framesSampled": 211,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "desktop",
+      "repetition": 1,
+      "task": "vertical-navigation",
+      "durationMs": 3318,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 9.200000000000273,
+      "framesSampled": 397,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "desktop",
+      "repetition": 1,
+      "task": "appearance",
+      "durationMs": 464.40000009536743,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 18,
+      "framesSampled": 41,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "desktop",
+      "repetition": 2,
+      "task": "cold-entry",
+      "durationMs": 1535.9000000953674,
+      "maxLongTaskMs": 54,
+      "maxLongFrameMs": 337.7999999523163,
+      "frameGapP95Ms": 10,
+      "framesSampled": 126,
+      "frameGapsOver50Ms": 2
+    },
+    {
+      "profile": "desktop",
+      "repetition": 2,
+      "task": "choose-project",
+      "durationMs": 1591.7999999523163,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 9.299999999999955,
+      "framesSampled": 186,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "desktop",
+      "repetition": 2,
+      "task": "image-viewer",
+      "durationMs": 1765.8999998569489,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 9.900000000000091,
+      "framesSampled": 210,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "desktop",
+      "repetition": 2,
+      "task": "vertical-navigation",
+      "durationMs": 3322.399999856949,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 9.200000000000273,
+      "framesSampled": 397,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "desktop",
+      "repetition": 2,
+      "task": "appearance",
+      "durationMs": 400.5,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 16.800000000000182,
+      "framesSampled": 35,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "desktop",
+      "repetition": 3,
+      "task": "cold-entry",
+      "durationMs": 1509.2000000476837,
+      "maxLongTaskMs": 53,
+      "maxLongFrameMs": 324.80000019073486,
+      "frameGapP95Ms": 10.399999999999977,
+      "framesSampled": 125,
+      "frameGapsOver50Ms": 2
+    },
+    {
+      "profile": "desktop",
+      "repetition": 3,
+      "task": "choose-project",
+      "durationMs": 1590.2999999523163,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 9.299999999999955,
+      "framesSampled": 186,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "desktop",
+      "repetition": 3,
+      "task": "image-viewer",
+      "durationMs": 1751.2000000476837,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 10.099999999999909,
+      "framesSampled": 208,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "desktop",
+      "repetition": 3,
+      "task": "vertical-navigation",
+      "durationMs": 3284.7999999523163,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 9.699999999999818,
+      "framesSampled": 393,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "desktop",
+      "repetition": 3,
+      "task": "appearance",
+      "durationMs": 447,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 16.800000000000182,
+      "framesSampled": 41,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "small-laptop-slow",
+      "repetition": 1,
+      "task": "cold-entry",
+      "durationMs": 9373,
+      "maxLongTaskMs": 222,
+      "maxLongFrameMs": 2841.199999809265,
+      "frameGapP95Ms": 10.199999999999818,
+      "framesSampled": 673,
+      "frameGapsOver50Ms": 5
+    },
+    {
+      "profile": "small-laptop-slow",
+      "repetition": 1,
+      "task": "choose-project",
+      "durationMs": 1590,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 88.5,
+      "frameGapP95Ms": 10.299999999999272,
+      "framesSampled": 177,
+      "frameGapsOver50Ms": 1
+    },
+    {
+      "profile": "small-laptop-slow",
+      "repetition": 1,
+      "task": "image-viewer",
+      "durationMs": 2036.4000000953674,
+      "maxLongTaskMs": 104,
+      "maxLongFrameMs": 121.90000009536743,
+      "frameGapP95Ms": 10.30000000000291,
+      "framesSampled": 214,
+      "frameGapsOver50Ms": 1
+    },
+    {
+      "profile": "small-laptop-slow",
+      "repetition": 1,
+      "task": "vertical-navigation",
+      "durationMs": 2376.300000190735,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 10.30000000000291,
+      "framesSampled": 267,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "small-laptop-slow",
+      "repetition": 1,
+      "task": "appearance",
+      "durationMs": 707.2000000476837,
+      "maxLongTaskMs": 97,
+      "maxLongFrameMs": 104.29999995231628,
+      "frameGapP95Ms": 92.20000000000437,
+      "framesSampled": 24,
+      "frameGapsOver50Ms": 7
+    },
+    {
+      "profile": "small-laptop-slow",
+      "repetition": 2,
+      "task": "cold-entry",
+      "durationMs": 9415.199999809265,
+      "maxLongTaskMs": 222,
+      "maxLongFrameMs": 2847.7000000476837,
+      "frameGapP95Ms": 10.199999999999818,
+      "framesSampled": 672,
+      "frameGapsOver50Ms": 4
+    },
+    {
+      "profile": "small-laptop-slow",
+      "repetition": 2,
+      "task": "choose-project",
+      "durationMs": 1588.2000000476837,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 77.5,
+      "frameGapP95Ms": 10.299999999999272,
+      "framesSampled": 179,
+      "frameGapsOver50Ms": 1
+    },
+    {
+      "profile": "small-laptop-slow",
+      "repetition": 2,
+      "task": "image-viewer",
+      "durationMs": 2016.7000000476837,
+      "maxLongTaskMs": 91,
+      "maxLongFrameMs": 121,
+      "frameGapP95Ms": 10.200000000004366,
+      "framesSampled": 214,
+      "frameGapsOver50Ms": 2
+    },
+    {
+      "profile": "small-laptop-slow",
+      "repetition": 2,
+      "task": "vertical-navigation",
+      "durationMs": 2403.5999999046326,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 10.299999999995634,
+      "framesSampled": 270,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "small-laptop-slow",
+      "repetition": 2,
+      "task": "appearance",
+      "durationMs": 826.3999998569489,
+      "maxLongTaskMs": 96,
+      "maxLongFrameMs": 104,
+      "frameGapP95Ms": 100.5,
+      "framesSampled": 36,
+      "frameGapsOver50Ms": 7
+    },
+    {
+      "profile": "small-laptop-slow",
+      "repetition": 3,
+      "task": "cold-entry",
+      "durationMs": 9382.599999904633,
+      "maxLongTaskMs": 216,
+      "maxLongFrameMs": 2730.5,
+      "frameGapP95Ms": 10.100000000000364,
+      "framesSampled": 691,
+      "frameGapsOver50Ms": 4
+    },
+    {
+      "profile": "small-laptop-slow",
+      "repetition": 3,
+      "task": "choose-project",
+      "durationMs": 1575.9000000953674,
+      "maxLongTaskMs": 51,
+      "maxLongFrameMs": 91,
+      "frameGapP95Ms": 10.299999999999272,
+      "framesSampled": 176,
+      "frameGapsOver50Ms": 1
+    },
+    {
+      "profile": "small-laptop-slow",
+      "repetition": 3,
+      "task": "image-viewer",
+      "durationMs": 2029.7000000476837,
+      "maxLongTaskMs": 93,
+      "maxLongFrameMs": 117.5,
+      "frameGapP95Ms": 10.299999999995634,
+      "framesSampled": 214,
+      "frameGapsOver50Ms": 1
+    },
+    {
+      "profile": "small-laptop-slow",
+      "repetition": 3,
+      "task": "vertical-navigation",
+      "durationMs": 2497.899999856949,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 50.40000009536743,
+      "frameGapP95Ms": 10.400000000001455,
+      "framesSampled": 276,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "small-laptop-slow",
+      "repetition": 3,
+      "task": "appearance",
+      "durationMs": 826.0999999046326,
+      "maxLongTaskMs": 104,
+      "maxLongFrameMs": 111.5,
+      "frameGapP95Ms": 91.40000000000146,
+      "framesSampled": 36,
+      "frameGapsOver50Ms": 6
+    },
+    {
+      "profile": "phone-portrait-slow",
+      "repetition": 1,
+      "task": "cold-entry",
+      "durationMs": 9286.399999856949,
+      "maxLongTaskMs": 144,
+      "maxLongFrameMs": 2718.7000000476837,
+      "frameGapP95Ms": 10.200000000000728,
+      "framesSampled": 690,
+      "frameGapsOver50Ms": 4
+    },
+    {
+      "profile": "phone-portrait-slow",
+      "repetition": 1,
+      "task": "choose-project",
+      "durationMs": 1637.2000000476837,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 10.200000000000728,
+      "framesSampled": 191,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "phone-portrait-slow",
+      "repetition": 1,
+      "task": "horizontal-gesture",
+      "durationMs": 18627.300000190735,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 10.099999999998545,
+      "framesSampled": 2233,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "phone-portrait-slow",
+      "repetition": 1,
+      "task": "image-viewer",
+      "durationMs": 2021.9000000953674,
+      "maxLongTaskMs": 57,
+      "maxLongFrameMs": 69.79999995231628,
+      "frameGapP95Ms": 10.19999999999709,
+      "framesSampled": 221,
+      "frameGapsOver50Ms": 1
+    },
+    {
+      "profile": "phone-portrait-slow",
+      "repetition": 1,
+      "task": "appearance",
+      "durationMs": 688.0999999046326,
+      "maxLongTaskMs": 81,
+      "maxLongFrameMs": 93.89999985694885,
+      "frameGapP95Ms": 90.09999999999854,
+      "framesSampled": 28,
+      "frameGapsOver50Ms": 6
+    },
+    {
+      "profile": "phone-portrait-slow",
+      "repetition": 2,
+      "task": "cold-entry",
+      "durationMs": 9303,
+      "maxLongTaskMs": 148,
+      "maxLongFrameMs": 2816,
+      "frameGapP95Ms": 10.100000000000364,
+      "framesSampled": 681,
+      "frameGapsOver50Ms": 4
+    },
+    {
+      "profile": "phone-portrait-slow",
+      "repetition": 2,
+      "task": "choose-project",
+      "durationMs": 1623.2999999523163,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 10.200000000000728,
+      "framesSampled": 190,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "phone-portrait-slow",
+      "repetition": 2,
+      "task": "horizontal-gesture",
+      "durationMs": 18661.700000047684,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 10.099999999998545,
+      "framesSampled": 2237,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "phone-portrait-slow",
+      "repetition": 2,
+      "task": "image-viewer",
+      "durationMs": 2058.9000000953674,
+      "maxLongTaskMs": 56,
+      "maxLongFrameMs": 69.39999985694885,
+      "frameGapP95Ms": 10.400000000001455,
+      "framesSampled": 221,
+      "frameGapsOver50Ms": 1
+    },
+    {
+      "profile": "phone-portrait-slow",
+      "repetition": 2,
+      "task": "appearance",
+      "durationMs": 670.2999999523163,
+      "maxLongTaskMs": 83,
+      "maxLongFrameMs": 91.5,
+      "frameGapP95Ms": 82.80000000000109,
+      "framesSampled": 24,
+      "frameGapsOver50Ms": 7
+    },
+    {
+      "profile": "phone-portrait-slow",
+      "repetition": 3,
+      "task": "cold-entry",
+      "durationMs": 9268.199999809265,
+      "maxLongTaskMs": 161,
+      "maxLongFrameMs": 2688.4000000953674,
+      "frameGapP95Ms": 10.100000000000364,
+      "framesSampled": 693,
+      "frameGapsOver50Ms": 4
+    },
+    {
+      "profile": "phone-portrait-slow",
+      "repetition": 3,
+      "task": "choose-project",
+      "durationMs": 1612.5,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 10.200000000000728,
+      "framesSampled": 188,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "phone-portrait-slow",
+      "repetition": 3,
+      "task": "horizontal-gesture",
+      "durationMs": 18678.800000190735,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 10.100000000002183,
+      "framesSampled": 2239,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "phone-portrait-slow",
+      "repetition": 3,
+      "task": "image-viewer",
+      "durationMs": 2033.2000000476837,
+      "maxLongTaskMs": 58,
+      "maxLongFrameMs": 71.40000009536743,
+      "frameGapP95Ms": 10.30000000000291,
+      "framesSampled": 221,
+      "frameGapsOver50Ms": 1
+    },
+    {
+      "profile": "phone-portrait-slow",
+      "repetition": 3,
+      "task": "appearance",
+      "durationMs": 681.1000001430511,
+      "maxLongTaskMs": 81,
+      "maxLongFrameMs": 89.09999990463257,
+      "frameGapP95Ms": 83.5,
+      "framesSampled": 26,
+      "frameGapsOver50Ms": 7
+    },
+    {
+      "profile": "phone-landscape-slow",
+      "repetition": 1,
+      "task": "cold-entry",
+      "durationMs": 9392.899999856949,
+      "maxLongTaskMs": 229,
+      "maxLongFrameMs": 2812.899999856949,
+      "frameGapP95Ms": 10.199999999999818,
+      "framesSampled": 681,
+      "frameGapsOver50Ms": 4
+    },
+    {
+      "profile": "phone-landscape-slow",
+      "repetition": 1,
+      "task": "choose-project",
+      "durationMs": 1521.2999999523163,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 10.099999999998545,
+      "framesSampled": 179,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "phone-landscape-slow",
+      "repetition": 1,
+      "task": "horizontal-gesture",
+      "durationMs": 22795.89999985695,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 10,
+      "framesSampled": 2730,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "phone-landscape-slow",
+      "repetition": 1,
+      "task": "image-viewer",
+      "durationMs": 2020.6000001430511,
+      "maxLongTaskMs": 58,
+      "maxLongFrameMs": 73.59999990463257,
+      "frameGapP95Ms": 10.30000000000291,
+      "framesSampled": 219,
+      "frameGapsOver50Ms": 1
+    },
+    {
+      "profile": "phone-landscape-slow",
+      "repetition": 1,
+      "task": "vertical-navigation",
+      "durationMs": 3020.399999856949,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 10.19999999999709,
+      "framesSampled": 362,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "phone-landscape-slow",
+      "repetition": 1,
+      "task": "appearance",
+      "durationMs": 809.7999999523163,
+      "maxLongTaskMs": 106,
+      "maxLongFrameMs": 107.60000014305115,
+      "frameGapP95Ms": 101.79999999999563,
+      "framesSampled": 38,
+      "frameGapsOver50Ms": 7
+    },
+    {
+      "profile": "phone-landscape-slow",
+      "repetition": 2,
+      "task": "cold-entry",
+      "durationMs": 9429.5,
+      "maxLongTaskMs": 230,
+      "maxLongFrameMs": 2708.0999999046326,
+      "frameGapP95Ms": 10.100000000000364,
+      "framesSampled": 691,
+      "frameGapsOver50Ms": 6
+    },
+    {
+      "profile": "phone-landscape-slow",
+      "repetition": 2,
+      "task": "choose-project",
+      "durationMs": 1523.2999999523163,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 10,
+      "framesSampled": 179,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "phone-landscape-slow",
+      "repetition": 2,
+      "task": "horizontal-gesture",
+      "durationMs": 22745.5,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 10,
+      "framesSampled": 2724,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "phone-landscape-slow",
+      "repetition": 2,
+      "task": "image-viewer",
+      "durationMs": 2021.3999998569489,
+      "maxLongTaskMs": 60,
+      "maxLongFrameMs": 75.69999980926514,
+      "frameGapP95Ms": 10.400000000001455,
+      "framesSampled": 218,
+      "frameGapsOver50Ms": 1
+    },
+    {
+      "profile": "phone-landscape-slow",
+      "repetition": 2,
+      "task": "vertical-navigation",
+      "durationMs": 2996.100000143051,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 10.099999999998545,
+      "framesSampled": 357,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "phone-landscape-slow",
+      "repetition": 2,
+      "task": "appearance",
+      "durationMs": 788.7999999523163,
+      "maxLongTaskMs": 90,
+      "maxLongFrameMs": 98.20000004768372,
+      "frameGapP95Ms": 90.59999999999854,
+      "framesSampled": 33,
+      "frameGapsOver50Ms": 7
+    },
+    {
+      "profile": "phone-landscape-slow",
+      "repetition": 3,
+      "task": "cold-entry",
+      "durationMs": 9447.100000143051,
+      "maxLongTaskMs": 236,
+      "maxLongFrameMs": 2790.199999809265,
+      "frameGapP95Ms": 10.199999999999818,
+      "framesSampled": 683,
+      "frameGapsOver50Ms": 4
+    },
+    {
+      "profile": "phone-landscape-slow",
+      "repetition": 3,
+      "task": "choose-project",
+      "durationMs": 1509,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 10.199999999998909,
+      "framesSampled": 176,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "phone-landscape-slow",
+      "repetition": 3,
+      "task": "horizontal-gesture",
+      "durationMs": 22756.300000190735,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 10,
+      "framesSampled": 2726,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "phone-landscape-slow",
+      "repetition": 3,
+      "task": "image-viewer",
+      "durationMs": 2006.2000000476837,
+      "maxLongTaskMs": 60,
+      "maxLongFrameMs": 72.70000004768372,
+      "frameGapP95Ms": 10.30000000000291,
+      "framesSampled": 218,
+      "frameGapsOver50Ms": 1
+    },
+    {
+      "profile": "phone-landscape-slow",
+      "repetition": 3,
+      "task": "vertical-navigation",
+      "durationMs": 3059.7000000476837,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 10.099999999998545,
+      "framesSampled": 367,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "phone-landscape-slow",
+      "repetition": 3,
+      "task": "appearance",
+      "durationMs": 750.9000000953674,
+      "maxLongTaskMs": 91,
+      "maxLongFrameMs": 101.29999995231628,
+      "frameGapP95Ms": 90.59999999999854,
+      "framesSampled": 34,
+      "frameGapsOver50Ms": 7
+    }
+  ],
+  "errors": [
+    "desktop/1/horizontal-gesture: expect(page).toHaveURL(expected) failed\n\nExpected pattern: /\\/work\\/aarons-toolbox\\/normalizer$/\nReceived string:  \"http://127.0.0.1:3032/work/aarons-toolbox\"\nTimeout: 5000ms\n\nCall log:\n  - Expect \"to.have.url\" with timeout 5000ms\n    14 × locator resolved to <html lang=\"en\" data-portfolio-route=\"work\" data-portfolio-theme=\"dark\" data-portfolio-theme-preference=\"system\">…</html>\n       - unexpected value \"http://127.0.0.1:3032/work/aarons-toolbox\"\n",
+    "desktop/2/horizontal-gesture: expect(page).toHaveURL(expected) failed\n\nExpected pattern: /\\/work\\/aarons-toolbox\\/normalizer$/\nReceived string:  \"http://127.0.0.1:3032/work/aarons-toolbox\"\nTimeout: 5000ms\n\nCall log:\n  - Expect \"to.have.url\" with timeout 5000ms\n    14 × locator resolved to <html lang=\"en\" data-portfolio-route=\"work\" data-portfolio-theme=\"dark\" data-portfolio-theme-preference=\"system\">…</html>\n       - unexpected value \"http://127.0.0.1:3032/work/aarons-toolbox\"\n",
+    "desktop/3/horizontal-gesture: expect(page).toHaveURL(expected) failed\n\nExpected pattern: /\\/work\\/aarons-toolbox\\/normalizer$/\nReceived string:  \"http://127.0.0.1:3032/work/aarons-toolbox\"\nTimeout: 5000ms\n\nCall log:\n  - Expect \"to.have.url\" with timeout 5000ms\n    14 × locator resolved to <html lang=\"en\" data-portfolio-route=\"work\" data-portfolio-theme=\"dark\" data-portfolio-theme-preference=\"system\">…</html>\n       - unexpected value \"http://127.0.0.1:3032/work/aarons-toolbox\"\n",
+    "small-laptop-slow/1/horizontal-gesture: expect(page).toHaveURL(expected) failed\n\nExpected pattern: /\\/work\\/aarons-toolbox\\/normalizer$/\nReceived string:  \"http://127.0.0.1:3032/work/aarons-toolbox\"\nTimeout: 5000ms\n\nCall log:\n  - Expect \"to.have.url\" with timeout 5000ms\n    13 × locator resolved to <html lang=\"en\" data-portfolio-route=\"work\" data-portfolio-theme=\"dark\" data-portfolio-theme-preference=\"system\">…</html>\n       - unexpected value \"http://127.0.0.1:3032/work/aarons-toolbox\"\n",
+    "small-laptop-slow/2/horizontal-gesture: expect(page).toHaveURL(expected) failed\n\nExpected pattern: /\\/work\\/aarons-toolbox\\/normalizer$/\nReceived string:  \"http://127.0.0.1:3032/work/aarons-toolbox\"\nTimeout: 5000ms\n\nCall log:\n  - Expect \"to.have.url\" with timeout 5000ms\n    13 × locator resolved to <html lang=\"en\" data-portfolio-route=\"work\" data-portfolio-theme=\"dark\" data-portfolio-theme-preference=\"system\">…</html>\n       - unexpected value \"http://127.0.0.1:3032/work/aarons-toolbox\"\n",
+    "small-laptop-slow/3/horizontal-gesture: expect(page).toHaveURL(expected) failed\n\nExpected pattern: /\\/work\\/aarons-toolbox\\/normalizer$/\nReceived string:  \"http://127.0.0.1:3032/work/aarons-toolbox\"\nTimeout: 5000ms\n\nCall log:\n  - Expect \"to.have.url\" with timeout 5000ms\n    13 × locator resolved to <html lang=\"en\" data-portfolio-route=\"work\" data-portfolio-theme=\"dark\" data-portfolio-theme-preference=\"system\">…</html>\n       - unexpected value \"http://127.0.0.1:3032/work/aarons-toolbox\"\n",
+    "phone-portrait-slow/1/vertical-navigation: locator.tap: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('[data-portfolio-home-logo]:visible').first()\n    - locator resolved to <button type=\"button\" aria-label=\"Back to top\" data-interactive-pop=\"off\" data-portfolio-home-logo=\"true\" class=\"pointer-events-auto grid size-[var(--portfolio-control-size)] shrink-0 place-items-center border-0 bg-transparent p-0 outline-none focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-current\">…</button>\n  - attempting tap action\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <nav data-interactive-pop=\"off\" aria-label=\"Left section navigation\" data-portfolio-section-nav-zone=\"left\" class=\"fixed inset-y-0 z-[var(--portfolio-layer-navigation)] font-portfolio-controls transition-opacity duration-[var(--portfolio-motion-state)] motion-reduce:transition-none opacity-100\">…</nav> intercepts pointer events\n    - retrying tap action\n    - waiting 20ms\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <nav data-interactive-pop=\"off\" aria-label=\"Left section navigation\" data-portfolio-section-nav-zone=\"left\" class=\"fixed inset-y-0 z-[var(--portfolio-layer-navigation)] font-portfolio-controls transition-opacity duration-[var(--portfolio-motion-state)] motion-reduce:transition-none opacity-100\">…</nav> intercepts pointer events\n    - retrying tap action\n      - waiting 100ms\n    58 × waiting for element to be visible, enabled and stable\n       - element is visible, enabled and stable\n       - scrolling into view if needed\n       - done scrolling\n       - <nav data-interactive-pop=\"off\" aria-label=\"Left section navigation\" data-portfolio-section-nav-zone=\"left\" class=\"fixed inset-y-0 z-[var(--portfolio-layer-navigation)] font-portfolio-controls transition-opacity duration-[var(--portfolio-motion-state)] motion-reduce:transition-none opacity-100\">…</nav> intercepts pointer events\n     - retrying tap action\n       - waiting 500ms\n",
+    "phone-portrait-slow/2/vertical-navigation: locator.tap: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('[data-portfolio-home-logo]:visible').first()\n    - locator resolved to <button type=\"button\" aria-label=\"Back to top\" data-interactive-pop=\"off\" data-portfolio-home-logo=\"true\" class=\"pointer-events-auto grid size-[var(--portfolio-control-size)] shrink-0 place-items-center border-0 bg-transparent p-0 outline-none focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-current\">…</button>\n  - attempting tap action\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <nav data-interactive-pop=\"off\" aria-label=\"Left section navigation\" data-portfolio-section-nav-zone=\"left\" class=\"fixed inset-y-0 z-[var(--portfolio-layer-navigation)] font-portfolio-controls transition-opacity duration-[var(--portfolio-motion-state)] motion-reduce:transition-none opacity-100\">…</nav> intercepts pointer events\n    - retrying tap action\n    - waiting 20ms\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <nav data-interactive-pop=\"off\" aria-label=\"Left section navigation\" data-portfolio-section-nav-zone=\"left\" class=\"fixed inset-y-0 z-[var(--portfolio-layer-navigation)] font-portfolio-controls transition-opacity duration-[var(--portfolio-motion-state)] motion-reduce:transition-none opacity-100\">…</nav> intercepts pointer events\n    - retrying tap action\n      - waiting 100ms\n    58 × waiting for element to be visible, enabled and stable\n       - element is visible, enabled and stable\n       - scrolling into view if needed\n       - done scrolling\n       - <nav data-interactive-pop=\"off\" aria-label=\"Left section navigation\" data-portfolio-section-nav-zone=\"left\" class=\"fixed inset-y-0 z-[var(--portfolio-layer-navigation)] font-portfolio-controls transition-opacity duration-[var(--portfolio-motion-state)] motion-reduce:transition-none opacity-100\">…</nav> intercepts pointer events\n     - retrying tap action\n       - waiting 500ms\n",
+    "phone-portrait-slow/3/vertical-navigation: expect(page).toHaveURL(expected) failed\n\nExpected pattern: /\\/work\\/nextphrase$/\nReceived string:  \"http://127.0.0.1:3032/work/aarons-toolbox\"\nTimeout: 5000ms\n\nCall log:\n  - Expect \"to.have.url\" with timeout 5000ms\n    13 × locator resolved to <html lang=\"en\" data-portfolio-route=\"work\" data-portfolio-theme=\"dark\" data-portfolio-theme-preference=\"system\">…</html>\n       - unexpected value \"http://127.0.0.1:3032/work/aarons-toolbox\"\n"
+  ],
+  "failures": [
+    "Unit or cross-browser checks did not pass.",
+    "desktop/1/horizontal-gesture: expect(page).toHaveURL(expected) failed\n\nExpected pattern: /\\/work\\/aarons-toolbox\\/normalizer$/\nReceived string:  \"http://127.0.0.1:3032/work/aarons-toolbox\"\nTimeout: 5000ms\n\nCall log:\n  - Expect \"to.have.url\" with timeout 5000ms\n    14 × locator resolved to <html lang=\"en\" data-portfolio-route=\"work\" data-portfolio-theme=\"dark\" data-portfolio-theme-preference=\"system\">…</html>\n       - unexpected value \"http://127.0.0.1:3032/work/aarons-toolbox\"\n",
+    "desktop/2/horizontal-gesture: expect(page).toHaveURL(expected) failed\n\nExpected pattern: /\\/work\\/aarons-toolbox\\/normalizer$/\nReceived string:  \"http://127.0.0.1:3032/work/aarons-toolbox\"\nTimeout: 5000ms\n\nCall log:\n  - Expect \"to.have.url\" with timeout 5000ms\n    14 × locator resolved to <html lang=\"en\" data-portfolio-route=\"work\" data-portfolio-theme=\"dark\" data-portfolio-theme-preference=\"system\">…</html>\n       - unexpected value \"http://127.0.0.1:3032/work/aarons-toolbox\"\n",
+    "desktop/3/horizontal-gesture: expect(page).toHaveURL(expected) failed\n\nExpected pattern: /\\/work\\/aarons-toolbox\\/normalizer$/\nReceived string:  \"http://127.0.0.1:3032/work/aarons-toolbox\"\nTimeout: 5000ms\n\nCall log:\n  - Expect \"to.have.url\" with timeout 5000ms\n    14 × locator resolved to <html lang=\"en\" data-portfolio-route=\"work\" data-portfolio-theme=\"dark\" data-portfolio-theme-preference=\"system\">…</html>\n       - unexpected value \"http://127.0.0.1:3032/work/aarons-toolbox\"\n",
+    "small-laptop-slow/1/horizontal-gesture: expect(page).toHaveURL(expected) failed\n\nExpected pattern: /\\/work\\/aarons-toolbox\\/normalizer$/\nReceived string:  \"http://127.0.0.1:3032/work/aarons-toolbox\"\nTimeout: 5000ms\n\nCall log:\n  - Expect \"to.have.url\" with timeout 5000ms\n    13 × locator resolved to <html lang=\"en\" data-portfolio-route=\"work\" data-portfolio-theme=\"dark\" data-portfolio-theme-preference=\"system\">…</html>\n       - unexpected value \"http://127.0.0.1:3032/work/aarons-toolbox\"\n",
+    "small-laptop-slow/2/horizontal-gesture: expect(page).toHaveURL(expected) failed\n\nExpected pattern: /\\/work\\/aarons-toolbox\\/normalizer$/\nReceived string:  \"http://127.0.0.1:3032/work/aarons-toolbox\"\nTimeout: 5000ms\n\nCall log:\n  - Expect \"to.have.url\" with timeout 5000ms\n    13 × locator resolved to <html lang=\"en\" data-portfolio-route=\"work\" data-portfolio-theme=\"dark\" data-portfolio-theme-preference=\"system\">…</html>\n       - unexpected value \"http://127.0.0.1:3032/work/aarons-toolbox\"\n",
+    "small-laptop-slow/3/horizontal-gesture: expect(page).toHaveURL(expected) failed\n\nExpected pattern: /\\/work\\/aarons-toolbox\\/normalizer$/\nReceived string:  \"http://127.0.0.1:3032/work/aarons-toolbox\"\nTimeout: 5000ms\n\nCall log:\n  - Expect \"to.have.url\" with timeout 5000ms\n    13 × locator resolved to <html lang=\"en\" data-portfolio-route=\"work\" data-portfolio-theme=\"dark\" data-portfolio-theme-preference=\"system\">…</html>\n       - unexpected value \"http://127.0.0.1:3032/work/aarons-toolbox\"\n",
+    "phone-portrait-slow/1/vertical-navigation: locator.tap: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('[data-portfolio-home-logo]:visible').first()\n    - locator resolved to <button type=\"button\" aria-label=\"Back to top\" data-interactive-pop=\"off\" data-portfolio-home-logo=\"true\" class=\"pointer-events-auto grid size-[var(--portfolio-control-size)] shrink-0 place-items-center border-0 bg-transparent p-0 outline-none focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-current\">…</button>\n  - attempting tap action\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <nav data-interactive-pop=\"off\" aria-label=\"Left section navigation\" data-portfolio-section-nav-zone=\"left\" class=\"fixed inset-y-0 z-[var(--portfolio-layer-navigation)] font-portfolio-controls transition-opacity duration-[var(--portfolio-motion-state)] motion-reduce:transition-none opacity-100\">…</nav> intercepts pointer events\n    - retrying tap action\n    - waiting 20ms\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <nav data-interactive-pop=\"off\" aria-label=\"Left section navigation\" data-portfolio-section-nav-zone=\"left\" class=\"fixed inset-y-0 z-[var(--portfolio-layer-navigation)] font-portfolio-controls transition-opacity duration-[var(--portfolio-motion-state)] motion-reduce:transition-none opacity-100\">…</nav> intercepts pointer events\n    - retrying tap action\n      - waiting 100ms\n    58 × waiting for element to be visible, enabled and stable\n       - element is visible, enabled and stable\n       - scrolling into view if needed\n       - done scrolling\n       - <nav data-interactive-pop=\"off\" aria-label=\"Left section navigation\" data-portfolio-section-nav-zone=\"left\" class=\"fixed inset-y-0 z-[var(--portfolio-layer-navigation)] font-portfolio-controls transition-opacity duration-[var(--portfolio-motion-state)] motion-reduce:transition-none opacity-100\">…</nav> intercepts pointer events\n     - retrying tap action\n       - waiting 500ms\n",
+    "phone-portrait-slow/2/vertical-navigation: locator.tap: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('[data-portfolio-home-logo]:visible').first()\n    - locator resolved to <button type=\"button\" aria-label=\"Back to top\" data-interactive-pop=\"off\" data-portfolio-home-logo=\"true\" class=\"pointer-events-auto grid size-[var(--portfolio-control-size)] shrink-0 place-items-center border-0 bg-transparent p-0 outline-none focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-current\">…</button>\n  - attempting tap action\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <nav data-interactive-pop=\"off\" aria-label=\"Left section navigation\" data-portfolio-section-nav-zone=\"left\" class=\"fixed inset-y-0 z-[var(--portfolio-layer-navigation)] font-portfolio-controls transition-opacity duration-[var(--portfolio-motion-state)] motion-reduce:transition-none opacity-100\">…</nav> intercepts pointer events\n    - retrying tap action\n    - waiting 20ms\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <nav data-interactive-pop=\"off\" aria-label=\"Left section navigation\" data-portfolio-section-nav-zone=\"left\" class=\"fixed inset-y-0 z-[var(--portfolio-layer-navigation)] font-portfolio-controls transition-opacity duration-[var(--portfolio-motion-state)] motion-reduce:transition-none opacity-100\">…</nav> intercepts pointer events\n    - retrying tap action\n      - waiting 100ms\n    58 × waiting for element to be visible, enabled and stable\n       - element is visible, enabled and stable\n       - scrolling into view if needed\n       - done scrolling\n       - <nav data-interactive-pop=\"off\" aria-label=\"Left section navigation\" data-portfolio-section-nav-zone=\"left\" class=\"fixed inset-y-0 z-[var(--portfolio-layer-navigation)] font-portfolio-controls transition-opacity duration-[var(--portfolio-motion-state)] motion-reduce:transition-none opacity-100\">…</nav> intercepts pointer events\n     - retrying tap action\n       - waiting 500ms\n",
+    "phone-portrait-slow/3/vertical-navigation: expect(page).toHaveURL(expected) failed\n\nExpected pattern: /\\/work\\/nextphrase$/\nReceived string:  \"http://127.0.0.1:3032/work/aarons-toolbox\"\nTimeout: 5000ms\n\nCall log:\n  - Expect \"to.have.url\" with timeout 5000ms\n    13 × locator resolved to <html lang=\"en\" data-portfolio-route=\"work\" data-portfolio-theme=\"dark\" data-portfolio-theme-preference=\"system\">…</html>\n       - unexpected value \"http://127.0.0.1:3032/work/aarons-toolbox\"\n",
+    "Incomplete sample matrix.",
+    "Missing repetitions: desktop/horizontal-gesture",
+    "Missing repetitions: small-laptop-slow/horizontal-gesture",
+    "Missing repetitions: phone-portrait-slow/vertical-navigation",
+    "No accepted baseline. Review a complete run, then use pnpm qa:baseline <report>."
+  ],
+  "status": "blocked",
+  "buildId": "Uld7-5kJMjeTqeaCceidV",
+  "browserResults": {
+    "startTime": "2026-09-18T23:47:03.844Z",
+    "duration": 240169.159,
+    "expected": 54,
+    "skipped": 26,
+    "unexpected": 24,
+    "flaky": 0,
+    "failures": [
+      {
+        "project": "chromium-desktop",
+        "task": "About Me uses the shared information layout without a media carousel",
+        "error": "Error: expect(locator).toBeVisible() failed\n\nLocator: locator('[aria-label=\"About Me overview\"]')\nExpected: visible\nTimeout: 8000ms\nError: element(s) not found\n\nCall log:\n  - Expect \"toBeVisible\" with timeout 8000ms\n  - waiting for locator('[aria-label=\"About Me overview\"]')\n"
+      },
+      {
+        "project": "chromium-desktop",
+        "task": "the project information remains fixed while only the media carousel moves",
+        "error": "Error: expect(locator).toContainText(expected) failed\n\nLocator: locator('[aria-label=\"Loopio overview\"]')\nExpected substring: \"A mature product\"\nReceived string:    \"Project02Company or productLoopio------<Prev2 of 4Next>RolePrincipal Designer → Sr. UX EngineerDates2018–2022\"\nTimeout: 8000ms\n\nCall log:\n  - Expect \"toContainText\" with timeout 8000ms\n  - waiting for locator('[aria-label=\"Loopio overview\"]')\n    20 × locator resolved to <section aria-label=\"Loopio overview\" class=\"portfolio-ledger-copy font-resume-mono tabular-nums text-left font-normal text-portfolio-text [--project-color:var(--portfolio-accent)] pointer-events-auto col-start-1 [padding-left:var(--portfolio-control-gutter-width)] [padding-right:var(--portfolio-default-spacing)] [transform:translateY(calc(-100%-2lh))]\">…</section>\n       - unexpected value \"Project02Company or productLoopio------<Prev2 of 4Next>RolePrincipal Designer → Sr. UX EngineerDates2018–2022\"\n"
+      },
+      {
+        "project": "chromium-desktop",
+        "task": "the active section item animates its project back to the first slide",
+        "error": "Error: expect(locator).toBeVisible() failed\n\nLocator: locator('button[data-portfolio-slide-indicator-index=\"5\"][aria-current=\"true\"]')\nExpected: visible\nTimeout: 8000ms\nError: element(s) not found\n\nCall log:\n  - Expect \"toBeVisible\" with timeout 8000ms\n  - waiting for locator('button[data-portfolio-slide-indicator-index=\"5\"][aria-current=\"true\"]')\n"
+      },
+      {
+        "project": "chromium-desktop",
+        "task": "keyboard navigation wraps across finite physical tracks",
+        "error": "Error: expect(page).toHaveURL(expected) failed\n\nExpected pattern: /\\/work\\/nextphrase$/\nReceived string:  \"http://127.0.0.1:3032/work\"\nTimeout: 8000ms\n\nCall log:\n  - Expect \"toHaveURL\" with timeout 8000ms\n    20 × locator resolved to <html lang=\"en\" data-portfolio-route=\"work\" data-portfolio-theme=\"light\" data-portfolio-theme-preference=\"system\">…</html>\n       - unexpected value \"http://127.0.0.1:3032/work\"\n"
+      },
+      {
+        "project": "chromium-desktop",
+        "task": "wrap navigation crosses the full ordered track",
+        "error": "Error: expect(page).toHaveURL(expected) failed\n\nExpected pattern: /\\/work\\/nextphrase$/\nReceived string:  \"http://127.0.0.1:3032/work\"\nTimeout: 8000ms\n\nCall log:\n  - Expect \"toHaveURL\" with timeout 8000ms\n    20 × locator resolved to <html lang=\"en\" data-portfolio-route=\"work\" data-portfolio-theme=\"light\" data-portfolio-theme-preference=\"system\">…</html>\n       - unexpected value \"http://127.0.0.1:3032/work\"\n"
+      },
+      {
+        "project": "chromium-desktop",
+        "task": "dominant horizontal wheel intent changes media without changing section",
+        "error": "Test timeout of 30000ms exceeded."
+      },
+      {
+        "project": "chromium-desktop",
+        "task": "horizontal trackpad intent stays axis-locked through a vertical tail",
+        "error": "Error: expect(page).toHaveURL(expected) failed\n\nExpected pattern: /\\/work\\/aarons-toolbox\\/normalizer$/\nReceived string:  \"http://127.0.0.1:3032/work/aarons-toolbox\"\nTimeout: 8000ms\n\nCall log:\n  - Expect \"toHaveURL\" with timeout 8000ms\n    20 × locator resolved to <html lang=\"en\" data-portfolio-route=\"work\" data-portfolio-theme=\"light\" data-portfolio-theme-preference=\"system\">…</html>\n       - unexpected value \"http://127.0.0.1:3032/work/aarons-toolbox\"\n"
+      },
+      {
+        "project": "chromium-desktop",
+        "task": "horizontal wheel selection settles without reinitializing the carousel",
+        "error": "Error: expect(page).toHaveURL(expected) failed\n\nExpected pattern: /\\/work\\/aarons-toolbox\\/normalizer$/\nReceived string:  \"http://127.0.0.1:3032/work/aarons-toolbox\"\nTimeout: 8000ms\n\nCall log:\n  - Expect \"toHaveURL\" with timeout 8000ms\n    20 × locator resolved to <html lang=\"en\" data-portfolio-route=\"work\" data-portfolio-theme=\"light\" data-portfolio-theme-preference=\"system\">…</html>\n       - unexpected value \"http://127.0.0.1:3032/work/aarons-toolbox\"\n"
+      },
+      {
+        "project": "chromium-desktop",
+        "task": "viewer stays open while media navigation updates the underlying route",
+        "error": "Error: expect(locator).toHaveCount(expected) failed\n\nLocator:  locator('.portfolio-viewer')\nExpected: 0\nReceived: 1\nTimeout:  8000ms\n\nCall log:\n  - Expect \"toHaveCount\" with timeout 8000ms\n  - waiting for locator('.portfolio-viewer')\n    20 × locator resolved to 1 element\n       - unexpected value \"1\"\n"
+      },
+      {
+        "project": "webkit-desktop",
+        "task": "About Me uses the shared information layout without a media carousel",
+        "error": "Error: expect(locator).toBeVisible() failed\n\nLocator: locator('[aria-label=\"About Me overview\"]')\nExpected: visible\nTimeout: 8000ms\nError: element(s) not found\n\nCall log:\n  - Expect \"toBeVisible\" with timeout 8000ms\n  - waiting for locator('[aria-label=\"About Me overview\"]')\n"
+      },
+      {
+        "project": "webkit-desktop",
+        "task": "the project information remains fixed while only the media carousel moves",
+        "error": "Error: expect(locator).toContainText(expected) failed\n\nLocator: locator('[aria-label=\"Loopio overview\"]')\nExpected substring: \"A mature product\"\nReceived string:    \"Project02Company or productLoopio------<Prev2 of 4Next>RolePrincipal Designer → Sr. UX EngineerDates2018–2022\"\nTimeout: 8000ms\n\nCall log:\n  - Expect \"toContainText\" with timeout 8000ms\n  - waiting for locator('[aria-label=\"Loopio overview\"]')\n    20 × locator resolved to <section aria-label=\"Loopio overview\" class=\"portfolio-ledger-copy font-resume-mono tabular-nums text-left font-normal text-portfolio-text [--project-color:var(--portfolio-accent)] pointer-events-auto col-start-1 [padding-left:var(--portfolio-control-gutter-width)] [padding-right:var(--portfolio-default-spacing)] [transform:translateY(calc(-100%-2lh))]\">…</section>\n       - unexpected value \"Project02Company or productLoopio------<Prev2 of 4Next>RolePrincipal Designer → Sr. UX EngineerDates2018–2022\"\n"
+      },
+      {
+        "project": "webkit-desktop",
+        "task": "the active section item animates its project back to the first slide",
+        "error": "Error: expect(locator).toBeVisible() failed\n\nLocator: locator('button[data-portfolio-slide-indicator-index=\"5\"][aria-current=\"true\"]')\nExpected: visible\nTimeout: 8000ms\nError: element(s) not found\n\nCall log:\n  - Expect \"toBeVisible\" with timeout 8000ms\n  - waiting for locator('button[data-portfolio-slide-indicator-index=\"5\"][aria-current=\"true\"]')\n"
+      },
+      {
+        "project": "webkit-desktop",
+        "task": "keyboard navigation wraps across finite physical tracks",
+        "error": "Error: expect(page).toHaveURL(expected) failed\n\nExpected pattern: /\\/work\\/nextphrase$/\nReceived string:  \"http://127.0.0.1:3032/work\"\nTimeout: 8000ms\n\nCall log:\n  - Expect \"toHaveURL\" with timeout 8000ms\n    19 × locator resolved to <html lang=\"en\" data-portfolio-route=\"work\" data-portfolio-theme=\"light\" data-portfolio-theme-preference=\"system\">…</html>\n       - unexpected value \"http://127.0.0.1:3032/work\"\n"
+      },
+      {
+        "project": "webkit-desktop",
+        "task": "wrap navigation crosses the full ordered track",
+        "error": "Error: expect(page).toHaveURL(expected) failed\n\nExpected pattern: /\\/work\\/nextphrase$/\nReceived string:  \"http://127.0.0.1:3032/work\"\nTimeout: 8000ms\n\nCall log:\n  - Expect \"toHaveURL\" with timeout 8000ms\n    20 × locator resolved to <html lang=\"en\" data-portfolio-route=\"work\" data-portfolio-theme=\"light\" data-portfolio-theme-preference=\"system\">…</html>\n       - unexpected value \"http://127.0.0.1:3032/work\"\n"
+      },
+      {
+        "project": "webkit-desktop",
+        "task": "dominant horizontal wheel intent changes media without changing section",
+        "error": "Test timeout of 30000ms exceeded."
+      },
+      {
+        "project": "webkit-desktop",
+        "task": "horizontal trackpad intent stays axis-locked through a vertical tail",
+        "error": "Error: expect(page).toHaveURL(expected) failed\n\nExpected pattern: /\\/work\\/aarons-toolbox\\/normalizer$/\nReceived string:  \"http://127.0.0.1:3032/work/aarons-toolbox\"\nTimeout: 8000ms\n\nCall log:\n  - Expect \"toHaveURL\" with timeout 8000ms\n    19 × locator resolved to <html lang=\"en\" data-portfolio-route=\"work\" data-portfolio-theme=\"light\" data-portfolio-theme-preference=\"system\">…</html>\n       - unexpected value \"http://127.0.0.1:3032/work/aarons-toolbox\"\n"
+      },
+      {
+        "project": "webkit-desktop",
+        "task": "horizontal wheel selection settles without reinitializing the carousel",
+        "error": "Error: expect(page).toHaveURL(expected) failed\n\nExpected pattern: /\\/work\\/aarons-toolbox\\/normalizer$/\nReceived string:  \"http://127.0.0.1:3032/work/aarons-toolbox\"\nTimeout: 8000ms\n\nCall log:\n  - Expect \"toHaveURL\" with timeout 8000ms\n    20 × locator resolved to <html lang=\"en\" data-portfolio-route=\"work\" data-portfolio-theme=\"light\" data-portfolio-theme-preference=\"system\">…</html>\n       - unexpected value \"http://127.0.0.1:3032/work/aarons-toolbox\"\n"
+      },
+      {
+        "project": "webkit-iphone-portrait",
+        "task": "About Me uses the shared information layout without a media carousel",
+        "error": "Error: expect(locator).toBeVisible() failed\n\nLocator: locator('[aria-label=\"About Me overview\"]')\nExpected: visible\nTimeout: 8000ms\nError: element(s) not found\n\nCall log:\n  - Expect \"toBeVisible\" with timeout 8000ms\n  - waiting for locator('[aria-label=\"About Me overview\"]')\n"
+      },
+      {
+        "project": "webkit-iphone-portrait",
+        "task": "the active section item animates its project back to the first slide",
+        "error": "Error: expect(locator).toBeVisible() failed\n\nLocator: locator('button[data-portfolio-slide-indicator-index=\"5\"][aria-current=\"true\"]')\nExpected: visible\nTimeout: 8000ms\nError: element(s) not found\n\nCall log:\n  - Expect \"toBeVisible\" with timeout 8000ms\n  - waiting for locator('button[data-portfolio-slide-indicator-index=\"5\"][aria-current=\"true\"]')\n"
+      },
+      {
+        "project": "webkit-iphone-portrait",
+        "task": "keyboard navigation wraps across finite physical tracks",
+        "error": "Error: expect(page).toHaveURL(expected) failed\n\nExpected pattern: /\\/work\\/nextphrase$/\nReceived string:  \"http://127.0.0.1:3032/work\"\nTimeout: 8000ms\n\nCall log:\n  - Expect \"toHaveURL\" with timeout 8000ms\n    20 × locator resolved to <html lang=\"en\" data-portfolio-route=\"work\" data-portfolio-theme=\"light\" data-portfolio-theme-preference=\"system\">…</html>\n       - unexpected value \"http://127.0.0.1:3032/work\"\n"
+      },
+      {
+        "project": "webkit-iphone-landscape",
+        "task": "About Me uses the shared information layout without a media carousel",
+        "error": "Error: expect(locator).toBeVisible() failed\n\nLocator: locator('[aria-label=\"About Me overview\"]')\nExpected: visible\nTimeout: 8000ms\nError: element(s) not found\n\nCall log:\n  - Expect \"toBeVisible\" with timeout 8000ms\n  - waiting for locator('[aria-label=\"About Me overview\"]')\n"
+      },
+      {
+        "project": "webkit-iphone-landscape",
+        "task": "touch layouts keep project information above a constrained media stage",
+        "error": "Error: expect(received).toBeGreaterThanOrEqual(expected)\n\nExpected: >= 178\nReceived:    0"
+      },
+      {
+        "project": "webkit-iphone-landscape",
+        "task": "the active section item animates its project back to the first slide",
+        "error": "Error: expect(locator).toBeVisible() failed\n\nLocator: locator('button[data-portfolio-slide-indicator-index=\"5\"][aria-current=\"true\"]')\nExpected: visible\nTimeout: 8000ms\nError: element(s) not found\n\nCall log:\n  - Expect \"toBeVisible\" with timeout 8000ms\n  - waiting for locator('button[data-portfolio-slide-indicator-index=\"5\"][aria-current=\"true\"]')\n"
+      },
+      {
+        "project": "webkit-iphone-landscape",
+        "task": "keyboard navigation wraps across finite physical tracks",
+        "error": "Error: expect(page).toHaveURL(expected) failed\n\nExpected pattern: /\\/work\\/nextphrase$/\nReceived string:  \"http://127.0.0.1:3032/work\"\nTimeout: 8000ms\n\nCall log:\n  - Expect \"toHaveURL\" with timeout 8000ms\n    20 × locator resolved to <html lang=\"en\" data-portfolio-route=\"work\" data-portfolio-theme=\"light\" data-portfolio-theme-preference=\"system\">…</html>\n       - unexpected value \"http://127.0.0.1:3032/work\"\n"
+      }
+    ]
+  },
+  "completedAt": "2026-09-19T00:00:03.866Z"
+}

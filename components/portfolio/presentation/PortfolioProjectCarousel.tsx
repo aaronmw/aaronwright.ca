@@ -73,6 +73,7 @@ export const PortfolioProjectCarousel = memo(function PortfolioProjectCarousel({
   slides,
   activeSlideIndex,
   active,
+  renderingReady,
   playbackActive,
   isWideLayout,
   isTouchInput,
@@ -90,6 +91,7 @@ export const PortfolioProjectCarousel = memo(function PortfolioProjectCarousel({
   slides: ProjectSlide[]
   activeSlideIndex: number
   active: boolean
+  renderingReady: boolean
   playbackActive: boolean
   isWideLayout: boolean
   isTouchInput: boolean
@@ -145,7 +147,7 @@ export const PortfolioProjectCarousel = memo(function PortfolioProjectCarousel({
 
   return (
     <section
-      className="relative h-dvh min-h-0 min-w-0 shrink-0 basis-full overflow-hidden"
+      className={`relative h-dvh min-h-0 min-w-0 shrink-0 basis-full overflow-hidden ${renderingReady ? '[content-visibility:auto]' : ''}`}
       aria-label={project.title}
       style={layoutStyle}
     >
@@ -215,7 +217,10 @@ export const PortfolioProjectCarousel = memo(function PortfolioProjectCarousel({
                       slide={slide}
                       restingMediaPadding="var(--portfolio-default-spacing)"
                       isActive={activeSlideIndex === slideIndex}
-                      playbackActive={playbackActive && activeSlideIndex === slideIndex}
+                      priority={active && activeSlideIndex === slideIndex}
+                      playbackActive={
+                        playbackActive && activeSlideIndex === slideIndex
+                      }
                       registerMediaElement={registerMediaElement}
                       onOpenViewer={onOpenViewer}
                     />
@@ -256,7 +261,7 @@ export const PortfolioProjectCarousel = memo(function PortfolioProjectCarousel({
                   key={slide.id}
                   data-portfolio-carousel-panel="canonical"
                   data-portfolio-carousel-index={slideIndex}
-                  className="grid h-full min-h-0 min-w-0 shrink-0 basis-full grid-rows-[minmax(0,2fr)_minmax(0,1fr)] min-[30rem]:grid-rows-2"
+                  className="grid h-full min-h-0 min-w-0 shrink-0 basis-full grid-rows-[minmax(0,2fr)_minmax(min(12rem,50%),1fr)] min-[30rem]:grid-rows-2"
                   aria-hidden={activeSlideIndex !== slideIndex}
                   inert={activeSlideIndex !== slideIndex}
                 >
@@ -279,7 +284,10 @@ export const PortfolioProjectCarousel = memo(function PortfolioProjectCarousel({
                           : 'var(--portfolio-default-spacing)'
                       }
                       isActive={activeSlideIndex === slideIndex}
-                      playbackActive={playbackActive && activeSlideIndex === slideIndex}
+                      priority={active && activeSlideIndex === slideIndex}
+                      playbackActive={
+                        playbackActive && activeSlideIndex === slideIndex
+                      }
                       registerMediaElement={registerMediaElement}
                       onOpenViewer={onOpenViewer}
                     />

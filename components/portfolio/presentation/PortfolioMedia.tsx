@@ -3,7 +3,11 @@ import type { CSSProperties } from 'react'
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import type { PortfolioScreenshot } from '@/lib/portfolio'
 import { portfolioAccentColor } from '@/lib/portfolioPalette'
-import { PHONE_FRAME_PATH, PHONE_FRAME_PATH_SCALE, PHONE_FRAME_SIZE } from '@/lib/phoneFrame'
+import {
+  PHONE_FRAME_PATH,
+  PHONE_FRAME_PATH_SCALE,
+  PHONE_FRAME_SIZE,
+} from '@/lib/phoneFrame'
 import type { PortfolioMediaElement } from '@/components/portfolio/usePortfolioMediaReadiness'
 import {
   carouselMediaKey,
@@ -153,6 +157,7 @@ export function ProjectPanel({
   restingMediaPadding,
   reserveNavigationSpace = true,
   isActive,
+  priority,
   playbackActive,
   concealedScreenshotId,
   registerMediaElement,
@@ -162,6 +167,7 @@ export function ProjectPanel({
   restingMediaPadding: string
   reserveNavigationSpace?: boolean
   isActive: boolean
+  priority: boolean
   playbackActive: boolean
   concealedScreenshotId?: string
   registerMediaElement: (
@@ -189,7 +195,7 @@ export function ProjectPanel({
         style={
           {
             '--portfolio-media-padding': restingMediaPadding,
-            touchAction: 'pan-x pan-y',
+            'touchAction': 'pan-x pan-y',
           } as CSSProperties
         }
       >
@@ -198,7 +204,7 @@ export function ProjectPanel({
             screenshot={slide.screenshot}
             mediaKey={carouselMediaKey(slide.screenshot)}
             registerMediaElement={registerMediaElement}
-            priority={isActive}
+            priority={priority}
             playbackActive={playbackActive}
             showReplayControl={isActive}
             sizes="(min-aspect-ratio: 5/4) 70vw, 100vw"
@@ -213,6 +219,42 @@ export function ProjectPanel({
       </div>
     </div>
   )
+}
+
+function activateMedia(
+  element: PortfolioMediaElement | null,
+  source: string,
+  priority: boolean | undefined,
+  playbackActive: boolean,
+) {
+  if (element instanceof HTMLImageElement) {
+    const imageSource = element.dataset.portfolioImageSrc
+    if (
+      priority &&
+      imageSource &&
+      element.getAttribute('src') !== imageSource
+    ) {
+      element.fetchPriority = 'high'
+      element.src = imageSource
+    }
+    return
+  }
+  const video = element
+  if (!(video instanceof HTMLVideoElement)) return
+
+  if (playbackActive) {
+    // Inactive videos have no source, so even metadata cannot be fetched
+    // speculatively. Keep a visited video's source to preserve its position.
+    if (video.getAttribute('src') !== source) video.src = source
+    video.preload = 'auto'
+    void video.play().catch(() => undefined)
+  } else {
+    video.pause()
+    video.preload = 'none'
+  }
+
+  // Pausing preserves playback position and interrupts any pending play call.
+  return () => video.pause()
 }
 
 export function ScreenshotMedia({
@@ -242,7 +284,10 @@ export function ScreenshotMedia({
   className: string
 }) {
   const [aspectRatio, setAspectRatio] = useState<number | null>(
-    initialAspectRatio ?? null,
+    initialAspectRatio ??
+      (screenshot.width && screenshot.height
+        ? screenshot.width / screenshot.height
+        : null),
   )
   const [failedMediaSrc, setFailedMediaSrc] = useState<string | null>(null)
   const [replayHoverSuppressed, setReplayHoverSuppressed] = useState(false)
@@ -260,19 +305,16 @@ export function ScreenshotMedia({
     ? `Missing portfolio media: ${screenshot.alt}`
     : screenshot.alt
 
-  useEffect(() => {
-    const video = mediaElementRef.current
-    if (!(video instanceof HTMLVideoElement)) return
-
-    if (playbackActive) {
-      void video.play().catch(() => undefined)
-    } else {
-      video.pause()
-    }
-
-    // Pausing preserves playback position and interrupts any pending play call.
-    return () => video.pause()
-  }, [playbackActive, screenshot.src, mediaLoadFailed])
+  useEffect(
+    () =>
+      activateMedia(
+        mediaElementRef.current,
+        screenshot.src,
+        priority,
+        playbackActive,
+      ),
+    [playbackActive, priority, screenshot.src, mediaLoadFailed],
+  )
 
   const updateAspectRatio = (element: PortfolioMediaElement) => {
     const nextAspectRatio = getMediaAspectRatio(element)
@@ -397,7 +439,9 @@ export function ScreenshotMedia({
             ) : (
               <video
                 ref={setMediaRef}
-                src={screenshot.src}
+                data-portfolio-video-src={screenshot.src}
+                width={screenshot.width}
+                height={screenshot.height}
                 aria-label={renderedAlt}
                 autoPlay={playbackActive}
                 draggable={false}
@@ -419,7 +463,7 @@ export function ScreenshotMedia({
                   setVideoCurrentTime(event.currentTarget.currentTime)
                 }}
                 playsInline
-                preload={priority ? 'auto' : 'metadata'}
+                preload="none"
                 className={`absolute inset-0 h-full w-full select-none object-contain ${className}`}
               />
             )}
@@ -477,19 +521,23 @@ export function ScreenshotMedia({
           className={mediaFrameClassName}
           style={mediaFrameStyle}
         >
-          <Image
+          {/* Sources are assigned by the preload queue or active-slide effect;
+              native lazy loading would fetch projects passed during navigation. */}
+          <img
             ref={setMediaRef}
-            src={mediaLoadFailed ? MISSING_MEDIA_SRC : screenshot.src}
+            src={mediaLoadFailed ? MISSING_MEDIA_SRC : undefined}
+            data-portfolio-image-src={
+              mediaLoadFailed ? undefined : screenshot.src
+            }
             alt={renderedAlt}
-            fill
             draggable={false}
-            unoptimized
+            decoding="async"
             onDragStart={event => event.preventDefault()}
             onError={mediaLoadFailed ? undefined : handleMediaError}
             onLoad={event => updateAspectRatio(event.currentTarget)}
-            priority={priority}
+            fetchPriority={priority ? 'high' : 'low'}
             sizes={sizes}
-            className={`select-none object-contain ${className}`}
+            className={`absolute inset-0 h-full w-full select-none object-contain text-transparent [&:not([src])]:invisible ${className}`}
           />
           {mediaAction}
         </div>

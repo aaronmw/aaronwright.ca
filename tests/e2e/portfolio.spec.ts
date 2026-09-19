@@ -49,7 +49,7 @@ async function openOverviewViewer(page: Page, testInfo: TestInfo) {
     '[data-portfolio-screenshot-id="aarons-toolbox-overview"][data-portfolio-viewer-source="active"] [data-portfolio-media-action]',
   )
 
-  if (testInfo.project.name.includes('iphone')) {
+  if (testInfo.project.use.hasTouch) {
     const box = await source.boundingBox()
     expect(box).not.toBeNull()
     const x = box!.x + box!.width / 2
@@ -112,62 +112,107 @@ test('all media projects combine their intro and first media in one snap', async
   }
 })
 
-test('About Me uses the shared information layout without a media carousel', async ({
+test('About Me exposes both text panels without image-viewer controls', async ({
   page,
 }) => {
   await page.goto('/work/about-me')
   await waitForPortfolio(page)
-
-  const information = page.locator('[aria-label="About Me overview"]')
-  await expect(information).toBeVisible()
-  await expect(information).toContainText(
-    'I’ve been building things for the web',
+  const biography = page.getByRole('region', { name: 'About Me biography' })
+  await expect(biography).toBeVisible()
+  await expect(biography).toContainText(
+    'I’m a product designer and frontend engineer',
   )
+  const twoColumns = await page.evaluate(() => window.innerWidth >= 1024)
+  if (!twoColumns) await page.keyboard.press('ArrowRight')
   await expect(
-    page.locator('[data-portfolio-carousel="about-me"]'),
+    page.getByRole('region', { name: 'About Me working style and strengths' }),
+  ).toContainText('Situations I know well')
+  await expect(
+    page.locator(
+      '[data-portfolio-carousel="about-me"] [data-portfolio-media-action]',
+    ),
   ).toHaveCount(0)
 })
 
-test('touch layouts keep project information above a constrained media stage', async ({
+test('project text and media fit the viewport in wide and stacked layouts', async ({
   page,
-}, testInfo) => {
-  test.skip(!testInfo.project.name.includes('iphone'))
+}) => {
   await page.goto('/work/loopio')
   await waitForPortfolio(page)
-
-  const information = page.locator('[aria-label="Loopio overview"]')
-  const media = page.locator('[data-portfolio-carousel="loopio"]')
-  const [informationBox, mediaBox] = await Promise.all([
-    information.boundingBox(),
-    media.boundingBox(),
-  ])
-
-  expect(informationBox).not.toBeNull()
-  expect(mediaBox).not.toBeNull()
-  expect(informationBox!.height).toBeLessThanOrEqual(
-    (await page.evaluate(() => window.innerHeight)) / 2 + 1,
-  )
-  expect(mediaBox!.y).toBeGreaterThanOrEqual(
-    informationBox!.y + informationBox!.height - 1,
-  )
+  const text = await page
+    .getByRole('region', { name: 'Loopio slide 1 text' })
+    .boundingBox()
+  const media = await page
+    .locator(
+      '[data-portfolio-screenshot-id="loopio-cover"][data-portfolio-viewer-source="active"]',
+    )
+    .boundingBox()
+  expect(text).not.toBeNull()
+  expect(media).not.toBeNull()
+  const viewport = page.viewportSize()!
+  for (const box of [text!, media!]) {
+    expect(box.width).toBeGreaterThan(40)
+    expect(box.height).toBeGreaterThan(40)
+    expect(box.x).toBeGreaterThanOrEqual(0)
+    expect(box.y).toBeGreaterThanOrEqual(0)
+    expect(box.x + box.width).toBeLessThanOrEqual(viewport.width + 1)
+    expect(box.y + box.height).toBeLessThanOrEqual(viewport.height + 1)
+  }
+  // Layout follows available space, including a wide layout on landscape phones.
+  if (viewport.width >= 688 && viewport.width / viewport.height >= 1.25) {
+    expect(media!.x).toBeGreaterThanOrEqual(text!.x + text!.width - 1)
+  } else {
+    expect(media!.y).toBeGreaterThanOrEqual(text!.y + text!.height - 1)
+  }
+  // An outer stage can fit while its padding leaves the actual media tiny.
+  // Check a still image and a video in each viewport, including landscape phones.
+  for (const [route, id] of [
+    ['', 'loopio-cover'],
+    ['/work/aarons-toolbox', 'aarons-toolbox-overview'],
+  ]) {
+    if (route) {
+      await page.goto(route)
+      await waitForPortfolio(page)
+    }
+    const asset = page
+      .locator(`[data-portfolio-screenshot-id="${id}"]`)
+      .locator('img, video')
+      .first()
+    await expect
+      .poll(() =>
+        asset.evaluate(element =>
+          element instanceof HTMLImageElement
+            ? element.complete && element.naturalWidth > 0
+            : element instanceof HTMLVideoElement && element.readyState >= 2,
+        ),
+      )
+      .toBe(true)
+    await expect
+      .poll(async () => {
+        const box = await asset.boundingBox()
+        return box ? Math.min(box.width, box.height) : 0
+      })
+      .toBeGreaterThanOrEqual(80)
+  }
 })
 
-test('the project information remains fixed while only the media carousel moves', async ({
+test('project metadata remains fixed while slide narrative and media change', async ({
   page,
-}, testInfo) => {
-  test.skip(testInfo.project.name.includes('iphone'))
+}) => {
   await page.goto('/work/loopio/a-mature-product')
   await waitForPortfolio(page)
-
   const information = page.locator('[aria-label="Loopio overview"]')
   const initialBox = await information.boundingBox()
   await expect(information).toContainText('Loopio')
-  await expect(information).toContainText('A mature product')
-
+  await expect(
+    page.getByRole('region', { name: 'Loopio slide 2 text' }),
+  ).toContainText('The problem: the original prototype')
   await page.locator('button[data-portfolio-slide-indicator-index="0"]').click()
   await expect(page).toHaveURL(/\/work\/loopio$/)
-  await expect(information).toContainText('Proving a better Loopio')
-  expect(await information.boundingBox()).toEqual(initialBox)
+  await expect(
+    page.getByRole('region', { name: 'Loopio slide 1 text' }),
+  ).toContainText('A blank canvas re-imagining')
+  await expect.poll(() => information.boundingBox()).toEqual(initialBox)
 })
 
 test('the active section item animates its project back to the first slide', async ({
@@ -213,7 +258,7 @@ test('the active section item animates its project back to the first slide', asy
   await expect(page).toHaveURL(/\/work\/loopio\/shared-system$/)
   await expect(
     page.locator(
-      'button[data-portfolio-slide-indicator-index="5"][aria-current="true"]',
+      'button[data-portfolio-slide-indicator-index="3"][aria-current="true"]',
     ),
   ).toBeVisible()
 })
@@ -271,183 +316,122 @@ test('cover-media viewer deep links open without a media path segment', async ({
   await expect(page).toHaveURL(/\/work\/freshbooks\?modal=image$/)
 })
 
-test('keyboard navigation wraps across finite physical tracks', async ({
+test('keyboard navigation stops at both ends of each carousel', async ({
   page,
 }) => {
   await page.goto('/work')
   await waitForPortfolio(page)
-
+  await page.keyboard.press('ArrowUp')
+  await expectActiveSection(page, 0)
+  await expect(page).toHaveURL(/\/work$/)
+  await page.keyboard.press('6')
+  await expect(page).toHaveURL(/\/work\/nextphrase$/)
+  await page.keyboard.press('ArrowDown')
+  await expectActiveSection(page, 6)
+  await expect(page).toHaveURL(/\/work\/nextphrase$/)
   await page.keyboard.press('2')
   await expect(page).toHaveURL(/\/work\/loopio$/)
-  await page.keyboard.press('ArrowRight')
-  await expect(page).toHaveURL(/\/work\/loopio\/a-mature-product$/)
   await page.keyboard.press('ArrowLeft')
+  await expect(
+    page.locator('button[data-portfolio-slide-indicator-index="0"]'),
+  ).toHaveAttribute('aria-current', 'true')
   await expect(page).toHaveURL(/\/work\/loopio$/)
-
-  await page.keyboard.press('0')
-  await expect(page).toHaveURL(/\/work$/)
-  await page.keyboard.press('ArrowUp')
-  await expect(page).toHaveURL(/\/work\/nextphrase$/)
-  await page.keyboard.press('ArrowDown')
-  await expect(page).toHaveURL(/\/work$/)
-
-  await page.locator('[data-portfolio-start-section-index="6"]').click()
-  await expect(page).toHaveURL(/\/work\/nextphrase$/)
-  await page.keyboard.press('ArrowDown')
-  await expect(page).toHaveURL(/\/work$/)
-
-  await page.keyboard.press('0')
-  await page.locator('[data-portfolio-start-section-index="2"]').click()
-  await expect(page).toHaveURL(/\/work\/loopio$/)
+  for (const slug of ['a-mature-product', 'dense-work', 'shared-system']) {
+    await page.keyboard.press('ArrowRight')
+    await expect(page).toHaveURL(new RegExp(`/work/loopio/${slug}$`))
+  }
   await page.keyboard.press('ArrowRight')
-  await expect(page).toHaveURL(/\/work\/loopio\/a-mature-product$/)
-
+  await expect(
+    page.locator('button[data-portfolio-slide-indicator-index="3"]'),
+  ).toHaveAttribute('aria-current', 'true')
+  await expect(page).toHaveURL(/\/work\/loopio\/shared-system$/)
   await page.locator('[data-portfolio-home-logo]').click()
   await expect(page).toHaveURL(/\/work$/)
-  await page.keyboard.press('ArrowUp')
-  await expect(page).toHaveURL(/\/work\/nextphrase$/)
 })
 
-test('wrap navigation crosses the full ordered track', async ({
+test('outward wheel and mouse drags stop at the physical track boundaries', async ({
   page,
 }, testInfo) => {
-  test.skip(testInfo.project.name.includes('iphone'))
-  await page.goto('/work')
-  await waitForPortfolio(page)
-
-  const verticalViewport = page.locator('[data-portfolio-vertical-carousel]')
-  const verticalTrack = verticalViewport.locator(':scope > div')
-  const verticalBox = await verticalViewport.boundingBox()
-  expect(verticalBox).not.toBeNull()
-
-  await page.keyboard.press('ArrowUp')
-  await expect(page).toHaveURL(/\/work\/nextphrase$/)
-  await expect
-    .poll(() =>
-      verticalTrack.evaluate(element => {
-        const transform = getComputedStyle(element).transform
-        return transform === 'none' ? 0 : new DOMMatrix(transform).m42
-      }),
-    )
-    .toBeLessThan(-verticalBox!.height * 4)
-
-  await page.keyboard.press('ArrowDown')
-  await expect(page).toHaveURL(/\/work$/)
-  await expect
-    .poll(() =>
-      verticalTrack.evaluate(element => {
-        const transform = getComputedStyle(element).transform
-        return transform === 'none' ? 0 : new DOMMatrix(transform).m42
-      }),
-    )
-    .toBeGreaterThan(-verticalBox!.height / 2)
-
-  await dragGesture(
-    page,
+  test.skip(
+    Boolean(testInfo.project.use.hasTouch),
+    'Wheel and mouse-drag input is covered on desktop; touch swipes run in measured QA.',
+  )
+  const cases = [
     {
-      x: verticalBox!.x + verticalBox!.width * 0.75,
-      y: verticalBox!.y + verticalBox!.height * 0.35,
+      path: '/work',
+      selector: '[data-portfolio-vertical-carousel]',
+      axis: 'y',
+      outward: -1,
     },
-    { x: 0, y: verticalBox!.height * 0.3 },
-  )
-  await expect(page).toHaveURL(/\/work\/nextphrase$/)
-  await expect
-    .poll(() =>
-      verticalTrack.evaluate(element => {
-        const transform = getComputedStyle(element).transform
-        return transform === 'none' ? 0 : new DOMMatrix(transform).m42
-      }),
-    )
-    .toBeLessThan(-verticalBox!.height * 4)
-
-  await page.mouse.move(
-    verticalBox!.x + verticalBox!.width * 0.75,
-    verticalBox!.y + verticalBox!.height * 0.35,
-  )
-  await wheelGesture(page, 0, 900)
-  await expect(page).toHaveURL(/\/work$/)
-  await expect
-    .poll(() =>
-      verticalTrack.evaluate(element => {
-        const transform = getComputedStyle(element).transform
-        return transform === 'none' ? 0 : new DOMMatrix(transform).m42
-      }),
-    )
-    .toBeGreaterThan(-verticalBox!.height / 2)
-
-  await page.keyboard.press('2')
-  await expect(page).toHaveURL(/\/work\/loopio$/)
-  const horizontalViewport = page.locator('[data-portfolio-carousel="loopio"]')
-  const horizontalTrack = horizontalViewport.locator(':scope > div')
-  const horizontalBox = await horizontalViewport.boundingBox()
-  expect(horizontalBox).not.toBeNull()
-
-  await page.keyboard.press('ArrowLeft')
-  await expect
-    .poll(() =>
-      horizontalTrack.evaluate(element => {
-        const transform = getComputedStyle(element).transform
-        return transform === 'none' ? 0 : new DOMMatrix(transform).m41
-      }),
-    )
-    .toBeLessThan(-horizontalBox!.width * 2)
-
-  await page.keyboard.press('ArrowRight')
-  await expect(page).toHaveURL(/\/work\/loopio$/)
-  await expect
-    .poll(() =>
-      horizontalTrack.evaluate(element => {
-        const transform = getComputedStyle(element).transform
-        return transform === 'none' ? 0 : new DOMMatrix(transform).m41
-      }),
-    )
-    .toBeGreaterThan(-horizontalBox!.width / 2)
-
-  const horizontalGestureBox = await horizontalViewport.boundingBox()
-  expect(horizontalGestureBox).not.toBeNull()
-  await dragGesture(
-    page,
     {
-      x: horizontalGestureBox!.x + horizontalGestureBox!.width * 0.2,
-      y: horizontalGestureBox!.y + horizontalGestureBox!.height / 2,
+      path: '/work/nextphrase',
+      selector: '[data-portfolio-vertical-carousel]',
+      axis: 'y',
+      outward: 1,
     },
-    { x: horizontalGestureBox!.width * 0.6, y: 0 },
-  )
-  await expect
-    .poll(() =>
-      horizontalTrack.evaluate(element => {
-        const transform = getComputedStyle(element).transform
-        return transform === 'none' ? 0 : new DOMMatrix(transform).m41
-      }),
+    {
+      path: '/work/loopio',
+      selector: '[data-portfolio-carousel="loopio"]',
+      axis: 'x',
+      outward: -1,
+    },
+    {
+      path: '/work/loopio/shared-system',
+      selector: '[data-portfolio-carousel="loopio"]',
+      axis: 'x',
+      outward: 1,
+    },
+  ]
+  for (const { path, selector, axis, outward } of cases) {
+    await page.goto(path)
+    await waitForPortfolio(page)
+    const viewport = page.locator(selector)
+    const track = viewport.locator(':scope > div')
+    const position = () =>
+      track.evaluate((element, axis) => {
+        const matrix = new DOMMatrix(getComputedStyle(element).transform)
+        return axis === 'x' ? matrix.m41 : matrix.m42
+      }, axis)
+    const initial = await position()
+    const box = (await viewport.boundingBox())!
+    const start = {
+      x: box.x + box.width * (axis === 'x' && outward > 0 ? 0.8 : 0.6),
+      y: box.y + box.height * 0.65,
+    }
+    await page.mouse.move(start.x, start.y)
+    await wheelGesture(
+      page,
+      axis === 'x' ? 500 * outward : 0,
+      axis === 'y' ? 500 * outward : 0,
     )
-    .toBeLessThan(-horizontalBox!.width * 2)
-
-  await page.mouse.move(
-    horizontalGestureBox!.x + horizontalGestureBox!.width / 2,
-    horizontalGestureBox!.y + horizontalGestureBox!.height / 2,
-  )
-  await wheelGesture(page, 900, 0)
-  await expect(page).toHaveURL(/\/work\/loopio$/)
-  await expect
-    .poll(() =>
-      horizontalTrack.evaluate(element => {
-        const transform = getComputedStyle(element).transform
-        return transform === 'none' ? 0 : new DOMMatrix(transform).m41
-      }),
-    )
-    .toBeGreaterThan(-horizontalBox!.width / 2)
+    await expect
+      .poll(async () => Math.abs((await position()) - initial))
+      .toBeLessThan(1)
+    await expect(page).toHaveURL(new RegExp(`${path}$`))
+    await dragGesture(page, start, {
+      x: axis === 'x' ? -outward * box.width * 0.3 : 0,
+      y: axis === 'y' ? -outward * box.height * 0.3 : 0,
+    })
+    await expect
+      .poll(async () => Math.abs((await position()) - initial))
+      .toBeLessThan(1)
+    await expect(page).toHaveURL(new RegExp(`${path}$`))
+  }
 })
 
 test('dominant horizontal wheel intent changes media without changing section', async ({
   page,
 }, testInfo) => {
-  test.skip(testInfo.project.name.includes('iphone'))
+  test.skip(
+    Boolean(testInfo.project.use.hasTouch),
+    'Requires physical mouse/wheel input; touch gestures run in measured QA.',
+  )
   await page.goto('/work/aarons-toolbox/overview')
   await waitForPortfolio(page)
 
   const selectableParagraph = page
     .locator(
-      '[aria-label="Aaron\'s Toolbox overview"] [data-portfolio-selectable-text] .portfolio-markdown p',
+      '[aria-label="Aaron\'s Toolbox slide 1 text"] [data-portfolio-selectable-text] .portfolio-markdown p',
     )
     .first()
   const verticalViewport = page.locator('[data-portfolio-vertical-carousel]')
@@ -491,7 +475,10 @@ test('dominant horizontal wheel intent changes media without changing section', 
 test('horizontal trackpad intent stays axis-locked through a vertical tail', async ({
   page,
 }, testInfo) => {
-  test.skip(testInfo.project.name.includes('iphone'))
+  test.skip(
+    Boolean(testInfo.project.use.hasTouch),
+    'Requires physical mouse/wheel input; touch gestures run in measured QA.',
+  )
   await page.goto('/work/aarons-toolbox/overview')
   await waitForPortfolio(page)
 
@@ -526,7 +513,10 @@ test('horizontal trackpad intent stays axis-locked through a vertical tail', asy
 test('horizontal wheel selection settles without reinitializing the carousel', async ({
   page,
 }, testInfo) => {
-  test.skip(testInfo.project.name.includes('iphone'))
+  test.skip(
+    Boolean(testInfo.project.use.hasTouch),
+    'Requires physical mouse/wheel input; touch gestures run in measured QA.',
+  )
   await page.goto('/work/aarons-toolbox/overview')
   await waitForPortfolio(page)
 
@@ -578,12 +568,25 @@ test('horizontal wheel selection settles without reinitializing the carousel', a
   })
 
   expect(maximumFrameJump).toBeLessThan(box!.width / 4)
+
+  // The next real click must work after the wheel plugin's synthetic drag.
+  await page
+    .locator(
+      '[data-portfolio-screenshot-id="normalizer"][data-portfolio-viewer-source="active"] [data-portfolio-media-action]',
+    )
+    .click()
+  await expect(page.locator('.portfolio-viewer')).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(page.locator('.portfolio-viewer')).toHaveCount(0)
 })
 
 test('vertical wheel navigation changes only the outer section', async ({
   page,
 }, testInfo) => {
-  test.skip(testInfo.project.name.includes('iphone'))
+  test.skip(
+    Boolean(testInfo.project.use.hasTouch),
+    'Requires physical mouse/wheel input; touch gestures run in measured QA.',
+  )
   await page.goto('/work/aarons-toolbox/overview')
   await waitForPortfolio(page)
 
@@ -596,7 +599,10 @@ test('vertical wheel navigation changes only the outer section', async ({
 test('nested drag gestures move only their intended Embla axis', async ({
   page,
 }, testInfo) => {
-  test.skip(testInfo.project.name.includes('iphone'))
+  test.skip(
+    Boolean(testInfo.project.use.hasTouch),
+    'Requires physical mouse/wheel input; touch gestures run in measured QA.',
+  )
   await page.goto('/work/aarons-toolbox/overview')
   await waitForPortfolio(page)
 
@@ -623,6 +629,16 @@ test('nested drag gestures move only their intended Embla axis', async ({
   )
   await expect(page).toHaveURL(/\/work\/aarons-toolbox\/normalizer$/)
   await expectActiveSection(page, 5)
+
+  // A completed mouse drag must not consume the next distinct click either.
+  await page
+    .locator(
+      '[data-portfolio-screenshot-id="normalizer"][data-portfolio-viewer-source="active"] [data-portfolio-media-action]',
+    )
+    .click()
+  await expect(page.locator('.portfolio-viewer')).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(page.locator('.portfolio-viewer')).toHaveCount(0)
 
   await dragGesture(page, { x: 1300, y: 700 }, { x: 20, y: -600 })
   await expect(page).toHaveURL(/\/work\/nextphrase$/)
@@ -661,7 +677,7 @@ test('viewer stays open while media navigation updates the underlying route', as
     page.locator('[data-portfolio-section-nav-zone="left"]'),
   ).toHaveCSS('opacity', '0')
 
-  if (testInfo.project.name.includes('iphone')) {
+  if (testInfo.project.use.hasTouch) {
     await page.getByRole('button', { name: 'Next image' }).click()
   } else {
     await page.waitForTimeout(400)
@@ -679,6 +695,13 @@ test('viewer stays open while media navigation updates the underlying route', as
   await expect(page.locator('.portfolio-viewer')).toBeVisible()
   await expect(page).toHaveURL(/normalizer\?modal=image$/)
 
+  await expect
+    .poll(() =>
+      page
+        .locator('.portfolio-viewer')
+        .evaluate(element => element.contains(document.activeElement)),
+    )
+    .toBe(true)
   await page.keyboard.press('Escape')
   await expect(page.locator('.portfolio-viewer')).toHaveCount(0)
   await expect(page).toHaveURL(/\/work\/aarons-toolbox\/normalizer$/)
@@ -695,7 +718,10 @@ test('viewer stays open while media navigation updates the underlying route', as
 test('zoomed viewer drags pan and media changes reset zoom', async ({
   page,
 }, testInfo) => {
-  test.skip(testInfo.project.name.includes('iphone'))
+  test.skip(
+    Boolean(testInfo.project.use.hasTouch),
+    'Requires physical mouse/wheel input; touch gestures run in measured QA.',
+  )
   await page.goto('/work/aarons-toolbox/overview')
   await waitForPortfolio(page)
   await openOverviewViewer(page, testInfo)
@@ -742,10 +768,14 @@ test('viewer deep links restore with browser history', async ({
   await expect(page.locator('.portfolio-viewer')).toBeVisible()
 })
 
-test('viewer deep links retain their modal URL after carousel initialization', async ({ page }) => {
+test('viewer deep links retain their modal URL after carousel initialization', async ({
+  page,
+}) => {
   await page.goto('/work/freshbooks/client-first?modal=image')
   await waitForPortfolio(page)
-  await expect(page.locator('.portfolio-viewer')).toHaveClass(/portfolio-viewer--open/)
+  await expect(page.locator('.portfolio-viewer')).toHaveClass(
+    /portfolio-viewer--open/,
+  )
   await expect(page).toHaveURL(/\/work\/freshbooks\/client-first\?modal=image$/)
   await page.keyboard.press('Escape')
   await expect(page.locator('.portfolio-viewer')).toHaveCount(0)
