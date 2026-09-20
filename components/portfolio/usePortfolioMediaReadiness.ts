@@ -291,8 +291,8 @@ export function usePortfolioMediaReadiness() {
             await ensureMediaReady(key);
             progress.loaded += 1;
           } catch {
-            // A failed background image must not stop the remaining queue or
-            // prevent browsing. Opening-media failures are handled by reveal.
+            // A failed image must not stop the remaining queue or browsing.
+            // Keep the unfilled share grey rather than reporting it as loaded.
             progress.failed += 1;
           }
           publishProgress();

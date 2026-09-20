@@ -79,21 +79,38 @@ those swipe sequences or physical iPhone behavior.
 - The actual image or video, beyond its surrounding stage, must have a short edge
   of at least 80 CSS pixels in the four browser-matrix viewports. This catches
   landscape layouts where fixed text columns and padding consume the media area.
-- Image preload progress uses only the FiveByFive: one randomly ordered square per
-  4% of successfully decoded images, with no visible loading text. Background
-  loading uses one worker; active media can load immediately. Videos load on demand
-  on every device. Previously visited video may retain its source and buffer.
+- The page waits for fonts, carousel initialization, and media visible on the
+  initial route. The text menu needs no images; deep links wait only for their
+  active media. A text-free FiveByFive shows six lit perimeter squares stepping
+  clockwise during this wait, without rotating the grid. Reduced motion keeps
+  those six squares static. Reveal has no added delay or entrance fade.
+- The top and bottom frame rules start grey and fill with the accent red from
+  left to right, together, as images decode. They remain fully red after success.
+  Contact-dialog frame rules share that same live progress. Failed images retain
+  their grey share and are described to assistive technology, without visible
+  loading text. Background loading continues after the startup spinner disappears.
+- Background image loading uses one worker; active media can load immediately.
+  Videos load on demand on every device. Previously visited video may retain its
+  source and buffer.
 
 ## Required tasks
 
 | ID                  | Visitor action                                          | Required outcome                                                                                                |
 | ------------------- | ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| cold-entry          | Open `/work` with an empty browser cache.               | Loading curtain finishes; the project menu is usable.                                                           |
+| cold-entry          | Open `/work` with an empty browser cache.               | Fonts and carousel initialization finish; the project menu is usable while images load.                         |
 | choose-project      | Choose Aaron's Toolbox from the menu.                   | Correct route and section marker, settled vertical track, ready media contained in the viewport.                |
 | horizontal-gesture  | Wheel horizontally or swipe left through the media.     | Normalizer becomes active; the selected project stays Aaron's Toolbox; the new image loads and fits.            |
 | image-viewer        | Open Normalizer, go to the previous image, then close.  | Viewer opens, navigates to Overview, closes, and restores the project with the correct route and visible media. |
 | vertical-navigation | Wheel/swipe vertically to NextPhrase, then return home. | Only the project changes; route and section marker agree; Back to top returns to the menu.                      |
 | appearance          | Open Appearance and select Light.                       | Menu remains usable, closes on selection, and the Light preference is applied and stored.                       |
+
+Cold-entry now observes page readiness, removal of the startup spinner, and visible
+page content. First-screen readiness and background frame progress are an
+intentional loading-contract change; the next measured release needs a reviewed
+baseline with this task fingerprint.
+Readiness checks target the visible page, excluding temporary hidden streaming
+copies. Viewer deep links assert the requested viewer is opaque; ordinary entry
+asserts opaque page chrome, which the viewer intentionally hides while open.
 
 Each task waits for UI state and settled track geometry. A changed URL alone is
 insufficient. JavaScript exceptions, console errors, and same-origin HTTP errors

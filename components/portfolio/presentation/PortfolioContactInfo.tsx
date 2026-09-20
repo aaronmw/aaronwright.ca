@@ -16,6 +16,7 @@ import {
 } from '../mobileLayout'
 import { PortfolioIcon } from './PortfolioIcon'
 import { PortfolioLogoMark } from './PortfolioLogoMark'
+import { PortfolioFrameProgress } from './PortfolioFrameProgress'
 
 const CONTACT_LINK_CLASS_NAME = 'portfolio-prose-link'
 const CONTROL_CLASS_NAME =
@@ -122,10 +123,14 @@ export function PortfolioContactInfo() {
                       className="portfolio-theme-trigger fixed"
                       style={{
                         top: 'var(--portfolio-theme-control-edge-inset)',
-                        right: 'calc(var(--portfolio-navigation-control-edge-offset) + env(safe-area-inset-right, 0px))',
+                        right:
+                          'calc(var(--portfolio-navigation-control-edge-offset) + env(safe-area-inset-right, 0px))',
                       }}
                     >
-                      <PortfolioIcon name="close" className="text-portfolio-accent-decoration" />
+                      <PortfolioIcon
+                        name="close"
+                        className="text-portfolio-accent-decoration"
+                      />
                     </Button>
                   </header>
                   <OverscrollIndicator
@@ -144,14 +149,7 @@ export function PortfolioContactInfo() {
               )}
             </Dialog>
           </Modal>
-          <span
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-x-0 top-0 h-[var(--portfolio-frame-rule-size)] bg-portfolio-accent-decoration"
-          />
-          <span
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-x-0 bottom-0 h-[var(--portfolio-frame-rule-size)] bg-portfolio-accent-decoration"
-          />
+          <PortfolioFrameProgress />
         </ModalOverlay>
       </DialogTrigger>
     </>

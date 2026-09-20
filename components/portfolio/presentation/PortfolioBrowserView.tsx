@@ -8,7 +8,6 @@ import {
 } from 'react'
 import type { EmblaCarouselType } from 'embla-carousel'
 import type { EmblaViewportRefType } from 'embla-carousel-react'
-import { faRotateRight } from '@fortawesome/free-solid-svg-icons'
 import { portfolioSlides } from '@/lib/portfolio'
 import type { ProjectSlide } from '../domain/slides'
 import type { PortfolioViewerSlide, ViewerOpenIntent } from '../domain/viewer'
@@ -32,8 +31,11 @@ import { PortfolioLogoMark } from './PortfolioLogoMark'
 import { PortfolioViewer } from './PortfolioViewer'
 import { CircularIconButton, PortfolioHelperMessage } from './PortfolioControls'
 import { PortfolioIcon } from './PortfolioIcon'
-import { createFiveByFiveRevealOrder } from './FiveByFive'
-import { PortfolioImageLoader } from './PortfolioImageLoader'
+import { PortfolioStartupLoader } from './PortfolioStartupLoader'
+import {
+  PortfolioFrameProgress,
+  PortfolioImageProgressProvider,
+} from './PortfolioFrameProgress'
 
 const START_SCREEN_INDEX = -1
 const NOOP = () => undefined
@@ -104,7 +106,7 @@ type PortfolioBrowserViewActions = {
 
 const SECTION_ITEMS = [
   { id: 'work', label: 'Work' },
-  ...portfolioSlides.map((project) => ({
+  ...portfolioSlides.map(project => ({
     id: project.id,
     label: project.title,
   })),
@@ -132,7 +134,7 @@ function deriveViewState(
       resolvedTheme,
     ),
     activeProjectHasMedia: activeSlides.some(
-      (slide) => slide.kind === 'screenshot',
+      slide => slide.kind === 'screenshot',
     ),
     activeSlideIndex,
     activeSlides,
@@ -191,7 +193,7 @@ function PortfolioHorizontalNavigation({
         }}
       >
         <PortfolioSlideRail
-          items={activeSlides.map((slide) => ({
+          items={activeSlides.map(slide => ({
             id: slide.id,
             label:
               slide.kind === 'screenshot'
@@ -199,7 +201,7 @@ function PortfolioHorizontalNavigation({
                 : `Show ${activeProject?.title ?? 'Portfolio'} ${slide.kind}`,
           }))}
           activeIndex={activeSlideIndex}
-          onSelect={(index) => {
+          onSelect={index => {
             if (activeProjectIndex < 0) return
             actions.setActiveSlide(activeProjectIndex, index, 'push')
           }}
@@ -216,7 +218,10 @@ function PortfolioHorizontalNavigation({
         >
           <CircularIconButton
             visual={
-              <PortfolioIcon name="up" className="text-portfolio-accent-decoration" />
+              <PortfolioIcon
+                name="up"
+                className="text-portfolio-accent-decoration"
+              />
             }
             iconClassName=""
             className="font-portfolio-controls relative size-[var(--portfolio-control-size)] bg-transparent text-[var(--project-color)]"
@@ -226,57 +231,6 @@ function PortfolioHorizontalNavigation({
         </div>
       ) : null}
     </nav>
-  )
-}
-
-function PortfolioLoadingCurtain({
-  curtainRef,
-  introPhase,
-  imageProgress,
-  revealOrder,
-}: {
-  curtainRef: RefObject<HTMLDivElement | null>
-  introPhase: PortfolioIntroPhase
-  imageProgress: ImagePreloadProgress
-  revealOrder: readonly number[]
-}) {
-  return (
-    <div
-      ref={curtainRef}
-      aria-hidden={
-        introPhase === 'ready' || introPhase === 'revealing' ? true : undefined
-      }
-      data-portfolio-loading-curtain
-      data-phase={introPhase}
-      className={`portfolio-theme-surface fixed inset-0 z-[var(--portfolio-layer-loading)] grid place-items-center ${
-        introPhase === 'ready' ? 'pointer-events-none' : 'pointer-events-auto'
-      }`}
-    >
-      {introPhase === 'error' ? (
-        <div
-          role="alert"
-          className="flex max-w-md flex-col items-center gap-5 px-8 text-center"
-        >
-          <p className="font-normal text-portfolio-text-dimmed">
-            Portfolio media didn&apos;t finish loading.
-          </p>
-          <CircularIconButton
-            icon={faRotateRight}
-            iconClassName="size-6"
-            ring
-            className="portfolio-theme-surface relative size-[var(--portfolio-control-size)] text-portfolio-text"
-            aria-label="Reload page"
-            title="Reload page"
-            onClick={() => window.location.reload()}
-          />
-        </div>
-      ) : (
-        <PortfolioImageLoader
-          progress={imageProgress}
-          revealOrder={revealOrder}
-        />
-      )}
-    </div>
   )
 }
 
@@ -403,24 +357,16 @@ function getHelperKind(model: PortfolioBrowserViewModel, viewerOpen: boolean) {
 export function PortfolioBrowserView({
   actions,
   model,
-  curtainRef,
   keyboardSurfaceRef,
   verticalViewportRef,
 }: {
   actions: PortfolioBrowserViewActions
   model: PortfolioBrowserViewModel
-  curtainRef: RefObject<HTMLDivElement | null>
   keyboardSurfaceRef: RefObject<HTMLElement | null>
   verticalViewportRef: EmblaViewportRefType
 }) {
   const { resolvedTheme } = usePortfolioTheme()
   const [mediaBackdropVisible, setMediaBackdropVisible] = useState(true)
-  // Initial progress is zero on server and client, so the empty grid hydrates
-  // identically. Keep one random order through the curtain and background phase.
-  const [loaderRevealOrder] = useState(createFiveByFiveRevealOrder)
-  const imagePreloadFinished =
-    model.imageProgress.loaded + model.imageProgress.failed ===
-    model.imageProgress.total
   const {
     activeProject,
     activeProjectColor,
@@ -448,174 +394,150 @@ export function PortfolioBrowserView({
   }
 
   return (
-    <main
-      ref={keyboardSurfaceRef}
-      tabIndex={-1}
-      className="portfolio-theme-surface relative isolate h-dvh overflow-hidden text-portfolio-text outline-none"
-    >
-      <PortfolioMediaBackdrop
-        activeProjectHasMedia={activeProjectHasMedia}
-        activeProjectIndex={model.activeProjectIndex}
-        mediaBackdropVisible={mediaBackdropVisible}
-        usesSideBySideProjectLayout={usesSideBySideProjectLayout}
-        viewerOpen={viewerOpen}
-      />
-      <div
-        data-portfolio-browser-chrome
-        className="absolute inset-0 z-[var(--portfolio-layer-content)]"
+    <PortfolioImageProgressProvider progress={model.imageProgress}>
+      <main
+        ref={keyboardSurfaceRef}
+        data-portfolio-phase={model.introPhase}
+        tabIndex={-1}
+        className="portfolio-theme-surface relative isolate h-dvh overflow-hidden text-portfolio-text outline-none"
       >
-        <span
-          data-portfolio-top-rule
-          className="pointer-events-none fixed inset-x-0 top-0 z-[var(--portfolio-layer-frame)] h-[var(--portfolio-frame-rule-size)] bg-portfolio-accent-decoration"
-          aria-hidden="true"
-        />
-        <span
-          data-portfolio-bottom-rule
-          className="pointer-events-none fixed inset-x-0 bottom-0 z-[var(--portfolio-layer-frame)] h-[var(--portfolio-frame-rule-size)] bg-portfolio-accent-decoration"
-          aria-hidden="true"
-        />
-        {/* Embla moves slides with transforms; focus must not scroll its viewport. */}
+        <PortfolioFrameProgress />
+        <PortfolioStartupLoader phase={model.introPhase} />
+        {model.introPhase === 'ready' && (
+          <PortfolioMediaBackdrop
+            activeProjectHasMedia={activeProjectHasMedia}
+            activeProjectIndex={model.activeProjectIndex}
+            mediaBackdropVisible={mediaBackdropVisible}
+            usesSideBySideProjectLayout={usesSideBySideProjectLayout}
+            viewerOpen={viewerOpen}
+          />
+        )}
         <div
-          ref={verticalViewportRef}
-          data-portfolio-vertical-carousel
-          className="h-dvh overflow-clip [touch-action:pan-x_pinch-zoom]"
+          data-portfolio-browser-chrome
+          inert={model.introPhase !== 'ready'}
+          className={`absolute inset-0 z-[var(--portfolio-layer-content)] ${model.introPhase === 'ready' ? 'opacity-100' : 'opacity-0'}`}
         >
-          <div className="flex h-dvh flex-col">
-            <div className="h-dvh min-h-0 shrink-0 basis-full">
-              <PortfolioStartScreen
-                projects={portfolioSlides}
-                pendingProjectIndex={null}
-                isWideLayout={model.isWideLayout}
-                isTouchLandscapeLayout={model.isTouchLandscapeLayout}
-                getProjectColor={projectColor}
-                setTitleRef={NOOP}
-                onHoveredChange={NOOP}
-                onPreview={NOOP}
-                onSelect={selectStartProject}
-              />
-            </div>
-
-            {portfolioSlides.map((project, projectIndex) => {
-              const slides = model.projectSlides[project.slug]
-              return (
-                <PortfolioProjectCarousel
-                  key={project.id}
-                  project={project}
-                  projectIndex={projectIndex}
-                  projectNumber={String(projectIndex + 1).padStart(2, '0')}
-                  slides={slides}
-                  activeSlideIndex={model.activeSlideIndexes[projectIndex] ?? 0}
-                  active={model.activeProjectIndex === projectIndex}
-                  renderingReady={model.introPhase === 'ready'}
-                  playbackActive={
-                    model.activeProjectIndex === projectIndex &&
-                    model.introPhase === 'ready' &&
-                    !viewerOpen
-                  }
-                  isWideLayout={
-                    project.detailsMarkdown
-                      ? model.isWideTextLayout
-                      : model.isWideLayout
-                  }
-                  isTouchInput={model.isTouchInput}
-                  layoutStyle={WIDE_LAYOUT_STYLE}
-                  registerMediaElement={actions.registerMediaElement}
-                  onApi={actions.registerHorizontalApi}
-                  onSelect={actions.handleHorizontalSelect}
-                  onSelectSlide={actions.setActiveSlide}
-                  onOpenViewer={actions.openViewer}
-                  onBackdropVisibilityChange={setMediaBackdropVisible}
-                />
-              )
-            })}
-          </div>
-        </div>
-
-        <PortfolioIdentityLayers
-          activeProjectIndex={model.activeProjectIndex}
-          isWideLayout={model.isWideLayout}
-          onSelectTop={selectTop}
-        />
-
-        <PortfolioThemeMenu
-          hidden={viewerOpen}
-          isTouchInput={model.isTouchInput}
-          isTouchLandscapeLayout={model.isTouchLandscapeLayout}
-          isWideLayout={model.isWideLayout}
-        />
-
-        <PortfolioSectionRail
-          items={SECTION_ITEMS}
-          activeIndex={model.activeProjectIndex + 1}
-          side="left"
-          hidden={viewerOpen}
-          onSelect={(index) => {
-            const projectIndex = index - 1
-            if (
-              projectIndex >= 0 &&
-              projectIndex === model.activeProjectIndex
-            ) {
-              actions.setActiveSlide(projectIndex, 0, 'push')
-              return
-            }
-            actions.setActiveProject(
-              projectIndex,
-              'push',
-              false,
-              projectIndex >= 0 ? 0 : undefined,
-            )
-          }}
-        />
-
-        <PortfolioViewerLayer
-          actions={actions}
-          activeProject={activeProject}
-          model={model}
-        />
-
-        <PortfolioHelperMessage kind={getHelperKind(model, viewerOpen)} />
-
-        <PortfolioLoadingCurtain
-          curtainRef={curtainRef}
-          introPhase={model.introPhase}
-          imageProgress={model.imageProgress}
-          revealOrder={loaderRevealOrder}
-        />
-        {model.introPhase === 'ready' &&
-        !viewerOpen &&
-        model.imageProgress.total > 0 ? (
+          {/* Embla moves slides with transforms; focus must not scroll its viewport. */}
           <div
-            aria-hidden={imagePreloadFinished ? true : undefined}
-            className={`pointer-events-none fixed z-[var(--portfolio-layer-navigation)] grid size-[var(--portfolio-navigation-track-size)] place-items-center transition-opacity duration-[var(--portfolio-motion-loading)] motion-reduce:transition-none ${imagePreloadFinished ? 'opacity-0 delay-[var(--portfolio-motion-loading)]' : 'opacity-100'}`}
-            style={{
-              left: 'env(safe-area-inset-left, 0px)',
-              bottom:
-                'calc(var(--portfolio-frame-rule-size) + env(safe-area-inset-bottom, 0px))',
-            }}
+            ref={verticalViewportRef}
+            data-portfolio-vertical-carousel
+            className="h-dvh overflow-clip [touch-action:pan-x_pinch-zoom]"
           >
-            <PortfolioImageLoader
-              progress={model.imageProgress}
-              revealOrder={loaderRevealOrder}
-            />
+            <div className="flex h-dvh flex-col">
+              <div className="h-dvh min-h-0 shrink-0 basis-full">
+                <PortfolioStartScreen
+                  projects={portfolioSlides}
+                  pendingProjectIndex={null}
+                  isWideLayout={model.isWideLayout}
+                  isTouchLandscapeLayout={model.isTouchLandscapeLayout}
+                  getProjectColor={projectColor}
+                  setTitleRef={NOOP}
+                  onHoveredChange={NOOP}
+                  onPreview={NOOP}
+                  onSelect={selectStartProject}
+                />
+              </div>
+
+              {portfolioSlides.map((project, projectIndex) => {
+                const slides = model.projectSlides[project.slug]
+                return (
+                  <PortfolioProjectCarousel
+                    key={project.id}
+                    project={project}
+                    projectIndex={projectIndex}
+                    projectNumber={String(projectIndex + 1).padStart(2, '0')}
+                    slides={slides}
+                    activeSlideIndex={
+                      model.activeSlideIndexes[projectIndex] ?? 0
+                    }
+                    active={model.activeProjectIndex === projectIndex}
+                    renderingReady={model.introPhase === 'ready'}
+                    playbackActive={
+                      model.activeProjectIndex === projectIndex &&
+                      model.introPhase === 'ready' &&
+                      !viewerOpen
+                    }
+                    isWideLayout={
+                      project.detailsMarkdown
+                        ? model.isWideTextLayout
+                        : model.isWideLayout
+                    }
+                    isTouchInput={model.isTouchInput}
+                    layoutStyle={WIDE_LAYOUT_STYLE}
+                    registerMediaElement={actions.registerMediaElement}
+                    onApi={actions.registerHorizontalApi}
+                    onSelect={actions.handleHorizontalSelect}
+                    onSelectSlide={actions.setActiveSlide}
+                    onOpenViewer={actions.openViewer}
+                    onBackdropVisibilityChange={setMediaBackdropVisible}
+                  />
+                )
+              })}
+            </div>
           </div>
-        ) : null}
-        <PortfolioHorizontalNavigation
-          actions={actions}
-          activeProject={activeProject}
-          activeProjectColor={activeProjectColor}
-          activeProjectIndex={model.activeProjectIndex}
-          activeSlideIndex={activeSlideIndex}
-          activeSlides={
-            usesSideBySideProjectLayout && !activeProjectHasMedia
-              ? []
-              : activeSlides
-          }
-          introPhase={model.introPhase}
-          isTouchInput={model.isTouchInput}
-          usesSideBySideProjectLayout={usesSideBySideProjectLayout}
-          viewerOpen={viewerOpen}
-        />
-      </div>
-    </main>
+
+          <PortfolioIdentityLayers
+            activeProjectIndex={model.activeProjectIndex}
+            isWideLayout={model.isWideLayout}
+            onSelectTop={selectTop}
+          />
+
+          <PortfolioThemeMenu
+            hidden={viewerOpen}
+            isTouchInput={model.isTouchInput}
+            isTouchLandscapeLayout={model.isTouchLandscapeLayout}
+            isWideLayout={model.isWideLayout}
+          />
+
+          <PortfolioSectionRail
+            items={SECTION_ITEMS}
+            activeIndex={model.activeProjectIndex + 1}
+            side="left"
+            hidden={viewerOpen}
+            onSelect={index => {
+              const projectIndex = index - 1
+              if (
+                projectIndex >= 0 &&
+                projectIndex === model.activeProjectIndex
+              ) {
+                actions.setActiveSlide(projectIndex, 0, 'push')
+                return
+              }
+              actions.setActiveProject(
+                projectIndex,
+                'push',
+                false,
+                projectIndex >= 0 ? 0 : undefined,
+              )
+            }}
+          />
+
+          <PortfolioViewerLayer
+            actions={actions}
+            activeProject={activeProject}
+            model={model}
+          />
+
+          <PortfolioHelperMessage kind={getHelperKind(model, viewerOpen)} />
+
+          <PortfolioHorizontalNavigation
+            actions={actions}
+            activeProject={activeProject}
+            activeProjectColor={activeProjectColor}
+            activeProjectIndex={model.activeProjectIndex}
+            activeSlideIndex={activeSlideIndex}
+            activeSlides={
+              usesSideBySideProjectLayout && !activeProjectHasMedia
+                ? []
+                : activeSlides
+            }
+            introPhase={model.introPhase}
+            isTouchInput={model.isTouchInput}
+            usesSideBySideProjectLayout={usesSideBySideProjectLayout}
+            viewerOpen={viewerOpen}
+          />
+        </div>
+      </main>
+    </PortfolioImageProgressProvider>
   )
 }

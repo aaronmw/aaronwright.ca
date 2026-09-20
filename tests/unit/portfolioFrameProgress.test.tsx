@@ -1,45 +1,65 @@
 import React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
-import { createFiveByFiveRevealOrder } from '../../components/portfolio/presentation/FiveByFive'
-import { PortfolioImageLoader } from '../../components/portfolio/presentation/PortfolioImageLoader'
+import {
+  PortfolioFrameProgress,
+  PortfolioImageProgressProvider,
+} from '../../components/portfolio/presentation/PortfolioFrameProgress'
 import { ScreenshotMedia } from '../../components/portfolio/presentation/PortfolioMedia'
+import { PortfolioStartupLoader } from '../../components/portfolio/presentation/PortfolioStartupLoader'
 
-describe('FiveByFive image loading', () => {
-  it('fills one additional, distinct square at each 4% threshold', () => {
-    const order = createFiveByFiveRevealOrder(() => 0.37)
-    expect(new Set(order).size).toBe(25)
-    expect([...order].sort((a, b) => a - b)).toEqual(
-      Array.from({ length: 25 }, (_, index) => index),
+describe('portfolio startup loader', () => {
+  it('renders a text-free six-square snake before hydration and disappears when ready', () => {
+    const html = renderToStaticMarkup(
+      <PortfolioStartupLoader phase="loading" />,
     )
-    expect(order).not.toEqual([...order].sort((a, b) => a - b))
-    let previous: number[] = []
-    for (let loaded = 0; loaded <= 100; loaded++) {
+    expect(html.replace(/<[^>]+>/g, '')).toBe('')
+    expect(html).toContain('data-five-by-five="snake"')
+    expect(html.match(/opacity-100/g)).toHaveLength(6)
+    expect(html.match(/motion-safe:animate-portfolio-snake/g)).toHaveLength(16)
+    expect(renderToStaticMarkup(<PortfolioStartupLoader phase="ready" />)).toBe(
+      '',
+    )
+  })
+})
+
+describe('portfolio frame image progress', () => {
+  it('fills both frame bars together without visible text', () => {
+    for (const loaded of [0, 4, 8, 16]) {
       const html = renderToStaticMarkup(
-        <PortfolioImageLoader
-          progress={{ loaded, total: 100, failed: 0 }}
-          revealOrder={order}
-        />,
+        <PortfolioImageProgressProvider
+          progress={{ loaded, total: 16, failed: 0 }}
+        >
+          <PortfolioFrameProgress />
+        </PortfolioImageProgressProvider>,
       )
-      const filled = Array.from(
-        html.matchAll(/<span class="(bg-current|bg-portfolio-shaded)"/g),
-      ).flatMap((match, index) => (match[1] === 'bg-current' ? [index] : []))
       expect(html.replace(/<[^>]+>/g, '')).toBe('')
-      expect(filled).toHaveLength(Math.floor(loaded / 4))
-      expect(previous.every(index => filled.includes(index))).toBe(true)
-      previous = filled
+      expect(html).toContain('data-portfolio-top-rule="true"')
+      expect(html).toContain('data-portfolio-bottom-rule="true"')
+      expect(html.match(/scaleX\([^)]+\)/g)).toEqual([
+        `scaleX(${loaded / 16})`,
+        `scaleX(${loaded / 16})`,
+      ])
+      expect(html.match(/role="progressbar"/g)).toHaveLength(1)
+      expect(html).toContain(`aria-valuenow="${loaded}"`)
+      expect(html).not.toContain('data-five-by-five')
     }
   })
 
-  it('does not count a failed image as loaded', () => {
+  it('keeps failed images unfilled and exposes their status without visible text', () => {
     const html = renderToStaticMarkup(
-      <PortfolioImageLoader
-        progress={{ loaded: 24, total: 25, failed: 1 }}
-        revealOrder={createFiveByFiveRevealOrder(() => 0)}
-      />,
+      <PortfolioImageProgressProvider
+        progress={{ loaded: 15, total: 16, failed: 1 }}
+      >
+        <PortfolioFrameProgress />
+      </PortfolioImageProgressProvider>,
     )
-    expect(html).toContain('data-filled-cells="24"')
+    expect(html.match(/scaleX\([^)]+\)/g)).toEqual([
+      'scaleX(0.9375)',
+      'scaleX(0.9375)',
+    ])
     expect(html).toContain('1 could not load')
+    expect(html.replace(/<[^>]+>/g, '')).toBe('')
   })
 
   it('leaves background images to the preload queue rather than the browser preload scanner', () => {

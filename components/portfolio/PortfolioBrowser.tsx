@@ -1,6 +1,5 @@
 'use client'
 
-import { portfolioMotionSeconds } from '@/lib/portfolioTokens'
 import {
   useCallback,
   useEffect,
@@ -12,7 +11,6 @@ import {
 import type { EmblaCarouselType } from 'embla-carousel'
 import useEmblaCarousel from 'embla-carousel-react'
 import { WheelGesturesPlugin } from 'embla-carousel-wheel-gestures'
-import { gsap } from 'gsap'
 import { portfolioSlides } from '@/lib/portfolio'
 import { usePortfolioMediaReadiness } from './usePortfolioMediaReadiness'
 import { usePortfolioLayout } from './runtime/usePortfolioLayout'
@@ -81,15 +79,18 @@ export function PortfolioBrowser({
   initialViewerOpen = false,
 }: PortfolioBrowserProps) {
   const keyboardSurfaceRef = useRef<HTMLElement>(null)
-  const curtainRef = useRef<HTMLDivElement>(null)
   const horizontalApisRef = useRef(new Map<number, EmblaCarouselType>())
   const horizontalModesRef = useRef(new Map<number, NavigationMode>())
   const verticalIntentRef = useRef<VerticalNavigationIntent | null>(null)
   const verticalViewportElementRef = useRef<HTMLElement>(null)
-  const initialRevealStartedRef = useRef(false)
+  const initializationStartedRef = useRef(false)
   const [introPhase, setIntroPhase] = useState<PortfolioIntroPhase>('loading')
-  const { isTouchInput, isTouchLandscapeLayout, isWideLayout, isWideTextLayout } =
-    usePortfolioLayout()
+  const {
+    isTouchInput,
+    isTouchLandscapeLayout,
+    isWideLayout,
+    isWideTextLayout,
+  } = usePortfolioLayout()
 
   const {
     imageProgress,
@@ -224,9 +225,11 @@ export function PortfolioBrowser({
 
   const handleKeyDown = useEffectEvent((event: KeyboardEvent) => {
     if (
+      introPhase !== 'ready' ||
       viewerIntent ||
       targetMatches(event.target, '[data-portfolio-contact-dialog]')
-    ) return
+    )
+      return
     if (event.metaKey || event.ctrlKey || event.altKey) return
 
     if (event.key === '0') {
@@ -288,25 +291,14 @@ export function PortfolioBrowser({
     return () => window.removeEventListener('keydown', handleKeyDown, true)
   }, [])
 
-  const revealPortfolio = useEffectEvent(async () => {
-    if (!verticalApi || initialRevealStartedRef.current) return
-    initialRevealStartedRef.current = true
+  const initializePortfolio = useEffectEvent(async () => {
+    if (!verticalApi || initializationStartedRef.current) return
+    initializationStartedRef.current = true
 
-    // Start required media first, then preload images with bounded concurrency.
-    // The curtain only waits for the opening scene, not the whole portfolio.
+    // Prioritize only the media visible on the initial route. Other assets
+    // preload independently and never delay the initial page.
     const openingReady = ensureMediaReady(openingMediaKeys)
     void preloadQueue(imagePreloadQueue, 1)
-    try {
-      await Promise.all([
-        document.fonts.ready.catch(() => undefined),
-        nextFrame().then(nextFrame),
-        openingReady,
-      ])
-    } catch {
-      setIntroPhase('error')
-      return
-    }
-
     const targetIndex = normalizedInitialProjectIndex + 1
     if (verticalApi.selectedScrollSnap() !== targetIndex) {
       verticalIntentRef.current = {
@@ -317,22 +309,17 @@ export function PortfolioBrowser({
     } else {
       verticalIntentRef.current = null
     }
-    setIntroPhase('revealing')
-    const curtain = curtainRef.current
-    const reducedMotion = window.matchMedia(
-      '(prefers-reduced-motion: reduce)',
-    ).matches
-    if (curtain) {
-      await new Promise<void>(resolve => {
-        gsap.to(curtain, {
-          autoAlpha: 0,
-          duration: reducedMotion
-            ? portfolioMotionSeconds.reduced
-            : portfolioMotionSeconds.scroll,
-          ease: 'power3.inOut',
-          onComplete: resolve,
-        })
-      })
+    try {
+      await Promise.all([
+        document.fonts.ready.catch(() => undefined),
+        openingReady,
+      ])
+      // Settle layout with the loaded font metrics before showing the carousels
+      // and enabling offscreen containment.
+      await nextFrame().then(nextFrame)
+    } catch {
+      setIntroPhase('error')
+      return
     }
     setIntroPhase('ready')
 
@@ -350,9 +337,9 @@ export function PortfolioBrowser({
   })
 
   useLayoutEffect(() => {
-    // Async font/media readiness intentionally advances reveal state after mount.
+    // Reveal once the initial screen is ready, without an additional fade.
     // react-doctor-disable-next-line react-hooks-js/set-state-in-effect
-    void revealPortfolio()
+    void initializePortfolio()
   }, [verticalApi])
 
   return (
@@ -382,7 +369,6 @@ export function PortfolioBrowser({
         setActiveProject,
         setActiveSlide,
       }}
-      curtainRef={curtainRef}
       keyboardSurfaceRef={keyboardSurfaceRef}
       verticalViewportRef={setVerticalViewportRef}
     />

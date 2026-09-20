@@ -1,9 +1,20 @@
 import { expect, test, type Page, type TestInfo } from '@playwright/test'
 
 async function waitForPortfolio(page: Page) {
-  const curtain = page.locator('[data-portfolio-loading-curtain]')
-  await expect(curtain).toHaveAttribute('data-phase', 'ready')
-  await expect(curtain).toHaveCSS('visibility', 'hidden')
+  // Next's streamed HTML can temporarily include a second, hidden copy.
+  const portfolio = page.locator('main[data-portfolio-phase]:visible')
+  await expect(portfolio).toHaveAttribute('data-portfolio-phase', 'ready')
+  await expect(
+    portfolio.locator('[data-portfolio-startup-loader]'),
+  ).toHaveCount(0)
+  if (new URL(page.url()).searchParams.get('modal') === 'image') {
+    // A requested viewer intentionally hides the page chrome beneath it.
+    await expect(page.locator('.portfolio-viewer')).toHaveCSS('opacity', '1')
+  } else {
+    await expect(
+      portfolio.locator('[data-portfolio-browser-chrome]'),
+    ).toHaveCSS('opacity', '1')
+  }
 }
 
 async function expectActiveSection(page: Page, index: number) {

@@ -155,11 +155,9 @@ export async function prepareTask(page, task) {
   const current = new URL(page.url())
   if (current.pathname + current.search === path) return
   await page.goto(path, { waitUntil: 'domcontentloaded' })
-  const curtain = page.locator('[data-portfolio-loading-curtain]')
-  await expect(curtain).toHaveAttribute('data-phase', 'ready', {
-    timeout: 45_000,
-  })
-  await expect(curtain).toHaveCSS('visibility', 'hidden', { timeout: 15_000 })
+  await expect(
+    page.locator('main[data-portfolio-phase]:visible'),
+  ).toHaveAttribute('data-portfolio-phase', 'ready', { timeout: 45_000 })
   await settled(page)
   if (path.includes('aarons-toolbox')) await visibleMedia(page)
 }
@@ -169,13 +167,19 @@ export async function runTasks({ page, cdp, profile, measure }) {
     'cold-entry',
     async () => {
       await page.goto('/work', { waitUntil: 'domcontentloaded' })
-      const curtain = page.locator('[data-portfolio-loading-curtain]')
-      await expect(curtain).toHaveAttribute('data-phase', 'ready', {
-        timeout: 45_000,
-      })
-      await expect(curtain).toHaveCSS('visibility', 'hidden', {
-        timeout: 15_000,
-      })
+      await expect(
+        page.locator('main[data-portfolio-phase]:visible'),
+      ).toHaveAttribute('data-portfolio-phase', 'ready', { timeout: 45_000 })
+      await expect(
+        page.locator(
+          'main[data-portfolio-phase]:visible [data-portfolio-startup-loader]',
+        ),
+      ).toHaveCount(0)
+      await expect(
+        page.locator(
+          'main[data-portfolio-phase]:visible [data-portfolio-browser-chrome]',
+        ),
+      ).toHaveCSS('opacity', '1')
       await expect(
         page.locator('[data-portfolio-start-section-index="5"]'),
       ).toBeVisible()

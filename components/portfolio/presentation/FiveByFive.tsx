@@ -1,41 +1,27 @@
 import type { CSSProperties } from 'react'
 
-export const FIVE_BY_FIVE_CELL_COUNT = 25
-
-const GRID_CELLS = Array.from(
-  { length: FIVE_BY_FIVE_CELL_COUNT },
-  (_, index) => [index % 5, Math.floor(index / 5)] as const,
-)
-
-export function createFiveByFiveRevealOrder(random = Math.random) {
-  const order = GRID_CELLS.map((_, index) => index)
-  for (let index = order.length - 1; index > 0; index -= 1) {
-    const other = Math.floor(random() * (index + 1))
-    ;[order[index], order[other]] = [order[other], order[index]]
-  }
-  return order
-}
+const OUTLINE_CELLS = [
+  [0, 0],
+  [1, 0],
+  [2, 0],
+  [3, 0],
+  [4, 0],
+  [4, 1],
+  [4, 2],
+  [4, 3],
+  [4, 4],
+  [3, 4],
+  [2, 4],
+  [1, 4],
+  [0, 4],
+  [0, 3],
+  [0, 2],
+  [0, 1],
+] as const
 
 const VARIANT_CELLS = {
-  fill: GRID_CELLS,
-  outline: [
-    [0, 0],
-    [1, 0],
-    [2, 0],
-    [3, 0],
-    [4, 0],
-    [4, 1],
-    [4, 2],
-    [4, 3],
-    [4, 4],
-    [3, 4],
-    [2, 4],
-    [1, 4],
-    [0, 4],
-    [0, 3],
-    [0, 2],
-    [0, 1],
-  ],
+  outline: OUTLINE_CELLS,
+  snake: OUTLINE_CELLS,
   logo: [
     [0, 0],
     [4, 0],
@@ -67,6 +53,11 @@ const VARIANT_CELLS = {
   dot: [[2, 2]],
 } as const
 
+const GRID_CELLS = Array.from(
+  { length: 25 },
+  (_, index) => [index % 5, Math.floor(index / 5)] as const,
+)
+
 const ENABLED_CELLS = Object.fromEntries(
   Object.entries(VARIANT_CELLS).map(([variant, cells]) => [
     variant,
@@ -80,16 +71,12 @@ export function FiveByFive({
   variant,
   cellSize = 'var(--logo-stroke-width)',
   visibleCellCount,
-  revealOrder,
-  unrevealedClassName = 'bg-current opacity-0',
   className,
   style,
 }: {
   variant: FiveByFiveVariant
   cellSize?: string
   visibleCellCount?: number
-  revealOrder?: readonly number[]
-  unrevealedClassName?: string
   className?: string
   style?: CSSProperties
 }) {
@@ -99,7 +86,7 @@ export function FiveByFive({
   return (
     <span
       data-five-by-five={variant}
-      className={`inline-grid shrink-0 ${className ?? ''}`}
+      className={`inline-grid shrink-0 ${variant === 'snake' ? '[--portfolio-snake-duration:1200ms]' : ''} ${className ?? ''}`}
       style={{
         gridTemplateColumns: `repeat(5, ${cellSize})`,
         gridTemplateRows: `repeat(5, ${cellSize})`,
@@ -107,31 +94,43 @@ export function FiveByFive({
       }}
       aria-hidden="true"
     >
-      {GRID_CELLS.map(([column, row], index) => {
+      {GRID_CELLS.map(([column, row]) => {
         const cellKey = `${column}-${row}`
         const drawIndex =
-          revealOrder?.indexOf(index) ??
-          (variant === 'outline'
+          variant === 'outline' || variant === 'snake'
             ? outlineCells.findIndex(
                 ([outlineColumn, outlineRow]) =>
                   outlineColumn === column && outlineRow === row,
               )
-            : variant === 'fill'
-              ? index
-              : -1)
+            : -1
         const progressivelyRevealed =
-          drawIndex >= 0 && visibleCellCount !== undefined
+          variant === 'outline' &&
+          drawIndex >= 0 &&
+          visibleCellCount !== undefined
         const visible = !progressivelyRevealed || drawIndex < visibleCellCount
+        const snakeCell = variant === 'snake' && drawIndex >= 0
+        // Six contiguous perimeter cells remain lit without animation as well.
+        const snakeInitiallyLit =
+          drawIndex === 0 || drawIndex >= outlineCells.length - 5
 
         return (
           <span
             key={cellKey}
             className={
-              enabledCells.has(cellKey)
-                ? visible
-                  ? 'bg-current'
-                  : unrevealedClassName
-                : 'bg-transparent'
+              snakeCell
+                ? `bg-current motion-safe:animate-portfolio-snake ${snakeInitiallyLit ? 'opacity-100' : 'opacity-0'}`
+                : enabledCells.has(cellKey)
+                  ? visible
+                    ? 'bg-current'
+                    : 'bg-current opacity-0'
+                  : 'bg-transparent'
+            }
+            style={
+              snakeCell
+                ? {
+                    animationDelay: `calc(var(--portfolio-snake-duration) * ${drawIndex / outlineCells.length - 1})`,
+                  }
+                : undefined
             }
           />
         )

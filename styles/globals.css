@@ -23,6 +23,20 @@
 }
 
 @theme inline {
+  --animate-portfolio-snake: portfolio-snake var(--portfolio-snake-duration)
+    steps(1, end) infinite;
+
+  /* Each perimeter pixel is on for six of the sixteen steps. */
+  @keyframes portfolio-snake {
+    0% {
+      opacity: 1;
+    }
+    37.5%,
+    100% {
+      opacity: 0;
+    }
+  }
+
   --color-portfolio-accent: var(--portfolio-accent);
   --color-portfolio-accent-decoration: var(--portfolio-accent-decoration);
   --color-portfolio-red: var(--portfolio-accent);

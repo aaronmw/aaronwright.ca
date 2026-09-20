@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "id": "2026-09-20T04-49-41-046Z",
+  "createdAt": "2026-09-20T04:49:41.047Z",
+  "commit": "bd783d215e82fb2a355a5a71b850a314feff659b",
+  "sourceHash": "33e203a3b9bf7f15f7f094756275e4a358565f1d63cf76760621b1cea181793e",
+  "configHash": "e6a524ba833c6c5f55ede2e332961b53e08c4b7cc86945956e53ffcf070b1840",
+  "mode": "release",
+  "environment": null,
+  "checks": {
+    "unit": true,
+    "browser": false
+  },
+  "samples": [],
+  "errors": [
+    "QA interrupted"
+  ],
+  "failures": [
+    "Missing production build/environment evidence.",
+    "Unit or cross-browser checks did not pass.",
+    "QA interrupted",
+    "Incomplete sample matrix.",
+    "Missing repetitions: desktop/cold-entry",
+    "Missing repetitions: desktop/choose-project",
+    "Missing repetitions: desktop/horizontal-gesture",
+    "Missing repetitions: desktop/image-viewer",
+    "Missing repetitions: desktop/vertical-navigation",
+    "Missing repetitions: desktop/appearance",
+    "Missing repetitions: small-laptop-slow/cold-entry",
+    "Missing repetitions: small-laptop-slow/choose-project",
+    "Missing repetitions: small-laptop-slow/horizontal-gesture",
+    "Missing repetitions: small-laptop-slow/image-viewer",
+    "Missing repetitions: small-laptop-slow/vertical-navigation",
+    "Missing repetitions: small-laptop-slow/appearance",
+    "Missing repetitions: phone-portrait-slow/cold-entry",
+    "Missing repetitions: phone-portrait-slow/choose-project",
+    "Missing repetitions: phone-portrait-slow/horizontal-gesture",
+    "Missing repetitions: phone-portrait-slow/image-viewer",
+    "Missing repetitions: phone-portrait-slow/vertical-navigation",
+    "Missing repetitions: phone-portrait-slow/appearance",
+    "Missing repetitions: phone-landscape-slow/cold-entry",
+    "Missing repetitions: phone-landscape-slow/choose-project",
+    "Missing repetitions: phone-landscape-slow/horizontal-gesture",
+    "Missing repetitions: phone-landscape-slow/image-viewer",
+    "Missing repetitions: phone-landscape-slow/vertical-navigation",
+    "Missing repetitions: phone-landscape-slow/appearance",
+    "The baseline is incomplete or uses a different QA configuration."
+  ],
+  "status": "blocked",
+  "buildId": "LuDOBwSgtTifbzz9JmR8r",
+  "completedAt": "2026-09-20T04:51:21.560Z"
+}

@@ -1,9 +1,16 @@
 import { expect, test, type Page } from '@playwright/test'
 
 async function waitForPortfolio(page: Page) {
-  const curtain = page.locator('[data-portfolio-loading-curtain]')
-  await expect(curtain).toHaveAttribute('data-phase', 'ready')
-  await expect(curtain).toHaveCSS('visibility', 'hidden')
+  // Next's streamed HTML can temporarily include a second, hidden copy.
+  const portfolio = page.locator('main[data-portfolio-phase]:visible')
+  await expect(portfolio).toHaveAttribute('data-portfolio-phase', 'ready')
+  await expect(
+    portfolio.locator('[data-portfolio-startup-loader]'),
+  ).toHaveCount(0)
+  await expect(portfolio.locator('[data-portfolio-browser-chrome]')).toHaveCSS(
+    'opacity',
+    '1',
+  )
 }
 
 async function openThemeMenu(page: Page) {

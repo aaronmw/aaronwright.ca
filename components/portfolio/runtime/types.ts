@@ -1,1 +1,1 @@
-export type PortfolioIntroPhase = 'loading' | 'revealing' | 'ready' | 'error'
+export type PortfolioIntroPhase = 'loading' | 'ready' | 'error'

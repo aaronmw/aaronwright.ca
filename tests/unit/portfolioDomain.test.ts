@@ -79,7 +79,7 @@ describe('portfolio image preloading', () => {
     expect(model.openingMediaKeys).toEqual([])
   })
 
-  it('only loads video for an explicitly opened video slide, not an earlier project', () => {
+  it('preserves an explicitly opened video target without adding videos to the preload queue', () => {
     const videoFirst = {
       ...projects[1],
       screenshots: [...projects[1].screenshots].reverse(),
@@ -96,6 +96,7 @@ describe('portfolio image preloading', () => {
       projectSlides,
       initialProjectSlug: 'after-video',
     })
+    expect(later.initialTargetScreenshot).toBeUndefined()
     expect(later.openingMediaKeys).toEqual([])
     expect(later.imagePreloadQueue).toEqual(['carousel:overview'])
     const activeVideo = createPortfolioModel({
@@ -104,8 +105,37 @@ describe('portfolio image preloading', () => {
       initialProjectSlug: videoFirst.slug,
       initialScreenshotSlug: 'motion',
     })
+    expect(activeVideo.initialTargetScreenshot?.id).toBe('motion')
     expect(activeVideo.openingMediaKeys).toEqual(['carousel:motion'])
     expect(activeVideo.imagePreloadQueue).toEqual(['carousel:overview'])
+  })
+
+  it('only gates a deep link on its visible image, not earlier projects', () => {
+    const laterProject = {
+      ...projects[1],
+      id: 'later',
+      slug: 'later',
+      screenshots: [
+        {
+          id: 'later-image',
+          slug: 'later-image',
+          src: '/later.png',
+          alt: 'Later image',
+        },
+      ],
+    }
+    const sequence = [...projects, laterProject]
+    const model = createPortfolioModel({
+      projects: sequence,
+      projectSlides: getProjectSlidesBySlug(sequence),
+      initialProjectSlug: 'later',
+      initialScreenshotSlug: 'later-image',
+    })
+    expect(model.openingMediaKeys).toEqual(['carousel:later-image'])
+    expect(model.imagePreloadQueue).toEqual([
+      'carousel:overview',
+      'carousel:later-image',
+    ])
   })
 })
 

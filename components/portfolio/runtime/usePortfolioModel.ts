@@ -53,22 +53,6 @@ export function createPortfolioModel({
       ? initialSlide.screenshot
       : undefined
   })()
-  const openingMediaKeys = (() => {
-    const journeyKeys = projects
-      .slice(0, normalizedInitialProjectIndex + 1)
-      .flatMap(project => {
-        const first = getProjectMediaScreenshots(project)[0]
-        return first && !isVideoScreenshot(first)
-          ? [carouselMediaKey(first)]
-          : []
-      })
-
-    if (initialTargetScreenshot) {
-      journeyKeys.push(carouselMediaKey(initialTargetScreenshot))
-    }
-
-    return Array.from(new Set(journeyKeys))
-  })()
   const imagePreloadQueue = (() => {
     const activeProjectMedia =
       normalizedInitialProjectIndex >= 0
@@ -101,7 +85,10 @@ export function createPortfolioModel({
     initialSlideIndexes,
     initialTargetScreenshot,
     normalizedInitialProjectIndex,
-    openingMediaKeys,
+    // The text menu needs no images. Deep links wait only for their visible media.
+    openingMediaKeys: initialTargetScreenshot
+      ? [carouselMediaKey(initialTargetScreenshot)]
+      : [],
     projectSlides,
   }
 }
