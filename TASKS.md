@@ -16,6 +16,9 @@ projects can use this format with their own tasks and implementation.
 3. Review `qa/results/<timestamp>.md` and its JSON, including failed runs. Commit
    these small records alongside the tested changes. Screenshots and browser
    traces/logs stay in ignored `test-results/qa/<timestamp>/`.
+   For performance failures, complete the quick triage below before another full
+   run or a release-blocked handoff. A threshold crossing is an observation, not
+   by itself proof that the release introduced a regression.
 4. On the first complete run, review the measurements, then explicitly establish
    the starting baseline: `pnpm qa:baseline qa/results/<timestamp>.json`.
    The initial run is blocked until this is done; this is not a functional failure.
@@ -57,8 +60,9 @@ WebKit desktop plus WebKit iPhone portrait/landscape, with their declared device
 skips. The private copy editor is outside this visitor release gate; its existing
 test remains available through `pnpm test:e2e`.
 
-The public browser matrix contains 26 scenarios across four profiles. Seven
-scenarios require mouse drags or wheel input and are explicitly skipped on each
+The public browser matrix contains 29 scenarios across four profiles, including
+one check that QA waits for visible motion without reading offscreen carousel
+descendants. Seven scenarios require mouse drags or wheel input and are explicitly skipped on each
 touch profile (14 skips). Theme keyboard/focus/persistence, viewer lifecycle,
 history, content, and responsive geometry checks run on all four profiles. These
 are capability exclusions, not quarantined failures. The measured Chromium tasks
@@ -102,7 +106,7 @@ those swipe sequences or physical iPhone behavior.
 | horizontal-gesture  | Wheel horizontally or swipe left through the media.     | Normalizer becomes active; the selected project stays Aaron's Toolbox; the new image loads and fits.            |
 | image-viewer        | Open Normalizer, go to the previous image, then close.  | Viewer opens, navigates to Overview, closes, and restores the project with the correct route and visible media. |
 | vertical-navigation | Wheel/swipe vertically to NextPhrase, then return home. | Only the project changes; route and section marker agree; Back to top returns to the menu.                      |
-| appearance          | Open Appearance and select Light.                       | Menu remains usable, closes on selection, and the Light preference is applied and stored.                       |
+| appearance          | Open Appearance and select Light.                       | Menu and scrim close without reordering visible options; then Light is stored, visible theme transitions finish, and focus returns to the trigger. |
 
 Cold-entry now observes page readiness, removal of the startup spinner, and visible
 page content. First-screen readiness and background frame progress are an
@@ -118,6 +122,24 @@ fail a measured journey. Failures record profile, repetition, task, error and
 screenshot. After a task fails, the runner restores the next task's starting route
 outside the measurement window so unrelated tasks can still run. Recovery never
 turns a failed run into eligible baseline or release evidence.
+
+Protocol version 2 (September 22) corrects the geometry observer to read the outer
+track, in-view project tracks, and viewer only. Section boxes remain observable
+while scrolling, but offscreen descendants are not forced out of
+`content-visibility: auto` on every frame. Visible tracks still must hold their
+geometry for 200 ms; a browser regression check covers both actual motion and
+forbidden offscreen reads. The appearance task now awaits the native animation
+completion promises on the visible theme surfaces, trigger, and scrim, then
+checks the clear scrim and restored focus. It does not poll carousel geometry or
+add an arbitrary sampling delay during the color transition. Normal and reduced
+motion are covered by the existing menu tests.
+
+This intentionally changes the observation cost and appearance completion
+boundary. Version 1 timing samples cannot serve as a comparable baseline. A new,
+complete version 2 run must be reviewed and explicitly accepted; the existing
+30%/absolute regression allowances are unchanged. This recalibration is for the
+corrected protocol and the close-before-apply interaction, not an exemption for
+the previous failed runs.
 
 The vertical touch journey moves 60% of the outer viewport height. Using the
 shorter inner media stage as the distance reference could end before the outer
@@ -156,6 +178,58 @@ the host; it does not reproduce a phone's GPU, thermal state, Safari engine,
 browser chrome, or touch ergonomics. Use a physical phone for those.
 
 ## Agent-assisted exploratory pass
+
+### Quick performance-failure triage
+
+Include this in the agent-assisted release scan whenever a performance limit is
+exceeded. Start with existing evidence and keep the investigation proportional to
+the miss; do not turn a borderline result into an open-ended optimization task.
+
+1. **Put the number in context.** Report the metric, profile, baseline, allowed
+   limit, measured median, and absolute/percentage differences. Show individual
+   repetitions and relevant sample counts. Compare only matching protocols and
+   environments; different-source history is context, not a noise distribution.
+   Distinguish a relative regression budget from an independently supported user
+   experience threshold. A zero long-task/long-frame value means no qualifying
+   entry was observed, not that the browser did no work. Check whether a percentile
+   with very few frames is effectively a maximum.
+2. **Inspect the release diff and measurement code.** Look for a plausible path
+   from changed code to the failing interaction: work added, scheduling changes,
+   layout reads, animation timing, resource loading, or altered task boundaries.
+   Identify specific files and mechanisms, with evidence for and against each.
+   Inspect observer overhead too. No obvious relevant diff does not prove noise;
+   finding a plausible mechanism does not prove causation.
+3. **Do quick, targeted research.** Consult primary browser/specification or tool
+   documentation about that metric's variability, recording threshold, throttling,
+   and any suspected mechanism. Usually one or two focused searches suffice.
+   Reuse still-applicable sources already checked in the task. Cite the supporting
+   links and explain their relevance; do not import a Lighthouse score or field
+   INP threshold as a pass/fail rule for this custom lab measurement. Research
+   cannot supply a universal "normal fluctuation" percentage for this site.
+4. **Classify and choose a bounded next step.** Record likely ordinary variation,
+   suspected application regression, suspected measurement/environment effect,
+   or inconclusive, with confidence and remaining uncertainty. Separate a
+   repeatable measured increase from attribution to the release. If existing data
+   cannot settle a consequential result, choose one targeted diagnostic or a
+   small, predeclared set of matched base/current runs with identical conditions
+   and instrumentation. Alternate their order when practical and retain all
+   results. Do not mix traced and untraced timings or rerun until one passes.
+
+Save the assessment under `docs/qa/` and link the relevant run reports. The handoff
+must state what the evidence suggests and why, any plausible changed-code cause,
+the research sources, and the release disposition. This is an agent research
+step, not a network or LLM dependency of the deterministic QA commands. It does
+not waive `pnpm qa:check`, change budgets, or authorize baseline replacement. If a
+measurement bug is confirmed, document and validate the correction before
+establishing a baseline for the corrected protocol.
+
+Useful primary references: [Lighthouse's variability guidance](https://github.com/GoogleChrome/lighthouse/blob/main/docs/variability.md)
+for repeated measurement and resource contention, the [Long Tasks specification](https://www.w3.org/TR/longtasks-1/)
+for its reporting threshold, and [Chrome's content-visibility guidance](https://web.dev/articles/content-visibility)
+for DOM reads that force skipped rendering. Use the source appropriate to the
+finding, rather than treating this list as a mandatory research checklist.
+
+### Exploratory checks
 
 An agent can read this file, run the fixed suite, inspect evidence, and then explore
 beyond it: breakpoint edges, very short windows, rapid/reversed gestures, text

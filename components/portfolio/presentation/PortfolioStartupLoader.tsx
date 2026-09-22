@@ -20,7 +20,7 @@ export function PortfolioStartupLoader({
       {phase === 'error' ? (
         <div className="flex max-w-md flex-col items-center gap-5 px-8 text-center">
           <p className="font-normal text-portfolio-text-dimmed">
-            Portfolio media didn&apos;t finish loading.
+            Portfolio media didn’t finish loading.
           </p>
           <CircularIconButton
             icon={faRotateRight}

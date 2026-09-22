@@ -309,6 +309,19 @@ html[data-portfolio-route='work'],
   opacity: 0;
 }
 
+.portfolio-theme-menu[data-exiting] {
+  pointer-events: none;
+}
+
+.portfolio-theme-menu-scrim {
+  opacity: 0;
+  transition: opacity var(--portfolio-motion-menu) ease-in;
+}
+
+.portfolio-theme-menu-scrim[data-open] {
+  opacity: 1;
+}
+
 .portfolio-theme-menu-item {
   display: grid;
   width: 100%;
@@ -346,6 +359,7 @@ html[data-portfolio-route='work'],
 
   .portfolio-theme-trigger,
   .portfolio-theme-menu,
+  .portfolio-theme-menu-scrim,
   .portfolio-theme-menu-item {
     transition: none;
   }

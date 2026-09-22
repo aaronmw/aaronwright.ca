@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
+import { themeSettled } from '../../scripts/qa/tasks.mjs'
 
 async function waitForPortfolio(page: Page) {
   // Next's streamed HTML can temporarily include a second, hidden copy.
@@ -71,6 +72,73 @@ test('System follows live color-scheme changes', async ({ page }) => {
     'data-portfolio-theme',
     'dark',
   )
+})
+
+test('theme selection waits for the menu to close without reordering its visible rows', async ({
+  page,
+}) => {
+  await page.emulateMedia({
+    colorScheme: 'light',
+    reducedMotion: 'no-preference',
+  })
+  await page.goto('/work')
+  await waitForPortfolio(page)
+  // Keep the exit observable without depending on machine or frame timing.
+  await page.addStyleTag({
+    content:
+      '.portfolio-theme-control, .portfolio-theme-menu { --portfolio-motion-menu: 2s; } ' +
+      '[data-portfolio-theme-root] { --portfolio-motion-theme: 1s; }',
+  })
+  await openThemeMenu(page)
+  const menu = page.locator('[data-portfolio-theme-menu]')
+  const options = menu.locator('[data-portfolio-theme-option]')
+  const initialOrder = await options.allTextContents()
+  await expect(menu).toHaveCSS('opacity', '1')
+
+  await page.getByRole('menuitemradio', { name: 'Dark', exact: true }).click()
+
+  await expect(menu).toHaveAttribute('data-exiting', 'true')
+  expect(await options.allTextContents()).toEqual(initialOrder)
+  await expect(page.locator('html')).toHaveAttribute(
+    'data-portfolio-theme',
+    'light',
+  )
+  await expect(page.locator('[data-portfolio-theme-menu-scrim]')).not.toHaveCSS(
+    'opacity',
+    '0',
+  )
+
+  await expect(menu).toHaveCount(0)
+  await expect(page.locator('html')).toHaveAttribute(
+    'data-portfolio-theme',
+    'dark',
+  )
+  await expect(page.locator('[data-portfolio-theme-trigger]')).toBeFocused()
+  await themeSettled(page)
+  expect(await page.locator('[data-portfolio-theme-root]').evaluate(
+    element => element.getAnimations().length,
+  )).toBe(0)
+})
+
+test('choosing the current appearance closes the menu with reduced motion', async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto('/work')
+  await waitForPortfolio(page)
+  await openThemeMenu(page)
+  await page.getByRole('menuitemradio', { name: 'System', exact: true }).click()
+  await expect(page.locator('[data-portfolio-theme-menu]')).toHaveCount(0)
+  await expect(page.locator('[data-portfolio-theme-trigger]')).toBeFocused()
+
+  await openThemeMenu(page)
+  await page.getByRole('menuitemradio', { name: 'Light', exact: true }).click()
+  await expect(page.locator('[data-portfolio-theme-menu]')).toHaveCount(0)
+  await expect(page.locator('html')).toHaveAttribute(
+    'data-portfolio-theme-preference',
+    'light',
+  )
+  await themeSettled(page)
 })
 
 test('React Aria menu persists selection and restores trigger focus', async ({

@@ -5,6 +5,9 @@
 - Before publishing this project, run `pnpm qa:check`. A missing, incomplete,
   failing, or stale report blocks release. This also applies to direct Netlify
   publish commands that bypass the repository build command.
+- For performance failures, include the quick evidence, changed-code, and
+  primary-source research triage in `TASKS.md` before diagnosing a regression,
+  repeating the full scan, or handing off a blocked release.
 - `pnpm qa:run` builds and temporarily serves production on loopback port 3032.
   Follow the global process-authorization rule before starting it; do not reuse
   or stop an unrelated server.

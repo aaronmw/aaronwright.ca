@@ -1,18 +1,21 @@
 'use client'
 
-import { useState, type CSSProperties } from 'react'
+import { useCallback, useRef, useState, type CSSProperties } from 'react'
 import {
   Button,
   Menu,
   MenuItem,
   MenuTrigger,
   Popover,
-  type Selection,
+  type Key,
 } from 'react-aria-components'
 import { portfolioFont } from '@/lib/portfolioFonts'
 import { usePortfolioTheme } from './PortfolioThemeProvider'
 import type { PortfolioThemePreference } from './domain/appearance'
-import { PortfolioIcon, type PortfolioIconName } from './presentation/PortfolioIcon'
+import {
+  PortfolioIcon,
+  type PortfolioIconName,
+} from './presentation/PortfolioIcon'
 
 type PortfolioThemeMenuProps = {
   hidden: boolean
@@ -42,20 +45,44 @@ function getControlPosition(): CSSProperties {
 export function PortfolioThemeMenu({ hidden }: PortfolioThemeMenuProps) {
   const { preference, setPreference } = usePortfolioTheme()
   const [open, setOpen] = useState(false)
+  const pendingPreference = useRef<PortfolioThemePreference | null>(null)
+  const pointerStartedInMenu = useRef(false)
+  const releasedFromOutside = useRef(false)
+  const handlePopoverRef = useCallback(
+    (element: HTMLDivElement | null) => {
+      // React Aria detaches the popover after its exit transition (or immediately
+      // with reduced motion). Keep its order and colors unchanged until then.
+      if (element || pendingPreference.current === null) return
+      const selected = pendingPreference.current
+      pendingPreference.current = null
+      setPreference(selected)
+    },
+    [setPreference],
+  )
   if (hidden) return null
 
   const activeOption =
-    THEME_OPTIONS.find(option => option.value === preference) ?? THEME_OPTIONS[0]
+    THEME_OPTIONS.find(option => option.value === preference) ??
+    THEME_OPTIONS[0]
   const menuOptions = [
     activeOption,
     ...THEME_OPTIONS.filter(option => option.value !== activeOption.value),
   ]
   const triggerLabel = `Appearance: ${activeOption.label}`
-  const handleSelection = (keys: Selection) => {
-    if (keys === 'all') return
-    const selected = Array.from(keys)[0]
+  const handleSelection = (selected: Key) => {
+    // Ignore the opening mouse-up on the overlapping current row, while keeping
+    // fresh clicks, keyboard activation, and dragging to another option usable.
+    const openingRelease = releasedFromOutside.current
+    releasedFromOutside.current = false
+    if (
+      (openingRelease && selected === preference) ||
+      pendingPreference.current !== null
+    ) {
+      return
+    }
     if (selected === 'system' || selected === 'light' || selected === 'dark') {
-      setPreference(selected)
+      pendingPreference.current = selected
+      setOpen(false)
     }
   }
 
@@ -65,16 +92,20 @@ export function PortfolioThemeMenu({ hidden }: PortfolioThemeMenuProps) {
       data-interactive-pop="off"
       style={getControlPosition()}
     >
-      {open ? (
-        <span
-          className="pointer-events-none fixed inset-0 z-[var(--portfolio-layer-scrim)] bg-portfolio-overlay"
-          data-portfolio-theme-menu-scrim
-          aria-hidden="true"
-        />
-      ) : null}
+      <span
+        className="portfolio-theme-menu-scrim pointer-events-none fixed inset-0 z-[var(--portfolio-layer-scrim)] bg-portfolio-overlay"
+        data-portfolio-theme-menu-scrim
+        data-open={open ? '' : undefined}
+        aria-hidden="true"
+      />
       <MenuTrigger
         isOpen={open}
-        onOpenChange={setOpen}
+        onOpenChange={nextOpen => {
+          if (nextOpen && pendingPreference.current !== null) return
+          pointerStartedInMenu.current = false
+          releasedFromOutside.current = false
+          setOpen(nextOpen)
+        }}
       >
         <Button
           className="portfolio-theme-trigger"
@@ -89,6 +120,7 @@ export function PortfolioThemeMenu({ hidden }: PortfolioThemeMenuProps) {
           />
         </Button>
         <Popover
+          ref={handlePopoverRef}
           placement="bottom end"
           offset={0}
           containerPadding={0}
@@ -101,14 +133,20 @@ export function PortfolioThemeMenu({ hidden }: PortfolioThemeMenuProps) {
             aria-label="Appearance"
             selectionMode="single"
             selectedKeys={new Set([preference])}
-            onSelectionChange={handleSelection}
+            onAction={handleSelection}
+            onPointerDownCapture={() => {
+              pointerStartedInMenu.current = true
+            }}
+            onPointerUpCapture={() => {
+              releasedFromOutside.current = !pointerStartedInMenu.current
+              pointerStartedInMenu.current = false
+            }}
           >
             {menuOptions.map(option => (
               <MenuItem
                 key={option.value}
                 id={option.value}
-                // The current row overlaps the launcher and receives its mouse-up.
-                shouldCloseOnSelect={option.value !== preference}
+                shouldCloseOnSelect={false}
                 className="portfolio-theme-menu-item"
                 data-portfolio-theme-option={option.value}
                 textValue={option.label}

@@ -20,7 +20,7 @@ export const SHARE_IMAGE_SLUGS = [
 export function shareImageAlt(slug: string) {
   const project = getPortfolioProject(slug)
   return project
-    ? `${metadataText(project.title)} — ${SITE_NAME}'s product design and frontend engineering portfolio`
+    ? `${metadataText(project.title)} — ${SITE_NAME}’s product design and frontend engineering portfolio`
     : `${SITE_NAME} — ${SITE_ROLE}`
 }
 

@@ -1,4 +1,35 @@
 import { expect, test, type Page, type TestInfo } from '@playwright/test'
+import { settled } from '../../scripts/qa/tasks.mjs'
+
+test('QA settlement observes visible motion without laying out offscreen tracks', async ({ page }) => {
+  await page.setContent(`
+    <style>
+      body { margin: 0; }
+      section { height: 100vh; content-visibility: auto; }
+      [data-portfolio-carousel] > div { width: 100px; height: 100px; }
+    </style>
+    <div data-portfolio-vertical-carousel><div>
+      <section><div data-portfolio-carousel="visible"><div></div></div></section>
+      <section><div data-portfolio-carousel="offscreen"><div></div></div></section>
+    </div></div>
+  `)
+  await page.evaluate(() => {
+    const offscreen = document.querySelector<HTMLElement>(
+      '[data-portfolio-carousel="offscreen"] > div',
+    )!
+    offscreen.getBoundingClientRect = () => {
+      throw new Error('QA must not measure an offscreen carousel descendant')
+    }
+    document.querySelector('[data-portfolio-carousel="visible"] > div')!.animate(
+      [{ transform: 'translateX(0)' }, { transform: 'translateX(80px)' }],
+      { duration: 600, fill: 'forwards' },
+    )
+  })
+  await settled(page)
+  expect(await page.locator('[data-portfolio-carousel="visible"] > div').evaluate(
+    element => element.getBoundingClientRect().x,
+  )).toBeCloseTo(80, 2)
+})
 
 async function waitForPortfolio(page: Page) {
   // Next's streamed HTML can temporarily include a second, hidden copy.
@@ -98,7 +129,7 @@ test('all media projects combine their intro and first media in one snap', async
     },
     {
       path: '/work/aarons-toolbox',
-      title: "Aaron's Toolbox",
+      title: 'Aaron’s Toolbox',
       mediaId: 'aarons-toolbox-overview',
     },
   ]
@@ -442,7 +473,7 @@ test('dominant horizontal wheel intent changes media without changing section', 
 
   const selectableParagraph = page
     .locator(
-      '[aria-label="Aaron\'s Toolbox slide 1 text"] [data-portfolio-selectable-text] .portfolio-markdown p',
+      '[aria-label="Aaron’s Toolbox slide 1 text"] [data-portfolio-selectable-text] .portfolio-markdown p',
     )
     .first()
   const verticalViewport = page.locator('[data-portfolio-vertical-carousel]')

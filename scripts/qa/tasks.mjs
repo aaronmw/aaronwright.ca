@@ -8,9 +8,10 @@ async function activate(locator, touch) {
   else await locator.click()
 }
 
-// A URL can update before the carousel has stopped. Wait for the actual tracks
-// and viewer to hold still, without adding arbitrary seconds to every task.
-async function settled(page) {
+// A URL can update before the carousel has stopped. Observe the outer track,
+// visible project tracks, and viewer. Reading offscreen descendants defeats
+// content-visibility and adds layout work to the interaction being measured.
+export async function settled(page) {
   await page.evaluate(() => {
     delete window.__qaSettle
   })
@@ -19,12 +20,31 @@ async function settled(page) {
       const elements = document.querySelectorAll(
         '[data-portfolio-vertical-carousel] > div, [data-portfolio-carousel] > div, .portfolio-viewer, .yarl__slide_current .yarl__slide_wrapper',
       )
-      const positions = Array.from(elements, element => {
-        const box = element.getBoundingClientRect()
-        return [box.x, box.y, box.width, box.height]
-          .map(value => Math.round(value * 2))
-          .join(',')
-      }).join('|')
+      const visibleSections = new Map()
+      const positions = Array.from(elements)
+        .filter(element => {
+          const section = element.closest(
+            '[data-portfolio-vertical-carousel] > div > section',
+          )
+          if (!section) return true
+          if (!visibleSections.has(section)) {
+            // The section has its own fixed viewport height. Inspect its box
+            // before touching descendants that the browser may have skipped.
+            const box = section.getBoundingClientRect()
+            visibleSections.set(
+              section,
+              box.bottom > 0 && box.top < innerHeight &&
+                box.right > 0 && box.left < innerWidth,
+            )
+          }
+          return visibleSections.get(section)
+        })
+        .map(element => {
+          const box = element.getBoundingClientRect()
+          return [box.x, box.y, box.width, box.height]
+            .map(value => Math.round(value * 2))
+            .join(',')
+        }).join('|')
       if (window.__qaSettle?.positions !== positions) {
         window.__qaSettle = { positions, since: performance.now() }
       }
@@ -33,6 +53,36 @@ async function settled(page) {
     undefined,
     { timeout: 15_000, polling: 'raf' },
   )
+}
+
+export async function themeSettled(page) {
+  // Await the actual visible color/opacity transitions, without sampling
+  // carousel geometry or adding idle frames to the performance distribution.
+  await page.locator(
+    '[data-portfolio-theme-root]:visible, main[data-portfolio-phase]:visible, ' +
+      '[data-portfolio-theme-trigger]:visible, [data-portfolio-theme-menu-scrim]',
+  ).evaluateAll(async elements => {
+    for (;;) {
+      const animations = elements.flatMap(element => element.getAnimations())
+        .filter(animation => !['finished', 'idle'].includes(animation.playState))
+      if (!animations.length) return
+      // Focus and theme changes can replace a transition. A cancellation is
+      // not completion: inspect the replacement animations before returning.
+      const results = await Promise.allSettled(
+        animations.map(animation => animation.finished),
+      )
+      for (const result of results) {
+        if (result.status === 'rejected' && result.reason?.name !== 'AbortError') {
+          throw result.reason
+        }
+      }
+    }
+  })
+  await expect(page.locator('[data-portfolio-theme-menu-scrim]')).toHaveCSS(
+    'opacity',
+    '0',
+  )
+  await expect(page.locator('[data-portfolio-theme-trigger]')).toBeFocused()
 }
 
 async function activeSection(page, index) {
@@ -260,6 +310,6 @@ export async function runTasks({ page, cdp, profile, measure }) {
     expect(
       await page.evaluate(() => localStorage.getItem('portfolio-theme')),
     ).toBe('light')
-    await settled(page)
+    await themeSettled(page)
   })
 }

@@ -142,15 +142,15 @@ function transformPortfolioProjectMarkdown(
 }
 
 const LOOPIO_OVERVIEW = `
-# A blank canvas re-imagining of Loopio's core offering
+# A blank canvas re-imagining of Loopio’s core offering
 
-Loopio's core RFP workflow had outgrown the frontend beneath it. I partnered with [Thomas Cheng](https://www.linkedin.com/in/thomascheng81/) to turn a redesign proposal into a working product, then carried that momentum into a tested, documented design system other teams could leverage and safely extend themselves.
+Loopio’s core RFP workflow had outgrown the frontend beneath it. I partnered with [Thomas Cheng](https://www.linkedin.com/in/thomascheng81/) to turn a redesign proposal into a working product, then carried that momentum into a tested, documented design system other teams could leverage and safely extend themselves.
 `
 
 const FRESHBOOKS_OVERVIEW = `
 # Redesigning for Simplicity and Scale
 
-I was selected to join a small group of FreshBookers tasked with reimagining the platform as a coherent system: clearer workflows, reusable interaction patterns, and a bidirectional transition path that let customers move to the new platform when they were ready and even move back if they later decided they weren't.
+I was selected to join a small group of FreshBookers tasked with reimagining the platform as a coherent system: clearer workflows, reusable interaction patterns, and a bidirectional transition path that let customers move to the new platform when they were ready and even move back if they later decided they weren’t.
 `
 
 const rawPortfolioSlides = [
@@ -184,7 +184,7 @@ const rawPortfolioSlides = [
 
 Loopio had found product-market fit, but its interface had accumulated several generations of frontend tech: jQuery, Backbone, React, Redux, Bootstrap, and one-off controls living side by side.
 
-That inconsistency was expensive: designers and developers had to specialize in arbitrary "zones" and couldn't easily collaborate across those zones without onboarding. It was also hard to achieve consensus without a real “source of truth”.
+That inconsistency was expensive: designers and developers had to specialize in arbitrary “zones” and couldn’t easily collaborate across those zones without onboarding. It was also hard to achieve consensus without a real “source of truth”.
 `,
       },
       {
@@ -331,7 +331,7 @@ These days, I’m especially interested in how better tools and practices can gi
   {
     id: 'aarons-toolbox',
     slug: 'aarons-toolbox',
-    title: "Aaron's Toolbox",
+    title: 'Aaron’s Toolbox',
     seo: {
       title: 'Aaron’s Toolbox: Figma Plugin',
       description: 'A Figma plugin by Aaron M. Wright that automates repetitive tasks and helps designers clean, organize, and manipulate their work.',
@@ -340,13 +340,13 @@ These days, I’m especially interested in how better tools and practices can gi
       'One **Figma plugin** with built-in tools for cleaning, remixing, and organizing design work.',
     url: 'https://www.figma.com/community/plugin/1616614645120502242/aarons-toolbox',
     overviewMarkdown: `
-I'm infatuated with Figma both as a user and as a developer building on their platform. I'm equally obsessed with the art and science of tool-building, so the match is cosmically perfect.
+I’m infatuated with Figma both as a user and as a developer building on their platform. I’m equally obsessed with the art and science of tool-building, so the match is cosmically perfect.
 
-**Aaron's Toolbox** is a collection of utilities I've built to solve problems I repeatedly encounter in my own design work. Some automate repetitive tasks, others simplify common workflows, and two are actually evolutions of plugins I'd already built and refined over years of use (both with [tens of thousands of users in the Figma Community](https://www.figma.com/@aaronmw)).
+**Aaron’s Toolbox** is a collection of utilities I’ve built to solve problems I repeatedly encounter in my own design work. Some automate repetitive tasks, others simplify common workflows, and two are actually evolutions of plugins I’d already built and refined over years of use (both with [tens of thousands of users in the Figma Community](https://www.figma.com/@aaronmw)).
 
-My first Figma plugins were simple replacements for features I'd missed from other apps: **Selection Saver** revived a feature I'd long missed from Adobe Illustrator. **Property Randomizer** exists because I was assigned a dashboard project and wanted my charts and data to look real enough that they wouldn't be distracting. I once needed to do a fancy regular expression replace operation in a giant Figma file but it wasn't supported at the time, so I built **Find and Replace** and it's still among my most popular plugins.
+My first Figma plugins were simple replacements for features I’d missed from other apps: **Selection Saver** revived a feature I’d long missed from Adobe Illustrator. **Property Randomizer** exists because I was assigned a dashboard project and wanted my charts and data to look real enough that they wouldn’t be distracting. I once needed to do a fancy regular expression replace operation in a giant Figma file but it wasn’t supported at the time, so I built **Find and Replace** and it’s still among my most popular plugins.
 
-There are few things from which I derive more satisfaction than my Figma plugins. They were useful to me, sure, but knowing that so many others have been spared the same tedium I'd faced myself is just 👩‍🍳🤌 I think they're the best expression of what I'm all about.
+There are few things from which I derive more satisfaction than my Figma plugins. They were useful to me, sure, but knowing that so many others have been spared the same tedium I’d faced myself is just 👩‍🍳🤌 I think they’re the best expression of what I’m all about.
 
 `,
     screenshots: [
@@ -356,7 +356,7 @@ There are few things from which I derive more satisfaction than my Figma plugins
         src: '/portfolio/aarons-toolbox/aarons-toolbox-community-preview.mp4',
         width: 1920,
         height: 1080,
-        alt: "1 of 6: Aaron's Toolbox overview",
+        alt: '1 of 6: Aaron’s Toolbox overview',
       },
       {
         id: 'normalizer',
@@ -368,9 +368,9 @@ There are few things from which I derive more satisfaction than my Figma plugins
 
 Some Toolbox utilities automate repetitive tasks; others simplify workflows that are technically possible but needlessly tedious. Each began with a problem I encountered often enough that solving it once was worth turning into a tool.
 
-The Normalizer helps designers identify "stray tokens" in their selections and fix them all in one swoop. It highlights the differences between your selected nodes and allows you to coerce them towards your design system.
+The Normalizer helps designers identify “stray tokens” in their selections and fix them all in one swoop. It highlights the differences between your selected nodes and allows you to coerce them towards your design system.
 
-One example use case: a designer can select a frame with dozens of font sizes throughout and, in a few clicks, "redesign" with only a few, forcing each node to choose its closest allowed size. Instant, effortless conformity!
+One example use case: a designer can select a frame with dozens of font sizes throughout and, in a few clicks, “redesign” with only a few, forcing each node to choose its closest allowed size. Instant, effortless conformity!
 `,
       },
       {
@@ -396,9 +396,9 @@ The latest Randomizer will write to just about any Figma node data type there is
         description: `
 # Create components from disparate instances
 
-I realized that most of the components I make in Figma are created AFTER I've already hand-crafted (copy-pasted...) a few instances of the same thing. Starting with a component from the very beginning isn't always feasible, but this reverse flow meant not only creating the component itself but also configuring variants, overrides, and interactions.
+I realized that most of the components I make in Figma are created AFTER I’ve already hand-crafted (copy-pasted...) a few instances of the same thing. Starting with a component from the very beginning isn’t always feasible, but this reverse flow meant not only creating the component itself but also configuring variants, overrides, and interactions.
 
-The Componentizer works backwards from your already-built instances. It surfaces differences and lets you decide whether they're part of a variant or just a plain ol' override. Once you've assigned traits to their variants, one click creates the component, its variants, and any interactions you chose, and replaces your selected originals with instances of the new component. Bam! So much time and tedium saved.
+The Componentizer works backwards from your already-built instances. It surfaces differences and lets you decide whether they’re part of a variant or just a plain ol’ override. Once you’ve assigned traits to their variants, one click creates the component, its variants, and any interactions you chose, and replaces your selected originals with instances of the new component. Bam! So much time and tedium saved.
 `,
       },
       {
@@ -409,7 +409,7 @@ The Componentizer works backwards from your already-built instances. It surfaces
         description: `
 # Useful for work AND play
 
-The Distributor is helpful for laying out large numbers of nodes, and it's also wildly amusing to just mess around with the power of instantly and perfectly placing oodles of objects on an arbitrary path.
+The Distributor is helpful for laying out large numbers of nodes, and it’s also wildly amusing to just mess around with the power of instantly and perfectly placing oodles of objects on an arbitrary path.
 `,
       },
       {
@@ -420,7 +420,7 @@ The Distributor is helpful for laying out large numbers of nodes, and it's also 
         description: `
 # A missing feature became a shared tool
 
-**Selection Saver** revived a feature I missed from Adobe Illustrator. It and Property Randomizer grew into tools used by tens of thousands of people in the Figma Community—the most satisfying proof that I don't suffer this tedium alone.
+**Selection Saver** revived a feature I missed from Adobe Illustrator. It and Property Randomizer grew into tools used by tens of thousands of people in the Figma Community—the most satisfying proof that I don’t suffer this tedium alone.
 `,
       },
     ],
@@ -447,7 +447,7 @@ Informal was a freelance customer of mine when their needs grew into a full-time
         description: `
 ## Content ownership without design drift
 
-The website I'd built was a simple Next.js app and lived as code on GitHub and as a hosted app on Netlify. Making a copy change was just another task for me, but a bit of a steep hill to climb for someone just looking to fix a typo on a blog post. Time to hire a CMS.
+The website I’d built was a simple Next.js app and lived as code on GitHub and as a hosted app on Netlify. Making a copy change was just another task for me, but a bit of a steep hill to climb for someone just looking to fix a typo on a blog post. Time to hire a CMS.
 
 I chose Contentful for its headlessness and built a lightweight editing workflow around it. The trick was giving teams the freedom to update their own content without giving them enough freedom to accidentally, shall we say, redesign the site.
 `,
@@ -476,7 +476,7 @@ The staging version of the site pulls its content from Contentful, but includes 
         description: `
 ## Let writers own the content while design stays in code
 
-The websites that consume Contentful content make a single request, constructed at request time around the route's needs. It fetches the copy and image paths for the request and makes them available to the page through React Context.
+The websites that consume Contentful content make a single request, constructed at request time around the route’s needs. It fetches the copy and image paths for the request and makes them available to the page through React Context.
 
 I built a \`ContentfulSpotCopy\` component that accepts a \`path\` and a \`render\` prop receiving the fields for that chunk of copy. From there, I can build a carousel from the images, style the body however I want, or shape a completely different interface. The writers own the content while I own the design 👌
 `,
@@ -494,13 +494,13 @@ I built a \`ContentfulSpotCopy\` component that accepts a \`path\` and a \`rende
     blurb: 'My own version of my favourite party game.',
     url: 'https://nextphrase.app',
     overviewMarkdown: `
-Some of you may recognize the concept (it's [Catch Phrase](https://en.wikipedia.org/wiki/Catch_Phrase_(game)) by Hasbro) but I've put my own twists on it, of course.
+Some of you may recognize the concept (it’s [Catch Phrase](https://en.wikipedia.org/wiki/Catch_Phrase_(game)) by Hasbro) but I’ve put my own twists on it, of course.
 
 My original motivation for making the game was two-fold: first, I kept finding myself at parties with friends wanting to play Catch Phrase, but nobody had it. If only I had it on my phone... Secondly, I wanted to try my hand at React Native.
 
-I've built this game at least five times now. I've built it with different themes, different mechanics, and on different technologies. Now it's just a simple PWA because it's the most accessible: just visit [NextPhrase.app](https://nextphrase.app) and add it to your home screen for the best experience.
+I’ve built this game at least five times now. I’ve built it with different themes, different mechanics, and on different technologies. Now it’s just a simple PWA because it’s the most accessible: just visit [NextPhrase.app](https://nextphrase.app) and add it to your home screen for the best experience.
 
-I've learned a LOT building this game over and over, including the architectural challenges of building a game where pretty much everything is animated, despite running on a wee computer without 16GB of memory to lean on. Give it a shot at your next party!
+I’ve learned a LOT building this game over and over, including the architectural challenges of building a game where pretty much everything is animated, despite running on a wee computer without 16GB of memory to lean on. Give it a shot at your next party!
 `,
     screenshots: [
       {
