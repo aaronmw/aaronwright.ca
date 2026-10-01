@@ -268,33 +268,42 @@ test('the active section item animates its project back to the first slide', asy
     .locator(':scope > div')
   const horizontalBox = await horizontalTrack.boundingBox()
   expect(horizontalBox).not.toBeNull()
-  const sampledPositions = new Set<number>()
+  // Observe in the page before clicking: the click and subsequent driver calls
+  // can otherwise finish after most or all of the animation, especially in WebKit.
+  const motion = await horizontalTrack.evaluateHandle(element => {
+    const samples = { positions: new Set<number>(), position: 0, frame: 0 }
+    const sample = () => {
+      const transform = getComputedStyle(element).transform
+      samples.position = transform === 'none' ? 0 : new DOMMatrix(transform).m41
+      samples.positions.add(Math.round(samples.position))
+      samples.frame = requestAnimationFrame(sample)
+    }
+    sample()
+    return { samples, stop: () => cancelAnimationFrame(samples.frame) }
+  })
 
-  await page
-    .locator(
-      'button[data-portfolio-section-nav-side="left"][data-portfolio-section-nav-index="2"]',
-    )
-    .click()
-  await expect
-    .poll(
-      async () => {
-        const position = await horizontalTrack.evaluate(element => {
-          const transform = getComputedStyle(element).transform
-          return transform === 'none' ? 0 : new DOMMatrix(transform).m41
-        })
-        sampledPositions.add(Math.round(position))
-        return position
-      },
-      { intervals: [16, 16, 16, 16, 16, 16, 16, 16, 16, 16] },
-    )
-    .toBeGreaterThan(-horizontalBox!.width / 2)
-  await expect(page).toHaveURL(/\/work\/loopio$/)
-  await expect(
-    page.locator(
-      'button[data-portfolio-slide-indicator-index="0"][aria-current="true"]',
-    ),
-  ).toBeVisible()
-  expect(sampledPositions.size).toBeGreaterThan(2)
+  try {
+    await page
+      .locator(
+        'button[data-portfolio-section-nav-side="left"][data-portfolio-section-nav-index="2"]',
+      )
+      .click()
+    await expect
+      .poll(() => motion.evaluate(state => state.samples.position))
+      .toBeGreaterThan(-horizontalBox!.width / 2)
+    await expect(page).toHaveURL(/\/work\/loopio$/)
+    await expect(
+      page.locator(
+        'button[data-portfolio-slide-indicator-index="0"][aria-current="true"]',
+      ),
+    ).toBeVisible()
+    expect(
+      await motion.evaluate(state => state.samples.positions.size),
+    ).toBeGreaterThan(2)
+  } finally {
+    await motion.evaluate(state => state.stop())
+    await motion.dispose()
+  }
 
   await page.goBack()
   await expect(page).toHaveURL(/\/work\/loopio\/shared-system$/)

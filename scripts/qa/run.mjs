@@ -1,9 +1,9 @@
 import { spawn, execFileSync } from 'node:child_process'
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs'
-import { createServer } from 'node:net'
 import { createRequire } from 'node:module'
 import { once } from 'node:events'
 import { resolve } from 'node:path'
+import { stripVTControlCharacters } from 'node:util'
 import { chromium } from '@playwright/test'
 import {
   compare,
@@ -23,7 +23,7 @@ const tasksOnly =
   process.argv.length === 3 && process.argv[2] === '--tasks-only'
 if (process.argv.length > 2 && !tasksOnly)
   throw new Error(
-    'Usage: pnpm qa:run [--tasks-only] (builds and temporarily serves this checkout on 127.0.0.1:3032)',
+    'Usage: pnpm qa:run [--tasks-only] (builds and temporarily serves this checkout on an available loopback port)',
   )
 
 const id = new Date().toISOString().replaceAll(':', '-').replaceAll('.', '-')
@@ -45,7 +45,7 @@ const report = {
   failures: [],
   status: 'running',
 }
-const baseURL = 'http://127.0.0.1:3032'
+let baseURL
 let server
 let browser
 let child
@@ -80,13 +80,6 @@ async function command(label, executable, args, env = {}) {
 }
 
 try {
-  // Refuse to reuse or terminate an unrelated server on the QA port.
-  const probe = createServer()
-  probe.listen(3032, '127.0.0.1')
-  await once(probe, 'listening')
-  await new Promise((resolve, reject) =>
-    probe.close(error => (error ? reject(error) : resolve())),
-  )
   if (!(await command('build', 'pnpm', ['build'])))
     throw new Error('Production build failed')
   report.buildId = readFileSync('.next/BUILD_ID', 'utf8').trim()
@@ -98,7 +91,8 @@ try {
       '--hostname',
       '127.0.0.1',
       '--port',
-      '3032',
+      // Let this server bind an available port atomically, without a probe race.
+      '0',
     ],
     { stdio: ['ignore', 'pipe', 'pipe'] },
   )
@@ -120,18 +114,26 @@ try {
       server.signalCode !== null
     )
       throw new Error(`QA server failed: ${serverError ?? serverLog}`)
-    try {
-      const response = await fetch(`${baseURL}/work`, {
-        signal: AbortSignal.timeout(1000),
-      })
-      if (response.ok) break
-    } catch {
-      /* The owned server is still starting. */
+    // Next reports the actual bound address, including an OS-assigned port.
+    baseURL ??= stripVTControlCharacters(serverLog).match(
+      /Local:\s+(http:\/\/127\.0\.0\.1:\d+)(?=\s|$)/,
+    )?.[1]
+    if (baseURL) {
+      try {
+        const response = await fetch(`${baseURL}/work`, {
+          signal: AbortSignal.timeout(1000),
+        })
+        if (response.ok) break
+      } catch {
+        /* The owned server is still starting. */
+      }
     }
     if (Date.now() >= deadline)
       throw new Error(`QA server did not become ready: ${serverLog}`)
     await new Promise(resolve => setTimeout(resolve, 250))
   }
+  report.baseURL = baseURL
+  console.log(`QA server: ${baseURL}`)
 
   report.checks.unit = await command('unit', 'pnpm', ['test:unit'])
   if (!tasksOnly) {

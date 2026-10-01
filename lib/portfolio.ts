@@ -437,27 +437,13 @@ The Distributor is helpful for laying out large numbers of nodes, and it’s als
       'A CMS-backed workflow that let content owners update the site without waiting on developers.',
     overviewMarkdown: `
 Informal was a freelance customer of mine when their needs grew into a full-time role for me as their sole UX/UI developer. I got to wear the hats of researcher, designer, developer, internal tool builder, and more. One of my earliest contributions serves as a good example of what I brought:
-`,
-    screenshots: [
-      {
-        id: 'informal-systems-home-page',
-        slug: 'home-page',
-        src: '/portfolio/informal-systems/home-page.png',
-        alt: '1 of 3: Homepage Overview',
-        description: `
+
 ## Content ownership without design drift
 
 The website I’d built was a simple Next.js app and lived as code on GitHub and as a hosted app on Netlify. Making a copy change was just another task for me, but a bit of a steep hill to climb for someone just looking to fix a typo on a blog post. Time to hire a CMS.
 
 I chose Contentful for its headlessness and built a lightweight editing workflow around it. The trick was giving teams the freedom to update their own content without giving them enough freedom to accidentally, shall we say, redesign the site.
-`,
-      },
-      {
-        id: 'informal-systems-hover-to-edit',
-        slug: 'hover-to-edit',
-        src: '/portfolio/informal-systems/hover-to-edit.png',
-        alt: '2 of 3: Hover-to-Edit',
-        description: `
+
 ## One content shape for every editable surface
 
 The staging version of the site pulls its content from Contentful, but includes content marked as \`draft\` whereas production only shows \`published\` content. In Contentful, everything takes the shape of a single, consistent object that I dubbed \`spot_copy_entry\`:
@@ -466,20 +452,21 @@ The staging version of the site pulls its content from Contentful, but includes 
 - \`body\`: Optional Rich Text content which arrives as bare HTML.
 - \`media\`: An optional picker for attaching one or more images.
 - \`json\`: An optional escape hatch for simple arrays, objects, or references to other \`spot_copy_entry\` paths.
-`,
-      },
-      {
-        id: 'informal-staking',
-        slug: 'informal-staking',
-        src: '/portfolio/informal-systems/informal-staking.png',
-        alt: '3 of 3: Informal Staking',
-        description: `
+
 ## Let writers own the content while design stays in code
 
 The websites that consume Contentful content make a single request, constructed at request time around the route’s needs. It fetches the copy and image paths for the request and makes them available to the page through React Context.
 
 I built a \`ContentfulSpotCopy\` component that accepts a \`path\` and a \`render\` prop receiving the fields for that chunk of copy. From there, I can build a carousel from the images, style the body however I want, or shape a completely different interface. The writers own the content while I own the design 👌
 `,
+    screenshots: [
+      {
+        id: 'informal-systems-walkthrough',
+        slug: 'walkthrough',
+        src: '/portfolio/informal-systems/walkthrough.mp4',
+        width: 1680,
+        height: 1158,
+        alt: 'Informal Systems content editing walkthrough',
       },
     ],
   },

@@ -10,8 +10,9 @@ projects can use this format with their own tasks and implementation.
 1. Install locked dependencies and browsers if needed:
    `pnpm install --frozen-lockfile` and `pnpm exec playwright install chromium webkit`.
 2. Run `pnpm qa:run`. This explicitly builds production, starts its own temporary
-   loopback server on **3032**, runs checks, writes results, and stops that server.
-   It refuses to use an occupied port; it does not manage the ordinary dev server.
+   loopback server on an **OS-assigned available port**, runs checks, writes results,
+   and stops that server. It does not reuse or stop other servers or manage the
+   ordinary dev server. The selected URL is logged and recorded in the JSON report.
    Keep the checkout unchanged and avoid other heavy work during measurement.
 3. Review `qa/results/<timestamp>.md` and its JSON, including failed runs. Commit
    these small records alongside the tested changes. Screenshots and browser
@@ -38,6 +39,22 @@ Both preview and production Netlify builds use the gate. A passing receipt verif
 the local production build of these sources; hosting configuration and CDN behavior
 still require post-deploy observation. Changes to build-time environment variables
 require a new measured run with those same values.
+
+The October 1 port-selection change fixes a collision with Gift Exchanges' assigned
+development port, 3032. QA now launches `next start --hostname 127.0.0.1 --port 0`
+and reads the bound URL from that child process before starting checks. The OS
+allocates the port when the server binds, avoiding a probe-and-release race.
+Development routing, visitor tasks, throttling, budgets, and baseline stay unchanged.
+See [Node's port-zero behavior](https://nodejs.org/api/net.html#serverlistenport-host-backlog-callback).
+
+The same release corrects the section-reset animation test's observation timing.
+The [first complete October 1 run](qa/results/2026-10-01T23-32-21-154Z.md) passed
+all performance comparisons, but WebKit desktop and portrait sampled only one or
+two track positions after the click returned. The observer now runs on animation
+frames inside the page starting before the click, while retaining the requirement
+for more than two distinct positions, the correct final slide, and browser-history
+restoration. This repairs observation of the existing animation contract; it does
+not change application behavior, skip coverage, or relax performance budgets.
 
 ## Conditions
 

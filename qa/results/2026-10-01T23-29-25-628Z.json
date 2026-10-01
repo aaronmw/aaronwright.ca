@@ -1,0 +1,51 @@
+{
+  "schema": 1,
+  "id": "2026-10-01T23-29-25-628Z",
+  "createdAt": "2026-10-01T23:29:25.628Z",
+  "commit": "9aa71b3cd8f2585dc32f554c2439ce5f3ee6f500",
+  "sourceHash": "7885d9cf9b9f1f25623c4c7c5b19bf3b759838b96caaed87a108c17def3bd820",
+  "configHash": "0e568e89ded990e796ef9876a3e6a70f60b31a889b2d533c99665a39b08d0f8b",
+  "mode": "release",
+  "environment": null,
+  "checks": {
+    "unit": false,
+    "browser": false
+  },
+  "samples": [],
+  "errors": [
+    "listen EADDRINUSE: address already in use 127.0.0.1:3032"
+  ],
+  "failures": [
+    "Missing production build/environment evidence.",
+    "Unit or cross-browser checks did not pass.",
+    "listen EADDRINUSE: address already in use 127.0.0.1:3032",
+    "Incomplete sample matrix.",
+    "Missing repetitions: desktop/cold-entry",
+    "Missing repetitions: desktop/choose-project",
+    "Missing repetitions: desktop/horizontal-gesture",
+    "Missing repetitions: desktop/image-viewer",
+    "Missing repetitions: desktop/vertical-navigation",
+    "Missing repetitions: desktop/appearance",
+    "Missing repetitions: small-laptop-slow/cold-entry",
+    "Missing repetitions: small-laptop-slow/choose-project",
+    "Missing repetitions: small-laptop-slow/horizontal-gesture",
+    "Missing repetitions: small-laptop-slow/image-viewer",
+    "Missing repetitions: small-laptop-slow/vertical-navigation",
+    "Missing repetitions: small-laptop-slow/appearance",
+    "Missing repetitions: phone-portrait-slow/cold-entry",
+    "Missing repetitions: phone-portrait-slow/choose-project",
+    "Missing repetitions: phone-portrait-slow/horizontal-gesture",
+    "Missing repetitions: phone-portrait-slow/image-viewer",
+    "Missing repetitions: phone-portrait-slow/vertical-navigation",
+    "Missing repetitions: phone-portrait-slow/appearance",
+    "Missing repetitions: phone-landscape-slow/cold-entry",
+    "Missing repetitions: phone-landscape-slow/choose-project",
+    "Missing repetitions: phone-landscape-slow/horizontal-gesture",
+    "Missing repetitions: phone-landscape-slow/image-viewer",
+    "Missing repetitions: phone-landscape-slow/vertical-navigation",
+    "Missing repetitions: phone-landscape-slow/appearance",
+    "Measurement environment changed. Recalibrate on the same machine/browser before comparing."
+  ],
+  "status": "blocked",
+  "completedAt": "2026-10-01T23:29:25.787Z"
+}

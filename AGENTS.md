@@ -8,7 +8,7 @@
 - For performance failures, include the quick evidence, changed-code, and
   primary-source research triage in `TASKS.md` before diagnosing a regression,
   repeating the full scan, or handing off a blocked release.
-- `pnpm qa:run` builds and temporarily serves production on loopback port 3032.
+- `pnpm qa:run` builds and temporarily serves production on an OS-assigned loopback port.
   Follow the global process-authorization rule before starting it; do not reuse
   or stop an unrelated server.
 - Do not skip a failing task, relax an assertion/budget, or replace a baseline

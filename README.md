@@ -15,7 +15,7 @@ trusted local network. Ordinary test commands do not start either server.
   Markdown sanitization, metadata, and release-report validation.
 - `PLAYWRIGHT_BASE_URL=<running-app-url> pnpm test:e2e`: the existing Playwright
   suite across desktop Chrome/Safari and iPhone portrait/landscape emulation.
-- `pnpm qa:run`: build production, temporarily serve it on `127.0.0.1:3032`, run
+- `pnpm qa:run`: build production, temporarily serve it on an available loopback port, run
   public-portfolio browser checks and measured visitor tasks, and save repo-local
   results. The command stops its own server when finished.
 - `pnpm qa:check`: verify that the latest complete run matches this checkout and
