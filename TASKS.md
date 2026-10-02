@@ -56,6 +56,17 @@ for more than two distinct positions, the correct final slide, and browser-histo
 restoration. This repairs observation of the existing animation contract; it does
 not change application behavior, skip coverage, or relax performance budgets.
 
+The Informal Systems walkthrough is encoded as H.264 MP4 at its original
+1680 × 1158 resolution and 30 fps, retaining the full 70.47-second recording.
+FFmpeg's `libx264 -preset slow -crf 24 -pix_fmt yuv420p -movflags +faststart`
+reduces the supplied 81,877,466-byte file to 7,552,249 bytes (90.8% smaller).
+The existing shared player keeps inactive videos source-less and outside the
+image preload queue. Browser coverage now checks that no video requests occur
+on the portfolio menu, that opening Informal Systems starts only its video with
+looping muted inline playback, and that returning home pauses it. No second
+loading implementation or codec fallback is needed. See
+[FFmpeg's MP4 fast-start documentation](https://ffmpeg.org/ffmpeg-formats.html#MOV_002fMPEG_002d4_002fISOMBFF-muxers).
+
 ## Conditions
 
 For debugging task definitions, `pnpm qa:run --tasks-only` omits the long browser
@@ -77,7 +88,7 @@ WebKit desktop plus WebKit iPhone portrait/landscape, with their declared device
 skips. The private copy editor is outside this visitor release gate; its existing
 test remains available through `pnpm test:e2e`.
 
-The public browser matrix contains 29 scenarios across four profiles, including
+The public browser matrix contains 30 scenarios across four profiles, including
 one check that QA waits for visible motion without reading offscreen carousel
 descendants. Seven scenarios require mouse drags or wheel input and are explicitly skipped on each
 touch profile (14 skips). Theme keyboard/focus/persistence, viewer lifecycle,
@@ -197,6 +208,9 @@ browser chrome, or touch ergonomics. Use a physical phone for those.
 ## Agent-assisted exploratory pass
 
 ### Quick performance-failure triage
+
+October 1's optimized-video release hit the landscape image-viewer long-task and
+long-frame budgets. See [the evidence and bounded diagnostic plan](docs/qa/2026-10-01-video-release-triage.md).
 
 Include this in the agent-assisted release scan whenever a performance limit is
 exceeded. Start with existing evidence and keep the investigation proportional to

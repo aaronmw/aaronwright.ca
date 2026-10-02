@@ -176,6 +176,65 @@ test('About Me exposes both text panels without image-viewer controls', async ({
   ).toHaveCount(0)
 })
 
+test('portfolio videos defer downloading until their project is opened', async ({
+  page,
+}) => {
+  const videoRequests: string[] = []
+  page.on('request', request => {
+    if (/\.(mp4|webm)(\?|$)/.test(request.url()))
+      videoRequests.push(request.url())
+  })
+  await page.goto('/work')
+  await waitForPortfolio(page)
+  await settled(page)
+  const videos = page.locator('main[data-portfolio-phase]:visible video')
+  expect(await videos.count()).toBeGreaterThan(0)
+  await expect(page.locator('video[src]')).toHaveCount(0)
+  expect(videoRequests).toEqual([])
+
+  await page
+    .locator('.portfolio-start-index-item:visible')
+    .filter({ hasText: 'Informal Systems' })
+    .click()
+  await expect(page).toHaveURL(/\/work\/informal-systems$/)
+  const walkthrough = page.locator(
+    'main[data-portfolio-phase]:visible video[data-portfolio-video-src="/portfolio/informal-systems/walkthrough.mp4"]',
+  )
+  await expect(walkthrough).toHaveAttribute(
+    'src',
+    '/portfolio/informal-systems/walkthrough.mp4',
+  )
+  await expect
+    .poll(() =>
+      walkthrough.evaluate(video => {
+        const media = video as HTMLVideoElement
+        return (
+          media.currentTime > 0 &&
+          !media.paused &&
+          media.loop &&
+          media.muted &&
+          media.playsInline
+        )
+      }),
+    )
+    .toBe(true)
+  expect(videoRequests.length).toBeGreaterThan(0)
+  expect(
+    videoRequests.every(url =>
+      url.endsWith('/informal-systems/walkthrough.mp4'),
+    ),
+  ).toBe(true)
+
+  await page.locator('[data-portfolio-home-logo]').click()
+  await expect(page).toHaveURL(/\/work$/)
+  await expect
+    .poll(() =>
+      walkthrough.evaluate(video => (video as HTMLVideoElement).paused),
+    )
+    .toBe(true)
+  await expect(walkthrough).toHaveAttribute('preload', 'none')
+})
+
 test('project text and media fit the viewport in wide and stacked layouts', async ({
   page,
 }) => {
