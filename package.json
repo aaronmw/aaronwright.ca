@@ -5,7 +5,7 @@
   "packageManager": "pnpm@11.22.0",
   "scripts": {
     "dev": "sh -c 'exec next dev --turbo \"$@\" --hostname 127.0.0.1 --port 3031' --",
-    "dev:lan": "next dev --turbo --hostname 0.0.0.0 --port 3031",
+    "dev:lan": "node scripts/dev-lan.mjs --port 3031 --local-url https://aaronwright-dot-ca.localhost -- pnpm dev",
     "build": "next build",
     "export": "next build",
     "test": "pnpm test:unit && pnpm test:e2e",
