@@ -56,7 +56,7 @@ for more than two distinct positions, the correct final slide, and browser-histo
 restoration. This repairs observation of the existing animation contract; it does
 not change application behavior, skip coverage, or relax performance budgets.
 
-The Informal Systems walkthrough is encoded as H.264 MP4 at its original
+The October 1 Informal Systems walkthrough was encoded as H.264 MP4 at its original
 1680 × 1158 resolution and 30 fps, retaining the full 70.47-second recording.
 FFmpeg's `libx264 -preset slow -crf 24 -pix_fmt yuv420p -movflags +faststart`
 reduces the supplied 81,877,466-byte file to 7,552,249 bytes (90.8% smaller).
@@ -66,6 +66,17 @@ on the portfolio menu, that opening Informal Systems starts only its video with
 looping muted inline playback, and that returning home pauses it. No second
 loading implementation or codec fallback is needed. See
 [FFmpeg's MP4 fast-start documentation](https://ffmpeg.org/ffmpeg-formats.html#MOV_002fMPEG_002d4_002fISOMBFF-muxers).
+
+The October 2 replacement uses the corrected iMovie edit, cropped to
+1544 × 1064 at 30 fps. The H.264 `yuv420p` MP4 is 59.10 seconds and
+6,182,592 bytes; its complete decode and declared dimensions were checked before
+release. The shared media surface now owns rectangular, phone-shaped, and
+rounded clipping, with the Informal Systems corner radius kept proportional to
+the recording. The same deferred player and unclipped video scrubber remain in
+use. Shared icons are smaller within their existing slots, Prev/Next use those
+icons, and persistent narrative scrollbars use native vertical range controls.
+These source and media changes require fresh release evidence under the existing
+task contract and budgets.
 
 ## Conditions
 
@@ -211,6 +222,13 @@ browser chrome, or touch ergonomics. Use a physical phone for those.
 
 October 1's optimized-video release hit the landscape image-viewer long-task and
 long-frame budgets. See [the evidence and bounded diagnostic plan](docs/qa/2026-10-01-video-release-triage.md).
+
+October 2's first release run hit 16 performance limits and two browser failures.
+See [the quick evidence, changed-code and primary-source triage, and bounded next
+step](docs/qa/2026-10-02-release-triage.md). Aaron approved the decision audit and
+a one-release exception to the failed/stale receipt after the focused functional
+checks passed. This exception does not change the baseline, budgets, or complete
+QA requirement for future releases.
 
 Include this in the agent-assisted release scan whenever a performance limit is
 exceeded. Start with existing evidence and keep the investigation proportional to

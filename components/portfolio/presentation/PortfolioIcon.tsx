@@ -14,23 +14,27 @@ const ICON_CLASSES = {
 
 export type PortfolioIconName = keyof typeof ICON_CLASSES
 
+const ICON_SIZE_CLASSES = {
+  control:
+    'size-[var(--portfolio-logo-size)] [--portfolio-icon-size:var(--portfolio-logo-size)]',
+  keyboard: 'size-[10px] [--portfolio-icon-size:10px]',
+  // Text-button slots follow their labels rather than the standalone controls.
+  label: 'size-[1em] [--portfolio-icon-size:1em]',
+} as const
+
 export function PortfolioIcon({
   name,
   size = 'control',
   className,
 }: {
   name: PortfolioIconName
-  size?: 'control' | 'keyboard'
+  size?: keyof typeof ICON_SIZE_CLASSES
   className?: string
 }) {
   return (
     <span
       data-portfolio-icon={name}
-      className={`inline-grid shrink-0 place-items-center ${
-        size === 'keyboard'
-          ? 'size-[10px] [--portfolio-icon-size:10px]'
-          : 'size-[var(--portfolio-logo-size)] [--portfolio-icon-size:var(--portfolio-logo-size)]'
-      } ${className ?? ''}`}
+      className={`inline-grid shrink-0 place-items-center ${ICON_SIZE_CLASSES[size]} ${className ?? ''}`}
       aria-hidden="true"
     >
       <i

@@ -1,5 +1,11 @@
 import type { SeoCopy } from './siteMetadata'
 
+export type PortfolioMediaClip =
+  | { kind: 'phone' }
+  // Fractions of the source dimensions keep a recorded corner radius in
+  // proportion at every carousel, viewer, and zoom size.
+  | { kind: 'rounded'; radiusX: number; radiusY: number }
+
 export type PortfolioScreenshot = {
   id: string
   slug: string
@@ -9,7 +15,7 @@ export type PortfolioScreenshot = {
   height?: number
   description?: string
   animated?: boolean
-  clipToPhoneFrame?: boolean
+  clip?: PortfolioMediaClip
   restartable?: boolean
 }
 
@@ -464,8 +470,10 @@ I built a \`ContentfulSpotCopy\` component that accepts a \`path\` and a \`rende
         id: 'informal-systems-walkthrough',
         slug: 'walkthrough',
         src: '/portfolio/informal-systems/walkthrough.mp4',
-        width: 1680,
-        height: 1158,
+        width: 1544,
+        height: 1064,
+        // Preserve the established 28 px rounded media presentation.
+        clip: { kind: 'rounded', radiusX: 28 / 1544, radiusY: 28 / 1064 },
         alt: 'Informal Systems content editing walkthrough',
       },
     ],
@@ -497,7 +505,7 @@ I’ve learned a LOT building this game over and over, including the architectur
         width: 442,
         height: 906,
         alt: 'NextPhrase app walkthrough',
-        clipToPhoneFrame: true,
+        clip: { kind: 'phone' },
       },
     ],
   },

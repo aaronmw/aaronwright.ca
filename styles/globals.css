@@ -212,10 +212,10 @@ html[data-portfolio-route='work'],
   filter: drop-shadow(1px 1px 0 var(--portfolio-navigation-shadow));
 }
 
-/* Font Awesome's 1.25em canvas must fit inside the shared square icon slot. */
+/* Scale Font Awesome's 1.25em glyph canvas to 75% without shrinking its square slot. */
 [data-portfolio-icon] > .portfolio-icon-glyph {
-  width: var(--portfolio-icon-size);
-  font-size: calc(var(--portfolio-icon-size) / 1.25);
+  width: 1.25em;
+  font-size: calc(var(--portfolio-icon-size) * 0.75 / 1.25);
   line-height: 1;
 }
 
@@ -512,6 +512,10 @@ button {
 
 /* Reserve room for the project title, slide count, and navigation gaps. */
 @container portfolio-project-header (max-width: 52ch) {
+  .portfolio-project-slide-controls {
+    column-gap: 1ch;
+  }
+
   .portfolio-project-control-label {
     display: none;
   }
@@ -650,6 +654,47 @@ button {
   &::-webkit-scrollbar {
     display: none;
   }
+}
+
+/* The hit area extends inward through the existing gutter; its negative margin
+   preserves the layout footprint. Paint only the original right-aligned stroke. */
+.portfolio-scrollbar-input::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(var(--portfolio-shaded), var(--portfolio-shaded))
+    right / var(--logo-stroke-width) 100% no-repeat;
+}
+
+.portfolio-scrollbar-input::-webkit-slider-thumb {
+  width: 100%;
+  height: var(--portfolio-scrollbar-thumb-height, 24px);
+  border: 0;
+  border-radius: 0;
+  appearance: none;
+  background: linear-gradient(
+      var(--portfolio-accent-decoration),
+      var(--portfolio-accent-decoration)
+    )
+    right / var(--logo-stroke-width) 100% no-repeat;
+}
+
+.portfolio-scrollbar-input::-moz-range-track {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(var(--portfolio-shaded), var(--portfolio-shaded))
+    right / var(--logo-stroke-width) 100% no-repeat;
+}
+
+.portfolio-scrollbar-input::-moz-range-thumb {
+  width: 100%;
+  height: var(--portfolio-scrollbar-thumb-height, 24px);
+  border: 0;
+  border-radius: 0;
+  background: linear-gradient(
+      var(--portfolio-accent-decoration),
+      var(--portfolio-accent-decoration)
+    )
+    right / var(--logo-stroke-width) 100% no-repeat;
 }
 
 .portfolio-markdown {

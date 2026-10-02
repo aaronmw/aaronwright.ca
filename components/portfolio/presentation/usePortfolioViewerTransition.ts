@@ -134,8 +134,8 @@ function getMediaLayerTransitions(
       scaleX: matrix.a,
       scaleY: matrix.d,
     })
-    // Resize only the phone outline's SVG viewport, so its non-scaling stroke
-    // keeps the same thickness. The image and rectangular frame use transforms.
+    // Resize shaped borders so their token-based thickness remains constant.
+    // The media content and rectangular frame use transforms.
     const resize = element.hasAttribute('data-portfolio-media-layer-resize')
     const current: AnimatedStyle = {
       transform: style.transform,

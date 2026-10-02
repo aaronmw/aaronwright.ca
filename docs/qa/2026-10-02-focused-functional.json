@@ -1,0 +1,25 @@
+{
+  "sourceHash": "544c2f088b874209831a44fd1f8cb53078a4068b44916c1793b123e1a74dd8b5",
+  "sourceUnchanged": true,
+  "createdAt": "2026-10-02T16:32:37.865Z",
+  "baseURL": "http://127.0.0.1:60788",
+  "exitCode": 0,
+  "releaseEligible": false,
+  "performanceMeasured": false,
+  "command": "playwright test portfolio.spec.ts --grep \"project text and media fit the viewport|viewer deep links restore with browser history\" --workers=1 --retries=0",
+  "browserStats": {
+    "startTime": "2026-10-02T16:32:07.064Z",
+    "duration": 30613.876,
+    "expected": 8,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "projects": [
+    "chromium-desktop",
+    "webkit-desktop",
+    "webkit-iphone-portrait",
+    "webkit-iphone-landscape"
+  ],
+  "note": "Focused verification after the shared-header correction; not a complete release receipt. Later TASKS.md edits record the approved release exception and do not change application code."
+}

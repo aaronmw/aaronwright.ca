@@ -1,13 +1,8 @@
 import Image from 'next/image'
 import type { CSSProperties } from 'react'
-import { useCallback, useEffect, useId, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { PortfolioScreenshot } from '@/lib/portfolio'
 import { portfolioAccentColor } from '@/lib/portfolioPalette'
-import {
-  PHONE_FRAME_PATH,
-  PHONE_FRAME_PATH_SCALE,
-  PHONE_FRAME_SIZE,
-} from '@/lib/phoneFrame'
 import type { PortfolioMediaElement } from '@/components/portfolio/usePortfolioMediaReadiness'
 import {
   carouselMediaKey,
@@ -18,6 +13,7 @@ import {
 import { CircularIconButton } from './PortfolioControls'
 import { FiveByFive } from './FiveByFive'
 import { PortfolioIcon } from './PortfolioIcon'
+import { PortfolioMediaSurface } from './PortfolioMediaSurface'
 import { usePortfolioViewerOpenSurface } from './usePortfolioViewerOpenSurface'
 import {
   PortfolioMediaAction,
@@ -54,44 +50,6 @@ function getMediaAspectRatio(element: PortfolioMediaElement) {
 function restartVideo(video: HTMLVideoElement) {
   video.currentTime = 0
   void video.play().catch(() => undefined)
-}
-
-function PhoneFrameBackdrop({ clipPathId }: { clipPathId: string }) {
-  return (
-    <span
-      data-portfolio-media-layer="border"
-      data-portfolio-media-layer-resize
-      aria-hidden="true"
-      className="pointer-events-none absolute [inset:var(--portfolio-media-frame-width)]"
-    >
-      <svg
-        viewBox={`0 0 ${PHONE_FRAME_SIZE.width} ${PHONE_FRAME_SIZE.height}`}
-        preserveAspectRatio="none"
-        className="h-full w-full overflow-visible text-portfolio-shaded"
-      >
-        <defs>
-          <clipPath
-            id={clipPathId}
-            clipPathUnits="objectBoundingBox"
-          >
-            <path
-              d={PHONE_FRAME_PATH}
-              transform={PHONE_FRAME_PATH_SCALE}
-            />
-          </clipPath>
-        </defs>
-        <path
-          d={PHONE_FRAME_PATH}
-          fill="currentColor"
-          stroke="currentColor"
-          vectorEffect="non-scaling-stroke"
-          style={{
-            strokeWidth: 'calc(var(--portfolio-media-frame-width) * 2)',
-          }}
-        />
-      </svg>
-    </span>
-  )
 }
 
 function VideoScrubber({
@@ -294,10 +252,9 @@ export function ScreenshotMedia({
   const [videoCurrentTime, setVideoCurrentTime] = useState(0)
   const [videoDuration, setVideoDuration] = useState(0)
   const mediaElementRef = useRef<PortfolioMediaElement | null>(null)
-  const generatedClipPathId = useId()
-  const phoneFrameClipPathId = `phone-frame-${generatedClipPathId.replaceAll(':', '')}`
   const mediaLoadFailed = failedMediaSrc === screenshot.src
-  const usesPhoneFrame = screenshot.clipToPhoneFrame && !mediaLoadFailed
+  const mediaClip = mediaLoadFailed ? undefined : screenshot.clip
+  const usesPhoneFrame = mediaClip?.kind === 'phone'
   const hasReplayControl =
     showReplayControl && screenshot.restartable && !mediaLoadFailed
   const hasVideoScrubber = isVideoScreenshot(screenshot) && !mediaLoadFailed
@@ -382,24 +339,6 @@ export function ScreenshotMedia({
     ? `relative [padding:var(--portfolio-media-frame-width)] ${aspectRatio ? '' : 'invisible'}`
     : 'relative [padding:var(--portfolio-media-frame-width)]'
 
-  // Animate the border and the media independently: a fixed-width border changes
-  // the outer aspect ratio between the thumbnail and the enlarged image.
-  const frameBackdrop = usesPhoneFrame ? (
-    <PhoneFrameBackdrop clipPathId={phoneFrameClipPathId} />
-  ) : (
-    <span
-      data-portfolio-media-layer="border"
-      aria-hidden="true"
-      className="pointer-events-none absolute inset-0 bg-portfolio-shaded"
-    />
-  )
-
-  const mediaFrameStyle: CSSProperties | undefined = usesPhoneFrame
-    ? { clipPath: `url(#${phoneFrameClipPathId})` }
-    : undefined
-  const mediaFrameClassName = usesPhoneFrame
-    ? 'relative h-full w-full'
-    : 'relative h-full w-full bg-[var(--portfolio-surface)]'
   const mediaAction = <PortfolioMediaAction {...action} />
 
   if (isVideoScreenshot(screenshot)) {
@@ -411,11 +350,11 @@ export function ScreenshotMedia({
           // Include the scrubber's overhang in the grid's centred footprint.
           style={{ ...frameStyle, marginBottom: progressBarOverhang }}
         >
-          {frameBackdrop}
-          <div
-            data-portfolio-media-layer="content"
-            className={`${mediaFrameClassName} ${hasReplayControl && !replayHoverSuppressed ? 'group/restart' : ''}`}
-            style={mediaFrameStyle}
+          <PortfolioMediaSurface
+            clip={mediaClip}
+            className={
+              hasReplayControl && !replayHoverSuppressed ? 'group/restart' : ''
+            }
             onMouseLeave={
               hasReplayControl
                 ? () => setReplayHoverSuppressed(false)
@@ -496,7 +435,7 @@ export function ScreenshotMedia({
                 className="pointer-events-none absolute left-1/2 top-1/2 z-[var(--portfolio-layer-overlay)] size-[var(--portfolio-control-size)] -translate-x-1/2 -translate-y-1/2 scale-[0.96] bg-transparent p-0 opacity-0 transition-[opacity,scale] duration-[var(--portfolio-motion-feedback)] ease-out focus-visible:pointer-events-auto focus-visible:scale-100 focus-visible:opacity-100 [@media(hover:hover)]:group-hover/restart:pointer-events-auto [@media(hover:hover)]:group-hover/restart:scale-100 [@media(hover:hover)]:group-hover/restart:opacity-100 motion-reduce:scale-100 motion-reduce:transition-none"
               />
             ) : null}
-          </div>
+          </PortfolioMediaSurface>
           <VideoScrubber
             currentTime={videoCurrentTime}
             duration={videoDuration}
@@ -515,12 +454,7 @@ export function ScreenshotMedia({
         className={frameClassName}
         style={frameStyle}
       >
-        {frameBackdrop}
-        <div
-          data-portfolio-media-layer="content"
-          className={mediaFrameClassName}
-          style={mediaFrameStyle}
-        >
+        <PortfolioMediaSurface clip={mediaClip}>
           {/* Sources are assigned by the preload queue or active-slide effect;
               native lazy loading would fetch projects passed during navigation. */}
           <img
@@ -540,7 +474,7 @@ export function ScreenshotMedia({
             className={`absolute inset-0 h-full w-full select-none object-contain text-transparent [&:not([src])]:invisible ${className}`}
           />
           {mediaAction}
-        </div>
+        </PortfolioMediaSurface>
       </div>
     </div>
   )

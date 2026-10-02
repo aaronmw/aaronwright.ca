@@ -8,6 +8,7 @@ import {
   ReactNode,
   UIEventHandler,
   useCallback,
+  useId,
   useLayoutEffect,
   useRef,
   useState,
@@ -80,8 +81,9 @@ export const OverscrollIndicator = forwardRef<
   const viewportRef = useRef<HTMLDivElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
   const autoScrollFrameRef = useRef<number | null>(null)
-  const scrollbarTrackRef = useRef<HTMLDivElement>(null)
-  const scrollbarThumbRef = useRef<HTMLSpanElement>(null)
+  const scrollbarRef = useRef<HTMLInputElement>(null)
+  const generatedViewportId = useId()
+  const viewportId = viewportProps.id ?? generatedViewportId
   const visibilityRef = useRef<IndicatorVisibility>({
     top: false,
     bottom: false,
@@ -117,23 +119,27 @@ export const OverscrollIndicator = forwardRef<
       bottom:
         hasOverflow && viewport.scrollTop < maximumScrollTop - EDGE_EPSILON_PX,
     }
-    const scrollbarTrack = scrollbarTrackRef.current
-    const scrollbarThumb = scrollbarThumbRef.current
+    const scrollbar = scrollbarRef.current
 
-    if (scrollbarTrack && scrollbarThumb) {
-      scrollbarTrack.style.opacity = hasOverflow ? '1' : '0'
+    if (scrollbar) {
+      scrollbar.style.opacity = hasOverflow ? '1' : '0'
+      scrollbar.value = hasOverflow
+        ? String((viewport.scrollTop / maximumScrollTop) * 100)
+        : '0'
 
       if (hasOverflow) {
-        const thumbHeight = Math.max(
-          24,
-          (viewport.clientHeight * viewport.clientHeight) /
-            viewport.scrollHeight,
+        const thumbHeight = Math.min(
+          viewport.clientHeight,
+          Math.max(
+            24,
+            (viewport.clientHeight * viewport.clientHeight) /
+              viewport.scrollHeight,
+          ),
         )
-        const maximumThumbOffset = viewport.clientHeight - thumbHeight
-        const thumbOffset =
-          (viewport.scrollTop / maximumScrollTop) * maximumThumbOffset
-        scrollbarThumb.style.height = `${thumbHeight}px`
-        scrollbarThumb.style.transform = `translateY(${thumbOffset}px)`
+        scrollbar.style.setProperty(
+          '--portfolio-scrollbar-thumb-height',
+          `${thumbHeight}px`,
+        )
       }
     }
 
@@ -260,6 +266,7 @@ export const OverscrollIndicator = forwardRef<
     >
       <div
         {...viewportProps}
+        id={viewportId}
         ref={setViewportRef}
         data-portfolio-native-wheel-scroll={containsScroll || undefined}
         data-portfolio-touch-scroll-chain={touchScrollChaining || undefined}
@@ -283,18 +290,29 @@ export const OverscrollIndicator = forwardRef<
         </div>
       </div>
       {persistentScrollbar ? (
-        <div
-          ref={scrollbarTrackRef}
-          aria-hidden="true"
-          className="pointer-events-none relative z-[var(--portfolio-layer-content)] col-start-1 row-start-1 h-full w-[var(--logo-stroke-width)] justify-self-end opacity-0 transition-opacity duration-[var(--portfolio-motion-feedback)] ease-[var(--ease-out)] motion-reduce:transition-none"
-        >
-          <span className="absolute inset-0 bg-portfolio-shaded">
-            <span
-              ref={scrollbarThumbRef}
-              className="absolute inset-x-0 top-0 min-h-6 bg-portfolio-accent-decoration"
-            />
-          </span>
-        </div>
+        <input
+          ref={scrollbarRef}
+          type="range"
+          min={0}
+          max={100}
+          step="any"
+          defaultValue={0}
+          disabled={!hasOverflow}
+          aria-label={`Scroll position: ${viewportProps['aria-label'] ?? 'content'}`}
+          aria-controls={viewportId}
+          aria-orientation="vertical"
+          data-portfolio-carousel-drag-lock
+          className="portfolio-scrollbar-input relative z-[var(--portfolio-layer-content)] col-start-1 row-start-1 my-0 mr-0 -ml-[calc(var(--logo-stroke-width)*2)] h-full min-h-0 w-[calc(var(--logo-stroke-width)*3)] touch-none appearance-none justify-self-end border-0 bg-transparent p-0 opacity-0 outline-none transition-opacity duration-[var(--portfolio-motion-feedback)] ease-[var(--ease-out)] [direction:ltr] [writing-mode:vertical-lr] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-portfolio-accent disabled:pointer-events-none motion-reduce:transition-none"
+          onPointerDown={stopAutoScroll}
+          onChange={event => {
+            const viewport = viewportRef.current
+            if (!viewport) return
+            viewport.scrollTop =
+              (event.currentTarget.valueAsNumber / 100) *
+              Math.max(0, viewport.scrollHeight - viewport.clientHeight)
+            updateIndicators()
+          }}
+        />
       ) : null}
       {bottomScrollControl ? (
         <div

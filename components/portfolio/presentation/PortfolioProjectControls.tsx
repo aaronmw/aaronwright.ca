@@ -1,5 +1,7 @@
 'use client'
 
+import { PortfolioIcon } from './PortfolioIcon'
+
 export function PortfolioProjectControls({
   activeSlideIndex,
   projectTitle,
@@ -21,17 +23,17 @@ export function PortfolioProjectControls({
       {slideCount > 1 ? (
         <nav
           aria-label={`${projectTitle} slides`}
-          className="flex shrink-0 items-center gap-x-[2ch] whitespace-nowrap"
+          className="portfolio-project-slide-controls flex shrink-0 items-center gap-x-[2ch] whitespace-nowrap"
         >
           <button
             type="button"
             data-interactive-pop="off"
             disabled={!hasPrevious}
             aria-label={`Previous ${projectTitle} slide`}
-            className="portfolio-prose-link portfolio-prose-link--label-only inline-flex items-center gap-[1ch] border-0 bg-transparent p-0 outline-none focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-portfolio-accent disabled:pointer-events-none"
+            className="portfolio-prose-link portfolio-prose-link--label-only inline-flex items-center border-0 bg-transparent p-0 outline-none focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-portfolio-accent disabled:pointer-events-none"
             onClick={() => onSelectSlide(activeSlideIndex - 1)}
           >
-            <span aria-hidden="true">&lt;</span>
+            <PortfolioIcon name="left" size="label" />
             <span className="portfolio-prose-link-label portfolio-project-control-label">Prev</span>
           </button>
           <span aria-live="polite">
@@ -45,11 +47,11 @@ export function PortfolioProjectControls({
             data-interactive-pop="off"
             disabled={!hasNext}
             aria-label={`Next ${projectTitle} slide`}
-            className="portfolio-prose-link portfolio-prose-link--label-only inline-flex items-center gap-[1ch] border-0 bg-transparent p-0 outline-none focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-portfolio-accent disabled:pointer-events-none"
+            className="portfolio-prose-link portfolio-prose-link--label-only inline-flex items-center border-0 bg-transparent p-0 outline-none focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-portfolio-accent disabled:pointer-events-none"
             onClick={() => onSelectSlide(activeSlideIndex + 1)}
           >
             <span className="portfolio-prose-link-label portfolio-project-control-label">Next</span>
-            <span aria-hidden="true">&gt;</span>
+            <PortfolioIcon name="right" size="label" />
           </button>
         </nav>
       ) : null}
