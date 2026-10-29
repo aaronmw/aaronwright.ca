@@ -86,3 +86,40 @@ Netlify with the one-operation `pnpm build` exception, restore the configured
 Verify the live grid and legacy routes afterward. The normal build gate remains
 committed and will continue to reject the incompatible baseline until a separate
 calibration decision resolves it.
+
+## Publication outcome and packaging correction
+
+Application/evidence commit `a21a6ad48e769c912f1dd1d0e9bf5929dc00cf9f` was pushed.
+Netlify's production-context packaging succeeded, and the original build command
+was restored byte-for-byte. The code still matches the complete QA fingerprint.
+
+The first manual upload used the configured `.next` directory with `--no-build`.
+That is not the runtime adapter's packaged static root: the server's HTML
+referenced `/_next/static/...`, while those files were uploaded under `/static`.
+Deployment `6ae3c7ace2876c6b06039d88` consequently returned 404s for scripts/fonts
+and left `/work` loading. The post-deploy check caught this. The previous deploy
+was immediately restored and its production `/work` readiness verified. This was
+an upload-command error, not a source or performance regression.
+
+Correct command: `netlify deploy --no-build --dir .netlify/static`. The corrected
+bundle was uploaded as a draft, with the existing Netlify function/blob artifacts,
+then tested before promotion. The draft passed the root redirect, portfolio
+readiness, ten-project grid, noindex, new icons, flush pause/scrubber geometry,
+project link, playback and viewed-badge checks without page or HTTP errors.
+Both desktop published-portfolio isolation tests passed on that hosted artifact
+(dark and light, all four representative routes). It was then promoted unchanged.
+
+Final deployment: `6ae3c8c0fec465a29fbc12ef`.
+[Immutable deploy](https://6ae3c8c0fec465a29fbc12ef--aaronwright.netlify.app/grid-version),
+[deploy log](https://app.netlify.com/projects/aaronwright/deploys/6ae3c8c0fec465a29fbc12ef).
+The same live smoke checks passed on `https://aaronwright.ca` after promotion:
+`/` redirects to `/work`, the old portfolio reaches ready, and the updated grid
+works without page or HTTP errors. Local deployment evidence is in ignored
+`test-results/grid-controls-release/` and `test-results/deploy-isolation/`.
+
+The temporary publication lock was removed; no service/configuration changes
+remain. The automatic Git-triggered build failed at the deliberately unchanged
+QA gate; the verified manual deployment is the published release. Future manual
+uploads must use the adapter's packaged static root and validate a draft before
+promotion. Final audit verdict remains **ready with noted performance risks**;
+the packaging failure is resolved and the failed deployment remains as evidence.
