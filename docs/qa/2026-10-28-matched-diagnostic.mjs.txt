@@ -1,0 +1,85 @@
+import { spawn } from 'node:child_process'
+import { createRequire } from 'node:module'
+import { readFileSync, writeFileSync } from 'node:fs'
+import { once } from 'node:events'
+import { stripVTControlCharacters } from 'node:util'
+import { chromium } from '@playwright/test'
+import { config, configHash, environment } from '../../scripts/qa/report.mjs'
+import { installMeasurements } from '../../scripts/qa/measure.mjs'
+import { prepareTask, runTasks } from '../../scripts/qa/tasks.mjs'
+const root = '/Users/aaronwright/Projects/aaronwright-dot-ca'
+const inputs = {
+ reference: '/Users/aaronwright/.codex/worktrees/grid-release-reference/aaronwright-dot-ca',
+ candidate: root,
+}
+const servers=[]
+let browser
+let stopped=false
+for(const signal of ['SIGTERM','SIGINT']) process.on(signal,()=>{
+ stopped=true; for(const server of servers)server.kill('SIGTERM'); void browser?.close()
+})
+const report={mode:'bounded-diagnostic',configHash,createdAt:new Date().toISOString(),builds:{},samples:[],errors:[]}
+const delay=ms=>new Promise(resolve=>setTimeout(resolve,ms))
+async function serve(name,cwd){
+ const require=createRequire(`${cwd}/package.json`)
+ const server=spawn(process.execPath,[require.resolve('next/dist/bin/next'),'start','--hostname','127.0.0.1','--port','0'],{cwd,stdio:['ignore','pipe','pipe']})
+ servers.push(server)
+ let log='';let error
+ server.on('error',e=>error=e)
+ for(const stream of [server.stdout,server.stderr]) stream.on('data',data=>log+=data.toString())
+ const deadline=Date.now()+30000
+ while(Date.now()<deadline){
+  if(stopped||error||server.exitCode!==null||server.signalCode!==null)throw new Error(`Server failed: ${name}: ${error??log}`)
+  const url=stripVTControlCharacters(log).match(/Local:\s+(http:\/\/127\.0\.0\.1:\d+)(?=\s|$)/)?.[1]
+  if(url){try{if((await fetch(`${url}/work`,{signal:AbortSignal.timeout(1000)})).ok){
+    report.builds[name]={cwd,url,buildId:readFileSync(`${cwd}/.next/BUILD_ID`,'utf8').trim()}
+    console.log(`Owned ${name} server: ${url}`);return url
+  }}catch{}}
+  await delay(250)
+ }
+ throw new Error(`Server timeout: ${name}`)
+}
+try{
+ const urls={}
+ for(const [name,cwd] of Object.entries(inputs))urls[name]=await serve(name,cwd)
+ browser=await chromium.launch({headless:true})
+ report.environment=environment(browser.version())
+ for(const profile of config.profiles.filter(p=>['small-laptop-slow','phone-portrait-slow'].includes(p.id))){
+  for(let repetition=1;repetition<=3;repetition++){
+   for(const build of (repetition===2?['candidate','reference']:['reference','candidate'])){
+    if(stopped)throw new Error('Diagnostic interrupted')
+    const baseURL=urls[build]
+    const context=await browser.newContext({baseURL,viewport:{width:profile.width,height:profile.height},hasTouch:profile.touch,isMobile:profile.touch,deviceScaleFactor:profile.touch?2:1,colorScheme:'dark',reducedMotion:'no-preference',serviceWorkers:'block'})
+    const page=await context.newPage();page.setDefaultTimeout(30000);page.setDefaultNavigationTimeout(60000)
+    const errors=[]
+    page.on('pageerror',error=>errors.push(error.message))
+    page.on('console',message=>{if(message.type()==='error')errors.push(message.text())})
+    page.on('response',response=>{if(response.status()>=400&&response.url().startsWith(baseURL))errors.push(`${response.status()} ${response.url()}`)})
+    try{
+     const cdp=await context.newCDPSession(page)
+     await cdp.send('Network.enable')
+     await cdp.send('Network.setCacheDisabled',{cacheDisabled:true})
+     await cdp.send('Emulation.setCPUThrottlingRate',{rate:profile.cpu})
+     await cdp.send('Network.emulateNetworkConditions',{offline:false,latency:profile.latency,downloadThroughput:profile.downloadMbps*1_000_000/8,uploadThroughput:750_000/8})
+     await context.addInitScript(installMeasurements)
+     await runTasks({page,cdp,profile,measure:async(task,action,options={})=>{
+      if(!['cold-entry','appearance'].includes(task))return
+      await prepareTask(page,task)
+      if(!options.navigation)await page.evaluate(()=>window.__qa.begin())
+      await action()
+      const metrics=await page.evaluate(()=>window.__qa.finish())
+      report.samples.push({build,profile:profile.id,repetition,task,...metrics})
+      console.log(JSON.stringify(report.samples.at(-1)))
+     }})
+     if(errors.length)throw new Error(errors.join('\n'))
+    }finally{await context.close()}
+   }
+  }
+ }
+}catch(error){report.errors.push(error.stack??String(error));process.exitCode=1}
+finally{
+ await browser?.close().catch(()=>{})
+ for(const server of servers){if(server.exitCode===null&&server.signalCode===null){server.kill('SIGTERM');await Promise.race([once(server,'exit'),delay(3000)]);if(server.exitCode===null&&server.signalCode===null)server.kill('SIGKILL')}}
+ writeFileSync(`${root}/test-results/grid-performance-diagnostic/results.json`,JSON.stringify(report,null,2)+'\n')
+ console.log(`Diagnostic complete: ${report.samples.length} samples, ${report.errors.length} errors. Not release evidence.`)
+}

@@ -1,0 +1,429 @@
+.root {
+  --yarl__container_background_color: var(--portfolio-surface);
+  --mosaic-viewer-control-background: var(--portfolio-surface-translucent);
+  --mosaic-viewer-control-color: var(--portfolio-text);
+  --mosaic-viewer-control-edge: var(--portfolio-logo-size);
+  --portfolio-logo-size: calc(var(--logo-stroke-width) * 5);
+  --mosaic-viewer-left: max(
+    var(--mosaic-viewer-control-edge),
+    env(safe-area-inset-left)
+  );
+  --mosaic-viewer-right: max(
+    var(--mosaic-viewer-control-edge),
+    env(safe-area-inset-right)
+  );
+  --mosaic-viewer-top: max(
+    var(--mosaic-viewer-control-edge),
+    env(safe-area-inset-top)
+  );
+  --mosaic-viewer-bottom: max(
+    var(--mosaic-viewer-control-edge),
+    env(safe-area-inset-bottom)
+  );
+}
+
+.root :global(.yarl__toolbar) {
+  align-items: center;
+  padding: var(--mosaic-viewer-top) var(--mosaic-viewer-right) 0 0;
+}
+
+.root :global(.yarl__video_container) {
+  --mosaic-video-bottom-space: calc(
+    var(--mosaic-viewer-bottom) + var(--portfolio-logo-size) +
+      var(--logo-stroke-width)
+  );
+  /* Inset the media without changing the carousel's equal-width slides. */
+  flex-basis: calc(100% - var(--portfolio-logo-size) * 2);
+  min-width: 0;
+  max-height: calc(
+    100% - var(--portfolio-logo-size) - var(--mosaic-video-bottom-space)
+  );
+  margin-block: var(--portfolio-logo-size) var(--mosaic-video-bottom-space);
+}
+
+.button {
+  width: var(--portfolio-logo-size);
+  height: var(--portfolio-logo-size);
+  flex-shrink: 0;
+  padding: 0;
+  border: 0;
+  color: var(--mosaic-viewer-control-color);
+  background: var(--mosaic-viewer-control-background);
+  cursor: pointer;
+  transition: opacity var(--portfolio-motion-feedback, 150ms);
+}
+
+.button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.button:focus-visible {
+  outline: 2px solid var(--portfolio-text);
+  outline-offset: 3px;
+}
+.button svg {
+  width: 22px;
+  height: 22px;
+}
+.button :global([data-portfolio-icon]) {
+  --portfolio-icon-size: 22px;
+  width: 22px;
+  height: 22px;
+}
+.opening {
+  opacity: 0;
+}
+.root:not([data-mosaic-transition-state]) :global(.yarl__carousel),
+.root[data-mosaic-transition-state='opening'] :global(.yarl__carousel),
+.root[data-mosaic-transition-state='closing'] :global(.yarl__carousel) {
+  visibility: hidden;
+}
+.closing {
+  pointer-events: none;
+}
+
+.transition {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.transition img,
+.transition canvas {
+  position: absolute;
+  max-width: none;
+  transform-origin: 0 0;
+  object-fit: fill;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .button {
+    transition: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .button {
+    border: 1px solid ButtonText;
+  }
+  .button:focus-visible {
+    outline-color: Highlight;
+  }
+}
+
+.videoControls {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--portfolio-motion-viewer-chrome, 240ms);
+}
+.root[data-mosaic-transition-state='open'] .videoControls {
+  opacity: 1;
+}
+.videoPlayPause {
+  position: absolute;
+  top: var(--mosaic-viewer-top);
+  left: var(--mosaic-viewer-left);
+  pointer-events: auto;
+}
+.videoScrubber {
+  position: absolute;
+  left: var(--mosaic-viewer-left);
+  right: var(--mosaic-viewer-right);
+  bottom: var(--mosaic-viewer-bottom);
+  height: var(--portfolio-logo-size);
+  min-width: 0;
+  pointer-events: auto;
+}
+.root:has(.blurbLayer[data-video]) .videoScrubber {
+  left: calc(
+    var(--mosaic-viewer-left) + var(--portfolio-logo-size) +
+      var(--logo-stroke-width)
+  );
+}
+
+/* Shared screen rails align the blurb with the actual ends of the scrubber.
+   The upper rail leaves room for close, zoom, and play/pause controls. */
+.root:has(.blurb) :global(.yarl__container) {
+  touch-action: pan-y pinch-zoom;
+}
+.root:not(.aboutViewer):has(.blurb) :global(.yarl__carousel) {
+  /* Keep media gestures with the viewer, while its sibling blurb scrolls natively. */
+  touch-action: none;
+}
+.blurbLayer {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  grid-template: minmax(0, 1fr) / minmax(0, 1fr);
+  align-items: start;
+  justify-items: start;
+  padding: calc(var(--mosaic-viewer-top) + var(--portfolio-logo-size) * 2)
+    var(--mosaic-viewer-right)
+    calc(var(--mosaic-viewer-bottom) + var(--portfolio-logo-size) * 2)
+    var(--mosaic-viewer-left);
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+}
+.blurbLayer[data-visible] {
+  opacity: 1;
+  visibility: visible;
+}
+.blurbLayer[data-vertical='bottom'] {
+  align-items: end;
+}
+.blurbLayer[data-horizontal='center'] {
+  justify-items: center;
+}
+.blurbLayer[data-horizontal='right'] {
+  justify-items: end;
+}
+.blurb {
+  --portfolio-text: var(--portfolio-neutral-50);
+  --portfolio-text-body: var(--portfolio-neutral-50);
+  --portfolio-accent: var(--portfolio-accent-decoration);
+  position: relative;
+  z-index: 1;
+  grid-area: 1 / 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 48ch;
+  min-height: 0;
+  max-height: 100%;
+  padding: var(--portfolio-logo-size);
+  border: var(--logo-stroke-width) solid var(--portfolio-accent-decoration);
+  background: var(--portfolio-surface-dark);
+  color: var(--portfolio-neutral-50);
+  font-size: 16px;
+  line-height: 1.5;
+  text-align: left;
+  text-wrap: pretty;
+  overflow-wrap: anywhere;
+  user-select: text;
+  touch-action: pan-y pinch-zoom;
+  pointer-events: auto;
+}
+.blurbContent {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.blurbContent:focus-visible {
+  outline: 2px solid var(--portfolio-neutral-50);
+  outline-offset: -3px;
+}
+.blurbAnchor,
+.blurbToggle {
+  /* One fixed viewport anchor for the control and both animation endpoints. */
+  position: absolute;
+  left: var(--mosaic-viewer-left);
+  bottom: var(--mosaic-viewer-bottom);
+  width: var(--portfolio-logo-size);
+  height: var(--portfolio-logo-size);
+  visibility: hidden;
+  pointer-events: none;
+}
+.blurbAnchor {
+  grid-area: auto;
+}
+.blurbMinimize,
+.blurbToggle {
+  color: var(--portfolio-neutral-50);
+  background: var(--portfolio-accent-decoration);
+}
+.blurbMinimize {
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+.blurbToggle {
+  z-index: 3;
+}
+.blurbLayer[data-controls-ready] .blurbToggle {
+  visibility: visible;
+  pointer-events: auto;
+}
+.blurbLayer[data-collapsed] .blurb {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.blurbLayer[data-animating] .blurb {
+  visibility: visible;
+  pointer-events: none;
+}
+.blurbInk {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* About reuses the viewer's modal/close lifecycle, with one content scroller. */
+.aboutViewer :global(.yarl__container) {
+  touch-action: pan-y pinch-zoom;
+}
+
+.aboutViewport {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  user-select: text;
+  touch-action: pan-y pinch-zoom;
+}
+
+.aboutPage {
+  --about-gutter: var(--portfolio-logo-size);
+  display: grid;
+  align-content: start;
+  min-height: 100%;
+  color: var(--portfolio-text);
+  padding: max(var(--about-gutter), env(safe-area-inset-top))
+    max(var(--about-gutter), env(safe-area-inset-right))
+    max(var(--about-gutter), env(safe-area-inset-bottom))
+    max(var(--about-gutter), env(safe-area-inset-left));
+}
+
+.aboutColumns {
+  display: grid;
+  width: 100%;
+  max-width: 85.5rem;
+  margin-inline: auto;
+  grid-template-columns: minmax(0, 8fr) minmax(0, 15fr);
+  align-items: start;
+  gap: var(--about-gutter);
+}
+
+.aboutCopy {
+  min-width: 0;
+  opacity: 0;
+}
+
+.aboutBiography {
+  font-size: clamp(18px, 1.25vw, 24px);
+  line-height: 1.5;
+  font-weight: 300;
+}
+
+.aboutMasthead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--about-gutter);
+  margin-bottom: clamp(48px, 3.9vw, 75px);
+  font-size: clamp(16px, 0.9375vw, 18px);
+  line-height: 1.5;
+  color: var(--portfolio-text-body);
+}
+
+.aboutIdentity {
+  display: flex;
+  align-items: center;
+  gap: var(--about-gutter);
+}
+
+.aboutLogo {
+  color: var(--portfolio-accent-decoration);
+}
+
+.aboutRole {
+  color: var(--portfolio-text-dimmed);
+}
+
+.aboutHeadline {
+  container: about-headline / inline-size;
+  margin: 0 0 clamp(48px, 3.9vw, 75px);
+  font-size: clamp(32px, 2.917vw, 56px);
+  line-height: 1.2;
+  font-weight: 300;
+  letter-spacing: -0.015em;
+  text-transform: none;
+}
+
+/* Leave room for both phrases at the headline's current font size. */
+@container about-headline (min-width: 15em) {
+  .aboutHeadline > span {
+    display: block;
+  }
+}
+
+.aboutHeadlineAccent {
+  color: var(--portfolio-accent-decoration);
+}
+
+/* This editorial treatment inherits the shared Markdown semantics and colours. */
+.aboutBiography :global(.portfolio-markdown) {
+  font-weight: inherit;
+}
+
+.aboutBiography :global(.portfolio-markdown p) {
+  margin-bottom: 0.9em;
+}
+
+.aboutBiography :global(.portfolio-markdown p:last-child) {
+  margin-bottom: 0;
+}
+
+.aboutBiography :global(.portfolio-markdown strong) {
+  font-weight: 600;
+}
+
+@media (max-width: 64rem) {
+  .aboutColumns {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  }
+  .aboutMasthead {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 42rem) {
+  .root {
+    --mosaic-viewer-control-edge: var(--logo-stroke-width);
+  }
+
+  .blurbLayer {
+    padding-bottom: calc(
+      var(--mosaic-viewer-bottom) + var(--portfolio-logo-size) +
+        var(--logo-stroke-width)
+    );
+  }
+
+  .aboutColumns {
+    max-width: none;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .aboutMasthead {
+    margin-bottom: 32px;
+  }
+
+  .aboutRole > span {
+    display: block;
+  }
+
+  .aboutHeadline {
+    margin-bottom: 32px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aboutCopy,
+  .blurbLayer,
+  .videoControls {
+    transition: none;
+  }
+}

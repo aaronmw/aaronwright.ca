@@ -3,3 +3,7 @@ packages:
 
 minimumReleaseAge: 1440
 trustPolicy: no-downgrade
+
+overrides:
+  postcss: '$postcss'
+  sharp: 0.35.3

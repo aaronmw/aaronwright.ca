@@ -1,0 +1,555 @@
+{
+  "mode": "traced-startup-diagnostic",
+  "createdAt": "2026-10-29T02:09:08.555Z",
+  "environment": {
+    "platform": "darwin",
+    "osRelease": "27.0.0",
+    "arch": "arm64",
+    "cpu": "Apple M1 Pro",
+    "cores": 10,
+    "browserVersion": "156.0.8078.4",
+    "node": "v22.23.2"
+  },
+  "configHash": "0e568e89ded990e796ef9876a3e6a70f60b31a889b2d533c99665a39b08d0f8b",
+  "samples": [
+    {
+      "build": "reference",
+      "profile": "small-laptop-slow",
+      "repetition": 1,
+      "task": "cold-entry",
+      "durationMs": 5518.200000047684,
+      "maxLongTaskMs": 362,
+      "maxLongFrameMs": 2378.600000143051,
+      "frameGapP95Ms": 100.09999999999991,
+      "framesSampled": 84,
+      "frameGapsOver50Ms": 8
+    },
+    {
+      "build": "candidate",
+      "profile": "small-laptop-slow",
+      "repetition": 1,
+      "task": "cold-entry",
+      "durationMs": 5403.800000190735,
+      "maxLongTaskMs": 353,
+      "maxLongFrameMs": 2506.0999999046326,
+      "frameGapP95Ms": 83.30000000000018,
+      "framesSampled": 95,
+      "frameGapsOver50Ms": 8
+    }
+  ],
+  "errors": [],
+  "builds": {
+    "reference": {
+      "buildId": "ObIU83xymxx_ypYlvg1sW",
+      "longFrames": [
+        {
+          "name": "long-animation-frame",
+          "entryType": "long-animation-frame",
+          "startTime": 275.7000000476837,
+          "duration": 2378.600000143051,
+          "navigationId": 9919,
+          "paintTime": 2654.300000190735,
+          "presentationTime": 2660,
+          "renderStart": 2604.2000000476837,
+          "styleAndLayoutStart": 2605.300000190735,
+          "firstUIEventTimestamp": 0,
+          "blockingDuration": 23,
+          "scripts": [
+            {
+              "name": "script",
+              "entryType": "script",
+              "startTime": 896.6000001430511,
+              "duration": 9.599999904632568,
+              "navigationId": 9919,
+              "invoker": "http://127.0.0.1:62857/_next/static/chunks/0yxsr-1nszn8a.js",
+              "invokerType": "classic-script",
+              "windowAttribution": "self",
+              "executionStart": 898.4000000953674,
+              "forcedStyleAndLayoutDuration": 0,
+              "pauseDuration": 0,
+              "sourceURL": "http://127.0.0.1:62857/_next/static/chunks/0yxsr-1nszn8a.js",
+              "sourceFunctionName": "",
+              "sourceCharPosition": 0
+            },
+            {
+              "name": "script",
+              "entryType": "script",
+              "startTime": 1001.6000001430511,
+              "duration": 22.899999856948853,
+              "navigationId": 9919,
+              "invoker": "http://127.0.0.1:62857/_next/static/chunks/turbopack-1sp6dkokukxu3.js",
+              "invokerType": "classic-script",
+              "windowAttribution": "self",
+              "executionStart": 1002.4000000953674,
+              "forcedStyleAndLayoutDuration": 0,
+              "pauseDuration": 0,
+              "sourceURL": "http://127.0.0.1:62857/_next/static/chunks/turbopack-1sp6dkokukxu3.js",
+              "sourceFunctionName": "",
+              "sourceCharPosition": 0
+            },
+            {
+              "name": "script",
+              "entryType": "script",
+              "startTime": 2597.4000000953674,
+              "duration": 6.700000047683716,
+              "navigationId": 9919,
+              "invoker": "http://127.0.0.1:62857/work",
+              "invokerType": "classic-script",
+              "windowAttribution": "self",
+              "executionStart": 2598.100000143051,
+              "forcedStyleAndLayoutDuration": 0,
+              "pauseDuration": 0,
+              "sourceURL": "http://127.0.0.1:62857/work",
+              "sourceFunctionName": "",
+              "sourceCharPosition": 0
+            }
+          ]
+        },
+        {
+          "name": "long-animation-frame",
+          "entryType": "long-animation-frame",
+          "startTime": 2681.5,
+          "duration": 101.5,
+          "navigationId": 9919,
+          "paintTime": 2783,
+          "presentationTime": 2784,
+          "renderStart": 2782.4000000953674,
+          "styleAndLayoutStart": 2782.600000143051,
+          "firstUIEventTimestamp": 0,
+          "blockingDuration": 27,
+          "scripts": [
+            {
+              "name": "script",
+              "entryType": "script",
+              "startTime": 2684.600000143051,
+              "duration": 76.29999995231628,
+              "navigationId": 9919,
+              "invoker": "http://127.0.0.1:62857/_next/static/chunks/1nj6bpqcj_fa2.js",
+              "invokerType": "classic-script",
+              "windowAttribution": "self",
+              "executionStart": 2685,
+              "forcedStyleAndLayoutDuration": 0,
+              "pauseDuration": 0,
+              "sourceURL": "http://127.0.0.1:62857/_next/static/chunks/1nj6bpqcj_fa2.js",
+              "sourceFunctionName": "",
+              "sourceCharPosition": 0
+            }
+          ]
+        },
+        {
+          "name": "long-animation-frame",
+          "entryType": "long-animation-frame",
+          "startTime": 2978.9000000953674,
+          "duration": 357.2000000476837,
+          "navigationId": 9919,
+          "paintTime": 3336.100000143051,
+          "presentationTime": 3352,
+          "renderStart": 3323.100000143051,
+          "styleAndLayoutStart": 3324,
+          "firstUIEventTimestamp": 0,
+          "blockingDuration": 0,
+          "scripts": []
+        },
+        {
+          "name": "long-animation-frame",
+          "entryType": "long-animation-frame",
+          "startTime": 3354.9000000953674,
+          "duration": 106.5,
+          "navigationId": 9919,
+          "paintTime": 3461.4000000953674,
+          "presentationTime": 3468,
+          "renderStart": 3397,
+          "styleAndLayoutStart": 3400.5,
+          "firstUIEventTimestamp": 0,
+          "blockingDuration": 20.8,
+          "scripts": [
+            {
+              "name": "script",
+              "entryType": "script",
+              "startTime": 3386.100000143051,
+              "duration": 6.200000047683716,
+              "navigationId": 9919,
+              "invoker": "MessagePort.onmessage",
+              "invokerType": "event-listener",
+              "windowAttribution": "self",
+              "executionStart": 3386.100000143051,
+              "forcedStyleAndLayoutDuration": 0,
+              "pauseDuration": 0,
+              "sourceURL": "http://127.0.0.1:62857/_next/static/chunks/345og5_mioy7_.js",
+              "sourceFunctionName": "O",
+              "sourceCharPosition": 3116
+            }
+          ]
+        },
+        {
+          "name": "long-animation-frame",
+          "entryType": "long-animation-frame",
+          "startTime": 3464.600000143051,
+          "duration": 158.29999995231628,
+          "navigationId": 9919,
+          "paintTime": 3622.9000000953674,
+          "presentationTime": 3628,
+          "renderStart": 3559.7000000476837,
+          "styleAndLayoutStart": 3560.4000000953674,
+          "firstUIEventTimestamp": 0,
+          "blockingDuration": 15.5,
+          "scripts": []
+        },
+        {
+          "name": "long-animation-frame",
+          "entryType": "long-animation-frame",
+          "startTime": 3625.5,
+          "duration": 187.30000019073486,
+          "navigationId": 9919,
+          "paintTime": 3812.800000190735,
+          "presentationTime": 3816,
+          "renderStart": 3811.800000190735,
+          "styleAndLayoutStart": 3812.300000190735,
+          "firstUIEventTimestamp": 0,
+          "blockingDuration": 136.4,
+          "scripts": [
+            {
+              "name": "script",
+              "entryType": "script",
+              "startTime": 3626.100000143051,
+              "duration": 185.20000004768372,
+              "navigationId": 9919,
+              "invoker": "http://127.0.0.1:62857/_next/static/chunks/0824wwkefce3o.js",
+              "invokerType": "classic-script",
+              "windowAttribution": "self",
+              "executionStart": 3628.4000000953674,
+              "forcedStyleAndLayoutDuration": 0,
+              "pauseDuration": 0,
+              "sourceURL": "http://127.0.0.1:62857/_next/static/chunks/0824wwkefce3o.js",
+              "sourceFunctionName": "",
+              "sourceCharPosition": 0
+            }
+          ]
+        },
+        {
+          "name": "long-animation-frame",
+          "entryType": "long-animation-frame",
+          "startTime": 4270.600000143051,
+          "duration": 419.7999999523163,
+          "navigationId": 9919,
+          "paintTime": 4690.400000095367,
+          "presentationTime": 4708,
+          "renderStart": 4633.700000047684,
+          "styleAndLayoutStart": 4641.100000143051,
+          "firstUIEventTimestamp": 0,
+          "blockingDuration": 369.6,
+          "scripts": [
+            {
+              "name": "script",
+              "entryType": "script",
+              "startTime": 4270.600000143051,
+              "duration": 362.89999985694885,
+              "navigationId": 9919,
+              "invoker": "MessagePort.onmessage",
+              "invokerType": "event-listener",
+              "windowAttribution": "self",
+              "executionStart": 4270.600000143051,
+              "forcedStyleAndLayoutDuration": 162.2,
+              "pauseDuration": 0,
+              "sourceURL": "http://127.0.0.1:62857/_next/static/chunks/345og5_mioy7_.js",
+              "sourceFunctionName": "O",
+              "sourceCharPosition": 3116
+            }
+          ]
+        },
+        {
+          "name": "long-animation-frame",
+          "entryType": "long-animation-frame",
+          "startTime": 4706.400000095367,
+          "duration": 52,
+          "navigationId": 9919,
+          "paintTime": 4758.400000095367,
+          "presentationTime": 4768,
+          "renderStart": 4749.600000143051,
+          "styleAndLayoutStart": 4753,
+          "firstUIEventTimestamp": 0,
+          "blockingDuration": 0,
+          "scripts": []
+        }
+      ],
+      "externalStyles": [
+        {
+          "url": "https://ka-p.fontawesome.com/assets/44d855bf5c/122652816/custom-icons.css?token=44d855bf5c",
+          "startTime": 557.8000001907349,
+          "duration": 352
+        },
+        {
+          "url": "https://ka-p.fontawesome.com/releases/v7.3.1/css/pro-v5-font-face.min.css?token=44d855bf5c",
+          "startTime": 557.8000001907349,
+          "duration": 487.39999985694885
+        },
+        {
+          "url": "https://ka-p.fontawesome.com/releases/v7.3.1/css/pro-plus.min.css?token=44d855bf5c",
+          "startTime": 557.8000001907349,
+          "duration": 2016.2999999523163
+        }
+      ]
+    },
+    "candidate": {
+      "buildId": "kX5n2NvKT8jYn3HmTyqpM",
+      "longFrames": [
+        {
+          "name": "long-animation-frame",
+          "entryType": "long-animation-frame",
+          "startTime": 186.80000019073486,
+          "duration": 2506.0999999046326,
+          "navigationId": 4605,
+          "paintTime": 2692.9000000953674,
+          "presentationTime": 2696,
+          "renderStart": 2660.4000000953674,
+          "styleAndLayoutStart": 2660.5,
+          "firstUIEventTimestamp": 0,
+          "blockingDuration": 3.9,
+          "scripts": []
+        },
+        {
+          "name": "long-animation-frame",
+          "entryType": "long-animation-frame",
+          "startTime": 2733.600000143051,
+          "duration": 89.09999990463257,
+          "navigationId": 4605,
+          "paintTime": 2822.7000000476837,
+          "presentationTime": 2824,
+          "renderStart": 2822,
+          "styleAndLayoutStart": 2822.5,
+          "firstUIEventTimestamp": 0,
+          "blockingDuration": 13.9,
+          "scripts": [
+            {
+              "name": "script",
+              "entryType": "script",
+              "startTime": 2733.600000143051,
+              "duration": 63.200000047683716,
+              "navigationId": 4605,
+              "invoker": "http://127.0.0.1:62863/_next/static/chunks/1zg7s98b15f8-.js",
+              "invokerType": "classic-script",
+              "windowAttribution": "self",
+              "executionStart": 2733.7000000476837,
+              "forcedStyleAndLayoutDuration": 0,
+              "pauseDuration": 0,
+              "sourceURL": "http://127.0.0.1:62863/_next/static/chunks/1zg7s98b15f8-.js",
+              "sourceFunctionName": "",
+              "sourceCharPosition": 0
+            },
+            {
+              "name": "script",
+              "entryType": "script",
+              "startTime": 2799.2000000476837,
+              "duration": 22.700000047683716,
+              "navigationId": 4605,
+              "invoker": "http://127.0.0.1:62863/work",
+              "invokerType": "classic-script",
+              "windowAttribution": "self",
+              "executionStart": 2799.2000000476837,
+              "forcedStyleAndLayoutDuration": 0,
+              "pauseDuration": 0,
+              "sourceURL": "http://127.0.0.1:62863/work",
+              "sourceFunctionName": "",
+              "sourceCharPosition": 0
+            }
+          ]
+        },
+        {
+          "name": "long-animation-frame",
+          "entryType": "long-animation-frame",
+          "startTime": 3001.2000000476837,
+          "duration": 182.90000009536743,
+          "navigationId": 4605,
+          "paintTime": 3184.100000143051,
+          "presentationTime": 3192,
+          "renderStart": 3018.2000000476837,
+          "styleAndLayoutStart": 3018.800000190735,
+          "firstUIEventTimestamp": 0,
+          "blockingDuration": 118,
+          "scripts": []
+        },
+        {
+          "name": "long-animation-frame",
+          "entryType": "long-animation-frame",
+          "startTime": 3189.600000143051,
+          "duration": 57.700000047683716,
+          "navigationId": 4605,
+          "paintTime": 3247.300000190735,
+          "presentationTime": 3248,
+          "renderStart": 3246.7000000476837,
+          "styleAndLayoutStart": 3247.300000190735,
+          "firstUIEventTimestamp": 0,
+          "blockingDuration": 0,
+          "scripts": []
+        },
+        {
+          "name": "long-animation-frame",
+          "entryType": "long-animation-frame",
+          "startTime": 3334.800000190735,
+          "duration": 160.69999980926514,
+          "navigationId": 4605,
+          "paintTime": 3495.5,
+          "presentationTime": 3500,
+          "renderStart": 3436.5,
+          "styleAndLayoutStart": 3437.300000190735,
+          "firstUIEventTimestamp": 0,
+          "blockingDuration": 10.5,
+          "scripts": []
+        },
+        {
+          "name": "long-animation-frame",
+          "entryType": "long-animation-frame",
+          "startTime": 3497.9000000953674,
+          "duration": 67.59999990463257,
+          "navigationId": 4605,
+          "paintTime": 3565.5,
+          "presentationTime": 3572,
+          "renderStart": 3502.9000000953674,
+          "styleAndLayoutStart": 3503.7000000476837,
+          "firstUIEventTimestamp": 0,
+          "blockingDuration": 14.2,
+          "scripts": []
+        },
+        {
+          "name": "long-animation-frame",
+          "entryType": "long-animation-frame",
+          "startTime": 3569.5,
+          "duration": 154.90000009536743,
+          "navigationId": 4605,
+          "paintTime": 3724.4000000953674,
+          "presentationTime": 3728,
+          "renderStart": 3723.5,
+          "styleAndLayoutStart": 3723.5,
+          "firstUIEventTimestamp": 0,
+          "blockingDuration": 104,
+          "scripts": [
+            {
+              "name": "script",
+              "entryType": "script",
+              "startTime": 3569.5,
+              "duration": 153.10000014305115,
+              "navigationId": 4605,
+              "invoker": "http://127.0.0.1:62863/_next/static/chunks/1bm4zr9ohqxuz.js",
+              "invokerType": "classic-script",
+              "windowAttribution": "self",
+              "executionStart": 3571.4000000953674,
+              "forcedStyleAndLayoutDuration": 0,
+              "pauseDuration": 0,
+              "sourceURL": "http://127.0.0.1:62863/_next/static/chunks/1bm4zr9ohqxuz.js",
+              "sourceFunctionName": "",
+              "sourceCharPosition": 0
+            }
+          ]
+        },
+        {
+          "name": "long-animation-frame",
+          "entryType": "long-animation-frame",
+          "startTime": 4153.900000095367,
+          "duration": 424.40000009536743,
+          "navigationId": 4605,
+          "paintTime": 4578.300000190735,
+          "presentationTime": 4596,
+          "renderStart": 4517.800000190735,
+          "styleAndLayoutStart": 4524,
+          "firstUIEventTimestamp": 0,
+          "blockingDuration": 363.5,
+          "scripts": [
+            {
+              "name": "script",
+              "entryType": "script",
+              "startTime": 4153.900000095367,
+              "duration": 5,
+              "navigationId": 4605,
+              "invoker": "MessagePort.onmessage",
+              "invokerType": "event-listener",
+              "windowAttribution": "self",
+              "executionStart": 4153.900000095367,
+              "forcedStyleAndLayoutDuration": 0,
+              "pauseDuration": 0,
+              "sourceURL": "http://127.0.0.1:62863/_next/static/chunks/1zg7s98b15f8-.js",
+              "sourceFunctionName": "z",
+              "sourceCharPosition": 224978
+            },
+            {
+              "name": "script",
+              "entryType": "script",
+              "startTime": 4158.900000095367,
+              "duration": 5.700000047683716,
+              "navigationId": 4605,
+              "invoker": "MessagePort.onmessage",
+              "invokerType": "event-listener",
+              "windowAttribution": "self",
+              "executionStart": 4158.900000095367,
+              "forcedStyleAndLayoutDuration": 0,
+              "pauseDuration": 0,
+              "sourceURL": "http://127.0.0.1:62863/_next/static/chunks/1zg7s98b15f8-.js",
+              "sourceFunctionName": "z",
+              "sourceCharPosition": 224978
+            },
+            {
+              "name": "script",
+              "entryType": "script",
+              "startTime": 4164.600000143051,
+              "duration": 352.39999985694885,
+              "navigationId": 4605,
+              "invoker": "MessagePort.onmessage",
+              "invokerType": "event-listener",
+              "windowAttribution": "self",
+              "executionStart": 4164.600000143051,
+              "forcedStyleAndLayoutDuration": 151.7,
+              "pauseDuration": 0,
+              "sourceURL": "http://127.0.0.1:62863/_next/static/chunks/1zg7s98b15f8-.js",
+              "sourceFunctionName": "z",
+              "sourceCharPosition": 224978
+            }
+          ]
+        },
+        {
+          "name": "long-animation-frame",
+          "entryType": "long-animation-frame",
+          "startTime": 4592.400000095367,
+          "duration": 61.09999990463257,
+          "navigationId": 4605,
+          "paintTime": 4653.5,
+          "presentationTime": 4660,
+          "renderStart": 4644.600000143051,
+          "styleAndLayoutStart": 4648.400000095367,
+          "firstUIEventTimestamp": 0,
+          "blockingDuration": 0,
+          "scripts": []
+        },
+        {
+          "name": "long-animation-frame",
+          "entryType": "long-animation-frame",
+          "startTime": 4722.800000190735,
+          "duration": 50.89999985694885,
+          "navigationId": 4605,
+          "paintTime": 4773.700000047684,
+          "presentationTime": 4784,
+          "renderStart": 4743,
+          "styleAndLayoutStart": 4745.400000095367,
+          "firstUIEventTimestamp": 0,
+          "blockingDuration": 0,
+          "scripts": []
+        }
+      ],
+      "externalStyles": [
+        {
+          "url": "https://ka-p.fontawesome.com/releases/v7.3.1/css/pro-plus.min.css?token=44d855bf5c",
+          "startTime": 436.60000014305115,
+          "duration": 2197.7000000476837
+        },
+        {
+          "url": "https://ka-p.fontawesome.com/releases/v7.3.1/css/pro-v5-font-face.min.css?token=44d855bf5c",
+          "startTime": 436.7000000476837,
+          "duration": 396.2999999523163
+        },
+        {
+          "url": "https://ka-p.fontawesome.com/assets/44d855bf5c/122652816/custom-icons.css?token=44d855bf5c",
+          "startTime": 437.40000009536743,
+          "duration": 268.5
+        }
+      ]
+    }
+  }
+}

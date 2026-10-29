@@ -1,0 +1,2347 @@
+{
+  "mode": "frame-window-diagnostic",
+  "configHash": "0e568e89ded990e796ef9876a3e6a70f60b31a889b2d533c99665a39b08d0f8b",
+  "createdAt": "2026-10-29T17:33:52.567Z",
+  "builds": {
+    "reference": {
+      "cwd": "/Users/aaronwright/.codex/worktrees/grid-release-reference/aaronwright-dot-ca",
+      "url": "http://127.0.0.1:49286",
+      "buildId": "1U4dWcr4D-ubFbsYEr1Xa"
+    },
+    "candidate": {
+      "cwd": "/Users/aaronwright/Projects/aaronwright-dot-ca",
+      "url": "http://127.0.0.1:49292",
+      "buildId": "7Vh-KjCQgu3PvYHzLmEMo"
+    }
+  },
+  "samples": [
+    {
+      "build": "reference",
+      "profile": "small-laptop-slow",
+      "repetition": 1,
+      "task": "cold-entry",
+      "durationMs": 4982.800000190735,
+      "maxLongTaskMs": 223,
+      "maxLongFrameMs": 2358.7999999523163,
+      "frameGapP95Ms": 83.29999999999973,
+      "framesSampled": 90,
+      "frameGapsOver50Ms": 5,
+      "attribution": {
+        "navigation": [
+          {
+            "startTime": 0,
+            "responseEnd": 294.10000014305115,
+            "domContentLoadedEventEnd": 2767.7000000476837,
+            "loadEventEnd": 3698.5
+          }
+        ],
+        "resources": [
+          {
+            "name": "http://127.0.0.1:49286/_next/static/media/60ec66547305f91a-s.p.00w9pdq4k75rv.woff2",
+            "startTime": 204,
+            "responseEnd": 654.2000000476837,
+            "duration": 450.2000000476837,
+            "transferSize": 11864
+          },
+          {
+            "name": "http://127.0.0.1:49286/_next/static/media/99e609270109b47d-s.p.40sczeszzbjw1.woff2",
+            "startTime": 205.20000004768372,
+            "responseEnd": 624.7000000476837,
+            "duration": 419.5,
+            "transferSize": 10352
+          },
+          {
+            "name": "http://127.0.0.1:49286/_next/static/media/a46a75cfd765634f-s.p.0i_4norqw3xaj.woff2",
+            "startTime": 205.30000019073486,
+            "responseEnd": 661.2000000476837,
+            "duration": 455.89999985694885,
+            "transferSize": 11868
+          },
+          {
+            "name": "http://127.0.0.1:49286/_next/static/media/a7e15459c1805da0-s.p.3y9b8znjr2455.woff2",
+            "startTime": 206.20000004768372,
+            "responseEnd": 639.3000001907349,
+            "duration": 433.10000014305115,
+            "transferSize": 10428
+          },
+          {
+            "name": "http://127.0.0.1:49286/_next/static/chunks/2d1t0yk-040hb.css",
+            "startTime": 206.80000019073486,
+            "responseEnd": 579,
+            "duration": 372.19999980926514,
+            "transferSize": 4187
+          },
+          {
+            "name": "http://127.0.0.1:49286/_next/static/chunks/0qrsql1n38a68.css",
+            "startTime": 206.80000019073486,
+            "responseEnd": 715.6000001430511,
+            "duration": 508.7999999523163,
+            "transferSize": 20502
+          },
+          {
+            "name": "http://127.0.0.1:49286/_next/static/chunks/1nj6bpqcj_fa2.js",
+            "startTime": 207.5,
+            "responseEnd": 745,
+            "duration": 537.5,
+            "transferSize": 2317
+          },
+          {
+            "name": "http://127.0.0.1:49286/_next/static/chunks/0yxsr-1nszn8a.js",
+            "startTime": 207.5,
+            "responseEnd": 1038.2000000476837,
+            "duration": 830.7000000476837,
+            "transferSize": 9435
+          },
+          {
+            "name": "http://127.0.0.1:49286/_next/static/chunks/345og5_mioy7_.js",
+            "startTime": 207.5,
+            "responseEnd": 2514.600000143051,
+            "duration": 2307.100000143051,
+            "transferSize": 71881
+          },
+          {
+            "name": "http://127.0.0.1:49286/_next/static/chunks/turbopack-1sp6dkokukxu3.js",
+            "startTime": 207.90000009536743,
+            "responseEnd": 1023.6000001430511,
+            "duration": 815.7000000476837,
+            "transferSize": 4587
+          },
+          {
+            "name": "http://127.0.0.1:49286/_next/static/chunks/07d7q-2qm1qpn.js",
+            "startTime": 207.90000009536743,
+            "responseEnd": 1098.1000001430511,
+            "duration": 890.2000000476837,
+            "transferSize": 6117
+          },
+          {
+            "name": "http://127.0.0.1:49286/_next/static/chunks/356th34vvq6wo.js",
+            "startTime": 207.90000009536743,
+            "responseEnd": 1982.9000000953674,
+            "duration": 1775,
+            "transferSize": 44059
+          },
+          {
+            "name": "http://127.0.0.1:49286/_next/static/chunks/2ur9viobhqe80.js",
+            "startTime": 208,
+            "responseEnd": 954.4000000953674,
+            "duration": 746.4000000953674,
+            "transferSize": 1283
+          },
+          {
+            "name": "http://127.0.0.1:49286/_next/static/chunks/1y26empwqw1ru.js",
+            "startTime": 208,
+            "responseEnd": 1376.9000000953674,
+            "duration": 1168.9000000953674,
+            "transferSize": 10041
+          },
+          {
+            "name": "http://127.0.0.1:49286/_next/static/chunks/1qxtp47pwrdx_.js",
+            "startTime": 208.10000014305115,
+            "responseEnd": 3053.800000190735,
+            "duration": 2845.7000000476837,
+            "transferSize": 108436
+          },
+          {
+            "name": "http://127.0.0.1:49286/_next/static/chunks/0824wwkefce3o.js",
+            "startTime": 208.10000014305115,
+            "responseEnd": 3482.9000000953674,
+            "duration": 3274.7999999523163,
+            "transferSize": 160649
+          },
+          {
+            "name": "https://kit.fontawesome.com/44d855bf5c.css",
+            "startTime": 209,
+            "responseEnd": 530.3000001907349,
+            "duration": 321.30000019073486,
+            "transferSize": 0
+          },
+          {
+            "name": "https://ka-p.fontawesome.com/assets/44d855bf5c/122652816/custom-icons.css?token=44d855bf5c",
+            "startTime": 538.5,
+            "responseEnd": 864.8000001907349,
+            "duration": 326.30000019073486,
+            "transferSize": 0
+          },
+          {
+            "name": "https://ka-p.fontawesome.com/releases/v7.3.1/css/pro-v5-font-face.min.css?token=44d855bf5c",
+            "startTime": 538.5,
+            "responseEnd": 1002.1000001430511,
+            "duration": 463.60000014305115,
+            "transferSize": 0
+          },
+          {
+            "name": "https://ka-p.fontawesome.com/releases/v7.3.1/css/pro-plus.min.css?token=44d855bf5c",
+            "startTime": 538.5,
+            "responseEnd": 2539.100000143051,
+            "duration": 2000.6000001430511,
+            "transferSize": 0
+          }
+        ],
+        "longFrames": [
+          {
+            "startTime": 240.60000014305115,
+            "duration": 2358.7999999523163,
+            "renderStart": 2560.9000000953674,
+            "styleAndLayoutStart": 2561.100000143051,
+            "blockingDuration": 6.7
+          },
+          {
+            "startTime": 2636.100000143051,
+            "duration": 87,
+            "renderStart": 2723.100000143051,
+            "styleAndLayoutStart": 2723.100000143051,
+            "blockingDuration": 25.9
+          },
+          {
+            "startTime": 2932.300000190735,
+            "duration": 300.2999999523163,
+            "renderStart": 3222.600000143051,
+            "styleAndLayoutStart": 3223.2000000476837,
+            "blockingDuration": 0
+          },
+          {
+            "startTime": 3287.100000143051,
+            "duration": 60.09999990463257,
+            "renderStart": 3298.9000000953674,
+            "styleAndLayoutStart": 3298.9000000953674,
+            "blockingDuration": 0
+          },
+          {
+            "startTime": 3348.600000143051,
+            "duration": 68.5,
+            "renderStart": 3413.300000190735,
+            "styleAndLayoutStart": 3413.5,
+            "blockingDuration": 0
+          },
+          {
+            "startTime": 3466.800000190735,
+            "duration": 55.09999990463257,
+            "renderStart": 3518.5,
+            "styleAndLayoutStart": 3518.800000190735,
+            "blockingDuration": 0
+          },
+          {
+            "startTime": 3549.4000000953674,
+            "duration": 142.5,
+            "renderStart": 3691.2000000476837,
+            "styleAndLayoutStart": 3691.4000000953674,
+            "blockingDuration": 92.5
+          },
+          {
+            "startTime": 3918.2000000476837,
+            "duration": 264.7000000476837,
+            "renderStart": 4147.300000190735,
+            "styleAndLayoutStart": 4151.300000190735,
+            "blockingDuration": 209.4
+          }
+        ],
+        "paints": [
+          {
+            "name": "first-paint",
+            "entryType": "paint",
+            "startTime": 2604,
+            "duration": 0,
+            "navigationId": 5117,
+            "paintTime": 2599.4000000953674,
+            "presentationTime": 2604
+          },
+          {
+            "name": "first-contentful-paint",
+            "entryType": "paint",
+            "startTime": 4304,
+            "duration": 0,
+            "navigationId": 5117,
+            "paintTime": 4288,
+            "presentationTime": 4304
+          }
+        ],
+        "diagnostic": {
+          "marks": [
+            {
+              "name": "dom-content-loaded",
+              "time": 2766.2000000476837
+            },
+            {
+              "name": "fonts-ready",
+              "time": 2767.7000000476837
+            },
+            {
+              "name": "phase",
+              "value": "ready",
+              "time": 4250.400000095367
+            }
+          ],
+          "framesRecorded": 91,
+          "firstFrame": {
+            "time": 2546.6,
+            "gap": null
+          },
+          "lastFrame": {
+            "time": 4979.8,
+            "gap": 16.699999999999818
+          },
+          "gapsOver49Ms": [
+            {
+              "time": 2596.6,
+              "gap": 50
+            },
+            {
+              "time": 2713.2,
+              "gap": 83.29999999999973
+            },
+            {
+              "time": 3229.9,
+              "gap": 283.4000000000001
+            },
+            {
+              "time": 3346.5,
+              "gap": 50
+            },
+            {
+              "time": 3429.9,
+              "gap": 83.40000000000009
+            },
+            {
+              "time": 3679.9,
+              "gap": 133.4000000000001
+            },
+            {
+              "time": 4179.8,
+              "gap": 249.9000000000001
+            },
+            {
+              "time": 4229.8,
+              "gap": 50
+            }
+          ]
+        }
+      }
+    },
+    {
+      "build": "candidate",
+      "profile": "small-laptop-slow",
+      "repetition": 1,
+      "task": "cold-entry",
+      "durationMs": 4579.400000095367,
+      "maxLongTaskMs": 219,
+      "maxLongFrameMs": 2499.7999999523163,
+      "frameGapP95Ms": 66.69999999999982,
+      "framesSampled": 78,
+      "frameGapsOver50Ms": 4,
+      "attribution": {
+        "navigation": [
+          {
+            "startTime": 0,
+            "responseEnd": 294.7999999523163,
+            "domContentLoadedEventEnd": 2714.2999999523163,
+            "loadEventEnd": 3651.600000143051
+          }
+        ],
+        "resources": [
+          {
+            "name": "http://127.0.0.1:49292/_next/static/media/60ec66547305f91a-s.p.00w9pdq4k75rv.woff2",
+            "startTime": 178.10000014305115,
+            "responseEnd": 612.7000000476837,
+            "duration": 434.59999990463257,
+            "transferSize": 11864
+          },
+          {
+            "name": "http://127.0.0.1:49292/_next/static/media/99e609270109b47d-s.p.40sczeszzbjw1.woff2",
+            "startTime": 178.60000014305115,
+            "responseEnd": 573.1000001430511,
+            "duration": 394.5,
+            "transferSize": 10352
+          },
+          {
+            "name": "http://127.0.0.1:49292/_next/static/media/a46a75cfd765634f-s.p.0i_4norqw3xaj.woff2",
+            "startTime": 178.70000004768372,
+            "responseEnd": 617.7999999523163,
+            "duration": 439.09999990463257,
+            "transferSize": 11868
+          },
+          {
+            "name": "http://127.0.0.1:49292/_next/static/media/a7e15459c1805da0-s.p.3y9b8znjr2455.woff2",
+            "startTime": 178.70000004768372,
+            "responseEnd": 670.4000000953674,
+            "duration": 491.7000000476837,
+            "transferSize": 10428
+          },
+          {
+            "name": "http://127.0.0.1:49292/_next/static/chunks/0a194l25qr4iu.css",
+            "startTime": 178.70000004768372,
+            "responseEnd": 805.7000000476837,
+            "duration": 627,
+            "transferSize": 20743
+          },
+          {
+            "name": "http://127.0.0.1:49292/_next/static/chunks/027f4nomg71r8.css",
+            "startTime": 179.40000009536743,
+            "responseEnd": 438.10000014305115,
+            "duration": 258.7000000476837,
+            "transferSize": 4092
+          },
+          {
+            "name": "http://127.0.0.1:49292/_next/static/chunks/0stj_wa55u9tm.js",
+            "startTime": 179.40000009536743,
+            "responseEnd": 650,
+            "duration": 470.59999990463257,
+            "transferSize": 2319
+          },
+          {
+            "name": "http://127.0.0.1:49292/_next/static/chunks/358joc6p4dayu.js",
+            "startTime": 179.40000009536743,
+            "responseEnd": 1022.7000000476837,
+            "duration": 843.2999999523163,
+            "transferSize": 9411
+          },
+          {
+            "name": "http://127.0.0.1:49292/_next/static/chunks/1zg7s98b15f8-.js",
+            "startTime": 179.40000009536743,
+            "responseEnd": 2725.600000143051,
+            "duration": 2546.2000000476837,
+            "transferSize": 72191
+          },
+          {
+            "name": "http://127.0.0.1:49292/_next/static/chunks/turbopack-2c3mg3r-05n1w.js",
+            "startTime": 179.5,
+            "responseEnd": 985.2000000476837,
+            "duration": 805.7000000476837,
+            "transferSize": 4696
+          },
+          {
+            "name": "http://127.0.0.1:49292/_next/static/chunks/38i6xralj4ahs.js",
+            "startTime": 179.5,
+            "responseEnd": 1002.7000000476837,
+            "duration": 823.2000000476837,
+            "transferSize": 1282
+          },
+          {
+            "name": "http://127.0.0.1:49292/_next/static/chunks/1fm4ma-uocxt3.js",
+            "startTime": 179.5,
+            "responseEnd": 1045.2000000476837,
+            "duration": 865.7000000476837,
+            "transferSize": 5996
+          },
+          {
+            "name": "http://127.0.0.1:49292/_next/static/chunks/1jrapvfsdq02g.js",
+            "startTime": 179.5,
+            "responseEnd": 1728.5,
+            "duration": 1549,
+            "transferSize": 16540
+          },
+          {
+            "name": "http://127.0.0.1:49292/_next/static/chunks/2d3dq2o-p4dkj.js",
+            "startTime": 179.5,
+            "responseEnd": 2156,
+            "duration": 1976.5,
+            "transferSize": 45268
+          },
+          {
+            "name": "http://127.0.0.1:49292/_next/static/chunks/3c6v0lkpx06yg.js",
+            "startTime": 179.60000014305115,
+            "responseEnd": 2102.5,
+            "duration": 1922.8999998569489,
+            "transferSize": 27693
+          },
+          {
+            "name": "http://127.0.0.1:49292/_next/static/chunks/3rrw9te5ot4dv.js",
+            "startTime": 179.60000014305115,
+            "responseEnd": 2410.600000143051,
+            "duration": 2231,
+            "transferSize": 38536
+          },
+          {
+            "name": "http://127.0.0.1:49292/_next/static/chunks/0iote4uzs6jjp.js",
+            "startTime": 180.5,
+            "responseEnd": 3221.7000000476837,
+            "duration": 3041.2000000476837,
+            "transferSize": 102034
+          },
+          {
+            "name": "http://127.0.0.1:49292/_next/static/chunks/1bm4zr9ohqxuz.js",
+            "startTime": 180.5,
+            "responseEnd": 3446.2000000476837,
+            "duration": 3265.7000000476837,
+            "transferSize": 98536
+          },
+          {
+            "name": "https://kit.fontawesome.com/44d855bf5c.css",
+            "startTime": 180.79999995231628,
+            "responseEnd": 445.7999999523163,
+            "duration": 265,
+            "transferSize": 0
+          },
+          {
+            "name": "https://ka-p.fontawesome.com/releases/v7.3.1/css/pro-v5-font-face.min.css?token=44d855bf5c",
+            "startTime": 447.2000000476837,
+            "responseEnd": 850.2000000476837,
+            "duration": 403,
+            "transferSize": 0
+          },
+          {
+            "name": "https://ka-p.fontawesome.com/releases/v7.3.1/css/pro-plus.min.css?token=44d855bf5c",
+            "startTime": 447.2000000476837,
+            "responseEnd": 2642.2999999523163,
+            "duration": 2195.0999999046326,
+            "transferSize": 0
+          },
+          {
+            "name": "https://ka-p.fontawesome.com/assets/44d855bf5c/122652816/custom-icons.css?token=44d855bf5c",
+            "startTime": 447.2999999523163,
+            "responseEnd": 731.6000001430511,
+            "duration": 284.30000019073486,
+            "transferSize": 0
+          }
+        ],
+        "longFrames": [
+          {
+            "startTime": 188.40000009536743,
+            "duration": 2499.7999999523163,
+            "renderStart": 2663.7999999523163,
+            "styleAndLayoutStart": 2663.7999999523163,
+            "blockingDuration": 0
+          },
+          {
+            "startTime": 2739.2999999523163,
+            "duration": 84.40000009536743,
+            "renderStart": 2822.9000000953674,
+            "styleAndLayoutStart": 2823.7000000476837,
+            "blockingDuration": 24.4
+          },
+          {
+            "startTime": 2995.5,
+            "duration": 141.29999995231628,
+            "renderStart": 3013.2999999523163,
+            "styleAndLayoutStart": 3013.4000000953674,
+            "blockingDuration": 75.2
+          },
+          {
+            "startTime": 3370.9000000953674,
+            "duration": 54.5,
+            "renderStart": 3379.5,
+            "styleAndLayoutStart": 3379.5,
+            "blockingDuration": 0
+          },
+          {
+            "startTime": 3524.2000000476837,
+            "duration": 120.59999990463257,
+            "renderStart": 3643.5,
+            "styleAndLayoutStart": 3644.7000000476837,
+            "blockingDuration": 70.6
+          },
+          {
+            "startTime": 3863.9000000953674,
+            "duration": 265.09999990463257,
+            "renderStart": 4094.2999999523163,
+            "styleAndLayoutStart": 4096.799999952316,
+            "blockingDuration": 203.8
+          }
+        ],
+        "paints": [
+          {
+            "name": "first-paint",
+            "entryType": "paint",
+            "startTime": 2692,
+            "duration": 0,
+            "navigationId": 8574,
+            "paintTime": 2688.2000000476837,
+            "presentationTime": 2692
+          },
+          {
+            "name": "first-contentful-paint",
+            "entryType": "paint",
+            "startTime": 4212,
+            "duration": 0,
+            "navigationId": 8574,
+            "paintTime": 4199.600000143051,
+            "presentationTime": 4212
+          }
+        ],
+        "diagnostic": {
+          "marks": [
+            {
+              "name": "dom-content-loaded",
+              "time": 2714.100000143051
+            },
+            {
+              "name": "fonts-ready",
+              "time": 2714.2999999523163
+            },
+            {
+              "name": "phase",
+              "value": "ready",
+              "time": 4163.900000095367
+            }
+          ],
+          "framesRecorded": 79,
+          "firstFrame": {
+            "time": 2660.7,
+            "gap": null
+          },
+          "lastFrame": {
+            "time": 4577.3,
+            "gap": 16.699999999999818
+          },
+          "gapsOver49Ms": [
+            {
+              "time": 2810.7,
+              "gap": 66.69999999999982
+            },
+            {
+              "time": 3127.3,
+              "gap": 116.60000000000036
+            },
+            {
+              "time": 3177.3,
+              "gap": 50
+            },
+            {
+              "time": 3427.3,
+              "gap": 49.90000000000009
+            },
+            {
+              "time": 3510.6,
+              "gap": 50
+            },
+            {
+              "time": 3644,
+              "gap": 133.4000000000001
+            },
+            {
+              "time": 4127.3,
+              "gap": 250
+            }
+          ]
+        }
+      }
+    },
+    {
+      "build": "candidate",
+      "profile": "small-laptop-slow",
+      "repetition": 2,
+      "task": "cold-entry",
+      "durationMs": 4570.899999856949,
+      "maxLongTaskMs": 214,
+      "maxLongFrameMs": 2493.9000000953674,
+      "frameGapP95Ms": 50.09999999999991,
+      "framesSampled": 81,
+      "frameGapsOver50Ms": 5,
+      "attribution": {
+        "navigation": [
+          {
+            "startTime": 0,
+            "responseEnd": 287.2999999523163,
+            "domContentLoadedEventEnd": 2701.2000000476837,
+            "loadEventEnd": 3541.5
+          }
+        ],
+        "resources": [
+          {
+            "name": "http://127.0.0.1:49292/_next/static/media/60ec66547305f91a-s.p.00w9pdq4k75rv.woff2",
+            "startTime": 170.20000004768372,
+            "responseEnd": 595.2999999523163,
+            "duration": 425.09999990463257,
+            "transferSize": 11864
+          },
+          {
+            "name": "http://127.0.0.1:49292/_next/static/media/99e609270109b47d-s.p.40sczeszzbjw1.woff2",
+            "startTime": 170.89999985694885,
+            "responseEnd": 564.8999998569489,
+            "duration": 394,
+            "transferSize": 10352
+          },
+          {
+            "name": "http://127.0.0.1:49292/_next/static/media/a46a75cfd765634f-s.p.0i_4norqw3xaj.woff2",
+            "startTime": 170.89999985694885,
+            "responseEnd": 602.2000000476837,
+            "duration": 431.30000019073486,
+            "transferSize": 11868
+          },
+          {
+            "name": "http://127.0.0.1:49292/_next/static/media/a7e15459c1805da0-s.p.3y9b8znjr2455.woff2",
+            "startTime": 171,
+            "responseEnd": 678.2000000476837,
+            "duration": 507.2000000476837,
+            "transferSize": 10428
+          },
+          {
+            "name": "http://127.0.0.1:49292/_next/static/chunks/027f4nomg71r8.css",
+            "startTime": 171.09999990463257,
+            "responseEnd": 431.09999990463257,
+            "duration": 260,
+            "transferSize": 4092
+          },
+          {
+            "name": "http://127.0.0.1:49292/_next/static/chunks/0stj_wa55u9tm.js",
+            "startTime": 171.09999990463257,
+            "responseEnd": 634.3999998569489,
+            "duration": 463.2999999523163,
+            "transferSize": 2319
+          },
+          {
+            "name": "http://127.0.0.1:49292/_next/static/chunks/0a194l25qr4iu.css",
+            "startTime": 171.09999990463257,
+            "responseEnd": 822.0999999046326,
+            "duration": 651,
+            "transferSize": 20743
+          },
+          {
+            "name": "http://127.0.0.1:49292/_next/static/chunks/turbopack-2c3mg3r-05n1w.js",
+            "startTime": 171.09999990463257,
+            "responseEnd": 971.5,
+            "duration": 800.4000000953674,
+            "transferSize": 4696
+          },
+          {
+            "name": "http://127.0.0.1:49292/_next/static/chunks/358joc6p4dayu.js",
+            "startTime": 171.09999990463257,
+            "responseEnd": 993.8999998569489,
+            "duration": 822.7999999523163,
+            "transferSize": 9411
+          },
+          {
+            "name": "http://127.0.0.1:49292/_next/static/chunks/1fm4ma-uocxt3.js",
+            "startTime": 171.09999990463257,
+            "responseEnd": 1047.2999999523163,
+            "duration": 876.2000000476837,
+            "transferSize": 5996
+          },
+          {
+            "name": "http://127.0.0.1:49292/_next/static/chunks/2d3dq2o-p4dkj.js",
+            "startTime": 171.09999990463257,
+            "responseEnd": 2140.7000000476837,
+            "duration": 1969.6000001430511,
+            "transferSize": 45268
+          },
+          {
+            "name": "http://127.0.0.1:49292/_next/static/chunks/1zg7s98b15f8-.js",
+            "startTime": 171.09999990463257,
+            "responseEnd": 2712.5,
+            "duration": 2541.4000000953674,
+            "transferSize": 72191
+          },
+          {
+            "name": "http://127.0.0.1:49292/_next/static/chunks/38i6xralj4ahs.js",
+            "startTime": 172.09999990463257,
+            "responseEnd": 1015.3999998569489,
+            "duration": 843.2999999523163,
+            "transferSize": 1282
+          },
+          {
+            "name": "http://127.0.0.1:49292/_next/static/chunks/1jrapvfsdq02g.js",
+            "startTime": 172.09999990463257,
+            "responseEnd": 1689.8999998569489,
+            "duration": 1517.7999999523163,
+            "transferSize": 16540
+          },
+          {
+            "name": "http://127.0.0.1:49292/_next/static/chunks/3c6v0lkpx06yg.js",
+            "startTime": 172.29999995231628,
+            "responseEnd": 2089.899999856949,
+            "duration": 1917.5999999046326,
+            "transferSize": 27693
+          },
+          {
+            "name": "http://127.0.0.1:49292/_next/static/chunks/3rrw9te5ot4dv.js",
+            "startTime": 172.29999995231628,
+            "responseEnd": 2402.899999856949,
+            "duration": 2230.5999999046326,
+            "transferSize": 38536
+          },
+          {
+            "name": "http://127.0.0.1:49292/_next/static/chunks/0iote4uzs6jjp.js",
+            "startTime": 172.29999995231628,
+            "responseEnd": 3212.2999999523163,
+            "duration": 3040,
+            "transferSize": 102034
+          },
+          {
+            "name": "http://127.0.0.1:49292/_next/static/chunks/1bm4zr9ohqxuz.js",
+            "startTime": 172.29999995231628,
+            "responseEnd": 3423.5999999046326,
+            "duration": 3251.2999999523163,
+            "transferSize": 98536
+          },
+          {
+            "name": "https://kit.fontawesome.com/44d855bf5c.css",
+            "startTime": 172.39999985694885,
+            "responseEnd": 423.39999985694885,
+            "duration": 251,
+            "transferSize": 0
+          },
+          {
+            "name": "https://ka-p.fontawesome.com/releases/v7.3.1/css/pro-plus.min.css?token=44d855bf5c",
+            "startTime": 424.39999985694885,
+            "responseEnd": 2628.899999856949,
+            "duration": 2204.5,
+            "transferSize": 0
+          },
+          {
+            "name": "https://ka-p.fontawesome.com/assets/44d855bf5c/122652816/custom-icons.css?token=44d855bf5c",
+            "startTime": 424.5,
+            "responseEnd": 693.0999999046326,
+            "duration": 268.59999990463257,
+            "transferSize": 0
+          },
+          {
+            "name": "https://ka-p.fontawesome.com/releases/v7.3.1/css/pro-v5-font-face.min.css?token=44d855bf5c",
+            "startTime": 424.5,
+            "responseEnd": 805.0999999046326,
+            "duration": 380.59999990463257,
+            "transferSize": 0
+          }
+        ],
+        "longFrames": [
+          {
+            "startTime": 180.09999990463257,
+            "duration": 2493.9000000953674,
+            "renderStart": 2649.7000000476837,
+            "styleAndLayoutStart": 2650.2000000476837,
+            "blockingDuration": 0
+          },
+          {
+            "startTime": 2725.5,
+            "duration": 83,
+            "renderStart": 2808.5,
+            "styleAndLayoutStart": 2808.5,
+            "blockingDuration": 23.1
+          },
+          {
+            "startTime": 2987.7999999523163,
+            "duration": 136.5,
+            "renderStart": 3004.399999856949,
+            "styleAndLayoutStart": 3004.5,
+            "blockingDuration": 71.6
+          },
+          {
+            "startTime": 3363.0999999046326,
+            "duration": 54.200000047683716,
+            "renderStart": 3371.399999856949,
+            "styleAndLayoutStart": 3371.399999856949,
+            "blockingDuration": 0
+          },
+          {
+            "startTime": 3421.7000000476837,
+            "duration": 167.59999990463257,
+            "renderStart": 3584.5,
+            "styleAndLayoutStart": 3585.7999999523163,
+            "blockingDuration": 68.8
+          },
+          {
+            "startTime": 3821.2000000476837,
+            "duration": 248.89999985694885,
+            "renderStart": 4036.2999999523163,
+            "styleAndLayoutStart": 4038.7999999523163,
+            "blockingDuration": 198.1
+          }
+        ],
+        "paints": [
+          {
+            "name": "first-paint",
+            "entryType": "paint",
+            "startTime": 2676,
+            "duration": 0,
+            "navigationId": 7094,
+            "paintTime": 2674,
+            "presentationTime": 2676
+          },
+          {
+            "name": "first-contentful-paint",
+            "entryType": "paint",
+            "startTime": 4152,
+            "duration": 0,
+            "navigationId": 7094,
+            "paintTime": 4139.899999856949,
+            "presentationTime": 4152
+          }
+        ],
+        "diagnostic": {
+          "marks": [
+            {
+              "name": "dom-content-loaded",
+              "time": 2701.0999999046326
+            },
+            {
+              "name": "fonts-ready",
+              "time": 2701.0999999046326
+            },
+            {
+              "name": "phase",
+              "value": "ready",
+              "time": 4106.5
+            }
+          ],
+          "framesRecorded": 82,
+          "firstFrame": {
+            "time": 2635.7,
+            "gap": null
+          },
+          "lastFrame": {
+            "time": 4569,
+            "gap": 16.800000000000182
+          },
+          "gapsOver49Ms": [
+            {
+              "time": 2802.3,
+              "gap": 66.60000000000036
+            },
+            {
+              "time": 3119,
+              "gap": 116.69999999999982
+            },
+            {
+              "time": 3419,
+              "gap": 50.09999999999991
+            },
+            {
+              "time": 3585.7,
+              "gap": 150.0999999999999
+            },
+            {
+              "time": 4068.9,
+              "gap": 249.9000000000001
+            }
+          ]
+        }
+      }
+    },
+    {
+      "build": "reference",
+      "profile": "small-laptop-slow",
+      "repetition": 2,
+      "task": "cold-entry",
+      "durationMs": 4364.699999809265,
+      "maxLongTaskMs": 209,
+      "maxLongFrameMs": 2242.2999999523163,
+      "frameGapP95Ms": 50,
+      "framesSampled": 83,
+      "frameGapsOver50Ms": 4,
+      "attribution": {
+        "navigation": [
+          {
+            "startTime": 0,
+            "responseEnd": 280.39999985694885,
+            "domContentLoadedEventEnd": 2524.699999809265,
+            "loadEventEnd": 3525.5999999046326
+          }
+        ],
+        "resources": [
+          {
+            "name": "http://127.0.0.1:49286/_next/static/media/60ec66547305f91a-s.p.00w9pdq4k75rv.woff2",
+            "startTime": 166.89999985694885,
+            "responseEnd": 594.5,
+            "duration": 427.60000014305115,
+            "transferSize": 11864
+          },
+          {
+            "name": "http://127.0.0.1:49286/_next/static/media/99e609270109b47d-s.p.40sczeszzbjw1.woff2",
+            "startTime": 167.39999985694885,
+            "responseEnd": 565,
+            "duration": 397.60000014305115,
+            "transferSize": 10352
+          },
+          {
+            "name": "http://127.0.0.1:49286/_next/static/media/a46a75cfd765634f-s.p.0i_4norqw3xaj.woff2",
+            "startTime": 167.39999985694885,
+            "responseEnd": 611.5999999046326,
+            "duration": 444.2000000476837,
+            "transferSize": 11868
+          },
+          {
+            "name": "http://127.0.0.1:49286/_next/static/media/a7e15459c1805da0-s.p.3y9b8znjr2455.woff2",
+            "startTime": 167.5,
+            "responseEnd": 687.0999999046326,
+            "duration": 519.5999999046326,
+            "transferSize": 10428
+          },
+          {
+            "name": "http://127.0.0.1:49286/_next/static/chunks/2d1t0yk-040hb.css",
+            "startTime": 167.59999990463257,
+            "responseEnd": 437.69999980926514,
+            "duration": 270.09999990463257,
+            "transferSize": 4187
+          },
+          {
+            "name": "http://127.0.0.1:49286/_next/static/chunks/0qrsql1n38a68.css",
+            "startTime": 167.59999990463257,
+            "responseEnd": 791.3999998569489,
+            "duration": 623.7999999523163,
+            "transferSize": 20502
+          },
+          {
+            "name": "http://127.0.0.1:49286/_next/static/chunks/1nj6bpqcj_fa2.js",
+            "startTime": 168,
+            "responseEnd": 649,
+            "duration": 481,
+            "transferSize": 2317
+          },
+          {
+            "name": "http://127.0.0.1:49286/_next/static/chunks/turbopack-1sp6dkokukxu3.js",
+            "startTime": 168.09999990463257,
+            "responseEnd": 979.5,
+            "duration": 811.4000000953674,
+            "transferSize": 4587
+          },
+          {
+            "name": "http://127.0.0.1:49286/_next/static/chunks/2ur9viobhqe80.js",
+            "startTime": 168.09999990463257,
+            "responseEnd": 986.0999999046326,
+            "duration": 818,
+            "transferSize": 1283
+          },
+          {
+            "name": "http://127.0.0.1:49286/_next/static/chunks/0yxsr-1nszn8a.js",
+            "startTime": 168.09999990463257,
+            "responseEnd": 1000.0999999046326,
+            "duration": 832,
+            "transferSize": 9435
+          },
+          {
+            "name": "http://127.0.0.1:49286/_next/static/chunks/07d7q-2qm1qpn.js",
+            "startTime": 168.09999990463257,
+            "responseEnd": 1054.0999999046326,
+            "duration": 886,
+            "transferSize": 6117
+          },
+          {
+            "name": "http://127.0.0.1:49286/_next/static/chunks/1y26empwqw1ru.js",
+            "startTime": 168.09999990463257,
+            "responseEnd": 1427.7999999523163,
+            "duration": 1259.7000000476837,
+            "transferSize": 10041
+          },
+          {
+            "name": "http://127.0.0.1:49286/_next/static/chunks/356th34vvq6wo.js",
+            "startTime": 168.09999990463257,
+            "responseEnd": 1901.6999998092651,
+            "duration": 1733.5999999046326,
+            "transferSize": 44059
+          },
+          {
+            "name": "http://127.0.0.1:49286/_next/static/chunks/345og5_mioy7_.js",
+            "startTime": 168.09999990463257,
+            "responseEnd": 2420.5999999046326,
+            "duration": 2252.5,
+            "transferSize": 71881
+          },
+          {
+            "name": "http://127.0.0.1:49286/_next/static/chunks/0824wwkefce3o.js",
+            "startTime": 168.19999980926514,
+            "responseEnd": 3401.5999999046326,
+            "duration": 3233.4000000953674,
+            "transferSize": 160649
+          },
+          {
+            "name": "https://kit.fontawesome.com/44d855bf5c.css",
+            "startTime": 169,
+            "responseEnd": 424,
+            "duration": 255,
+            "transferSize": 0
+          },
+          {
+            "name": "http://127.0.0.1:49286/_next/static/chunks/1qxtp47pwrdx_.js",
+            "startTime": 169,
+            "responseEnd": 3004.5999999046326,
+            "duration": 2835.5999999046326,
+            "transferSize": 108436
+          },
+          {
+            "name": "https://ka-p.fontawesome.com/releases/v7.3.1/css/pro-plus.min.css?token=44d855bf5c",
+            "startTime": 425,
+            "responseEnd": 2365.5999999046326,
+            "duration": 1940.5999999046326,
+            "transferSize": 0
+          },
+          {
+            "name": "https://ka-p.fontawesome.com/assets/44d855bf5c/122652816/custom-icons.css?token=44d855bf5c",
+            "startTime": 425.69999980926514,
+            "responseEnd": 700.2999999523163,
+            "duration": 274.60000014305115,
+            "transferSize": 0
+          },
+          {
+            "name": "https://ka-p.fontawesome.com/releases/v7.3.1/css/pro-v5-font-face.min.css?token=44d855bf5c",
+            "startTime": 425.69999980926514,
+            "responseEnd": 827.3999998569489,
+            "duration": 401.7000000476837,
+            "transferSize": 0
+          }
+        ],
+        "longFrames": [
+          {
+            "startTime": 170.29999995231628,
+            "duration": 2242.2999999523163,
+            "renderStart": 2385.7999999523163,
+            "styleAndLayoutStart": 2386.399999856949,
+            "blockingDuration": 0
+          },
+          {
+            "startTime": 2436.899999856949,
+            "duration": 87.90000009536743,
+            "renderStart": 2524.7999999523163,
+            "styleAndLayoutStart": 2524.7999999523163,
+            "blockingDuration": 29.8
+          },
+          {
+            "startTime": 2734.399999856949,
+            "duration": 129,
+            "renderStart": 2746.0999999046326,
+            "styleAndLayoutStart": 2746.5,
+            "blockingDuration": 69
+          },
+          {
+            "startTime": 3112.199999809265,
+            "duration": 61.5,
+            "renderStart": 3129.399999856949,
+            "styleAndLayoutStart": 3129.399999856949,
+            "blockingDuration": 0
+          },
+          {
+            "startTime": 3402,
+            "duration": 117.39999985694885,
+            "renderStart": 3518.5,
+            "styleAndLayoutStart": 3518.5,
+            "blockingDuration": 64
+          },
+          {
+            "startTime": 3752.399999856949,
+            "duration": 248.20000004768372,
+            "renderStart": 3966.699999809265,
+            "styleAndLayoutStart": 3969.5,
+            "blockingDuration": 193.1
+          }
+        ],
+        "paints": [
+          {
+            "name": "first-paint",
+            "entryType": "paint",
+            "startTime": 2416,
+            "duration": 0,
+            "navigationId": 4056,
+            "paintTime": 2412.5999999046326,
+            "presentationTime": 2416
+          },
+          {
+            "name": "first-contentful-paint",
+            "entryType": "paint",
+            "startTime": 4092,
+            "duration": 0,
+            "navigationId": 4056,
+            "paintTime": 4078,
+            "presentationTime": 4092
+          }
+        ],
+        "diagnostic": {
+          "marks": [
+            {
+              "name": "dom-content-loaded",
+              "time": 2523.5999999046326
+            },
+            {
+              "name": "fonts-ready",
+              "time": 2524.0999999046326
+            },
+            {
+              "name": "phase",
+              "value": "ready",
+              "time": 4049.7999999523163
+            }
+          ],
+          "framesRecorded": 84,
+          "firstFrame": {
+            "time": 2377.7,
+            "gap": null
+          },
+          "lastFrame": {
+            "time": 4361,
+            "gap": 16.699999999999818
+          },
+          "gapsOver49Ms": [
+            {
+              "time": 2511.1,
+              "gap": 66.69999999999982
+            },
+            {
+              "time": 2861.1,
+              "gap": 116.69999999999982
+            },
+            {
+              "time": 3211,
+              "gap": 50
+            },
+            {
+              "time": 3261,
+              "gap": 50
+            },
+            {
+              "time": 3511.1,
+              "gap": 100.09999999999991
+            },
+            {
+              "time": 3994.3,
+              "gap": 233.30000000000018
+            }
+          ]
+        }
+      }
+    },
+    {
+      "build": "reference",
+      "profile": "phone-landscape-slow",
+      "repetition": 1,
+      "task": "cold-entry",
+      "durationMs": 4357.600000143051,
+      "maxLongTaskMs": 215,
+      "maxLongFrameMs": 2240.800000190735,
+      "frameGapP95Ms": 50,
+      "framesSampled": 81,
+      "frameGapsOver50Ms": 4,
+      "attribution": {
+        "navigation": [
+          {
+            "startTime": 0,
+            "responseEnd": 287.30000019073486,
+            "domContentLoadedEventEnd": 2448,
+            "loadEventEnd": 3561.2000000476837
+          }
+        ],
+        "resources": [
+          {
+            "name": "http://127.0.0.1:49286/_next/static/media/60ec66547305f91a-s.p.00w9pdq4k75rv.woff2",
+            "startTime": 179.5,
+            "responseEnd": 612.3000001907349,
+            "duration": 432.80000019073486,
+            "transferSize": 11864
+          },
+          {
+            "name": "http://127.0.0.1:49286/_next/static/media/99e609270109b47d-s.p.40sczeszzbjw1.woff2",
+            "startTime": 180.30000019073486,
+            "responseEnd": 581.9000000953674,
+            "duration": 401.59999990463257,
+            "transferSize": 10352
+          },
+          {
+            "name": "http://127.0.0.1:49286/_next/static/media/a46a75cfd765634f-s.p.0i_4norqw3xaj.woff2",
+            "startTime": 180.40000009536743,
+            "responseEnd": 618.3000001907349,
+            "duration": 437.90000009536743,
+            "transferSize": 11868
+          },
+          {
+            "name": "http://127.0.0.1:49286/_next/static/media/a7e15459c1805da0-s.p.3y9b8znjr2455.woff2",
+            "startTime": 180.5,
+            "responseEnd": 671.1000001430511,
+            "duration": 490.60000014305115,
+            "transferSize": 10428
+          },
+          {
+            "name": "http://127.0.0.1:49286/_next/static/chunks/0qrsql1n38a68.css",
+            "startTime": 180.5,
+            "responseEnd": 807.4000000953674,
+            "duration": 626.9000000953674,
+            "transferSize": 20502
+          },
+          {
+            "name": "http://127.0.0.1:49286/_next/static/chunks/2d1t0yk-040hb.css",
+            "startTime": 180.90000009536743,
+            "responseEnd": 438,
+            "duration": 257.09999990463257,
+            "transferSize": 4187
+          },
+          {
+            "name": "http://127.0.0.1:49286/_next/static/chunks/1nj6bpqcj_fa2.js",
+            "startTime": 181.40000009536743,
+            "responseEnd": 647.2000000476837,
+            "duration": 465.7999999523163,
+            "transferSize": 2317
+          },
+          {
+            "name": "http://127.0.0.1:49286/_next/static/chunks/0yxsr-1nszn8a.js",
+            "startTime": 181.5,
+            "responseEnd": 1023,
+            "duration": 841.5,
+            "transferSize": 9435
+          },
+          {
+            "name": "http://127.0.0.1:49286/_next/static/chunks/turbopack-1sp6dkokukxu3.js",
+            "startTime": 181.60000014305115,
+            "responseEnd": 980.8000001907349,
+            "duration": 799.2000000476837,
+            "transferSize": 4587
+          },
+          {
+            "name": "http://127.0.0.1:49286/_next/static/chunks/07d7q-2qm1qpn.js",
+            "startTime": 181.60000014305115,
+            "responseEnd": 1045.3000001907349,
+            "duration": 863.7000000476837,
+            "transferSize": 6117
+          },
+          {
+            "name": "http://127.0.0.1:49286/_next/static/chunks/356th34vvq6wo.js",
+            "startTime": 181.60000014305115,
+            "responseEnd": 1916.2000000476837,
+            "duration": 1734.5999999046326,
+            "transferSize": 44059
+          },
+          {
+            "name": "http://127.0.0.1:49286/_next/static/chunks/345og5_mioy7_.js",
+            "startTime": 181.60000014305115,
+            "responseEnd": 2440.800000190735,
+            "duration": 2259.2000000476837,
+            "transferSize": 71881
+          },
+          {
+            "name": "http://127.0.0.1:49286/_next/static/chunks/2ur9viobhqe80.js",
+            "startTime": 181.70000004768372,
+            "responseEnd": 1000.6000001430511,
+            "duration": 818.9000000953674,
+            "transferSize": 1283
+          },
+          {
+            "name": "http://127.0.0.1:49286/_next/static/chunks/1y26empwqw1ru.js",
+            "startTime": 182.20000004768372,
+            "responseEnd": 1420.3000001907349,
+            "duration": 1238.1000001430511,
+            "transferSize": 10041
+          },
+          {
+            "name": "http://127.0.0.1:49286/_next/static/chunks/1qxtp47pwrdx_.js",
+            "startTime": 182.30000019073486,
+            "responseEnd": 3049.4000000953674,
+            "duration": 2867.0999999046326,
+            "transferSize": 108436
+          },
+          {
+            "name": "http://127.0.0.1:49286/_next/static/chunks/0824wwkefce3o.js",
+            "startTime": 182.30000019073486,
+            "responseEnd": 3417.5,
+            "duration": 3235.199999809265,
+            "transferSize": 160649
+          },
+          {
+            "name": "https://kit.fontawesome.com/44d855bf5c.css",
+            "startTime": 182.40000009536743,
+            "responseEnd": 447.2000000476837,
+            "duration": 264.7999999523163,
+            "transferSize": 0
+          },
+          {
+            "name": "https://ka-p.fontawesome.com/assets/44d855bf5c/122652816/custom-icons.css?token=44d855bf5c",
+            "startTime": 448.40000009536743,
+            "responseEnd": 723.2000000476837,
+            "duration": 274.7999999523163,
+            "transferSize": 0
+          },
+          {
+            "name": "https://ka-p.fontawesome.com/releases/v7.3.1/css/pro-v5-font-face.min.css?token=44d855bf5c",
+            "startTime": 448.40000009536743,
+            "responseEnd": 828.4000000953674,
+            "duration": 380,
+            "transferSize": 0
+          },
+          {
+            "name": "https://ka-p.fontawesome.com/releases/v7.3.1/css/pro-plus.min.css?token=44d855bf5c",
+            "startTime": 448.40000009536743,
+            "responseEnd": 2379.9000000953674,
+            "duration": 1931.5,
+            "transferSize": 0
+          }
+        ],
+        "longFrames": [
+          {
+            "startTime": 184.5,
+            "duration": 2240.800000190735,
+            "renderStart": 2400.9000000953674,
+            "styleAndLayoutStart": 2401,
+            "blockingDuration": 0
+          },
+          {
+            "startTime": 2445.9000000953674,
+            "duration": 90.40000009536743,
+            "renderStart": 2536.2000000476837,
+            "styleAndLayoutStart": 2536.300000190735,
+            "blockingDuration": 20.5
+          },
+          {
+            "startTime": 2726.7000000476837,
+            "duration": 131.29999995231628,
+            "renderStart": 2739.300000190735,
+            "styleAndLayoutStart": 2740.100000143051,
+            "blockingDuration": 70.1
+          },
+          {
+            "startTime": 3106,
+            "duration": 64.30000019073486,
+            "renderStart": 3124,
+            "styleAndLayoutStart": 3124,
+            "blockingDuration": 0
+          },
+          {
+            "startTime": 3408.2000000476837,
+            "duration": 126.5,
+            "renderStart": 3533.800000190735,
+            "styleAndLayoutStart": 3533.800000190735,
+            "blockingDuration": 63.1
+          },
+          {
+            "startTime": 3747.100000143051,
+            "duration": 262.39999985694885,
+            "renderStart": 3972.800000190735,
+            "styleAndLayoutStart": 3976.600000143051,
+            "blockingDuration": 202.1
+          }
+        ],
+        "paints": [
+          {
+            "name": "first-paint",
+            "entryType": "paint",
+            "startTime": 2428,
+            "duration": 0,
+            "navigationId": 247,
+            "paintTime": 2425.300000190735,
+            "presentationTime": 2428
+          },
+          {
+            "name": "first-contentful-paint",
+            "entryType": "paint",
+            "startTime": 4100,
+            "duration": 0,
+            "navigationId": 247,
+            "paintTime": 4088.800000190735,
+            "presentationTime": 4100
+          }
+        ],
+        "diagnostic": {
+          "marks": [
+            {
+              "name": "dom-content-loaded",
+              "time": 2447.9000000953674
+            },
+            {
+              "name": "fonts-ready",
+              "time": 2448
+            },
+            {
+              "name": "phase",
+              "value": "ready",
+              "time": 4060.600000143051
+            }
+          ],
+          "framesRecorded": 82,
+          "firstFrame": {
+            "time": 2388.5,
+            "gap": null
+          },
+          "lastFrame": {
+            "time": 4355.2,
+            "gap": 16.699999999999818
+          },
+          "gapsOver49Ms": [
+            {
+              "time": 2521.9,
+              "gap": 66.59999999999991
+            },
+            {
+              "time": 2855.2,
+              "gap": 116.69999999999982
+            },
+            {
+              "time": 3205.2,
+              "gap": 50
+            },
+            {
+              "time": 3255.2,
+              "gap": 50
+            },
+            {
+              "time": 3521.8,
+              "gap": 100
+            },
+            {
+              "time": 4005.2,
+              "gap": 250
+            }
+          ]
+        }
+      }
+    },
+    {
+      "build": "candidate",
+      "profile": "phone-landscape-slow",
+      "repetition": 1,
+      "task": "cold-entry",
+      "durationMs": 4562.200000047684,
+      "maxLongTaskMs": 216,
+      "maxLongFrameMs": 2509.2000000476837,
+      "frameGapP95Ms": 33.30000000000018,
+      "framesSampled": 80,
+      "frameGapsOver50Ms": 4,
+      "attribution": {
+        "navigation": [
+          {
+            "startTime": 0,
+            "responseEnd": 281.7999999523163,
+            "domContentLoadedEventEnd": 2707.2999999523163,
+            "loadEventEnd": 3541.7999999523163
+          }
+        ],
+        "resources": [
+          {
+            "name": "http://127.0.0.1:49292/_next/static/media/60ec66547305f91a-s.p.00w9pdq4k75rv.woff2",
+            "startTime": 167.70000004768372,
+            "responseEnd": 595.7999999523163,
+            "duration": 428.09999990463257,
+            "transferSize": 11864
+          },
+          {
+            "name": "http://127.0.0.1:49292/_next/static/media/99e609270109b47d-s.p.40sczeszzbjw1.woff2",
+            "startTime": 168.5,
+            "responseEnd": 564.7000000476837,
+            "duration": 396.2000000476837,
+            "transferSize": 10352
+          },
+          {
+            "name": "http://127.0.0.1:49292/_next/static/media/a46a75cfd765634f-s.p.0i_4norqw3xaj.woff2",
+            "startTime": 168.5,
+            "responseEnd": 609.3999998569489,
+            "duration": 440.89999985694885,
+            "transferSize": 11868
+          },
+          {
+            "name": "http://127.0.0.1:49292/_next/static/chunks/027f4nomg71r8.css",
+            "startTime": 168.59999990463257,
+            "responseEnd": 422.09999990463257,
+            "duration": 253.5,
+            "transferSize": 4092
+          },
+          {
+            "name": "http://127.0.0.1:49292/_next/static/media/a7e15459c1805da0-s.p.3y9b8znjr2455.woff2",
+            "startTime": 168.59999990463257,
+            "responseEnd": 657.2000000476837,
+            "duration": 488.60000014305115,
+            "transferSize": 10428
+          },
+          {
+            "name": "http://127.0.0.1:49292/_next/static/chunks/0a194l25qr4iu.css",
+            "startTime": 168.59999990463257,
+            "responseEnd": 811.8999998569489,
+            "duration": 643.2999999523163,
+            "transferSize": 20743
+          },
+          {
+            "name": "http://127.0.0.1:49292/_next/static/chunks/0stj_wa55u9tm.js",
+            "startTime": 168.70000004768372,
+            "responseEnd": 633.2999999523163,
+            "duration": 464.59999990463257,
+            "transferSize": 2319
+          },
+          {
+            "name": "http://127.0.0.1:49292/_next/static/chunks/358joc6p4dayu.js",
+            "startTime": 168.70000004768372,
+            "responseEnd": 1001.3999998569489,
+            "duration": 832.6999998092651,
+            "transferSize": 9411
+          },
+          {
+            "name": "http://127.0.0.1:49292/_next/static/chunks/2d3dq2o-p4dkj.js",
+            "startTime": 168.70000004768372,
+            "responseEnd": 2139.899999856949,
+            "duration": 1971.1999998092651,
+            "transferSize": 45268
+          },
+          {
+            "name": "http://127.0.0.1:49292/_next/static/chunks/1zg7s98b15f8-.js",
+            "startTime": 168.70000004768372,
+            "responseEnd": 2709.5,
+            "duration": 2540.7999999523163,
+            "transferSize": 72191
+          },
+          {
+            "name": "http://127.0.0.1:49292/_next/static/chunks/turbopack-2c3mg3r-05n1w.js",
+            "startTime": 169.5,
+            "responseEnd": 963.7999999523163,
+            "duration": 794.2999999523163,
+            "transferSize": 4696
+          },
+          {
+            "name": "http://127.0.0.1:49292/_next/static/chunks/38i6xralj4ahs.js",
+            "startTime": 169.59999990463257,
+            "responseEnd": 1008.2000000476837,
+            "duration": 838.6000001430511,
+            "transferSize": 1282
+          },
+          {
+            "name": "http://127.0.0.1:49292/_next/static/chunks/1fm4ma-uocxt3.js",
+            "startTime": 169.59999990463257,
+            "responseEnd": 1038.5999999046326,
+            "duration": 869,
+            "transferSize": 5996
+          },
+          {
+            "name": "http://127.0.0.1:49292/_next/static/chunks/1jrapvfsdq02g.js",
+            "startTime": 169.59999990463257,
+            "responseEnd": 1683.7000000476837,
+            "duration": 1514.1000001430511,
+            "transferSize": 16540
+          },
+          {
+            "name": "http://127.0.0.1:49292/_next/static/chunks/3c6v0lkpx06yg.js",
+            "startTime": 169.59999990463257,
+            "responseEnd": 2102.5,
+            "duration": 1932.9000000953674,
+            "transferSize": 27693
+          },
+          {
+            "name": "http://127.0.0.1:49292/_next/static/chunks/3rrw9te5ot4dv.js",
+            "startTime": 169.59999990463257,
+            "responseEnd": 2394.7000000476837,
+            "duration": 2225.100000143051,
+            "transferSize": 38536
+          },
+          {
+            "name": "https://kit.fontawesome.com/44d855bf5c.css",
+            "startTime": 170.09999990463257,
+            "responseEnd": 430.5,
+            "duration": 260.40000009536743,
+            "transferSize": 0
+          },
+          {
+            "name": "http://127.0.0.1:49292/_next/static/chunks/0iote4uzs6jjp.js",
+            "startTime": 170.09999990463257,
+            "responseEnd": 3206,
+            "duration": 3035.9000000953674,
+            "transferSize": 102034
+          },
+          {
+            "name": "http://127.0.0.1:49292/_next/static/chunks/1bm4zr9ohqxuz.js",
+            "startTime": 170.09999990463257,
+            "responseEnd": 3422,
+            "duration": 3251.9000000953674,
+            "transferSize": 98536
+          },
+          {
+            "name": "https://ka-p.fontawesome.com/releases/v7.3.1/css/pro-v5-font-face.min.css?token=44d855bf5c",
+            "startTime": 431.59999990463257,
+            "responseEnd": 790.5999999046326,
+            "duration": 359,
+            "transferSize": 0
+          },
+          {
+            "name": "https://ka-p.fontawesome.com/releases/v7.3.1/css/pro-plus.min.css?token=44d855bf5c",
+            "startTime": 431.59999990463257,
+            "responseEnd": 2636.0999999046326,
+            "duration": 2204.5,
+            "transferSize": 0
+          },
+          {
+            "name": "https://ka-p.fontawesome.com/assets/44d855bf5c/122652816/custom-icons.css?token=44d855bf5c",
+            "startTime": 432.2000000476837,
+            "responseEnd": 708.8999998569489,
+            "duration": 276.69999980926514,
+            "transferSize": 0
+          }
+        ],
+        "longFrames": [
+          {
+            "startTime": 172.39999985694885,
+            "duration": 2509.2000000476837,
+            "renderStart": 2658.0999999046326,
+            "styleAndLayoutStart": 2658.0999999046326,
+            "blockingDuration": 0
+          },
+          {
+            "startTime": 2706.0999999046326,
+            "duration": 79.29999995231628,
+            "renderStart": 2785.399999856949,
+            "styleAndLayoutStart": 2785.399999856949,
+            "blockingDuration": 23.8
+          },
+          {
+            "startTime": 2995,
+            "duration": 133,
+            "renderStart": 3010.7000000476837,
+            "styleAndLayoutStart": 3010.7999999523163,
+            "blockingDuration": 69
+          },
+          {
+            "startTime": 3363.7999999523163,
+            "duration": 58.59999990463257,
+            "renderStart": 3378.5,
+            "styleAndLayoutStart": 3378.5,
+            "blockingDuration": 0
+          },
+          {
+            "startTime": 3427.2000000476837,
+            "duration": 161.59999990463257,
+            "renderStart": 3583.5,
+            "styleAndLayoutStart": 3584.7999999523163,
+            "blockingDuration": 69
+          },
+          {
+            "startTime": 3818.899999856949,
+            "duration": 251.20000004768372,
+            "renderStart": 4035.5999999046326,
+            "styleAndLayoutStart": 4038.7999999523163,
+            "blockingDuration": 201.1
+          }
+        ],
+        "paints": [
+          {
+            "name": "first-paint",
+            "entryType": "paint",
+            "startTime": 2684,
+            "duration": 0,
+            "navigationId": 2104,
+            "paintTime": 2681.5999999046326,
+            "presentationTime": 2684
+          },
+          {
+            "name": "first-contentful-paint",
+            "entryType": "paint",
+            "startTime": 4156,
+            "duration": 0,
+            "navigationId": 2104,
+            "paintTime": 4147.700000047684,
+            "presentationTime": 4156
+          }
+        ],
+        "diagnostic": {
+          "marks": [
+            {
+              "name": "dom-content-loaded",
+              "time": 2706.2000000476837
+            },
+            {
+              "name": "fonts-ready",
+              "time": 2707.0999999046326
+            },
+            {
+              "name": "phase",
+              "value": "ready",
+              "time": 4113.5
+            }
+          ],
+          "framesRecorded": 81,
+          "firstFrame": {
+            "time": 2643,
+            "gap": null
+          },
+          "lastFrame": {
+            "time": 4559.5,
+            "gap": 16.600000000000364
+          },
+          "gapsOver49Ms": [
+            {
+              "time": 2776.4,
+              "gap": 66.80000000000018
+            },
+            {
+              "time": 3126.3,
+              "gap": 116.70000000000027
+            },
+            {
+              "time": 3576.2,
+              "gap": 149.89999999999964
+            },
+            {
+              "time": 4076.2,
+              "gap": 266.5999999999999
+            }
+          ]
+        }
+      }
+    },
+    {
+      "build": "candidate",
+      "profile": "phone-landscape-slow",
+      "repetition": 2,
+      "task": "cold-entry",
+      "durationMs": 4579.799999952316,
+      "maxLongTaskMs": 212,
+      "maxLongFrameMs": 2518.7000000476837,
+      "frameGapP95Ms": 83.39999999999964,
+      "framesSampled": 78,
+      "frameGapsOver50Ms": 5,
+      "attribution": {
+        "navigation": [
+          {
+            "startTime": 0,
+            "responseEnd": 280.5,
+            "domContentLoadedEventEnd": 2713.699999809265,
+            "loadEventEnd": 3645.5
+          }
+        ],
+        "resources": [
+          {
+            "name": "http://127.0.0.1:49292/_next/static/media/60ec66547305f91a-s.p.00w9pdq4k75rv.woff2",
+            "startTime": 167.39999985694885,
+            "responseEnd": 602.5,
+            "duration": 435.10000014305115,
+            "transferSize": 11864
+          },
+          {
+            "name": "http://127.0.0.1:49292/_next/static/media/99e609270109b47d-s.p.40sczeszzbjw1.woff2",
+            "startTime": 167.89999985694885,
+            "responseEnd": 573.0999999046326,
+            "duration": 405.2000000476837,
+            "transferSize": 10352
+          },
+          {
+            "name": "http://127.0.0.1:49292/_next/static/media/a46a75cfd765634f-s.p.0i_4norqw3xaj.woff2",
+            "startTime": 167.89999985694885,
+            "responseEnd": 610.1999998092651,
+            "duration": 442.2999999523163,
+            "transferSize": 11868
+          },
+          {
+            "name": "http://127.0.0.1:49292/_next/static/media/a7e15459c1805da0-s.p.3y9b8znjr2455.woff2",
+            "startTime": 167.89999985694885,
+            "responseEnd": 662.5999999046326,
+            "duration": 494.7000000476837,
+            "transferSize": 10428
+          },
+          {
+            "name": "http://127.0.0.1:49292/_next/static/chunks/0a194l25qr4iu.css",
+            "startTime": 168,
+            "responseEnd": 797.6999998092651,
+            "duration": 629.6999998092651,
+            "transferSize": 20743
+          },
+          {
+            "name": "http://127.0.0.1:49292/_next/static/chunks/027f4nomg71r8.css",
+            "startTime": 168.09999990463257,
+            "responseEnd": 433.39999985694885,
+            "duration": 265.2999999523163,
+            "transferSize": 4092
+          },
+          {
+            "name": "http://127.0.0.1:49292/_next/static/chunks/0stj_wa55u9tm.js",
+            "startTime": 168.79999995231628,
+            "responseEnd": 640.0999999046326,
+            "duration": 471.2999999523163,
+            "transferSize": 2319
+          },
+          {
+            "name": "http://127.0.0.1:49292/_next/static/chunks/358joc6p4dayu.js",
+            "startTime": 168.79999995231628,
+            "responseEnd": 1015.5,
+            "duration": 846.7000000476837,
+            "transferSize": 9411
+          },
+          {
+            "name": "http://127.0.0.1:49292/_next/static/chunks/turbopack-2c3mg3r-05n1w.js",
+            "startTime": 168.89999985694885,
+            "responseEnd": 978.5,
+            "duration": 809.6000001430511,
+            "transferSize": 4696
+          },
+          {
+            "name": "http://127.0.0.1:49292/_next/static/chunks/38i6xralj4ahs.js",
+            "startTime": 168.89999985694885,
+            "responseEnd": 993.7999999523163,
+            "duration": 824.9000000953674,
+            "transferSize": 1282
+          },
+          {
+            "name": "http://127.0.0.1:49292/_next/static/chunks/1fm4ma-uocxt3.js",
+            "startTime": 168.89999985694885,
+            "responseEnd": 1046.8999998569489,
+            "duration": 878,
+            "transferSize": 5996
+          },
+          {
+            "name": "http://127.0.0.1:49292/_next/static/chunks/2d3dq2o-p4dkj.js",
+            "startTime": 168.89999985694885,
+            "responseEnd": 2162.399999856949,
+            "duration": 1993.5,
+            "transferSize": 45268
+          },
+          {
+            "name": "http://127.0.0.1:49292/_next/static/chunks/1zg7s98b15f8-.js",
+            "startTime": 168.89999985694885,
+            "responseEnd": 2717.7999999523163,
+            "duration": 2548.9000000953674,
+            "transferSize": 72191
+          },
+          {
+            "name": "http://127.0.0.1:49292/_next/static/chunks/1jrapvfsdq02g.js",
+            "startTime": 169,
+            "responseEnd": 1705.0999999046326,
+            "duration": 1536.0999999046326,
+            "transferSize": 16540
+          },
+          {
+            "name": "http://127.0.0.1:49292/_next/static/chunks/3c6v0lkpx06yg.js",
+            "startTime": 169,
+            "responseEnd": 2088.7999999523163,
+            "duration": 1919.7999999523163,
+            "transferSize": 27693
+          },
+          {
+            "name": "http://127.0.0.1:49292/_next/static/chunks/3rrw9te5ot4dv.js",
+            "startTime": 169.59999990463257,
+            "responseEnd": 2397.699999809265,
+            "duration": 2228.0999999046326,
+            "transferSize": 38536
+          },
+          {
+            "name": "http://127.0.0.1:49292/_next/static/chunks/0iote4uzs6jjp.js",
+            "startTime": 169.69999980926514,
+            "responseEnd": 3207.699999809265,
+            "duration": 3038,
+            "transferSize": 102034
+          },
+          {
+            "name": "http://127.0.0.1:49292/_next/static/chunks/1bm4zr9ohqxuz.js",
+            "startTime": 169.69999980926514,
+            "responseEnd": 3439.0999999046326,
+            "duration": 3269.4000000953674,
+            "transferSize": 98536
+          },
+          {
+            "name": "https://kit.fontawesome.com/44d855bf5c.css",
+            "startTime": 169.79999995231628,
+            "responseEnd": 438.89999985694885,
+            "duration": 269.09999990463257,
+            "transferSize": 0
+          },
+          {
+            "name": "https://ka-p.fontawesome.com/releases/v7.3.1/css/pro-v5-font-face.min.css?token=44d855bf5c",
+            "startTime": 439.7999999523163,
+            "responseEnd": 844.7999999523163,
+            "duration": 405,
+            "transferSize": 0
+          },
+          {
+            "name": "https://ka-p.fontawesome.com/releases/v7.3.1/css/pro-plus.min.css?token=44d855bf5c",
+            "startTime": 439.7999999523163,
+            "responseEnd": 2646.199999809265,
+            "duration": 2206.399999856949,
+            "transferSize": 0
+          },
+          {
+            "name": "https://ka-p.fontawesome.com/assets/44d855bf5c/122652816/custom-icons.css?token=44d855bf5c",
+            "startTime": 439.89999985694885,
+            "responseEnd": 718.6999998092651,
+            "duration": 278.7999999523163,
+            "transferSize": 0
+          }
+        ],
+        "longFrames": [
+          {
+            "startTime": 171.69999980926514,
+            "duration": 2518.7000000476837,
+            "renderStart": 2666.2999999523163,
+            "styleAndLayoutStart": 2666.399999856949,
+            "blockingDuration": 0
+          },
+          {
+            "startTime": 2713.7999999523163,
+            "duration": 97,
+            "renderStart": 2810.7999999523163,
+            "styleAndLayoutStart": 2810.7999999523163,
+            "blockingDuration": 22.6
+          },
+          {
+            "startTime": 2997.199999809265,
+            "duration": 133.30000019073486,
+            "renderStart": 3012.5999999046326,
+            "styleAndLayoutStart": 3012.5999999046326,
+            "blockingDuration": 69.8
+          },
+          {
+            "startTime": 3349.699999809265,
+            "duration": 59.10000014305115,
+            "renderStart": 3364.399999856949,
+            "styleAndLayoutStart": 3365.2999999523163,
+            "blockingDuration": 0
+          },
+          {
+            "startTime": 3460,
+            "duration": 51.09999990463257,
+            "renderStart": 3463,
+            "styleAndLayoutStart": 3463.699999809265,
+            "blockingDuration": 0
+          },
+          {
+            "startTime": 3513.5999999046326,
+            "duration": 125.40000009536743,
+            "renderStart": 3638,
+            "styleAndLayoutStart": 3638.0999999046326,
+            "blockingDuration": 75.3
+          },
+          {
+            "startTime": 3868.0999999046326,
+            "duration": 247.70000004768372,
+            "renderStart": 4080.899999856949,
+            "styleAndLayoutStart": 4083.699999809265,
+            "blockingDuration": 197.6
+          }
+        ],
+        "paints": [
+          {
+            "name": "first-paint",
+            "entryType": "paint",
+            "startTime": 2692,
+            "duration": 0,
+            "navigationId": 8869,
+            "paintTime": 2690.399999856949,
+            "presentationTime": 2692
+          },
+          {
+            "name": "first-contentful-paint",
+            "entryType": "paint",
+            "startTime": 4208,
+            "duration": 0,
+            "navigationId": 8869,
+            "paintTime": 4198.299999952316,
+            "presentationTime": 4208
+          }
+        ],
+        "diagnostic": {
+          "marks": [
+            {
+              "name": "dom-content-loaded",
+              "time": 2713.699999809265
+            },
+            {
+              "name": "fonts-ready",
+              "time": 2713.699999809265
+            },
+            {
+              "name": "phase",
+              "value": "ready",
+              "time": 4166.899999856949
+            }
+          ],
+          "framesRecorded": 79,
+          "firstFrame": {
+            "time": 2661.2,
+            "gap": null
+          },
+          "lastFrame": {
+            "time": 4577.8,
+            "gap": 16.699999999999818
+          },
+          "gapsOver49Ms": [
+            {
+              "time": 2811.2,
+              "gap": 83.39999999999964
+            },
+            {
+              "time": 3127.8,
+              "gap": 116.70000000000027
+            },
+            {
+              "time": 3444.4,
+              "gap": 49.90000000000009
+            },
+            {
+              "time": 3511.1,
+              "gap": 66.69999999999982
+            },
+            {
+              "time": 3627.8,
+              "gap": 116.70000000000027
+            },
+            {
+              "time": 4111.1,
+              "gap": 233.30000000000018
+            }
+          ]
+        }
+      }
+    },
+    {
+      "build": "reference",
+      "profile": "phone-landscape-slow",
+      "repetition": 2,
+      "task": "cold-entry",
+      "durationMs": 4356.5,
+      "maxLongTaskMs": 216,
+      "maxLongFrameMs": 2234,
+      "frameGapP95Ms": 50,
+      "framesSampled": 83,
+      "frameGapsOver50Ms": 4,
+      "attribution": {
+        "navigation": [
+          {
+            "startTime": 0,
+            "responseEnd": 290.7999999523163,
+            "domContentLoadedEventEnd": 2444,
+            "loadEventEnd": 3563.2000000476837
+          }
+        ],
+        "resources": [
+          {
+            "name": "http://127.0.0.1:49286/_next/static/media/60ec66547305f91a-s.p.00w9pdq4k75rv.woff2",
+            "startTime": 178.10000014305115,
+            "responseEnd": 613.9000000953674,
+            "duration": 435.7999999523163,
+            "transferSize": 11864
+          },
+          {
+            "name": "http://127.0.0.1:49286/_next/static/media/99e609270109b47d-s.p.40sczeszzbjw1.woff2",
+            "startTime": 178.29999995231628,
+            "responseEnd": 581.6000001430511,
+            "duration": 403.30000019073486,
+            "transferSize": 10352
+          },
+          {
+            "name": "http://127.0.0.1:49286/_next/static/media/a46a75cfd765634f-s.p.0i_4norqw3xaj.woff2",
+            "startTime": 178.29999995231628,
+            "responseEnd": 618.2999999523163,
+            "duration": 440,
+            "transferSize": 11868
+          },
+          {
+            "name": "http://127.0.0.1:49286/_next/static/media/a7e15459c1805da0-s.p.3y9b8znjr2455.woff2",
+            "startTime": 178.40000009536743,
+            "responseEnd": 670.7000000476837,
+            "duration": 492.2999999523163,
+            "transferSize": 10428
+          },
+          {
+            "name": "http://127.0.0.1:49286/_next/static/chunks/2d1t0yk-040hb.css",
+            "startTime": 179.29999995231628,
+            "responseEnd": 446.10000014305115,
+            "duration": 266.80000019073486,
+            "transferSize": 4187
+          },
+          {
+            "name": "http://127.0.0.1:49286/_next/static/chunks/0qrsql1n38a68.css",
+            "startTime": 179.29999995231628,
+            "responseEnd": 828.2999999523163,
+            "duration": 649,
+            "transferSize": 20502
+          },
+          {
+            "name": "http://127.0.0.1:49286/_next/static/chunks/1nj6bpqcj_fa2.js",
+            "startTime": 179.5,
+            "responseEnd": 655.5,
+            "duration": 476,
+            "transferSize": 2317
+          },
+          {
+            "name": "http://127.0.0.1:49286/_next/static/chunks/0yxsr-1nszn8a.js",
+            "startTime": 179.5,
+            "responseEnd": 1016.2000000476837,
+            "duration": 836.7000000476837,
+            "transferSize": 9435
+          },
+          {
+            "name": "http://127.0.0.1:49286/_next/static/chunks/345og5_mioy7_.js",
+            "startTime": 179.5,
+            "responseEnd": 2435.2000000476837,
+            "duration": 2255.7000000476837,
+            "transferSize": 71881
+          },
+          {
+            "name": "http://127.0.0.1:49286/_next/static/chunks/turbopack-1sp6dkokukxu3.js",
+            "startTime": 179.90000009536743,
+            "responseEnd": 985.4000000953674,
+            "duration": 805.5,
+            "transferSize": 4587
+          },
+          {
+            "name": "http://127.0.0.1:49286/_next/static/chunks/07d7q-2qm1qpn.js",
+            "startTime": 179.90000009536743,
+            "responseEnd": 1054.2000000476837,
+            "duration": 874.2999999523163,
+            "transferSize": 6117
+          },
+          {
+            "name": "http://127.0.0.1:49286/_next/static/chunks/356th34vvq6wo.js",
+            "startTime": 179.90000009536743,
+            "responseEnd": 1933.5,
+            "duration": 1753.5999999046326,
+            "transferSize": 44059
+          },
+          {
+            "name": "http://127.0.0.1:49286/_next/static/chunks/2ur9viobhqe80.js",
+            "startTime": 180.10000014305115,
+            "responseEnd": 1023.1000001430511,
+            "duration": 843,
+            "transferSize": 1283
+          },
+          {
+            "name": "http://127.0.0.1:49286/_next/static/chunks/1y26empwqw1ru.js",
+            "startTime": 180.10000014305115,
+            "responseEnd": 1413.7000000476837,
+            "duration": 1233.5999999046326,
+            "transferSize": 10041
+          },
+          {
+            "name": "http://127.0.0.1:49286/_next/static/chunks/0824wwkefce3o.js",
+            "startTime": 180.10000014305115,
+            "responseEnd": 3415.600000143051,
+            "duration": 3235.5,
+            "transferSize": 160649
+          },
+          {
+            "name": "http://127.0.0.1:49286/_next/static/chunks/1qxtp47pwrdx_.js",
+            "startTime": 180.20000004768372,
+            "responseEnd": 3048.9000000953674,
+            "duration": 2868.7000000476837,
+            "transferSize": 108436
+          },
+          {
+            "name": "https://kit.fontawesome.com/44d855bf5c.css",
+            "startTime": 180.5,
+            "responseEnd": 430.40000009536743,
+            "duration": 249.90000009536743,
+            "transferSize": 0
+          },
+          {
+            "name": "https://ka-p.fontawesome.com/releases/v7.3.1/css/pro-v5-font-face.min.css?token=44d855bf5c",
+            "startTime": 431.5,
+            "responseEnd": 821.5,
+            "duration": 390,
+            "transferSize": 0
+          },
+          {
+            "name": "https://ka-p.fontawesome.com/releases/v7.3.1/css/pro-plus.min.css?token=44d855bf5c",
+            "startTime": 431.5,
+            "responseEnd": 2368.4000000953674,
+            "duration": 1936.9000000953674,
+            "transferSize": 0
+          },
+          {
+            "name": "https://ka-p.fontawesome.com/assets/44d855bf5c/122652816/custom-icons.css?token=44d855bf5c",
+            "startTime": 431.60000014305115,
+            "responseEnd": 715.5,
+            "duration": 283.89999985694885,
+            "transferSize": 0
+          }
+        ],
+        "longFrames": [
+          {
+            "startTime": 182.5,
+            "duration": 2234,
+            "renderStart": 2392.600000143051,
+            "styleAndLayoutStart": 2392.600000143051,
+            "blockingDuration": 0
+          },
+          {
+            "startTime": 2444.4000000953674,
+            "duration": 87.89999985694885,
+            "renderStart": 2532.2999999523163,
+            "styleAndLayoutStart": 2532.2999999523163,
+            "blockingDuration": 20.8
+          },
+          {
+            "startTime": 2726,
+            "duration": 129.70000004768372,
+            "renderStart": 2737.100000143051,
+            "styleAndLayoutStart": 2737.2999999523163,
+            "blockingDuration": 69.8
+          },
+          {
+            "startTime": 3105.2999999523163,
+            "duration": 60,
+            "renderStart": 3120.2000000476837,
+            "styleAndLayoutStart": 3120.2000000476837,
+            "blockingDuration": 0
+          },
+          {
+            "startTime": 3405.100000143051,
+            "duration": 129,
+            "renderStart": 3533.100000143051,
+            "styleAndLayoutStart": 3533.9000000953674,
+            "blockingDuration": 64.3
+          },
+          {
+            "startTime": 3756.2999999523163,
+            "duration": 262.40000009536743,
+            "renderStart": 3984.100000143051,
+            "styleAndLayoutStart": 3987,
+            "blockingDuration": 201.4
+          }
+        ],
+        "paints": [
+          {
+            "name": "first-paint",
+            "entryType": "paint",
+            "startTime": 2420,
+            "duration": 0,
+            "navigationId": 9877,
+            "paintTime": 2416.5,
+            "presentationTime": 2420
+          },
+          {
+            "name": "first-contentful-paint",
+            "entryType": "paint",
+            "startTime": 4096,
+            "duration": 0,
+            "navigationId": 9877,
+            "paintTime": 4085.4000000953674,
+            "presentationTime": 4096
+          }
+        ],
+        "diagnostic": {
+          "marks": [
+            {
+              "name": "dom-content-loaded",
+              "time": 2443.7999999523163
+            },
+            {
+              "name": "fonts-ready",
+              "time": 2444
+            },
+            {
+              "name": "phase",
+              "value": "ready",
+              "time": 4057.4000000953674
+            }
+          ],
+          "framesRecorded": 84,
+          "firstFrame": {
+            "time": 2386.4,
+            "gap": null
+          },
+          "lastFrame": {
+            "time": 4353,
+            "gap": 16.600000000000364
+          },
+          "gapsOver49Ms": [
+            {
+              "time": 2519.8,
+              "gap": 66.70000000000027
+            },
+            {
+              "time": 2853.1,
+              "gap": 116.69999999999982
+            },
+            {
+              "time": 3203.1,
+              "gap": 50
+            },
+            {
+              "time": 3253.1,
+              "gap": 50
+            },
+            {
+              "time": 3519.7,
+              "gap": 100
+            },
+            {
+              "time": 4019.7,
+              "gap": 250
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "errors": [],
+  "environment": {
+    "platform": "darwin",
+    "osRelease": "27.0.0",
+    "arch": "arm64",
+    "cpu": "Apple M1 Pro",
+    "cores": 10,
+    "browserVersion": "156.0.8078.4",
+    "node": "v22.23.2"
+  },
+  "rawArtifact": "test-results/grid-frame-diagnostic/results.json"
+}

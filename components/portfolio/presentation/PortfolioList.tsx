@@ -1,9 +1,12 @@
 import type { ComponentProps } from 'react'
 import { FiveByFive } from './FiveByFive'
 
-export function PortfolioList({ className, ...props }: ComponentProps<'ul'>) {
+export type PortfolioListVariant = 'bulleted' | 'divided'
+
+// Divided rows distinguish independent statements without a marker gutter.
+export function PortfolioList({ className, variant = 'bulleted', ...props }: ComponentProps<'ul'> & { variant?: PortfolioListVariant }) {
   return (
-    <ul {...props} role="list" className={`portfolio-list ${className ?? ''}`} />
+    <ul {...props} data-variant={variant} role="list" className={`portfolio-list ${className ?? ''}`} />
   )
 }
 

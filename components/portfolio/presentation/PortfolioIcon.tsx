@@ -6,6 +6,8 @@ const ICON_CLASSES = {
   left: 'fa-caret-left',
   right: 'fa-caret-right',
   close: 'fa-xmark',
+  collapse: 'fa-minus-large',
+  notes: 'fa-notes',
   replay: 'fa-arrow-rotate-left',
   system: 'fa-display',
   light: 'fa-sun',

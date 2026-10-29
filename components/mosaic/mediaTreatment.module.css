@@ -1,0 +1,16 @@
+/* Keep the portrait treatment consistent in covers, gallery images and snapshots. */
+.image[src$='/portrait.jpg'],
+.surface img[src$='/portrait.jpg'] {
+  filter: grayscale(1);
+}
+
+.clip {
+  display: contents;
+}
+
+.clip :is(img, video, canvas),
+.masked {
+  mask-image: var(--mosaic-media-mask, none);
+  mask-size: 100% 100%;
+  mask-repeat: no-repeat;
+}

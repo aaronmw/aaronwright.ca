@@ -85,7 +85,8 @@ body {
 html[data-portfolio-theme='dark'] {
   /* Foreground accent for text and functional controls. */
   --portfolio-accent: var(--portfolio-red-500);
-  --portfolio-surface: var(--portfolio-neutral-950);
+  --portfolio-surface-dark: var(--portfolio-neutral-950);
+  --portfolio-surface: var(--portfolio-surface-dark);
   --portfolio-text: var(--portfolio-neutral-50);
   --portfolio-text-body: var(--portfolio-neutral-300);
   --portfolio-text-dimmed: var(--portfolio-neutral-400);
@@ -763,8 +764,8 @@ button {
 
 .portfolio-list > li {
   display: grid;
-  grid-template-columns: var(--portfolio-logo-size) minmax(0, 1fr);
-  column-gap: calc(var(--portfolio-logo-size) / 2);
+  grid-template-columns: var(--portfolio-list-marker-size, var(--portfolio-logo-size)) minmax(0, 1fr);
+  column-gap: calc(var(--portfolio-list-marker-size, var(--portfolio-logo-size)) / 2);
   margin-block: 0;
   padding: 0;
 }
@@ -780,6 +781,23 @@ button {
   block-size: 1lh;
   color: var(--portfolio-accent-decoration);
   transform: translateY(-0.125em);
+}
+
+/* Separated statement rows share the list primitive, without bullet spacing. */
+.portfolio-list[data-variant='divided'] {
+  row-gap: 0;
+  color: var(--portfolio-text-dimmed);
+}
+
+.portfolio-list[data-variant='divided'] > li {
+  display: block;
+  margin-inline: -12px;
+  padding: 0.25lh 12px;
+  border-top: 1px solid color-mix(in srgb, var(--portfolio-accent-decoration) 50%, transparent);
+}
+
+.portfolio-list[data-variant='divided'] > li > .portfolio-list-bullet {
+  display: none;
 }
 
 .portfolio-markdown :where(code)::before,

@@ -1,0 +1,905 @@
+{
+  "schema": 1,
+  "id": "2026-10-28T22-47-40-450Z",
+  "createdAt": "2026-10-28T22:47:40.451Z",
+  "commit": "b9fcafc3b23b9eea96d9d73eb8b1ef152f027a67",
+  "sourceHash": "bcf41dadedb085498852eb2419e20e347d95c20d44bea1d743cbf58709c8531f",
+  "configHash": "0e568e89ded990e796ef9876a3e6a70f60b31a889b2d533c99665a39b08d0f8b",
+  "mode": "release",
+  "environment": {
+    "platform": "darwin",
+    "osRelease": "27.0.0",
+    "arch": "arm64",
+    "cpu": "Apple M1 Pro",
+    "cores": 10,
+    "browserVersion": "156.0.8078.4",
+    "node": "v22.23.2"
+  },
+  "checks": {
+    "unit": true,
+    "browser": false
+  },
+  "samples": [
+    {
+      "profile": "desktop",
+      "repetition": 1,
+      "task": "cold-entry",
+      "durationMs": 1053.1000001430511,
+      "maxLongTaskMs": 62,
+      "maxLongFrameMs": 363.7000000476837,
+      "frameGapP95Ms": 66.59999999999997,
+      "framesSampled": 32,
+      "frameGapsOver50Ms": 2
+    },
+    {
+      "profile": "desktop",
+      "repetition": 1,
+      "task": "choose-project",
+      "durationMs": 1644.7999999523163,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 16.800000000000182,
+      "framesSampled": 97,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "desktop",
+      "repetition": 1,
+      "task": "horizontal-gesture",
+      "durationMs": 1963.7000000476837,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 16.700000000000728,
+      "framesSampled": 117,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "desktop",
+      "repetition": 1,
+      "task": "image-viewer",
+      "durationMs": 1833.4000000953674,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 16.800000000000182,
+      "framesSampled": 109,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "desktop",
+      "repetition": 1,
+      "task": "vertical-navigation",
+      "durationMs": 3441.9000000953674,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 16.700000000000728,
+      "framesSampled": 206,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "desktop",
+      "repetition": 1,
+      "task": "appearance",
+      "durationMs": 497.7999999523163,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 16.700000000000728,
+      "framesSampled": 29,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "desktop",
+      "repetition": 2,
+      "task": "cold-entry",
+      "durationMs": 911.6999998092651,
+      "maxLongTaskMs": 56,
+      "maxLongFrameMs": 269.40000009536743,
+      "frameGapP95Ms": 50,
+      "framesSampled": 32,
+      "frameGapsOver50Ms": 1
+    },
+    {
+      "profile": "desktop",
+      "repetition": 2,
+      "task": "choose-project",
+      "durationMs": 1642.5999999046326,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 16.799999999999955,
+      "framesSampled": 97,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "desktop",
+      "repetition": 2,
+      "task": "horizontal-gesture",
+      "durationMs": 1983.5999999046326,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 16.799999999999727,
+      "framesSampled": 118,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "desktop",
+      "repetition": 2,
+      "task": "image-viewer",
+      "durationMs": 1833.2999999523163,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 16.700000000000728,
+      "framesSampled": 109,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "desktop",
+      "repetition": 2,
+      "task": "vertical-navigation",
+      "durationMs": 3440.300000190735,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 16.800000000000182,
+      "framesSampled": 206,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "desktop",
+      "repetition": 2,
+      "task": "appearance",
+      "durationMs": 515.8999998569489,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 16.700000000000728,
+      "framesSampled": 30,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "desktop",
+      "repetition": 3,
+      "task": "cold-entry",
+      "durationMs": 900.5999999046326,
+      "maxLongTaskMs": 57,
+      "maxLongFrameMs": 260.10000014305115,
+      "frameGapP95Ms": 50.099999999999966,
+      "framesSampled": 31,
+      "frameGapsOver50Ms": 2
+    },
+    {
+      "profile": "desktop",
+      "repetition": 3,
+      "task": "choose-project",
+      "durationMs": 1624.5,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 16.799999999999955,
+      "framesSampled": 96,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "desktop",
+      "repetition": 3,
+      "task": "horizontal-gesture",
+      "durationMs": 1999.3000001907349,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 16.800000000000182,
+      "framesSampled": 119,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "desktop",
+      "repetition": 3,
+      "task": "image-viewer",
+      "durationMs": 1801.9000000953674,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 16.700000000000728,
+      "framesSampled": 107,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "desktop",
+      "repetition": 3,
+      "task": "vertical-navigation",
+      "durationMs": 3473.7999999523163,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 16.700000000000728,
+      "framesSampled": 208,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "desktop",
+      "repetition": 3,
+      "task": "appearance",
+      "durationMs": 483.09999990463257,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 16.799999999999272,
+      "framesSampled": 28,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "small-laptop-slow",
+      "repetition": 1,
+      "task": "cold-entry",
+      "durationMs": 5191.5,
+      "maxLongTaskMs": 285,
+      "maxLongFrameMs": 2503.800000190735,
+      "frameGapP95Ms": 66.69999999999982,
+      "framesSampled": 97,
+      "frameGapsOver50Ms": 5
+    },
+    {
+      "profile": "small-laptop-slow",
+      "repetition": 1,
+      "task": "choose-project",
+      "durationMs": 1653.2999999523163,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 70.79999995231628,
+      "frameGapP95Ms": 16.799999999999272,
+      "framesSampled": 94,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "small-laptop-slow",
+      "repetition": 1,
+      "task": "horizontal-gesture",
+      "durationMs": 9015.799999952316,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 50.5,
+      "frameGapP95Ms": 16.700000000000728,
+      "framesSampled": 538,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "small-laptop-slow",
+      "repetition": 1,
+      "task": "image-viewer",
+      "durationMs": 2096.7999999523163,
+      "maxLongTaskMs": 57,
+      "maxLongFrameMs": 72,
+      "frameGapP95Ms": 16.799999999999272,
+      "framesSampled": 119,
+      "frameGapsOver50Ms": 1
+    },
+    {
+      "profile": "small-laptop-slow",
+      "repetition": 1,
+      "task": "vertical-navigation",
+      "durationMs": 2626,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 57.299999952316284,
+      "frameGapP95Ms": 16.799999999999272,
+      "framesSampled": 155,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "small-laptop-slow",
+      "repetition": 1,
+      "task": "appearance",
+      "durationMs": 702.7999999523163,
+      "maxLongTaskMs": 88,
+      "maxLongFrameMs": 110.5,
+      "frameGapP95Ms": 83.29999999999927,
+      "framesSampled": 23,
+      "frameGapsOver50Ms": 4
+    },
+    {
+      "profile": "small-laptop-slow",
+      "repetition": 2,
+      "task": "cold-entry",
+      "durationMs": 5007.200000047684,
+      "maxLongTaskMs": 290,
+      "maxLongFrameMs": 2579.199999809265,
+      "frameGapP95Ms": 50,
+      "framesSampled": 85,
+      "frameGapsOver50Ms": 4
+    },
+    {
+      "profile": "small-laptop-slow",
+      "repetition": 2,
+      "task": "choose-project",
+      "durationMs": 1638.7999999523163,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 79.20000004768372,
+      "frameGapP95Ms": 16.700000000000728,
+      "framesSampled": 94,
+      "frameGapsOver50Ms": 1
+    },
+    {
+      "profile": "small-laptop-slow",
+      "repetition": 2,
+      "task": "horizontal-gesture",
+      "durationMs": 9071.600000143051,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 16.700000000000728,
+      "framesSampled": 542,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "small-laptop-slow",
+      "repetition": 2,
+      "task": "image-viewer",
+      "durationMs": 2067.600000143051,
+      "maxLongTaskMs": 57,
+      "maxLongFrameMs": 71.5,
+      "frameGapP95Ms": 16.799999999999272,
+      "framesSampled": 118,
+      "frameGapsOver50Ms": 1
+    },
+    {
+      "profile": "small-laptop-slow",
+      "repetition": 2,
+      "task": "vertical-navigation",
+      "durationMs": 2667.7000000476837,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 62.40000009536743,
+      "frameGapP95Ms": 16.799999999999272,
+      "framesSampled": 157,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "small-laptop-slow",
+      "repetition": 2,
+      "task": "appearance",
+      "durationMs": 717.7000000476837,
+      "maxLongTaskMs": 101,
+      "maxLongFrameMs": 112,
+      "frameGapP95Ms": 83.30000000000291,
+      "framesSampled": 24,
+      "frameGapsOver50Ms": 3
+    },
+    {
+      "profile": "small-laptop-slow",
+      "repetition": 3,
+      "task": "cold-entry",
+      "durationMs": 5238,
+      "maxLongTaskMs": 295,
+      "maxLongFrameMs": 2532.7000000476837,
+      "frameGapP95Ms": 66.59999999999991,
+      "framesSampled": 96,
+      "frameGapsOver50Ms": 5
+    },
+    {
+      "profile": "small-laptop-slow",
+      "repetition": 3,
+      "task": "choose-project",
+      "durationMs": 1640.4000000953674,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 80.70000004768372,
+      "frameGapP95Ms": 16.800000000000182,
+      "framesSampled": 93,
+      "frameGapsOver50Ms": 1
+    },
+    {
+      "profile": "small-laptop-slow",
+      "repetition": 3,
+      "task": "horizontal-gesture",
+      "durationMs": 9087.399999856949,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 50.30000019073486,
+      "frameGapP95Ms": 16.799999999999272,
+      "framesSampled": 542,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "small-laptop-slow",
+      "repetition": 3,
+      "task": "image-viewer",
+      "durationMs": 2118.4000000953674,
+      "maxLongTaskMs": 70,
+      "maxLongFrameMs": 85.5,
+      "frameGapP95Ms": 16.80000000000291,
+      "framesSampled": 118,
+      "frameGapsOver50Ms": 1
+    },
+    {
+      "profile": "small-laptop-slow",
+      "repetition": 3,
+      "task": "vertical-navigation",
+      "durationMs": 2664.800000190735,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 61.60000014305115,
+      "frameGapP95Ms": 16.799999999999272,
+      "framesSampled": 157,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "small-laptop-slow",
+      "repetition": 3,
+      "task": "appearance",
+      "durationMs": 755.5999999046326,
+      "maxLongTaskMs": 106,
+      "maxLongFrameMs": 117.29999995231628,
+      "frameGapP95Ms": 100.10000000000218,
+      "framesSampled": 27,
+      "frameGapsOver50Ms": 2
+    },
+    {
+      "profile": "phone-portrait-slow",
+      "repetition": 1,
+      "task": "cold-entry",
+      "durationMs": 4792.299999952316,
+      "maxLongTaskMs": 203,
+      "maxLongFrameMs": 2519.2000000476837,
+      "frameGapP95Ms": 100,
+      "framesSampled": 80,
+      "frameGapsOver50Ms": 5
+    },
+    {
+      "profile": "phone-portrait-slow",
+      "repetition": 1,
+      "task": "choose-project",
+      "durationMs": 1676.4000000953674,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 16.800000000000182,
+      "framesSampled": 96,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "phone-portrait-slow",
+      "repetition": 1,
+      "task": "horizontal-gesture",
+      "durationMs": 8760.5,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 16.700000000000728,
+      "framesSampled": 525,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "phone-portrait-slow",
+      "repetition": 1,
+      "task": "image-viewer",
+      "durationMs": 2097.100000143051,
+      "maxLongTaskMs": 60,
+      "maxLongFrameMs": 71.40000009536743,
+      "frameGapP95Ms": 16.80000000000109,
+      "framesSampled": 120,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "phone-portrait-slow",
+      "repetition": 1,
+      "task": "vertical-navigation",
+      "durationMs": 3542.9000000953674,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 16.799999999999272,
+      "framesSampled": 212,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "phone-portrait-slow",
+      "repetition": 1,
+      "task": "appearance",
+      "durationMs": 771.5999999046326,
+      "maxLongTaskMs": 84,
+      "maxLongFrameMs": 98.89999985694885,
+      "frameGapP95Ms": 83.39999999999782,
+      "framesSampled": 29,
+      "frameGapsOver50Ms": 2
+    },
+    {
+      "profile": "phone-portrait-slow",
+      "repetition": 2,
+      "task": "cold-entry",
+      "durationMs": 4673.400000095367,
+      "maxLongTaskMs": 194,
+      "maxLongFrameMs": 2505.699999809265,
+      "frameGapP95Ms": 100,
+      "framesSampled": 74,
+      "frameGapsOver50Ms": 6
+    },
+    {
+      "profile": "phone-portrait-slow",
+      "repetition": 2,
+      "task": "choose-project",
+      "durationMs": 1650.2999999523163,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 16.800000000000182,
+      "framesSampled": 97,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "phone-portrait-slow",
+      "repetition": 2,
+      "task": "horizontal-gesture",
+      "durationMs": 8781.699999809265,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 16.799999999999272,
+      "framesSampled": 526,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "phone-portrait-slow",
+      "repetition": 2,
+      "task": "image-viewer",
+      "durationMs": 2098.7000000476837,
+      "maxLongTaskMs": 54,
+      "maxLongFrameMs": 64.79999995231628,
+      "frameGapP95Ms": 16.700000000000728,
+      "framesSampled": 121,
+      "frameGapsOver50Ms": 1
+    },
+    {
+      "profile": "phone-portrait-slow",
+      "repetition": 2,
+      "task": "vertical-navigation",
+      "durationMs": 3563.2999999523163,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 16.799999999999272,
+      "framesSampled": 213,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "phone-portrait-slow",
+      "repetition": 2,
+      "task": "appearance",
+      "durationMs": 712.0999999046326,
+      "maxLongTaskMs": 81,
+      "maxLongFrameMs": 94.79999995231628,
+      "frameGapP95Ms": 66.70000000000073,
+      "framesSampled": 24,
+      "frameGapsOver50Ms": 3
+    },
+    {
+      "profile": "phone-portrait-slow",
+      "repetition": 3,
+      "task": "cold-entry",
+      "durationMs": 5008.100000143051,
+      "maxLongTaskMs": 183,
+      "maxLongFrameMs": 2533.899999856949,
+      "frameGapP95Ms": 83.39999999999964,
+      "framesSampled": 92,
+      "frameGapsOver50Ms": 5
+    },
+    {
+      "profile": "phone-portrait-slow",
+      "repetition": 3,
+      "task": "choose-project",
+      "durationMs": 1646.3999998569489,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 16.800000000000182,
+      "framesSampled": 97,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "phone-portrait-slow",
+      "repetition": 3,
+      "task": "horizontal-gesture",
+      "durationMs": 8736.5,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 16.700000000000728,
+      "framesSampled": 523,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "phone-portrait-slow",
+      "repetition": 3,
+      "task": "image-viewer",
+      "durationMs": 2082.5,
+      "maxLongTaskMs": 54,
+      "maxLongFrameMs": 65.90000009536743,
+      "frameGapP95Ms": 16.799999999999272,
+      "framesSampled": 119,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "phone-portrait-slow",
+      "repetition": 3,
+      "task": "vertical-navigation",
+      "durationMs": 3510.7999999523163,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 16.799999999999272,
+      "framesSampled": 210,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "phone-portrait-slow",
+      "repetition": 3,
+      "task": "appearance",
+      "durationMs": 786.8000001907349,
+      "maxLongTaskMs": 82,
+      "maxLongFrameMs": 96.10000014305115,
+      "frameGapP95Ms": 83.29999999999927,
+      "framesSampled": 30,
+      "frameGapsOver50Ms": 2
+    },
+    {
+      "profile": "phone-landscape-slow",
+      "repetition": 1,
+      "task": "cold-entry",
+      "durationMs": 4775,
+      "maxLongTaskMs": 306,
+      "maxLongFrameMs": 2538.5,
+      "frameGapP95Ms": 83.40000000000009,
+      "framesSampled": 67,
+      "frameGapsOver50Ms": 6
+    },
+    {
+      "profile": "phone-landscape-slow",
+      "repetition": 1,
+      "task": "choose-project",
+      "durationMs": 1671.6000001430511,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 16.800000000000182,
+      "framesSampled": 97,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "phone-landscape-slow",
+      "repetition": 1,
+      "task": "horizontal-gesture",
+      "durationMs": 8858.200000047684,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 16.700000000000728,
+      "framesSampled": 531,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "phone-landscape-slow",
+      "repetition": 1,
+      "task": "image-viewer",
+      "durationMs": 2118.4000000953674,
+      "maxLongTaskMs": 62,
+      "maxLongFrameMs": 74,
+      "frameGapP95Ms": 16.799999999999272,
+      "framesSampled": 121,
+      "frameGapsOver50Ms": 1
+    },
+    {
+      "profile": "phone-landscape-slow",
+      "repetition": 1,
+      "task": "vertical-navigation",
+      "durationMs": 3298.2000000476837,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 16.700000000000728,
+      "framesSampled": 197,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "phone-landscape-slow",
+      "repetition": 1,
+      "task": "appearance",
+      "durationMs": 688.5,
+      "maxLongTaskMs": 80,
+      "maxLongFrameMs": 96.59999990463257,
+      "frameGapP95Ms": 83.29999999999927,
+      "framesSampled": 24,
+      "frameGapsOver50Ms": 3
+    },
+    {
+      "profile": "phone-landscape-slow",
+      "repetition": 2,
+      "task": "cold-entry",
+      "durationMs": 5207.200000047684,
+      "maxLongTaskMs": 287,
+      "maxLongFrameMs": 2516.2999999523163,
+      "frameGapP95Ms": 83.29999999999973,
+      "framesSampled": 96,
+      "frameGapsOver50Ms": 5
+    },
+    {
+      "profile": "phone-landscape-slow",
+      "repetition": 2,
+      "task": "choose-project",
+      "durationMs": 1671,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 16.700000000000728,
+      "framesSampled": 98,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "phone-landscape-slow",
+      "repetition": 2,
+      "task": "horizontal-gesture",
+      "durationMs": 8833.200000047684,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 16.700000000000728,
+      "framesSampled": 529,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "phone-landscape-slow",
+      "repetition": 2,
+      "task": "image-viewer",
+      "durationMs": 2146.100000143051,
+      "maxLongTaskMs": 54,
+      "maxLongFrameMs": 65,
+      "frameGapP95Ms": 16.799999999999272,
+      "framesSampled": 122,
+      "frameGapsOver50Ms": 1
+    },
+    {
+      "profile": "phone-landscape-slow",
+      "repetition": 2,
+      "task": "vertical-navigation",
+      "durationMs": 3327.7999999523163,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 16.700000000000728,
+      "framesSampled": 199,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "phone-landscape-slow",
+      "repetition": 2,
+      "task": "appearance",
+      "durationMs": 769.7999999523163,
+      "maxLongTaskMs": 87,
+      "maxLongFrameMs": 103.5,
+      "frameGapP95Ms": 83.29999999999927,
+      "framesSampled": 27,
+      "frameGapsOver50Ms": 4
+    },
+    {
+      "profile": "phone-landscape-slow",
+      "repetition": 3,
+      "task": "cold-entry",
+      "durationMs": 5058,
+      "maxLongTaskMs": 292,
+      "maxLongFrameMs": 2557.2999999523163,
+      "frameGapP95Ms": 50.100000000000364,
+      "framesSampled": 92,
+      "frameGapsOver50Ms": 5
+    },
+    {
+      "profile": "phone-landscape-slow",
+      "repetition": 3,
+      "task": "choose-project",
+      "durationMs": 1668.7999999523163,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 16.800000000000182,
+      "framesSampled": 98,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "phone-landscape-slow",
+      "repetition": 3,
+      "task": "horizontal-gesture",
+      "durationMs": 8862.200000047684,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 16.799999999999272,
+      "framesSampled": 531,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "phone-landscape-slow",
+      "repetition": 3,
+      "task": "image-viewer",
+      "durationMs": 2130.2000000476837,
+      "maxLongTaskMs": 62,
+      "maxLongFrameMs": 74.5,
+      "frameGapP95Ms": 16.80000000000109,
+      "framesSampled": 122,
+      "frameGapsOver50Ms": 1
+    },
+    {
+      "profile": "phone-landscape-slow",
+      "repetition": 3,
+      "task": "vertical-navigation",
+      "durationMs": 3344.100000143051,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 16.700000000000728,
+      "framesSampled": 200,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "phone-landscape-slow",
+      "repetition": 3,
+      "task": "appearance",
+      "durationMs": 718.5999999046326,
+      "maxLongTaskMs": 92,
+      "maxLongFrameMs": 107.20000004768372,
+      "frameGapP95Ms": 83.30000000000291,
+      "framesSampled": 24,
+      "frameGapsOver50Ms": 3
+    }
+  ],
+  "errors": [],
+  "failures": [
+    "Unit or cross-browser checks did not pass.",
+    "Measurement environment changed. Recalibrate on the same machine/browser before comparing."
+  ],
+  "status": "blocked",
+  "buildId": "AQfI22Iijh7oDdkCVS8EO",
+  "baseURL": "http://127.0.0.1:51045",
+  "browserResults": {
+    "startTime": "2026-10-28T22:48:00.256Z",
+    "duration": 369466.28,
+    "expected": 132,
+    "skipped": 14,
+    "unexpected": 14,
+    "flaky": 0,
+    "failures": [
+      {
+        "project": "webkit-desktop",
+        "task": "grid videos load inline, pause behind the viewer, and retain their separate media",
+        "error": "Error: expect(received).toBe(expected) // Object.is equality\n\nExpected: true\nReceived: false\n\nCall Log:\n- Timeout 15000ms exceeded while waiting on the predicate"
+      },
+      {
+        "project": "webkit-iphone-portrait",
+        "task": "grid videos load inline, pause behind the viewer, and retain their separate media",
+        "error": "Error: expect(received).toBe(expected) // Object.is equality\n\nExpected: true\nReceived: false\n\nCall Log:\n- Timeout 15000ms exceeded while waiting on the predicate"
+      },
+      {
+        "project": "webkit-iphone-landscape",
+        "task": "grid videos load inline, pause behind the viewer, and retain their separate media",
+        "error": "Error: expect(received).toBe(expected) // Object.is equality\n\nExpected: true\nReceived: false\n\nCall Log:\n- Timeout 15000ms exceeded while waiting on the predicate"
+      },
+      {
+        "project": "chromium-desktop",
+        "task": "/grid-version opens the first slide without navigation or zoom and preserves Back/Forward",
+        "error": "Error: expect(locator).toBeVisible() failed\n\nLocator: getByRole('dialog')\nExpected: visible\nTimeout: 8000ms\nError: element(s) not found\n\nCall log:\n  - Expect \"toBeVisible\" getByRole('dialog') with timeout 8000ms\n  - waiting for getByRole('dialog')\n"
+      },
+      {
+        "project": "chromium-desktop",
+        "task": "/grid-version closes a reduced-motion direct link on its own route",
+        "error": "Error: expect(locator).toBeFocused() failed\n\nLocator:  locator('[data-mosaic-project=\"nextphrase-dot-app\"]')\nExpected: focused\nReceived: inactive\nTimeout:  8000ms\n\nCall log:\n  - Expect \"toBeFocused\" locator('[data-mosaic-project=\"nextphrase-dot-app\"]') with timeout 8000ms\n  - waiting for locator('[data-mosaic-project=\"nextphrase-dot-app\"]')\n    20 × locator resolved to <button type=\"button\" class=\"ITTJxa_tile\" aria-haspopup=\"dialog\" aria-describedby=\"_R_tanpfdb_\" aria-label=\"View NextPhrase media\" data-mosaic-project=\"nextphrase-dot-app\">…</button>\n       - unexpected value \"inactive\"\n"
+      },
+      {
+        "project": "webkit-desktop",
+        "task": "/grid-version opens the first slide without navigation or zoom and preserves Back/Forward",
+        "error": "Error: expect(locator).toBeVisible() failed\n\nLocator: getByRole('dialog')\nExpected: visible\nTimeout: 8000ms\nError: element(s) not found\n\nCall log:\n  - Expect \"toBeVisible\" getByRole('dialog') with timeout 8000ms\n  - waiting for getByRole('dialog')\n"
+      },
+      {
+        "project": "webkit-desktop",
+        "task": "/grid-version closes a reduced-motion direct link on its own route",
+        "error": "Error: expect(locator).toBeFocused() failed\n\nLocator:  locator('[data-mosaic-project=\"nextphrase-dot-app\"]')\nExpected: focused\nReceived: inactive\nTimeout:  8000ms\n\nCall log:\n  - Expect \"toBeFocused\" locator('[data-mosaic-project=\"nextphrase-dot-app\"]') with timeout 8000ms\n  - waiting for locator('[data-mosaic-project=\"nextphrase-dot-app\"]')\n    19 × locator resolved to <button type=\"button\" class=\"ITTJxa_tile\" aria-haspopup=\"dialog\" aria-describedby=\"_R_tanpfdb_\" aria-label=\"View NextPhrase media\" data-mosaic-project=\"nextphrase-dot-app\">…</button>\n       - unexpected value \"inactive\"\n"
+      },
+      {
+        "project": "webkit-desktop",
+        "task": "legacy v2 redirects with gallery and unrelated query parameters intact",
+        "error": "Test timeout of 30000ms exceeded."
+      },
+      {
+        "project": "webkit-iphone-portrait",
+        "task": "/grid-version opens the first slide without navigation or zoom and preserves Back/Forward",
+        "error": "Error: expect(locator).toBeVisible() failed\n\nLocator: getByRole('dialog')\nExpected: visible\nTimeout: 8000ms\nError: element(s) not found\n\nCall log:\n  - Expect \"toBeVisible\" getByRole('dialog') with timeout 8000ms\n  - waiting for getByRole('dialog')\n"
+      },
+      {
+        "project": "webkit-iphone-portrait",
+        "task": "/grid-version closes a reduced-motion direct link on its own route",
+        "error": "Error: expect(locator).toBeFocused() failed\n\nLocator:  locator('[data-mosaic-project=\"nextphrase-dot-app\"]')\nExpected: focused\nReceived: inactive\nTimeout:  8000ms\n\nCall log:\n  - Expect \"toBeFocused\" locator('[data-mosaic-project=\"nextphrase-dot-app\"]') with timeout 8000ms\n  - waiting for locator('[data-mosaic-project=\"nextphrase-dot-app\"]')\n    20 × locator resolved to <button type=\"button\" class=\"ITTJxa_tile\" aria-haspopup=\"dialog\" aria-describedby=\"_R_tanpfdb_\" aria-label=\"View NextPhrase media\" data-mosaic-project=\"nextphrase-dot-app\">…</button>\n       - unexpected value \"inactive\"\n"
+      },
+      {
+        "project": "webkit-iphone-portrait",
+        "task": "legacy v2 redirects with gallery and unrelated query parameters intact",
+        "error": "Test timeout of 30000ms exceeded."
+      },
+      {
+        "project": "webkit-iphone-landscape",
+        "task": "/grid-version opens the first slide without navigation or zoom and preserves Back/Forward",
+        "error": "Error: expect(locator).toBeVisible() failed\n\nLocator: getByRole('dialog')\nExpected: visible\nTimeout: 8000ms\nError: element(s) not found\n\nCall log:\n  - Expect \"toBeVisible\" getByRole('dialog') with timeout 8000ms\n  - waiting for getByRole('dialog')\n"
+      },
+      {
+        "project": "webkit-iphone-landscape",
+        "task": "/grid-version closes a reduced-motion direct link on its own route",
+        "error": "Error: expect(locator).toBeFocused() failed\n\nLocator:  locator('[data-mosaic-project=\"nextphrase-dot-app\"]')\nExpected: focused\nReceived: inactive\nTimeout:  8000ms\n\nCall log:\n  - Expect \"toBeFocused\" locator('[data-mosaic-project=\"nextphrase-dot-app\"]') with timeout 8000ms\n  - waiting for locator('[data-mosaic-project=\"nextphrase-dot-app\"]')\n    20 × locator resolved to <button type=\"button\" class=\"ITTJxa_tile\" aria-haspopup=\"dialog\" aria-describedby=\"_R_tanpfdb_\" aria-label=\"View NextPhrase media\" data-mosaic-project=\"nextphrase-dot-app\">…</button>\n       - unexpected value \"inactive\"\n"
+      },
+      {
+        "project": "webkit-iphone-landscape",
+        "task": "legacy v2 redirects with gallery and unrelated query parameters intact",
+        "error": "Test timeout of 30000ms exceeded."
+      }
+    ]
+  },
+  "completedAt": "2026-10-28T22:57:56.345Z"
+}

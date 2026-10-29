@@ -1,0 +1,44 @@
+.portrait {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+}
+
+.portrait img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.hoverPortrait {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--portfolio-motion-state, 200ms) ease-out;
+}
+
+:global(button:focus-visible) .portrait .hoverPortrait[data-ready] {
+  opacity: 1;
+}
+
+@media (hover: hover) {
+  /* Grid media ignores pointer events; its tile owns the hover target. */
+  :global([data-mosaic-project]:hover) .portrait .hoverPortrait[data-ready],
+  .portrait:hover .hoverPortrait[data-ready] {
+    opacity: 1;
+  }
+}
+
+@media (hover: none) {
+  .portrait [data-mosaic-about-portrait] ~ .hoverPortrait[data-ready] {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hoverPortrait {
+    transition: none;
+  }
+}

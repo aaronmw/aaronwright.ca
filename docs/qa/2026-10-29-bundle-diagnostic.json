@@ -1,0 +1,173 @@
+{
+  "mode": "bounded-diagnostic",
+  "configHash": "0e568e89ded990e796ef9876a3e6a70f60b31a889b2d533c99665a39b08d0f8b",
+  "createdAt": "2026-10-29T17:55:20.937Z",
+  "builds": {
+    "reference": {
+      "cwd": "/Users/aaronwright/.codex/worktrees/grid-release-reference/aaronwright-dot-ca",
+      "url": "http://127.0.0.1:56177",
+      "buildId": "1U4dWcr4D-ubFbsYEr1Xa"
+    },
+    "candidate": {
+      "cwd": "/Users/aaronwright/.codex/worktrees/grid-dependency-control/aaronwright-dot-ca",
+      "url": "http://127.0.0.1:56183",
+      "buildId": "-IvbXnJJMRPvrntVFDuBN"
+    }
+  },
+  "samples": [
+    {
+      "build": "reference",
+      "profile": "small-laptop-slow",
+      "repetition": 1,
+      "task": "cold-entry",
+      "durationMs": 5025.899999856949,
+      "maxLongTaskMs": 256,
+      "maxLongFrameMs": 2322.2999999523163,
+      "frameGapP95Ms": 83.30000000000018,
+      "framesSampled": 92,
+      "frameGapsOver50Ms": 6
+    },
+    {
+      "build": "candidate",
+      "profile": "small-laptop-slow",
+      "repetition": 1,
+      "task": "cold-entry",
+      "durationMs": 5241.299999952316,
+      "maxLongTaskMs": 259,
+      "maxLongFrameMs": 2876.7000000476837,
+      "frameGapP95Ms": 66.69999999999982,
+      "framesSampled": 85,
+      "frameGapsOver50Ms": 6
+    },
+    {
+      "build": "candidate",
+      "profile": "small-laptop-slow",
+      "repetition": 2,
+      "task": "cold-entry",
+      "durationMs": 5169.899999856949,
+      "maxLongTaskMs": 242,
+      "maxLongFrameMs": 2886.100000143051,
+      "frameGapP95Ms": 83.30000000000018,
+      "framesSampled": 82,
+      "frameGapsOver50Ms": 5
+    },
+    {
+      "build": "reference",
+      "profile": "small-laptop-slow",
+      "repetition": 2,
+      "task": "cold-entry",
+      "durationMs": 4656.5,
+      "maxLongTaskMs": 258,
+      "maxLongFrameMs": 2580,
+      "frameGapP95Ms": 66.59999999999991,
+      "framesSampled": 69,
+      "frameGapsOver50Ms": 5
+    },
+    {
+      "build": "reference",
+      "profile": "small-laptop-slow",
+      "repetition": 3,
+      "task": "cold-entry",
+      "durationMs": 4907.599999904633,
+      "maxLongTaskMs": 250,
+      "maxLongFrameMs": 2569.199999809265,
+      "frameGapP95Ms": 83.30000000000018,
+      "framesSampled": 82,
+      "frameGapsOver50Ms": 5
+    },
+    {
+      "build": "candidate",
+      "profile": "small-laptop-slow",
+      "repetition": 3,
+      "task": "cold-entry",
+      "durationMs": 5255.700000047684,
+      "maxLongTaskMs": 240,
+      "maxLongFrameMs": 2877.5999999046326,
+      "frameGapP95Ms": 100,
+      "framesSampled": 83,
+      "frameGapsOver50Ms": 5
+    },
+    {
+      "build": "reference",
+      "profile": "phone-landscape-slow",
+      "repetition": 1,
+      "task": "cold-entry",
+      "durationMs": 4890.900000095367,
+      "maxLongTaskMs": 240,
+      "maxLongFrameMs": 2579,
+      "frameGapP95Ms": 66.59999999999991,
+      "framesSampled": 84,
+      "frameGapsOver50Ms": 5
+    },
+    {
+      "build": "candidate",
+      "profile": "phone-landscape-slow",
+      "repetition": 1,
+      "task": "cold-entry",
+      "durationMs": 5348.900000095367,
+      "maxLongTaskMs": 257,
+      "maxLongFrameMs": 2889.5,
+      "frameGapP95Ms": 66.59999999999991,
+      "framesSampled": 85,
+      "frameGapsOver50Ms": 6
+    },
+    {
+      "build": "candidate",
+      "profile": "phone-landscape-slow",
+      "repetition": 2,
+      "task": "cold-entry",
+      "durationMs": 5232.800000190735,
+      "maxLongTaskMs": 243,
+      "maxLongFrameMs": 2899.7000000476837,
+      "frameGapP95Ms": 100,
+      "framesSampled": 80,
+      "frameGapsOver50Ms": 5
+    },
+    {
+      "build": "reference",
+      "profile": "phone-landscape-slow",
+      "repetition": 2,
+      "task": "cold-entry",
+      "durationMs": 4933.200000047684,
+      "maxLongTaskMs": 238,
+      "maxLongFrameMs": 2573.9000000953674,
+      "frameGapP95Ms": 66.70000000000027,
+      "framesSampled": 88,
+      "frameGapsOver50Ms": 5
+    },
+    {
+      "build": "reference",
+      "profile": "phone-landscape-slow",
+      "repetition": 3,
+      "task": "cold-entry",
+      "durationMs": 4913.299999952316,
+      "maxLongTaskMs": 244,
+      "maxLongFrameMs": 2587.7000000476837,
+      "frameGapP95Ms": 83.29999999999973,
+      "framesSampled": 86,
+      "frameGapsOver50Ms": 5
+    },
+    {
+      "build": "candidate",
+      "profile": "phone-landscape-slow",
+      "repetition": 3,
+      "task": "cold-entry",
+      "durationMs": 5289.599999904633,
+      "maxLongTaskMs": 262,
+      "maxLongFrameMs": 2895,
+      "frameGapP95Ms": 99.90000000000009,
+      "framesSampled": 82,
+      "frameGapsOver50Ms": 5
+    }
+  ],
+  "errors": [],
+  "environment": {
+    "platform": "darwin",
+    "osRelease": "27.0.0",
+    "arch": "arm64",
+    "cpu": "Apple M1 Pro",
+    "cores": 10,
+    "browserVersion": "156.0.8078.4",
+    "node": "v22.23.2"
+  }
+}

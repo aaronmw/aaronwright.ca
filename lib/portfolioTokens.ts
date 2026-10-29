@@ -10,6 +10,8 @@ export const portfolioGeometry = {
 // Milliseconds are the source of truth. Keep distinct animation roles tunable.
 export const portfolioMotion = {
   feedback: 150,
+  mosaicLogo: 450,
+  mosaicMediaReveal: 350,
   menuHover: 140,
   menu: 160,
   link: 160,

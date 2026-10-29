@@ -21,7 +21,7 @@ import { portfolioMotion } from '@/lib/portfolioTokens'
 import type { ResolvedProjectNarrative } from '../domain/narrative'
 import { OverscrollIndicator } from '@/components/OverscrollIndicator'
 import { PortfolioIcon } from './PortfolioIcon'
-import { PortfolioList, PortfolioListItem } from './PortfolioList'
+import { PortfolioList, PortfolioListItem, type PortfolioListVariant } from './PortfolioList'
 
 type MarkdownLinkProps = AnchorHTMLAttributes<HTMLAnchorElement> & {
   node?: unknown
@@ -65,6 +65,13 @@ const PORTFOLIO_MARKDOWN_COMPONENTS = {
   h4: createMarkdownHeading('h5'),
   h5: createMarkdownHeading('h6'),
   h6: createMarkdownHeading('h6'),
+} satisfies Components
+
+const DIVIDED_MARKDOWN_COMPONENTS = {
+  ...PORTFOLIO_MARKDOWN_COMPONENTS,
+  ul({ node: _node, ...props }) {
+    return <PortfolioList {...props} variant="divided" />
+  },
 } satisfies Components
 
 export function PortfolioLedgerFrame({
@@ -256,12 +263,14 @@ function ProjectRoleDates({
 
 export const ProjectNarrative = memo(function ProjectNarrative({
   narrative,
+  listVariant,
 }: {
   narrative: ResolvedProjectNarrative
+  listVariant?: PortfolioListVariant
 }) {
   return (
     <div>
-      <NarrativeContent narrative={narrative} />
+      <NarrativeContent narrative={narrative} listVariant={listVariant} />
     </div>
   )
 })
@@ -392,9 +401,11 @@ function narrativeTransitionReducer(
 function NarrativeContent({
   narrative,
   className,
+  listVariant,
 }: {
   narrative: ResolvedProjectNarrative
   className?: string
+  listVariant?: PortfolioListVariant
 }) {
   return (
     <div
@@ -410,7 +421,7 @@ function NarrativeContent({
           </h1>
         ) : null}
         <div className="portfolio-markdown prose max-w-none font-normal">
-          <PortfolioMarkdown>{narrative.bodyMarkdown}</PortfolioMarkdown>
+          <PortfolioMarkdown listVariant={listVariant}>{narrative.bodyMarkdown}</PortfolioMarkdown>
         </div>
       </div>
     </div>
@@ -457,12 +468,12 @@ function createMarkdownHeading(Tag: MarkdownHeadingTag) {
   return MarkdownHeading
 }
 
-export function PortfolioMarkdown({ children }: { children: string }) {
+export function PortfolioMarkdown({ children, listVariant = 'bulleted' }: { children: string; listVariant?: PortfolioListVariant }) {
   return (
     <ReactMarkdown
       remarkPlugins={[remarkGfm]}
       rehypePlugins={PORTFOLIO_REHYPE_PLUGINS}
-      components={PORTFOLIO_MARKDOWN_COMPONENTS}
+      components={listVariant === 'divided' ? DIVIDED_MARKDOWN_COMPONENTS : PORTFOLIO_MARKDOWN_COMPONENTS}
     >
       {children}
     </ReactMarkdown>

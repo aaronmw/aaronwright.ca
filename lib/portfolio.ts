@@ -114,7 +114,7 @@ function preventMarkdownOrphans(markdown: string) {
     .join('')
 }
 
-function transformPortfolioMarkdown(markdown: string) {
+export function transformPortfolioMarkdown(markdown: string) {
   return transformMarkdownAcronyms(preventMarkdownOrphans(markdown))
 }
 

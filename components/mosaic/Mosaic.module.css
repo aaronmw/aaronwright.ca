@@ -1,0 +1,331 @@
+.root {
+  /* Canonical experiment controls. A single gap owns internal seams and the perimeter. */
+  --mosaic-gap: calc(var(--logo-stroke-width) * 5);
+  --mosaic-inactive-opacity: 0.22;
+  --mosaic-surface: var(--portfolio-surface-dark);
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100dvh;
+  overflow: hidden;
+  background: var(--mosaic-surface);
+}
+
+.grid {
+  z-index: 0;
+  display: grid;
+  box-sizing: border-box;
+  flex: 1;
+  min-height: 0;
+  padding: var(--mosaic-gap);
+  gap: var(--mosaic-gap);
+  grid-template-columns: var(--portrait-columns);
+  grid-template-rows: var(--portrait-rows);
+  grid-template-areas: var(--portrait-areas);
+}
+
+/* Blend only with this tile's media, below its label; never intercept input. */
+.adjustmentLayer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity var(--portfolio-motion-media-padding) ease;
+}
+
+.tile:is(
+    :focus-visible,
+    [data-mosaic-return-focus]:focus,
+    [data-mosaic-source-fit]
+  )
+  .adjustmentLayer {
+  opacity: 0;
+}
+
+.grid[data-mosaic-layout='adaptive'] {
+  grid-template-areas: none;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: none;
+  grid-auto-rows: minmax(0, 1fr);
+}
+
+.grid[data-mosaic-layout='adaptive'] > :last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+}
+
+/* The slot owns the entrance ink; its image-shaped surface owns the interaction. */
+.cell {
+  position: relative;
+  container-type: size;
+  display: grid;
+  align-items: start;
+  justify-items: start;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--mosaic-surface);
+}
+
+.cell[data-mosaic-entrance='waiting'] {
+  visibility: hidden;
+}
+
+.cell[data-mosaic-entrance='flying'] {
+  /* Only the SVG moves: never slide a full-size black cell over its neighbors. */
+  overflow: visible;
+  background: transparent;
+}
+
+.entranceInk {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.entranceOutline {
+  fill: none;
+  stroke: var(--portfolio-accent-decoration);
+  /* Per-edge animated widths are clipped in half to stay inside the polygon. */
+  stroke-linecap: square;
+}
+
+.root:has(.cell:not([data-mosaic-entrance='arrived']))
+  > :is(aside, [data-mosaic-dev-trigger]) {
+  visibility: hidden;
+}
+
+.cellSurface {
+  position: relative;
+  z-index: 2;
+  opacity: 0;
+  width: min(100cqw, calc(100cqh * var(--mosaic-ratio)));
+  height: min(100cqh, calc(100cqw / var(--mosaic-ratio)));
+  background: var(--mosaic-surface);
+  /* Use the same dark seam as the surrounding grid. */
+  box-shadow: 0 0 0 var(--mosaic-gap) var(--mosaic-surface);
+}
+
+/* Retire the entire source surface during the viewer's atomic handoff. */
+.cellSurface:has([data-mosaic-source-hidden]) {
+  visibility: hidden;
+}
+
+/* Keep the right edge and bottom edge of the authored composition anchored. */
+.cell[data-mosaic-cell='freshbooks'],
+.cell[data-mosaic-cell='nextphrase'] {
+  justify-items: end;
+}
+.cell[data-mosaic-cell='toolbox'] {
+  align-items: end;
+}
+
+.tile {
+  isolation: isolate;
+  --mosaic-focal-x: var(
+    --mosaic-segment-focal-x,
+    var(--mosaic-default-focal-x)
+  );
+  --mosaic-focal-y: var(
+    --mosaic-segment-focal-y,
+    var(--mosaic-default-focal-y)
+  );
+  --mosaic-zoom: var(--mosaic-segment-zoom, var(--mosaic-default-zoom));
+  --mosaic-target-x: var(--mosaic-segment-x, var(--mosaic-default-x));
+  --mosaic-target-y: var(--mosaic-segment-y, var(--mosaic-default-y));
+  position: relative;
+  container-type: size;
+  width: 100%;
+  height: 100%;
+  display: block;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  background: var(--mosaic-surface);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: opacity calc(var(--portfolio-motion-state) * 2) ease;
+}
+
+.tile:focus-visible {
+  outline: 3px solid var(--portfolio-neutral-50);
+  outline-offset: -6px;
+}
+
+.tile:hover {
+  outline: none;
+}
+
+/* top: 100% starts below the clipping edge; translating by its own height
+   lands flush with the bottom regardless of how the summary wraps. */
+.label {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  box-sizing: border-box;
+  display: grid;
+  gap: 0.375rem;
+  padding: clamp(12px, 4cqw, 24px);
+  padding-top: clamp(32px, 8cqw, 64px);
+  color: var(--portfolio-neutral-50);
+  text-align: left;
+  pointer-events: none;
+  transform: translateY(0);
+  transition: transform var(--portfolio-motion-media-padding)
+    cubic-bezier(0.22, 0.68, 0, 1);
+}
+.labelTitle {
+  font-size: clamp(16px, 6cqw, 24px);
+  font-weight: 700;
+  line-height: 1.15;
+}
+.labelSummary {
+  font-size: clamp(12px, 3.5cqw, 14px);
+  line-height: 1.4;
+}
+
+.root:not([data-mosaic-adjusting])
+  .tile:is(:focus-visible, [data-mosaic-return-focus]:focus)
+  .label {
+  transform: translateY(-100%);
+}
+
+/* Container-relative lengths solve cover/focal placement without resize JS.
+   Source and target coordinates differ; clamp prevents exposed image edges.
+   Animate actual framing lengths because object-fit itself cannot interpolate. */
+.media {
+  --cover-width: max(100cqw, calc(100cqh * var(--mosaic-ratio)));
+  --cover-height: max(100cqh, calc(100cqw / var(--mosaic-ratio)));
+  --rest-width: calc(var(--cover-width) * clamp(1, var(--mosaic-zoom), 20));
+  --rest-height: calc(var(--cover-height) * clamp(1, var(--mosaic-zoom), 20));
+  --fit-width: min(100cqw, calc(100cqh * var(--mosaic-ratio)));
+  --fit-height: min(100cqh, calc(100cqw / var(--mosaic-ratio)));
+  position: absolute;
+  display: block;
+  width: var(--rest-width);
+  height: var(--rest-height);
+  left: clamp(
+    calc(100cqw - var(--rest-width)),
+    calc(
+      100cqw * var(--mosaic-target-x) - var(--rest-width) *
+        var(--mosaic-focal-x)
+    ),
+    0px
+  );
+  top: clamp(
+    calc(100cqh - var(--rest-height)),
+    calc(
+      100cqh * var(--mosaic-target-y) - var(--rest-height) *
+        var(--mosaic-focal-y)
+    ),
+    0px
+  );
+  pointer-events: none;
+  transition-property: width, height, left, top;
+  transition-duration: var(--portfolio-motion-media-padding);
+  transition-timing-function: cubic-bezier(0.22, 0.68, 0, 1);
+}
+
+.root:not([data-mosaic-adjusting])
+  .tile:is(:focus-visible, [data-mosaic-return-focus]:focus)
+  .media,
+.tile[data-mosaic-source-fit] .media {
+  width: var(--fit-width);
+  height: var(--fit-height);
+  left: calc((100cqw - var(--fit-width)) / 2);
+  top: calc((100cqh - var(--fit-height)) / 2);
+}
+
+.root:not([data-mosaic-adjusting])
+  .grid:has(.tile:is(:focus-visible, [data-mosaic-return-focus]:focus))
+  .tile:not(:focus-visible, [data-mosaic-return-focus]:focus) {
+  opacity: var(--mosaic-inactive-opacity);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .tile:hover .adjustmentLayer {
+    opacity: 0;
+  }
+  .root:not([data-mosaic-adjusting])
+    .grid:not(:has(.tile:is(:focus-visible, [data-mosaic-return-focus]:focus)))
+    .tile:hover
+    .label {
+    transform: translateY(-100%);
+  }
+  .root:not([data-mosaic-adjusting])
+    .grid:not(:has(.tile:is(:focus-visible, [data-mosaic-return-focus]:focus)))
+    .tile:hover
+    .media {
+    width: var(--fit-width);
+    height: var(--fit-height);
+    left: calc((100cqw - var(--fit-width)) / 2);
+    top: calc((100cqh - var(--fit-height)) / 2);
+  }
+  .root:not([data-mosaic-adjusting])
+    .grid:not(
+      :has(.tile:is(:focus-visible, [data-mosaic-return-focus]:focus))
+    ):has(.tile:hover)
+    .tile:not(:hover) {
+    opacity: var(--mosaic-inactive-opacity);
+  }
+}
+
+@media (min-aspect-ratio: 1/1) {
+  .grid {
+    grid-template-columns: var(--landscape-columns);
+    grid-template-rows: var(--landscape-rows);
+    grid-template-areas: var(--landscape-areas);
+  }
+}
+
+.root[data-mosaic-adjusting] .tile {
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+.root[data-mosaic-adjusting] .tile[data-mosaic-dragging] {
+  cursor: grabbing;
+}
+.root[data-mosaic-adjusting] .tile,
+.root[data-mosaic-adjusting] .media {
+  transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .entranceInk {
+    display: none;
+  }
+  .cellSurface {
+    transition: none;
+  }
+  .tile,
+  .media,
+  .label,
+  .adjustmentLayer {
+    transition: none;
+  }
+}
+
+.grid:has(.tile[data-mosaic-source-fit]) .tile:not([data-mosaic-source-fit]) {
+  opacity: var(--mosaic-inactive-opacity);
+}
+
+/* Packed slots may crop slightly. Keep their hit targets and neighbors stable;
+   the existing hover/focus framing reveals the exact source ratio in place. */
+.grid[data-mosaic-layout='packed'] {
+  position: relative;
+  display: block;
+}
+
+.grid[data-mosaic-layout='packed'] .cellSurface {
+  width: 100cqw;
+  height: 100cqh;
+}

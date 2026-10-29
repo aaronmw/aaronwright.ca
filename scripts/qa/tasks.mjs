@@ -33,8 +33,10 @@ export async function settled(page) {
             const box = section.getBoundingClientRect()
             visibleSections.set(
               section,
-              box.bottom > 0 && box.top < innerHeight &&
-                box.right > 0 && box.left < innerWidth,
+              box.bottom > 0 &&
+                box.top < innerHeight &&
+                box.right > 0 &&
+                box.left < innerWidth,
             )
           }
           return visibleSections.get(section)
@@ -44,7 +46,8 @@ export async function settled(page) {
           return [box.x, box.y, box.width, box.height]
             .map(value => Math.round(value * 2))
             .join(',')
-        }).join('|')
+        })
+        .join('|')
       if (window.__qaSettle?.positions !== positions) {
         window.__qaSettle = { positions, since: performance.now() }
       }
@@ -58,26 +61,34 @@ export async function settled(page) {
 export async function themeSettled(page) {
   // Await the actual visible color/opacity transitions, without sampling
   // carousel geometry or adding idle frames to the performance distribution.
-  await page.locator(
-    '[data-portfolio-theme-root]:visible, main[data-portfolio-phase]:visible, ' +
-      '[data-portfolio-theme-trigger]:visible, [data-portfolio-theme-menu-scrim]',
-  ).evaluateAll(async elements => {
-    for (;;) {
-      const animations = elements.flatMap(element => element.getAnimations())
-        .filter(animation => !['finished', 'idle'].includes(animation.playState))
-      if (!animations.length) return
-      // Focus and theme changes can replace a transition. A cancellation is
-      // not completion: inspect the replacement animations before returning.
-      const results = await Promise.allSettled(
-        animations.map(animation => animation.finished),
-      )
-      for (const result of results) {
-        if (result.status === 'rejected' && result.reason?.name !== 'AbortError') {
-          throw result.reason
+  await page
+    .locator(
+      '[data-portfolio-theme-root]:visible, main[data-portfolio-phase]:visible, ' +
+        '[data-portfolio-theme-trigger]:visible, [data-portfolio-theme-menu-scrim]',
+    )
+    .evaluateAll(async elements => {
+      for (;;) {
+        const animations = elements
+          .flatMap(element => element.getAnimations())
+          .filter(
+            animation => !['finished', 'idle'].includes(animation.playState),
+          )
+        if (!animations.length) return
+        // Focus and theme changes can replace a transition. A cancellation is
+        // not completion: inspect the replacement animations before returning.
+        const results = await Promise.allSettled(
+          animations.map(animation => animation.finished),
+        )
+        for (const result of results) {
+          if (
+            result.status === 'rejected' &&
+            result.reason?.name !== 'AbortError'
+          ) {
+            throw result.reason
+          }
         }
       }
-    }
-  })
+    })
   await expect(page.locator('[data-portfolio-theme-menu-scrim]')).toHaveCSS(
     'opacity',
     '0',
@@ -217,25 +228,58 @@ export async function runTasks({ page, cdp, profile, measure }) {
     'cold-entry',
     async () => {
       await page.goto('/work', { waitUntil: 'domcontentloaded' })
-      await expect(
-        page.locator('main[data-portfolio-phase]:visible'),
-      ).toHaveAttribute('data-portfolio-phase', 'ready', { timeout: 45_000 })
-      await expect(
-        page.locator(
-          'main[data-portfolio-phase]:visible [data-portfolio-startup-loader]',
-        ),
-      ).toHaveCount(0)
-      await expect(
-        page.locator(
-          'main[data-portfolio-phase]:visible [data-portfolio-browser-chrome]',
-        ),
-      ).toHaveCSS('opacity', '1')
-      await expect(
-        page.locator('[data-portfolio-start-section-index="5"]'),
-      ).toBeVisible()
+      // Observe the complete visitor-ready state without assertion retry delays.
+      // Only visible startup elements are read; offscreen carousels stay untouched.
+      await page.waitForFunction(
+        () => {
+          const main = document.querySelector(
+            'main[data-portfolio-phase="ready"]',
+          )
+          if (!main || main.querySelector('[data-portfolio-startup-loader]'))
+            return false
+          const chrome = main.querySelector('[data-portfolio-browser-chrome]')
+          const menu = main.querySelector(
+            '[data-portfolio-start-section-index="5"]',
+          )
+          if (!chrome || !menu || getComputedStyle(chrome).opacity !== '1')
+            return false
+          const box = menu.getBoundingClientRect()
+          const visibility = getComputedStyle(menu).visibility
+          return (
+            box.width > 0 &&
+            box.height > 0 &&
+            visibility !== 'hidden' &&
+            visibility !== 'collapse'
+          )
+        },
+        undefined,
+        { timeout: 45_000, polling: 'raf' },
+      )
       await settled(page)
     },
-    { navigation: true },
+    {
+      navigation: true,
+      // Retain the functional assertions, but exclude their protocol round trips
+      // and retry scheduling from the performance sample's completion time.
+      verify: async () => {
+        await expect(
+          page.locator('main[data-portfolio-phase]:visible'),
+        ).toHaveAttribute('data-portfolio-phase', 'ready', { timeout: 45_000 })
+        await expect(
+          page.locator(
+            'main[data-portfolio-phase]:visible [data-portfolio-startup-loader]',
+          ),
+        ).toHaveCount(0)
+        await expect(
+          page.locator(
+            'main[data-portfolio-phase]:visible [data-portfolio-browser-chrome]',
+          ),
+        ).toHaveCSS('opacity', '1')
+        await expect(
+          page.locator('[data-portfolio-start-section-index="5"]'),
+        ).toBeVisible()
+      },
+    },
   )
 
   await measure('choose-project', async () => {

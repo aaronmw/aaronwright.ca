@@ -1,0 +1,35 @@
+.logo {
+  --mosaic-logo-size: calc(var(--logo-stroke-width) * 5);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: calc(var(--mosaic-logo-size) * 3);
+  height: calc(var(--mosaic-logo-size) * 3);
+  color: var(--portfolio-accent-decoration);
+  background: var(--portfolio-surface-dark);
+  opacity: 0;
+}
+
+.logo:focus-visible {
+  outline: 2px solid var(--portfolio-neutral-50);
+  outline-offset: 2px;
+}
+
+.loading {
+  position: fixed;
+  inset: 0;
+  z-index: var(--portfolio-layer-viewer);
+  display: grid;
+  place-items: center;
+  /* Keep the held source visible while the viewer chunk loads. */
+  color: var(--portfolio-accent-decoration);
+}
+
+/* Preserve source layout while the single transition/viewer visual owns it. */
+:global([data-mosaic-source-hidden]) {
+  visibility: hidden !important;
+}

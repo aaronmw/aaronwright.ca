@@ -1,0 +1,134 @@
+{
+  "schema": 1,
+  "id": "2026-10-28T23-11-02-983Z",
+  "createdAt": "2026-10-28T23:11:02.985Z",
+  "commit": "b9fcafc3b23b9eea96d9d73eb8b1ef152f027a67",
+  "sourceHash": "b8e58337e6a086b8ecb0ea793d914fe58dd8bbeadb8a975236ae7877187ab7c8",
+  "configHash": "0e568e89ded990e796ef9876a3e6a70f60b31a889b2d533c99665a39b08d0f8b",
+  "mode": "release",
+  "environment": {
+    "platform": "darwin",
+    "osRelease": "27.0.0",
+    "arch": "arm64",
+    "cpu": "Apple M1 Pro",
+    "cores": 10,
+    "browserVersion": "156.0.8078.4",
+    "node": "v22.23.2"
+  },
+  "checks": {
+    "unit": true,
+    "browser": false
+  },
+  "samples": [
+    {
+      "profile": "desktop",
+      "repetition": 1,
+      "task": "cold-entry",
+      "durationMs": 1074.2000000476837,
+      "maxLongTaskMs": 59,
+      "maxLongFrameMs": 376.7999999523163,
+      "frameGapP95Ms": 50,
+      "framesSampled": 34,
+      "frameGapsOver50Ms": 1
+    },
+    {
+      "profile": "desktop",
+      "repetition": 1,
+      "task": "choose-project",
+      "durationMs": 1645.5999999046326,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 16.700000000000273,
+      "framesSampled": 97,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "desktop",
+      "repetition": 1,
+      "task": "horizontal-gesture",
+      "durationMs": 1961.2000000476837,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 16.700000000000728,
+      "framesSampled": 116,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "desktop",
+      "repetition": 1,
+      "task": "image-viewer",
+      "durationMs": 1897.9000000953674,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 16.700000000000728,
+      "framesSampled": 113,
+      "frameGapsOver50Ms": 0
+    }
+  ],
+  "errors": [
+    "desktop/1/vertical-navigation: expect(page).toHaveURL(expected) failed\n\nExpected pattern: /\\/work\\/nextphrase$/\nReceived string:  \"http://127.0.0.1:60666/work/aarons-toolbox\"\n\nCall log:\n  - Expect \"toHaveURL\" with timeout 5000ms\n    2 × locator resolved to <html lang=\"en\" data-portfolio-route=\"work\" data-portfolio-theme=\"dark\" data-portfolio-theme-preference=\"system\">…</html>\n      - unexpected value \"http://127.0.0.1:60666/work/aarons-toolbox\"\n  - Target page, context or browser has been closed\n",
+    "desktop/1/appearance: page.goto: Target page, context or browser has been closed",
+    "QA interrupted"
+  ],
+  "failures": [
+    "Unit or cross-browser checks did not pass.",
+    "desktop/1/vertical-navigation: expect(page).toHaveURL(expected) failed\n\nExpected pattern: /\\/work\\/nextphrase$/\nReceived string:  \"http://127.0.0.1:60666/work/aarons-toolbox\"\n\nCall log:\n  - Expect \"toHaveURL\" with timeout 5000ms\n    2 × locator resolved to <html lang=\"en\" data-portfolio-route=\"work\" data-portfolio-theme=\"dark\" data-portfolio-theme-preference=\"system\">…</html>\n      - unexpected value \"http://127.0.0.1:60666/work/aarons-toolbox\"\n  - Target page, context or browser has been closed\n",
+    "desktop/1/appearance: page.goto: Target page, context or browser has been closed",
+    "QA interrupted",
+    "Incomplete sample matrix.",
+    "Missing repetitions: desktop/cold-entry",
+    "Missing repetitions: desktop/choose-project",
+    "Missing repetitions: desktop/horizontal-gesture",
+    "Missing repetitions: desktop/image-viewer",
+    "Missing repetitions: desktop/vertical-navigation",
+    "Missing repetitions: desktop/appearance",
+    "Missing repetitions: small-laptop-slow/cold-entry",
+    "Missing repetitions: small-laptop-slow/choose-project",
+    "Missing repetitions: small-laptop-slow/horizontal-gesture",
+    "Missing repetitions: small-laptop-slow/image-viewer",
+    "Missing repetitions: small-laptop-slow/vertical-navigation",
+    "Missing repetitions: small-laptop-slow/appearance",
+    "Missing repetitions: phone-portrait-slow/cold-entry",
+    "Missing repetitions: phone-portrait-slow/choose-project",
+    "Missing repetitions: phone-portrait-slow/horizontal-gesture",
+    "Missing repetitions: phone-portrait-slow/image-viewer",
+    "Missing repetitions: phone-portrait-slow/vertical-navigation",
+    "Missing repetitions: phone-portrait-slow/appearance",
+    "Missing repetitions: phone-landscape-slow/cold-entry",
+    "Missing repetitions: phone-landscape-slow/choose-project",
+    "Missing repetitions: phone-landscape-slow/horizontal-gesture",
+    "Missing repetitions: phone-landscape-slow/image-viewer",
+    "Missing repetitions: phone-landscape-slow/vertical-navigation",
+    "Missing repetitions: phone-landscape-slow/appearance",
+    "Measurement environment changed. Recalibrate on the same machine/browser before comparing."
+  ],
+  "status": "blocked",
+  "buildId": "M-gxG3GjJl7Vuy1G0sFi8",
+  "baseURL": "http://127.0.0.1:60666",
+  "browserResults": {
+    "startTime": "2026-10-28T23:11:23.285Z",
+    "duration": 270095.681,
+    "expected": 143,
+    "skipped": 14,
+    "unexpected": 3,
+    "flaky": 0,
+    "failures": [
+      {
+        "project": "webkit-desktop",
+        "task": "grid videos load inline, pause behind the viewer, and retain their separate media",
+        "error": "Error: expect(received).toEqual(expected) // deep equality\n\n- Expected  -  1\n+ Received  + 10\n\n- Array []\n+ Array [\n+   Object {\n+     \"error\": undefined,\n+     \"id\": \"informal-systems\",\n+     \"inline\": true,\n+     \"muted\": true,\n+     \"paused\": true,\n+     \"ready\": 4,\n+   },\n+ ]\n\nCall Log:\n- Timeout 15000ms exceeded while waiting on the predicate"
+      },
+      {
+        "project": "webkit-iphone-portrait",
+        "task": "grid videos load inline, pause behind the viewer, and retain their separate media",
+        "error": "Error: expect(received).toEqual(expected) // deep equality\n\n- Expected  -  1\n+ Received  + 10\n\n- Array []\n+ Array [\n+   Object {\n+     \"error\": undefined,\n+     \"id\": \"informal-systems\",\n+     \"inline\": true,\n+     \"muted\": true,\n+     \"paused\": true,\n+     \"ready\": 4,\n+   },\n+ ]\n\nCall Log:\n- Timeout 15000ms exceeded while waiting on the predicate"
+      },
+      {
+        "project": "webkit-iphone-landscape",
+        "task": "grid videos load inline, pause behind the viewer, and retain their separate media",
+        "error": "Error: expect(received).toEqual(expected) // deep equality\n\n- Expected  -  1\n+ Received  + 10\n\n- Array []\n+ Array [\n+   Object {\n+     \"error\": undefined,\n+     \"id\": \"informal-systems\",\n+     \"inline\": true,\n+     \"muted\": true,\n+     \"paused\": true,\n+     \"ready\": 4,\n+   },\n+ ]\n\nCall Log:\n- Timeout 15000ms exceeded while waiting on the predicate"
+      }
+    ]
+  },
+  "completedAt": "2026-10-28T23:16:00.827Z"
+}

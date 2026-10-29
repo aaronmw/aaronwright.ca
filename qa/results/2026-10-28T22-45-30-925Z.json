@@ -1,0 +1,863 @@
+{
+  "schema": 1,
+  "id": "2026-10-28T22-45-30-925Z",
+  "createdAt": "2026-10-28T22:45:30.926Z",
+  "commit": "b9fcafc3b23b9eea96d9d73eb8b1ef152f027a67",
+  "sourceHash": "0957915d865eb78282ef74eaabeb40e4464215e4d9f843400028914deb475f77",
+  "configHash": "0e568e89ded990e796ef9876a3e6a70f60b31a889b2d533c99665a39b08d0f8b",
+  "mode": "release",
+  "environment": null,
+  "checks": {
+    "unit": false,
+    "browser": false
+  },
+  "samples": [],
+  "errors": [
+    "browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-mac-arm64/chrome-headless-shell\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+  ],
+  "failures": [
+    "Missing production build/environment evidence.",
+    "Unit or cross-browser checks did not pass.",
+    "browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-mac-arm64/chrome-headless-shell\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝",
+    "Incomplete sample matrix.",
+    "Missing repetitions: desktop/cold-entry",
+    "Missing repetitions: desktop/choose-project",
+    "Missing repetitions: desktop/horizontal-gesture",
+    "Missing repetitions: desktop/image-viewer",
+    "Missing repetitions: desktop/vertical-navigation",
+    "Missing repetitions: desktop/appearance",
+    "Missing repetitions: small-laptop-slow/cold-entry",
+    "Missing repetitions: small-laptop-slow/choose-project",
+    "Missing repetitions: small-laptop-slow/horizontal-gesture",
+    "Missing repetitions: small-laptop-slow/image-viewer",
+    "Missing repetitions: small-laptop-slow/vertical-navigation",
+    "Missing repetitions: small-laptop-slow/appearance",
+    "Missing repetitions: phone-portrait-slow/cold-entry",
+    "Missing repetitions: phone-portrait-slow/choose-project",
+    "Missing repetitions: phone-portrait-slow/horizontal-gesture",
+    "Missing repetitions: phone-portrait-slow/image-viewer",
+    "Missing repetitions: phone-portrait-slow/vertical-navigation",
+    "Missing repetitions: phone-portrait-slow/appearance",
+    "Missing repetitions: phone-landscape-slow/cold-entry",
+    "Missing repetitions: phone-landscape-slow/choose-project",
+    "Missing repetitions: phone-landscape-slow/horizontal-gesture",
+    "Missing repetitions: phone-landscape-slow/image-viewer",
+    "Missing repetitions: phone-landscape-slow/vertical-navigation",
+    "Missing repetitions: phone-landscape-slow/appearance",
+    "Measurement environment changed. Recalibrate on the same machine/browser before comparing."
+  ],
+  "status": "blocked",
+  "buildId": "zXumSaN8mQHjMJW2D5cvC",
+  "baseURL": "http://127.0.0.1:50370",
+  "browserResults": {
+    "startTime": "2026-10-28T22:45:58.618Z",
+    "duration": 32268.296,
+    "expected": 0,
+    "skipped": 0,
+    "unexpected": 160,
+    "flaky": 0,
+    "failures": [
+      {
+        "project": "chromium-desktop",
+        "task": "production grid loads all projects without editor controls or indexing",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-mac-arm64/chrome-headless-shell\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "chromium-desktop",
+        "task": "About opens with its grid copy and returns keyboard focus after Escape",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-mac-arm64/chrome-headless-shell\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "chromium-desktop",
+        "task": "grid videos load inline, pause behind the viewer, and retain their separate media",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-mac-arm64/chrome-headless-shell\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "chromium-desktop",
+        "task": "grid styling does not leak into the dark portfolio after client navigation",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-mac-arm64/chrome-headless-shell\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "chromium-desktop",
+        "task": "grid styling does not leak into the light portfolio after client navigation",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-mac-arm64/chrome-headless-shell\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-desktop",
+        "task": "production grid loads all projects without editor controls or indexing",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-desktop",
+        "task": "About opens with its grid copy and returns keyboard focus after Escape",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-desktop",
+        "task": "grid videos load inline, pause behind the viewer, and retain their separate media",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-desktop",
+        "task": "grid styling does not leak into the dark portfolio after client navigation",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-desktop",
+        "task": "grid styling does not leak into the light portfolio after client navigation",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-portrait",
+        "task": "production grid loads all projects without editor controls or indexing",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-portrait",
+        "task": "About opens with its grid copy and returns keyboard focus after Escape",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-portrait",
+        "task": "grid videos load inline, pause behind the viewer, and retain their separate media",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-portrait",
+        "task": "grid styling does not leak into the dark portfolio after client navigation",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-portrait",
+        "task": "grid styling does not leak into the light portfolio after client navigation",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-landscape",
+        "task": "production grid loads all projects without editor controls or indexing",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-landscape",
+        "task": "About opens with its grid copy and returns keyboard focus after Escape",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-landscape",
+        "task": "grid videos load inline, pause behind the viewer, and retain their separate media",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-landscape",
+        "task": "grid styling does not leak into the dark portfolio after client navigation",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-landscape",
+        "task": "grid styling does not leak into the light portfolio after client navigation",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "chromium-desktop",
+        "task": "/grid-version opens the first slide without navigation or zoom and preserves Back/Forward",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-mac-arm64/chrome-headless-shell\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "chromium-desktop",
+        "task": "/grid-version closes a reduced-motion direct link on its own route",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-mac-arm64/chrome-headless-shell\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "chromium-desktop",
+        "task": "legacy v2 redirects with gallery and unrelated query parameters intact",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-mac-arm64/chrome-headless-shell\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-desktop",
+        "task": "/grid-version opens the first slide without navigation or zoom and preserves Back/Forward",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-desktop",
+        "task": "/grid-version closes a reduced-motion direct link on its own route",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-desktop",
+        "task": "legacy v2 redirects with gallery and unrelated query parameters intact",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-portrait",
+        "task": "/grid-version opens the first slide without navigation or zoom and preserves Back/Forward",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-portrait",
+        "task": "/grid-version closes a reduced-motion direct link on its own route",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-portrait",
+        "task": "legacy v2 redirects with gallery and unrelated query parameters intact",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-landscape",
+        "task": "/grid-version opens the first slide without navigation or zoom and preserves Back/Forward",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-landscape",
+        "task": "/grid-version closes a reduced-motion direct link on its own route",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-landscape",
+        "task": "legacy v2 redirects with gallery and unrelated query parameters intact",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "chromium-desktop",
+        "task": "pointer opening keeps the appearance menu open until a choice is made",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-mac-arm64/chrome-headless-shell\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "chromium-desktop",
+        "task": "System follows live color-scheme changes",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-mac-arm64/chrome-headless-shell\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "chromium-desktop",
+        "task": "theme selection waits for the menu to close without reordering its visible rows",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-mac-arm64/chrome-headless-shell\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "chromium-desktop",
+        "task": "choosing the current appearance closes the menu with reduced motion",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-mac-arm64/chrome-headless-shell\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "chromium-desktop",
+        "task": "React Aria menu persists selection and restores trigger focus",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-mac-arm64/chrome-headless-shell\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "chromium-desktop",
+        "task": "React Aria menu supports Home, End, Escape, and outside dismissal",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-mac-arm64/chrome-headless-shell\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "chromium-desktop",
+        "task": "theme menu keeps arrow navigation local without trapping section numbers",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-mac-arm64/chrome-headless-shell\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "chromium-desktop",
+        "task": "viewer hides the appearance control and restores it on close",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-mac-arm64/chrome-headless-shell\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-desktop",
+        "task": "pointer opening keeps the appearance menu open until a choice is made",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-desktop",
+        "task": "System follows live color-scheme changes",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-desktop",
+        "task": "theme selection waits for the menu to close without reordering its visible rows",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-desktop",
+        "task": "choosing the current appearance closes the menu with reduced motion",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-desktop",
+        "task": "React Aria menu persists selection and restores trigger focus",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-desktop",
+        "task": "React Aria menu supports Home, End, Escape, and outside dismissal",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-desktop",
+        "task": "theme menu keeps arrow navigation local without trapping section numbers",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-desktop",
+        "task": "viewer hides the appearance control and restores it on close",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-portrait",
+        "task": "pointer opening keeps the appearance menu open until a choice is made",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-portrait",
+        "task": "System follows live color-scheme changes",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-portrait",
+        "task": "theme selection waits for the menu to close without reordering its visible rows",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-portrait",
+        "task": "choosing the current appearance closes the menu with reduced motion",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-portrait",
+        "task": "React Aria menu persists selection and restores trigger focus",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-portrait",
+        "task": "React Aria menu supports Home, End, Escape, and outside dismissal",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-portrait",
+        "task": "theme menu keeps arrow navigation local without trapping section numbers",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-portrait",
+        "task": "viewer hides the appearance control and restores it on close",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-landscape",
+        "task": "pointer opening keeps the appearance menu open until a choice is made",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-landscape",
+        "task": "System follows live color-scheme changes",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-landscape",
+        "task": "theme selection waits for the menu to close without reordering its visible rows",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-landscape",
+        "task": "choosing the current appearance closes the menu with reduced motion",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-landscape",
+        "task": "React Aria menu persists selection and restores trigger focus",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-landscape",
+        "task": "React Aria menu supports Home, End, Escape, and outside dismissal",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-landscape",
+        "task": "theme menu keeps arrow navigation local without trapping section numbers",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-landscape",
+        "task": "viewer hides the appearance control and restores it on close",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "chromium-desktop",
+        "task": "QA settlement observes visible motion without laying out offscreen tracks",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-mac-arm64/chrome-headless-shell\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "chromium-desktop",
+        "task": "deep links restore both Embla axes and their active markers",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-mac-arm64/chrome-headless-shell\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "chromium-desktop",
+        "task": "all media projects combine their intro and first media in one snap",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-mac-arm64/chrome-headless-shell\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "chromium-desktop",
+        "task": "About Me exposes both text panels without image-viewer controls",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-mac-arm64/chrome-headless-shell\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "chromium-desktop",
+        "task": "portfolio videos defer downloading until their project is opened",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-mac-arm64/chrome-headless-shell\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "chromium-desktop",
+        "task": "project text and media fit the viewport in wide and stacked layouts",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-mac-arm64/chrome-headless-shell\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "chromium-desktop",
+        "task": "project metadata remains fixed while slide narrative and media change",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-mac-arm64/chrome-headless-shell\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "chromium-desktop",
+        "task": "the active section item animates its project back to the first slide",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-mac-arm64/chrome-headless-shell\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "chromium-desktop",
+        "task": "section navigation resets an offscreen project without changing remembered gesture state",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-mac-arm64/chrome-headless-shell\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "chromium-desktop",
+        "task": "cover-media viewer deep links open without a media path segment",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-mac-arm64/chrome-headless-shell\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "chromium-desktop",
+        "task": "keyboard navigation stops at both ends of each carousel",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-mac-arm64/chrome-headless-shell\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "chromium-desktop",
+        "task": "outward wheel and mouse drags stop at the physical track boundaries",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-mac-arm64/chrome-headless-shell\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "chromium-desktop",
+        "task": "dominant horizontal wheel intent changes media without changing section",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-mac-arm64/chrome-headless-shell\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "chromium-desktop",
+        "task": "horizontal trackpad intent stays axis-locked through a vertical tail",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-mac-arm64/chrome-headless-shell\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "chromium-desktop",
+        "task": "horizontal wheel selection settles without reinitializing the carousel",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-mac-arm64/chrome-headless-shell\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "chromium-desktop",
+        "task": "vertical wheel navigation changes only the outer section",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-mac-arm64/chrome-headless-shell\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "chromium-desktop",
+        "task": "nested drag gestures move only their intended Embla axis",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-mac-arm64/chrome-headless-shell\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "chromium-desktop",
+        "task": "viewer stays open while media navigation updates the underlying route",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-mac-arm64/chrome-headless-shell\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "chromium-desktop",
+        "task": "zoomed viewer drags pan and media changes reset zoom",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-mac-arm64/chrome-headless-shell\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "chromium-desktop",
+        "task": "viewer deep links restore with browser history",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-mac-arm64/chrome-headless-shell\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "chromium-desktop",
+        "task": "viewer deep links retain their modal URL after carousel initialization",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-mac-arm64/chrome-headless-shell\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "chromium-desktop",
+        "task": "reduced motion keeps navigation usable and shortens viewer transitions",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-mac-arm64/chrome-headless-shell\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-desktop",
+        "task": "QA settlement observes visible motion without laying out offscreen tracks",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-desktop",
+        "task": "deep links restore both Embla axes and their active markers",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-desktop",
+        "task": "all media projects combine their intro and first media in one snap",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-desktop",
+        "task": "About Me exposes both text panels without image-viewer controls",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-desktop",
+        "task": "portfolio videos defer downloading until their project is opened",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-desktop",
+        "task": "project text and media fit the viewport in wide and stacked layouts",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-desktop",
+        "task": "project metadata remains fixed while slide narrative and media change",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-desktop",
+        "task": "the active section item animates its project back to the first slide",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-desktop",
+        "task": "section navigation resets an offscreen project without changing remembered gesture state",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-desktop",
+        "task": "cover-media viewer deep links open without a media path segment",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-desktop",
+        "task": "keyboard navigation stops at both ends of each carousel",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-desktop",
+        "task": "outward wheel and mouse drags stop at the physical track boundaries",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-desktop",
+        "task": "dominant horizontal wheel intent changes media without changing section",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-desktop",
+        "task": "horizontal trackpad intent stays axis-locked through a vertical tail",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-desktop",
+        "task": "horizontal wheel selection settles without reinitializing the carousel",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-desktop",
+        "task": "vertical wheel navigation changes only the outer section",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-desktop",
+        "task": "nested drag gestures move only their intended Embla axis",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-desktop",
+        "task": "viewer stays open while media navigation updates the underlying route",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-desktop",
+        "task": "zoomed viewer drags pan and media changes reset zoom",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-desktop",
+        "task": "viewer deep links restore with browser history",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-desktop",
+        "task": "viewer deep links retain their modal URL after carousel initialization",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-desktop",
+        "task": "reduced motion keeps navigation usable and shortens viewer transitions",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-portrait",
+        "task": "QA settlement observes visible motion without laying out offscreen tracks",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-portrait",
+        "task": "deep links restore both Embla axes and their active markers",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-portrait",
+        "task": "all media projects combine their intro and first media in one snap",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-portrait",
+        "task": "About Me exposes both text panels without image-viewer controls",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-portrait",
+        "task": "portfolio videos defer downloading until their project is opened",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-portrait",
+        "task": "project text and media fit the viewport in wide and stacked layouts",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-portrait",
+        "task": "project metadata remains fixed while slide narrative and media change",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-portrait",
+        "task": "the active section item animates its project back to the first slide",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-portrait",
+        "task": "section navigation resets an offscreen project without changing remembered gesture state",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-portrait",
+        "task": "cover-media viewer deep links open without a media path segment",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-portrait",
+        "task": "keyboard navigation stops at both ends of each carousel",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-portrait",
+        "task": "outward wheel and mouse drags stop at the physical track boundaries",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-portrait",
+        "task": "dominant horizontal wheel intent changes media without changing section",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-portrait",
+        "task": "horizontal trackpad intent stays axis-locked through a vertical tail",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-portrait",
+        "task": "horizontal wheel selection settles without reinitializing the carousel",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-portrait",
+        "task": "vertical wheel navigation changes only the outer section",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-portrait",
+        "task": "nested drag gestures move only their intended Embla axis",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-portrait",
+        "task": "viewer stays open while media navigation updates the underlying route",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-portrait",
+        "task": "zoomed viewer drags pan and media changes reset zoom",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-portrait",
+        "task": "viewer deep links restore with browser history",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-portrait",
+        "task": "viewer deep links retain their modal URL after carousel initialization",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-portrait",
+        "task": "reduced motion keeps navigation usable and shortens viewer transitions",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-landscape",
+        "task": "QA settlement observes visible motion without laying out offscreen tracks",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-landscape",
+        "task": "deep links restore both Embla axes and their active markers",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-landscape",
+        "task": "all media projects combine their intro and first media in one snap",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-landscape",
+        "task": "About Me exposes both text panels without image-viewer controls",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-landscape",
+        "task": "portfolio videos defer downloading until their project is opened",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-landscape",
+        "task": "project text and media fit the viewport in wide and stacked layouts",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-landscape",
+        "task": "project metadata remains fixed while slide narrative and media change",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-landscape",
+        "task": "the active section item animates its project back to the first slide",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-landscape",
+        "task": "section navigation resets an offscreen project without changing remembered gesture state",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-landscape",
+        "task": "cover-media viewer deep links open without a media path segment",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-landscape",
+        "task": "keyboard navigation stops at both ends of each carousel",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-landscape",
+        "task": "outward wheel and mouse drags stop at the physical track boundaries",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-landscape",
+        "task": "dominant horizontal wheel intent changes media without changing section",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-landscape",
+        "task": "horizontal trackpad intent stays axis-locked through a vertical tail",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-landscape",
+        "task": "horizontal wheel selection settles without reinitializing the carousel",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-landscape",
+        "task": "vertical wheel navigation changes only the outer section",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-landscape",
+        "task": "nested drag gestures move only their intended Embla axis",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-landscape",
+        "task": "viewer stays open while media navigation updates the underlying route",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-landscape",
+        "task": "zoomed viewer drags pan and media changes reset zoom",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-landscape",
+        "task": "viewer deep links restore with browser history",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-landscape",
+        "task": "viewer deep links retain their modal URL after carousel initialization",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-landscape",
+        "task": "reduced motion keeps navigation usable and shortens viewer transitions",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "chromium-desktop",
+        "task": "published portfolio content and presentation remain unchanged in dark",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-mac-arm64/chrome-headless-shell\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "chromium-desktop",
+        "task": "published portfolio content and presentation remain unchanged in light",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-mac-arm64/chrome-headless-shell\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-desktop",
+        "task": "published portfolio content and presentation remain unchanged in dark",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-desktop",
+        "task": "published portfolio content and presentation remain unchanged in light",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-portrait",
+        "task": "published portfolio content and presentation remain unchanged in dark",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-portrait",
+        "task": "published portfolio content and presentation remain unchanged in light",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-landscape",
+        "task": "published portfolio content and presentation remain unchanged in dark",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      },
+      {
+        "project": "webkit-iphone-landscape",
+        "task": "published portfolio content and presentation remain unchanged in light",
+        "error": "Error: browserType.launch: Executable doesn't exist at /Users/aaronwright/Library/Caches/ms-playwright/webkit-2370/pw_run.sh\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     pnpm exec playwright install                           ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+      }
+    ]
+  },
+  "completedAt": "2026-10-28T22:46:30.936Z"
+}

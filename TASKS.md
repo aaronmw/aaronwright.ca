@@ -80,6 +80,68 @@ task contract and budgets.
 
 ## Conditions
 
+### Staged grid release — October 28, 2026
+
+The current portfolio remains at `/work`, with `/` redirecting there. Its copy,
+URLs, media bytes and presentation are compared against published deployment
+`6abfdf405a2b121236f0bbbc`. The new public, unlisted `/grid-version` route has its
+own biography, media replacements, scoped backgrounds and list sizing; `/v2`
+preserves query parameters when redirecting to it. Shared dependency upgrades
+are included and must pass checks for both versions. There is no database.
+
+The browser release matrix additionally runs `portfolioIsolation.spec.ts`,
+`mosaicRoutes.spec.ts`, and `mosaicRelease.spec.ts`. These cover representative
+published pages in both appearances, client navigation isolation, ten packed
+grid projects, About, inline video and pause/resume, keyboard return focus,
+history, direct links, reduced motion, and absence of production editor controls.
+Paired desktop/phone screenshots are retained in the ignored QA artifacts.
+Development-editor suites remain outside the production release gate.
+
+The grid's current visitor contract opens one cover per project, without image
+navigation or zoom. Its saved configuration includes ten projects, centered new
+Loopio/FreshBooks/Informal videos, additional AGE/Radio/Gift Exchanges projects,
+and per-segment speeds, fades and framing. Older unit assertions described the
+superseded seven-project composition and 1–6s Informal excerpt; they now assert
+the current authored values and export fidelity. The grid fills its remaining
+flex height and uses packed slots. No existing portfolio assertion, measured
+journey, performance allowance, or accepted baseline is relaxed.
+
+The previous October 2 receipt is failing and stale, and its one-release
+exception is not reused. Its triage identified host contention and a corrected
+header-layout issue; neither is assumed harmless for this release. The first
+current run follows the isolation changes and functional checks, on an idle
+CPU baseline (roughly 73% idle, load 2.15). New performance failures require the
+same evidence, changed-code and primary-source triage before another full run.
+The first managed attempt (`2026-10-28T22-45-30-925Z`) could not launch either
+browser because the upgraded Playwright binaries were missing; it produced no
+performance samples and remains recorded as blocked. The browser installation
+completed before the next run. The packing geometry matrix is split by
+viewport so its 24 configurations do not share a single five-second unit-test
+timeout; all configurations, assertions, and per-test timeouts are retained.
+Chromium 156 replaces the accepted baseline's Chromium 151, requiring a reviewed
+matching reference before performance comparison can authorize publication.
+The OS kernel also changed from 25.6.0 to 27.0.0. See the
+[retained evidence, grid fixes, primary-source triage and bounded reference protocol](docs/qa/2026-10-28-grid-release.md).
+The reference uses the published app and original runtime dependencies with only
+the Playwright toolchain updated. Review its complete report before accepting it;
+the candidate must still pass unchanged performance allowances.
+
+For environment recalibration, `pnpm qa:run --reference /path/to/published-checkout`
+builds and verifies both checkouts, then alternates reference/candidate order for
+each complete six-task journey. Each build still receives all four profiles and
+three repetitions, with the same measurement code, throttling and budgets. Only
+one browser context runs at a time. Both source fingerprints and build IDs are
+checked again afterward; each checkout receives its own complete report. The
+reference must use identical task/configuration code and the same Playwright
+version. This mode records a comparison but does not accept a baseline or bypass
+`qa:check`. Review the published-source provenance and all results before an
+environment-driven baseline replacement.
+
+The October 29 calibration uses this paired schedule because the unchanged
+published app also drifted against the earlier reference. One complete paired
+run is declared before observing its results; no repetition is discarded and
+no best run is selected. See the [calibration record](docs/qa/2026-10-29-paired-calibration.md).
+
 For debugging task definitions, `pnpm qa:run --tasks-only` omits the long browser
 suite. It still records a **blocked diagnostic** run and cannot establish a
 baseline or authorize release. Follow it with a complete run before shipping.
@@ -292,3 +354,17 @@ a repeatable defect, add the smallest deterministic check and update this contra
 if needed. Do not auto-heal assertions, skip failures, change budgets, or replace a
 baseline to obtain a green release. Intentional behavior changes should update the
 contract and test together, with the reason recorded.
+
+
+### October 29 startup-observation correction
+
+Cold-entry now detects the existing ready phase, absent loader, fully visible
+chrome and visible menu on an animation frame, then completes the unchanged
+200 ms geometry-settlement check. The performance sample ends there; the same
+functional assertions still run and block the receipt if any fails. Playwright 1.64.1's locator assertion retry
+loop backs off to 500 ms. Using that loop to delimit a timed journey introduced
+variable idle frames after readiness, diluting startup p95 by different amounts
+for different builds. The completion condition, measured metrics, three
+repetitions and all budgets remain unchanged. The same observer is used on the
+published-source reference. It requires a fresh calibration because the task
+instrumentation changed. See the [timestamps, source inspection and validation](docs/qa/2026-10-29-paired-calibration.md).
