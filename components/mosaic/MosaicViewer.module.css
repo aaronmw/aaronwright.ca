@@ -285,8 +285,9 @@
 
 .aboutPage {
   --about-gutter: var(--portfolio-logo-size);
+  --about-section-gap: clamp(48px, 3.9vw, 75px);
   display: grid;
-  align-content: start;
+  align-content: center;
   min-height: 100%;
   color: var(--portfolio-text);
   padding: max(var(--about-gutter), env(safe-area-inset-top))
@@ -302,7 +303,7 @@
   margin-inline: auto;
   grid-template-columns: minmax(0, 8fr) minmax(0, 15fr);
   align-items: start;
-  gap: var(--about-gutter);
+  gap: var(--about-section-gap);
 }
 
 .aboutCopy {
@@ -322,7 +323,7 @@
   justify-content: space-between;
   flex-wrap: wrap;
   gap: var(--about-gutter);
-  margin-bottom: clamp(48px, 3.9vw, 75px);
+  margin-bottom: var(--about-section-gap);
   font-size: clamp(16px, 0.9375vw, 18px);
   line-height: 1.5;
   color: var(--portfolio-text-body);
@@ -344,7 +345,7 @@
 
 .aboutHeadline {
   container: about-headline / inline-size;
-  margin: 0 0 clamp(48px, 3.9vw, 75px);
+  margin: 0 0 var(--about-section-gap);
   font-size: clamp(32px, 2.917vw, 56px);
   line-height: 1.2;
   font-weight: 300;
@@ -407,17 +408,14 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .aboutMasthead {
-    margin-bottom: 32px;
+  .aboutPage {
+    --about-section-gap: 32px;
   }
 
   .aboutRole > span {
     display: block;
   }
 
-  .aboutHeadline {
-    margin-bottom: 32px;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
