@@ -58,7 +58,7 @@ export function MosaicViewerLoader(props: MosaicViewerProps) {
       role="status"
       aria-label="Opening image gallery"
     >
-      <FiveByFive variant="snake" />
+      <FiveByFive variant="snake" className={styles.loadingIndicator} />
     </div>
   )
 }

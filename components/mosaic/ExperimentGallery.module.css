@@ -29,6 +29,11 @@
   color: var(--portfolio-accent-decoration);
 }
 
+.loadingIndicator {
+  /* Cover the centred logo without obscuring the held project media. */
+  background: var(--portfolio-surface-dark);
+}
+
 /* Preserve source layout while the single transition/viewer visual owns it. */
 :global([data-mosaic-source-hidden]) {
   visibility: hidden !important;
