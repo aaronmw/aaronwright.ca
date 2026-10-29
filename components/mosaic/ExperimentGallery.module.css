@@ -1,5 +1,4 @@
 .logo {
-  --mosaic-logo-size: calc(var(--logo-stroke-width) * 5);
   position: absolute;
   top: 50%;
   left: 50%;

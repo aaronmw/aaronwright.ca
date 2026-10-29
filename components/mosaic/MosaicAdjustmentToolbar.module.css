@@ -113,6 +113,7 @@
   max-width: 100%;
 }
 .button {
+  composes: pressed from '../portfolio/presentation/PortfolioButtonHover.module.css';
   min-height: var(--adjustment-control-height);
   display: inline-flex;
   align-items: center;
@@ -309,6 +310,7 @@
   color: var(--portfolio-neutral-50);
 }
 .timelineSegment {
+  composes: pressed from '../portfolio/presentation/PortfolioButtonHover.module.css';
   touch-action: none;
   user-select: none;
   position: absolute;

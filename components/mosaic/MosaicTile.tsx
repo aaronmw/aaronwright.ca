@@ -12,6 +12,7 @@ import type { MosaicOrigin, MosaicProject, MosaicVideoPreview } from './types'
 import styles from './Mosaic.module.css'
 import { MosaicCoverMedia } from './MosaicCoverMedia'
 import { MosaicProjectLabel } from './MosaicProjectLabel'
+import { MosaicVisitedBadge } from './MosaicVisitedBadge'
 import { captureMosaicOrigin } from './mediaSnapshot'
 import { mosaicCompositionProperties } from './composition'
 import type { MosaicTileEntrance } from './entrance'
@@ -28,6 +29,7 @@ import {
 
 export function MosaicTile({
   project,
+  visited = false,
   area,
   placement,
   onOpen,
@@ -47,6 +49,7 @@ export function MosaicTile({
   skipEntrance?: boolean
   preview?: MosaicVideoPreview
   project: MosaicProject
+  visited?: boolean
   area?: string
   placement?: CSSProperties
   adjusting?: boolean
@@ -60,6 +63,7 @@ export function MosaicTile({
   ) => void
 }) {
   const summaryId = useId()
+  const visitedId = useId()
   const [playbackTempo] = useState(createMosaicPlaybackTempo)
   const entry = useMosaicEntrance(entrance, skipEntrance, entranceGroup)
   const [mediaReady, setMediaReady] = useState(false)
@@ -112,7 +116,11 @@ export function MosaicTile({
           data-mosaic-project={project.slug}
           aria-label={`${adjusting ? 'Adjust' : 'View'} ${project.title.replace(/\u00ad/g, '')} media`}
           aria-haspopup={adjusting ? undefined : 'dialog'}
-          aria-describedby={adjusting ? 'mosaic-adjustment-help' : summaryId}
+          aria-describedby={
+            adjusting
+              ? 'mosaic-adjustment-help'
+              : `${summaryId}${visited ? ` ${visitedId}` : ''}`
+          }
           onClick={activate}
           onPointerEnter={event => {
             if (
@@ -152,6 +160,7 @@ export function MosaicTile({
             project={project}
             summaryId={summaryId}
           />
+          {visited ? <MosaicVisitedBadge id={visitedId} /> : null}
         </button>
       </div>
     </div>

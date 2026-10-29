@@ -1,8 +1,7 @@
 'use client'
 
 import { useMemo, useState, useSyncExternalStore } from 'react'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faPause, faPlay } from '@fortawesome/free-solid-svg-icons'
+import { PortfolioIcon } from '../portfolio/presentation/PortfolioIcon'
 import { MosaicViewerButton } from './MosaicViewerButton'
 import { VideoScrubber } from '../portfolio/presentation/VideoScrubber'
 import { createVideoTimelineStore } from './videoTimelineStore'
@@ -45,10 +44,7 @@ export function MosaicVideoControls({
           else video.pause()
         }}
       >
-        <FontAwesomeIcon
-          icon={timeline.paused ? faPlay : faPause}
-          aria-hidden="true"
-        />
+        <PortfolioIcon name={timeline.paused ? 'play' : 'pause'} />
       </MosaicViewerButton>
       <VideoScrubber
         className={styles.videoScrubber}

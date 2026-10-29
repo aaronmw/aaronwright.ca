@@ -56,6 +56,7 @@ export type MosaicProjectCopy = {
 export type MosaicProject = MosaicProjectCopy & {
   id: string
   slug: string
+  url?: string
   media: MosaicMedia[]
   composition: MosaicComposition
   about?: Pick<PortfolioProject, 'overviewMarkdown' | 'detailsMarkdown'>

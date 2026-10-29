@@ -1,0 +1,6 @@
+/* Filled actions are always red; pressed controls are red only when selected. */
+.filled:hover:not(:disabled):not([aria-disabled='true']),
+.pressed[aria-pressed='true']:hover:not(:disabled):not([aria-disabled='true']) {
+  background: var(--portfolio-red-800);
+  text-decoration: none;
+}

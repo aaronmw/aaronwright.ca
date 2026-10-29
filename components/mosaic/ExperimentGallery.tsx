@@ -25,6 +25,8 @@ import { gsap, mosaicEase, seconds } from './motion'
 import { portfolioMotion } from '@/lib/portfolioTokens'
 import { holdMosaicSource, restoreMosaicFocus } from './sourceVisual'
 import { useMosaicDevIndicatorHidden } from './useMosaicDevIndicatorHidden'
+import { useVisitedProjects } from './useVisitedProjects'
+import { mosaicFont } from '@/lib/mosaicFonts'
 
 type Session = {
   project: MosaicProject
@@ -41,6 +43,8 @@ export type ExperimentGalleryContext = {
   ) => void
   playbackPaused: boolean
   logoReady: boolean
+  visitedProjects: readonly string[]
+  clearViewHistory: () => void
 }
 
 const GalleryContext = createContext<ExperimentGalleryContext | null>(null)
@@ -73,6 +77,7 @@ export function ExperimentGallery({
   adjusting?: boolean
 }) {
   const [session, setSession] = useState<Session | null>(null)
+  const { visitedProjects, markVisited, clearViewHistory } = useVisitedProjects()
   useMosaicDevIndicatorHidden(session !== null)
   const triggerRef = useRef<HTMLButtonElement | null>(null)
   const restoreKeyboardFocusRef = useRef(true)
@@ -217,7 +222,7 @@ export function ExperimentGallery({
   return (
     // Keep our inert main inside a stable wrapper: the lightbox owns inert on
     // body children and must not capture/restore our temporary main state.
-    <div data-mosaic-root className={theme.scope}>
+    <div data-mosaic-root className={`${theme.scope} ${mosaicFont.className}`}>
       <main
         ref={mainRef}
         className={className}
@@ -227,21 +232,27 @@ export function ExperimentGallery({
         aria-label="Aaron Wright’s visual portfolio"
       >
         <GalleryContext.Provider
-          value={{ open, playbackPaused: session !== null, logoReady }}
+          value={{
+            open,
+            playbackPaused: session !== null,
+            logoReady,
+            visitedProjects,
+            clearViewHistory,
+          }}
         >
           {children}
+          <Link
+            ref={logoRef}
+            href="/work"
+            aria-label="Aaron Wright — portfolio"
+            className={styles.logo}
+            data-mosaic-logo
+            prefetch={false}
+          >
+            <PortfolioLogoMark />
+          </Link>
+          {!session ? toolbar : null}
         </GalleryContext.Provider>
-        <Link
-          ref={logoRef}
-          href="/work"
-          aria-label="Aaron Wright — portfolio"
-          className={styles.logo}
-          data-mosaic-logo
-          prefetch={false}
-        >
-          <PortfolioLogoMark />
-        </Link>
-        {!session ? toolbar : null}
       </main>
       {session ? (
         <MosaicViewerLoader
@@ -252,6 +263,7 @@ export function ExperimentGallery({
           origin={session.origin}
           onIndexChange={changeSlide}
           onRequestClose={requestClose}
+          onOpened={() => markVisited(session.project.id)}
           onExited={exited}
         />
       ) : null}

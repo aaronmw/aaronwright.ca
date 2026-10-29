@@ -35,7 +35,12 @@ function MosaicGrid({
   onVideoDuration,
   onPackingStatus,
 }: MosaicProps) {
-  const { open, playbackPaused, logoReady } = useExperimentGallery()
+  const { open, playbackPaused, logoReady, visitedProjects } =
+    useExperimentGallery()
+  const visitedProjectIds = useMemo(
+    () => new Set(visitedProjects),
+    [visitedProjects],
+  )
   const gridRef = useRef<HTMLDivElement>(null)
   const entranceGroup = useMemo(
     () => createMosaicEntranceGroup(projects.length),
@@ -87,6 +92,7 @@ function MosaicGrid({
         <MosaicTile
           key={project.id}
           project={project}
+          visited={visitedProjectIds.has(project.id)}
           adjustmentLayer={adjustmentLayer}
           entrance={entrances?.[index]}
           entranceGroup={entranceGroup}

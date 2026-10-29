@@ -21,6 +21,7 @@ export const portfolioPaletteStyle = {
   '--portfolio-accent-decoration': portfolioAccentColor,
   '--portfolio-red-500': colors.red[500],
   '--portfolio-red-600': colors.red[600],
+  '--portfolio-red-800': colors.red[800],
   '--portfolio-neutral-50': portfolioNeutralPalette[50],
   '--portfolio-neutral-200': portfolioNeutralPalette[200],
   '--portfolio-neutral-300': portfolioNeutralPalette[300],

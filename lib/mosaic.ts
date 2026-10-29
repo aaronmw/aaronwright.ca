@@ -124,6 +124,12 @@ const projectLongSummaries: Record<string, string> = {
     'I’ve built this game at least five times now. I’ve built it with different themes, different mechanics, and on different technologies. Now it’s just a simple PWA because it’s the most accessible: just visit [NextPhrase.app](https://nextphrase.app) and add it to your home screen for the best experience.',
 }
 
+const projectUrls: Record<string, string> = {
+  loopio: 'https://loopio.com',
+  freshbooks: 'https://www.freshbooks.com',
+  'informal-systems': 'https://staging.informal.systems',
+}
+
 // Source focal points and composition targets are separate, editable coordinates.
 // Keying by media ID prevents a replacement first slide inheriting an unrelated crop.
 // Video cells may set ordered segments with independent fades. Omission uses the full video.
@@ -323,6 +329,7 @@ const cyclesProject: MosaicProject = {
   id: 'cycles-dot-money',
   slug: 'cycles-dot-money',
   title: 'Cycles',
+  url: 'https://cycles.money',
   summary:
     "I worked with Informal's marketing designer to bring this site's scroll-driven animation to life.",
   longSummary:
@@ -360,6 +367,7 @@ const ageProject: MosaicProject = {
   id: 'age-dot-fund',
   slug: 'age-dot-fund',
   title: 'AGE',
+  url: 'https://age.fund',
   summary:
     'I designed and built the AGE.fund website alongside the founders to communicate their unique value.',
   longSummary:
@@ -404,6 +412,7 @@ const radioProject: MosaicProject = {
   id: 'radio-app',
   slug: 'radio-app',
   title: 'Radio App',
+  url: 'https://old-timey-radio-app.netlify.app',
   summary: 'The radio in my car sounded terrible, so I made my own.',
   longSummary:
     'Turns out, radio stations all publish their own streams. And there are free catalogues of those streams. I only wanted local stations, so my radio app geo-locates the user first then loads local stations in the background. Also features a simulated LCD screen with slow-dimming pixels, because why not?',
@@ -459,6 +468,7 @@ const giftExchangesProject: MosaicProject = {
   id: 'gift-exchanges',
   slug: 'gift-exchanges',
   title: 'Gift Exchanges',
+  url: 'https://gift-exchange-parties.netlify.app',
   summary: 'I built my own "Secret Santa" app to scratch my own itch.',
   longSummary:
     'Every year, both my family and close circle of friends organize a "Secret Santa" gift exchange, and every year we were forced to use less-than-great solutions. So this year, I built my own. It\'s powered by Supabase Realtime connections and authentication, and allows us to build and share wish lists, sends multi-channel notifications for updates and reminders, and more.',
@@ -505,6 +515,7 @@ export const mosaicProjects: MosaicProject[] = portfolioSlides
       id: slug,
       slug,
       title: project.title,
+      url: project.url ?? projectUrls[slug],
       summary: projectSummaries[slug],
       longSummary: projectLongSummaries[slug],
       ...(project.slug === 'about-me'

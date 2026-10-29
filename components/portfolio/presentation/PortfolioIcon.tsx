@@ -8,7 +8,10 @@ const ICON_CLASSES = {
   close: 'fa-xmark',
   collapse: 'fa-minus-large',
   notes: 'fa-notes',
+  external: 'fa-arrow-up-right-from-square',
   replay: 'fa-arrow-rotate-left',
+  play: 'fa-play',
+  pause: 'fa-pause',
   system: 'fa-display',
   light: 'fa-sun',
   dark: 'fa-moon',
@@ -27,12 +30,25 @@ const ICON_SIZE_CLASSES = {
 export function PortfolioIcon({
   name,
   size = 'control',
+  inline = false,
   className,
 }: {
   name: PortfolioIconName
   size?: keyof typeof ICON_SIZE_CLASSES
+  inline?: boolean
   className?: string
 }) {
+  // Icons within text inherit its size without the control slot's glyph scaling.
+  if (inline) {
+    return (
+      <i
+        data-portfolio-icon={name}
+        className={`${ICON_FAMILY_CLASS_NAME} ${ICON_CLASSES[name]} ${className ?? ''}`}
+        aria-hidden="true"
+      />
+    )
+  }
+
   return (
     <span
       data-portfolio-icon={name}

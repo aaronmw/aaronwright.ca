@@ -34,6 +34,7 @@ export type MosaicViewerProps = {
   origin: MosaicOrigin | null
   onIndexChange: (index: number) => void
   onRequestClose: () => void
+  onOpened?: () => void
   onExited: () => void
 }
 
@@ -341,6 +342,7 @@ export function useMosaicViewerTransition(props: MosaicViewerProps) {
     viewer.dataset.mosaicTransitionState = 'open'
     busy.current = false
     setPhase('open')
+    latest.current.onOpened?.()
   }
 
   function startMotion(

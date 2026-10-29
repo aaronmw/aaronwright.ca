@@ -41,6 +41,7 @@ export function MosaicDevelopment({ projects }: { projects: MosaicProject[] }) {
     return {
       ...project,
       title: current?.title ?? project.title,
+      url: current ? current.url : project.url,
       summary: current?.summary ?? project.summary,
       longSummary: current ? current.longSummary : project.longSummary,
       blurbPosition: current ? current.blurbPosition : project.blurbPosition,

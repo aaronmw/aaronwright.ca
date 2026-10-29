@@ -1,6 +1,7 @@
 /* Explicit staging boundary: keep the published portfolio's defaults intact.
    Portaled viewers and transition layers must opt into this same scope. */
 .scope {
+  --mosaic-logo-size: calc(var(--logo-stroke-width) * 5);
   --portfolio-surface-dark: #000;
   --portfolio-list-marker-size: calc(var(--logo-stroke-width) * 5);
 }

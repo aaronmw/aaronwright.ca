@@ -6,6 +6,7 @@ import { MosaicLoopEditor, type VideoLoopControls } from './MosaicLoopEditor'
 import type { PackingApproach } from './packing'
 import type { PackingStatus } from './usePackedLayout'
 import { MosaicLayoutSelector } from './MosaicLayoutSelector'
+import { useExperimentGallery } from './ExperimentGallery'
 import styles from './MosaicAdjustmentToolbar.module.css'
 
 export function MosaicAdjustmentToolbar({
@@ -53,6 +54,15 @@ export function MosaicAdjustmentToolbar({
   projectEditor?: ReactNode
   layerControls?: ReactNode
 }) {
+  const { clearViewHistory } = useExperimentGallery()
+  const clearHistoryButton = (
+    <AdjustmentButton
+      disabled={pending || shufflePending}
+      onClick={clearViewHistory}
+    >
+      Clear view history
+    </AdjustmentButton>
+  )
   const approachControl = (
     <MosaicLayoutSelector
       approach={approach}
@@ -86,6 +96,7 @@ export function MosaicAdjustmentToolbar({
           <div className={styles.row}>
             {approachControl}
             {shuffleButton}
+            {clearHistoryButton}
             <AdjustmentButton
               icon={faCopy}
               pending={pending}
@@ -163,6 +174,7 @@ export function MosaicAdjustmentToolbar({
           </AdjustmentButton>
           {approachControl}
           {shuffleButton}
+          {clearHistoryButton}
         </div>
       )}
       {layerControls}

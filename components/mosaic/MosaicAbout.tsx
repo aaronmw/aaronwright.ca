@@ -1,7 +1,6 @@
 import { stopNavigationEventsPropagation } from 'yet-another-react-lightbox'
 import { ProjectNarrative } from '@/components/portfolio/presentation/PortfolioText'
 import { PortfolioLogoMark } from '@/components/portfolio/presentation/PortfolioLogoMark'
-import { mosaicAboutFont } from '@/lib/mosaicFonts'
 import { MosaicPortrait } from './MosaicPortrait'
 import type { MosaicProject } from './types'
 import styles from './MosaicViewer.module.css'
@@ -16,9 +15,7 @@ export function MosaicAbout({ project }: { project: MosaicProject }) {
       aria-label="About Aaron Wright"
       {...stopNavigationEventsPropagation()}
     >
-      <section
-        className={`${styles.aboutPage} ${mosaicAboutFont.className}`}
-      >
+      <section className={styles.aboutPage}>
         <div className={styles.aboutColumns}>
           <MosaicPortrait expanded />
           <article

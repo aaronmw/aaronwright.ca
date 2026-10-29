@@ -5,9 +5,10 @@ import { stopNavigationEventsPropagation } from 'yet-another-react-lightbox'
 import { PortfolioIcon } from '@/components/portfolio/presentation/PortfolioIcon'
 import { PortfolioMarkdown } from '@/components/portfolio/presentation/PortfolioText'
 import { DEFAULT_MOSAIC_BLURB_POSITION } from './blurbPosition'
-import type { MosaicProjectCopy } from './types'
+import type { MosaicProject } from './types'
 import styles from './MosaicViewer.module.css'
 import { MosaicViewerButton } from './MosaicViewerButton'
+import { MosaicProjectLink } from './MosaicProjectLink'
 import { MosaicBlurbInk } from './MosaicBlurbInk'
 import { useMosaicBlurbMotion } from './useMosaicBlurbMotion'
 
@@ -16,7 +17,7 @@ export function MosaicProjectBlurb({
   video,
   visible,
 }: {
-  project: MosaicProjectCopy
+  project: Pick<MosaicProject, 'title' | 'longSummary' | 'blurbPosition' | 'url'>
   video: boolean
   visible: boolean
 }) {
@@ -73,6 +74,9 @@ export function MosaicProjectBlurb({
         >
           <PortfolioMarkdown>{project.longSummary!}</PortfolioMarkdown>
         </div>
+        {project.url ? (
+          <MosaicProjectLink href={project.url} title={project.title} />
+        ) : null}
       </aside>
       <span
         ref={anchor}

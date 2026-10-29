@@ -61,15 +61,6 @@
   outline: 2px solid var(--portfolio-text);
   outline-offset: 3px;
 }
-.button svg {
-  width: 22px;
-  height: 22px;
-}
-.button :global([data-portfolio-icon]) {
-  --portfolio-icon-size: 22px;
-  width: 22px;
-  height: 22px;
-}
 .opening {
   opacity: 0;
 }
@@ -114,6 +105,7 @@
 }
 
 .videoControls {
+  --mosaic-video-controls-left: var(--mosaic-viewer-left);
   position: absolute;
   z-index: 1;
   inset: 0;
@@ -125,29 +117,30 @@
   opacity: 1;
 }
 .videoPlayPause {
+  composes: filled from '../portfolio/presentation/PortfolioButtonHover.module.css';
   position: absolute;
-  top: var(--mosaic-viewer-top);
-  left: var(--mosaic-viewer-left);
+  bottom: var(--mosaic-viewer-bottom);
+  left: var(--mosaic-video-controls-left);
   pointer-events: auto;
 }
 .videoScrubber {
   position: absolute;
-  left: var(--mosaic-viewer-left);
+  left: calc(var(--mosaic-video-controls-left) + var(--portfolio-logo-size));
   right: var(--mosaic-viewer-right);
   bottom: var(--mosaic-viewer-bottom);
   height: var(--portfolio-logo-size);
   min-width: 0;
   pointer-events: auto;
 }
-.root:has(.blurbLayer[data-video]) .videoScrubber {
-  left: calc(
+.root:has(.blurbLayer[data-video]) .videoControls {
+  --mosaic-video-controls-left: calc(
     var(--mosaic-viewer-left) + var(--portfolio-logo-size) +
       var(--logo-stroke-width)
   );
 }
 
 /* Shared screen rails align the blurb with the actual ends of the scrubber.
-   The upper rail leaves room for close, zoom, and play/pause controls. */
+   The upper rail leaves room for close and zoom controls. */
 .root:has(.blurb) :global(.yarl__container) {
   touch-action: pan-y pinch-zoom;
 }
@@ -197,7 +190,7 @@
   max-width: 48ch;
   min-height: 0;
   max-height: 100%;
-  padding: var(--portfolio-logo-size);
+  padding: 0;
   border: var(--logo-stroke-width) solid var(--portfolio-accent-decoration);
   background: var(--portfolio-surface-dark);
   color: var(--portfolio-neutral-50);
@@ -212,12 +205,40 @@
 }
 .blurbContent {
   min-height: 0;
+  margin: var(--portfolio-logo-size);
   overflow-y: auto;
   overscroll-behavior: contain;
 }
 .blurbContent:focus-visible {
   outline: 2px solid var(--portfolio-neutral-50);
   outline-offset: -3px;
+}
+.projectLink {
+  composes: filled from '../portfolio/presentation/PortfolioButtonHover.module.css';
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  height: calc(var(--portfolio-logo-size) * 2);
+  margin: 0 var(--logo-stroke-width) var(--logo-stroke-width);
+  padding-inline: var(--logo-stroke-width);
+  color: var(--portfolio-neutral-50);
+  background: var(--portfolio-accent-decoration);
+  font-weight: 700;
+  text-align: center;
+  text-decoration: none;
+}
+.projectLink:focus-visible {
+  outline: 2px solid var(--portfolio-neutral-50);
+  outline-offset: -3px;
+}
+@media (forced-colors: active) {
+  .projectLink {
+    border: 1px solid LinkText;
+  }
+  .projectLink:focus-visible {
+    outline-color: Highlight;
+  }
 }
 .blurbAnchor,
 .blurbToggle {
@@ -234,16 +255,19 @@
   grid-area: auto;
 }
 .blurbMinimize,
-.blurbToggle {
+.blurbToggle,
+.videoPlayPause {
   color: var(--portfolio-neutral-50);
   background: var(--portfolio-accent-decoration);
 }
 .blurbMinimize {
+  composes: filled from '../portfolio/presentation/PortfolioButtonHover.module.css';
   position: absolute;
   top: 0;
   right: 0;
 }
 .blurbToggle {
+  composes: filled from '../portfolio/presentation/PortfolioButtonHover.module.css';
   z-index: 3;
 }
 .blurbLayer[data-controls-ready] .blurbToggle {

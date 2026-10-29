@@ -1,11 +1,12 @@
 'use client'
 
+import type { HTMLAttributes } from 'react'
+import { mosaicFont } from '@/lib/mosaicFonts'
 import Lightbox, { type Slide } from 'yet-another-react-lightbox'
 import Video from 'yet-another-react-lightbox/plugins/video'
 import 'yet-another-react-lightbox/styles.css'
 import { MosaicViewerButton as ViewerButton } from './MosaicViewerButton'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faXmark } from '@fortawesome/free-solid-svg-icons'
+import { PortfolioIcon } from '../portfolio/presentation/PortfolioIcon'
 import {
   useMosaicViewerTransition,
   type MosaicViewerProps,
@@ -78,7 +79,12 @@ export function MosaicViewer(props: MosaicViewerProps) {
       index={index}
       slides={slides}
       plugins={about ? [] : [Video]}
-      className={`${styles.root} ${theme.scope} ${treatment.surface} ${about ? styles.aboutViewer : ''} ${phase === 'opening' ? styles.opening : ''} ${phase === 'closing' ? styles.closing : ''}`}
+      className={`${styles.root} ${theme.scope} ${mosaicFont.className} ${treatment.surface} ${about ? styles.aboutViewer : ''} ${phase === 'opening' ? styles.opening : ''} ${phase === 'closing' ? styles.closing : ''}`}
+      portal={{
+        container: {
+          'data-interactive-pop': 'off',
+        } as HTMLAttributes<HTMLDivElement>,
+      }}
       controller={{
         ref: controller,
         closeOnEscape: false,
@@ -121,10 +127,7 @@ export function MosaicViewer(props: MosaicViewerProps) {
             label="Close viewer"
             onClick={requestClose}
           >
-            <FontAwesomeIcon
-              icon={faXmark}
-              aria-hidden="true"
-            />
+            <PortfolioIcon name="close" />
           </ViewerButton>
         ),
         buttonPrev: () => null,

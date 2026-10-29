@@ -192,6 +192,40 @@
   line-height: 1.4;
 }
 
+.visitedBadge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: inline-flex;
+  align-items: center;
+  height: var(--mosaic-logo-size);
+  padding: 0;
+  background: var(--portfolio-accent-decoration);
+  color: var(--portfolio-neutral-50);
+  font-size: 14px;
+  line-height: 1;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.visitedIcon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: var(--mosaic-logo-size);
+  height: var(--mosaic-logo-size);
+}
+
+.visitedIcon svg {
+  width: 1em;
+  height: 1em;
+}
+
+.visitedLabel {
+  padding-right: calc(var(--logo-stroke-width) * 2);
+  text-align: left;
+}
+
 .root:not([data-mosaic-adjusting])
   .tile:is(:focus-visible, [data-mosaic-return-focus]:focus)
   .label {
