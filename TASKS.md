@@ -294,3 +294,29 @@ Click feedback and silent stopping are checked independently on the hosted draft
 This helper change invalidates the protocol fingerprint. Review the next complete
 receipt against the preceding grid medians for context before accepting the
 corrected prerequisite baseline; never waive a functional failure or change a budget.
+
+### Bounded close-animation frame-gap triage
+
+Receipt `2026-10-30T01-13-32-962Z` has 236 unit passes, 80 browser passes and all
+72 journeys with no errors. One of 96 comparisons fails: laptop close-viewer p95
+is 49.9ms versus 33.3ms baseline, a 16.6ms/49.8% difference and 6.6ms over its
+43.3ms limit. Repetitions are 33.3/50.0/49.9ms with 36/36/37 frames, versus
+33.4/33.3/33.3ms with 36/34/36 frames. Each repetition in both runs has exactly
+one gap over 50ms. Close-duration medians are 715.8 versus 700.2ms (+15.6ms/2.2%);
+longest-task medians are 51 versus 50ms, and longest-frame medians 83 versus72.2ms.
+All other budgets pass.
+
+The only application/config changes since the accepted run are the edge import's
+explicit `.ts` extension and its no-emit TypeScript permission. All 24 shared
+browser JS/CSS chunks are byte-identical between the preceding Netlify package
+and current QA build; only three manifest paths carry different build IDs.
+The current 36-frame nearest-rank p95 is the second-worst interval, making it
+sensitive to one refresh interval. [MDN's rAF reference](https://developer.mozilla.org/en-US/docs/Web/API/Window/requestAnimationFrame)
+explains refresh-coupled sampling; [Chrome's variability guidance](https://github.com/GoogleChrome/lighthouse/blob/main/docs/variability.md)
+describes browser nondeterminism even without code changes. Neither waives budgets.
+
+Classification: likely ordinary scheduling/sample variation, medium-high
+confidence; no evidence of an added browser workload. One predeclared confirmation
+run will use the unchanged app, profiles, measurements and accepted baseline.
+Retain both results. Do not repeatedly scan, replace the baseline or relax the
+budget to get green. A repeated failure remains blocked for an explicit decision.

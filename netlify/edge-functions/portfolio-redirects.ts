@@ -1,7 +1,7 @@
 import {
   cleanMosaicSearchParams,
   hasViewerParameters,
-} from '../../components/mosaic/routing'
+} from '../../components/mosaic/routing.ts'
 
 type RedirectContext = { next: () => Promise<Response> }
 

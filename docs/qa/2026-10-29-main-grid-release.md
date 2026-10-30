@@ -212,3 +212,48 @@ The slow-network cold-load limitation remains deferred. No hidden functional
 failure or budget exception is accepted. Pride gate: yes, proud of the result;
 yes, willing to stand behind it in production after the mandatory hosted checks.
 Aaron's approved plan authorizes continuing through this audit without a pause.
+
+## Edge bundle compatibility correction
+
+Commit `88582d7` includes the shared redirect handler, video feedback and completed
+QA evidence. Netlify's production Next build and QA gate passed, but its Deno edge
+bundler rejected the extensionless relative import of `routing`. No corrected
+draft was published from that failed package.
+
+The import now names `routing.ts`, with TypeScript's `allowImportingTsExtensions`
+enabled under the existing `noEmit` configuration. This is resolver compatibility,
+not a runtime behavior change. TypeScript and all 12 edge-handler tests pass. The
+exact installed Netlify Deno bundler now produces the 11,073-byte edge bundle.
+The full release run is repeated because the repository requires a receipt that
+matches these source/config changes; the accepted video-prerequisite baseline
+and all performance budgets remain unchanged.
+
+The complete compatibility-correction receipt `2026-10-30T01-13-32-962Z` passed
+236 unit tests, 80 browser cases and 72 error-free journeys. One frame-gap budget
+failed on the laptop close animation (49.9ms versus a 43.3ms limit). TASKS.md
+records the full numeric context, identical browser-chunk evidence, primary
+references and a bounded one-run confirmation decision. No baseline or budget
+change is authorized by that observation, and the blocked receipt is retained.
+
+## Bounded confirmation outcome
+
+The single predeclared confirmation is
+`qa/results/2026-10-30T01-25-53-330Z.json`, source fingerprint
+`2f187ca3b0aac740df318ef5fb7d142e2076d2b7e094b6c7d62b78515abf575d`.
+Bootstrapper run `DA796830-C09C-4910-B7E3-64BB6757E28E` completed and cleaned up
+its temporary server. All 236 unit tests, all 80 browser cases and all 72 journeys
+completed with no functional errors. One of 96 budget comparisons remains blocked:
+laptop close-viewer p95 samples 50.1/33.3/50.0ms, median 50.0ms versus the 43.3ms
+limit (baseline 33.3ms). Sample counts are 36/35/36 and gaps over 50ms are 2/1/1.
+The close-duration median is 700.7ms versus 700.2ms baseline (+0.5ms/0.07%).
+Longest-task and longest-frame medians are 52ms and 76.4ms; all other budgets pass.
+
+No further repeat scan, assertion change or baseline replacement is planned.
+The unchanged-browser-code and short percentile-window evidence supports treating
+this isolated result as low practical impact, but the mandatory gate still blocks
+release. Audit verdict: **needs follow-up before finalizing the release**. The
+implementation and evidence can be committed for review; publishing requires an
+explicit one-release exception or a subsequent authorized change to the contract.
+Pride gate: yes for the implementation; yes for functional production confidence
+subject to the still-required corrected-draft and production checks. No claim is
+made that the performance gate passed or that the corrected draft was deployed.
