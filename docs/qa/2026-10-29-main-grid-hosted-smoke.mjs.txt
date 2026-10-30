@@ -1,0 +1,147 @@
+import { chromium, expect, request } from '@playwright/test'
+import { mkdir, writeFile } from 'node:fs/promises'
+import { gridReady, viewerReady, notesReady } from '../../scripts/qa/tasks.mjs'
+
+const [baseURL, label = 'draft-corrected'] = process.argv.slice(2)
+if (!baseURL) throw new Error('Pass the exact deployment URL')
+const dir = `test-results/main-grid-release/${label}`
+await mkdir(dir, { recursive: true })
+const api = await request.newContext({ baseURL, timeout: 45_000 })
+const routes = ['about-me', 'loopio', 'freshbooks', 'cycles-dot-money', 'informal-systems', 'aarons-toolbox', 'nextphrase', 'age-dot-fund', 'radio-app', 'gift-exchanges']
+const record = { baseURL, at: new Date().toISOString(), pages: [], redirects: [], cards: [], browsers: [] }
+for (const slug of ['', ...routes]) {
+  const path = '/work' + (slug ? '/' + slug : '')
+  const response = await api.get(path)
+  expect(response.status(), path).toBe(200)
+  const html = await response.text()
+  expect(html).toContain(`rel="canonical" href="https://aaronwright.ca${path}"`)
+  expect(html).not.toMatch(/name="robots"[^>]*content="[^"]*noindex/)
+  record.pages.push(path)
+}
+for (const [from, to] of [
+  ['/', '/work'],
+  ['/grid-version?project=nextphrase-dot-app&slide=intro&ref=a&ref=b', '/work/nextphrase?ref=a&ref=b'],
+  ['/v2?project=loopio&modal=image', '/work/loopio'],
+  ['/grid-version?project=loopio', '/work/loopio'],
+  ['/work/loopio?zoom=image', '/work/loopio'],
+  ['/work?project=nextphrase-dot-app', '/work/nextphrase'],
+  ['/work/loopio/a-mature-product?zoom=image', '/work/loopio'],
+  ['/work/loopio/a-mature-product?zoom=image&ref=old', '/work/loopio?ref=old'],
+  ['/projects/loopio', '/work/loopio'],
+  ['/slides/nextphrase', '/work/nextphrase'],
+]) {
+  const response = await api.get(from, { maxRedirects: 0 })
+  expect(response.status(), from).toBe(308)
+  const url = new URL(response.headers().location, response.url())
+  expect(url.pathname + url.search, from).toBe(to)
+  record.redirects.push({ from, to })
+}
+for (const path of ['/copy-editor', '/work/missing', '/work/loopio/missing', '/grid-version?project=missing']) {
+  expect((await api.get(path)).status(), path).toBe(404)
+}
+const sitemap = await (await api.get('/sitemap.xml')).text()
+expect(sitemap.match(/<loc>/g)).toHaveLength(11)
+for (const slug of ['portfolio', ...routes]) {
+  const response = await api.get(`/og/${slug}`)
+  expect(response.status()).toBe(200)
+  expect(response.headers()['content-type']).toContain('image/png')
+  const bytes = await response.body()
+  expect(bytes.length).toBeGreaterThan(1000)
+  await writeFile(`${dir}/card-${slug}.png`, bytes)
+  record.cards.push(slug)
+}
+
+const browser = await chromium.launch()
+try {
+  for (const [name, viewport, reducedMotion] of [
+    ['desktop', { width: 1440, height: 900 }, 'no-preference'],
+    ['phone', { width: 390, height: 844 }, 'no-preference'],
+    ['phone-reduced', { width: 390, height: 844 }, 'reduce'],
+  ]) {
+    const context = await browser.newContext({ baseURL, viewport, hasTouch: name !== 'desktop', reducedMotion })
+    const page = await context.newPage()
+    page.setDefaultTimeout(45_000)
+    const errors = []
+    const assets = new Set()
+    page.on('pageerror', error => errors.push(error.message))
+    page.on('response', response => {
+      const url = new URL(response.url())
+      if (url.origin === new URL(baseURL).origin) {
+        if (response.status() >= 400) errors.push(`${response.status()} ${url.pathname}`)
+        if (url.pathname.startsWith('/_next/static/')) assets.add(url.pathname)
+      }
+    })
+    await page.goto('/work')
+    await gridReady(page)
+    await expect(page.getByRole('button', { name: 'Project development tools' })).toHaveCount(0)
+    await page.screenshot({ path: `${dir}/${name}-grid.png` })
+    const tile = page.locator('[data-mosaic-project="loopio"]')
+    await tile.focus()
+    await tile.press('Enter')
+    await viewerReady(page)
+    await expect(page).toHaveURL('/work/loopio')
+    await expect(page).toHaveTitle(/Loopio/)
+    await page.getByRole('button', { name: 'Hide project details', exact: true }).click()
+    await notesReady(page, false)
+    await page.getByRole('button', { name: 'Show project details', exact: true }).click()
+    await notesReady(page, true)
+    const video = page.locator('.yarl__slide_current video')
+    if (await video.evaluate(v => v.paused)) await page.getByRole('button', { name: 'Play video', exact: true }).click()
+    await expect.poll(() => video.evaluate(v => !v.paused && v.readyState >= 2)).toBe(true)
+    await page.getByRole('button', { name: 'Pause video', exact: true }).click()
+    await expect.poll(() => video.evaluate(v => v.paused)).toBe(true)
+    await page.getByRole('button', { name: 'Play video', exact: true }).click()
+    await expect.poll(() => video.evaluate(v => v.paused)).toBe(false)
+    await page.screenshot({ path: `${dir}/${name}-viewer.png` })
+    await page.getByRole('button', { name: 'Hide project details', exact: true }).click()
+    await notesReady(page, false)
+    if (await video.evaluate(v => v.paused)) await page.getByRole('button', { name: 'Play video', exact: true }).click()
+    await video.click()
+    await expect.poll(() => video.evaluate(v => v.paused)).toBe(true)
+    const pauseGlyph = page.locator('[data-portfolio-icon="circlePause"]')
+    await expect(pauseGlyph).toBeVisible()
+    await expect.poll(() => pauseGlyph.evaluate(g => Number(getComputedStyle(g.parentElement).opacity))).toBeCloseTo(0.85, 2)
+    expect(await pauseGlyph.evaluate(g => parseFloat(getComputedStyle(g).fontSize))).toBeCloseTo(viewport.height * 0.2, 1)
+    await page.screenshot({ path: `${dir}/${name}-pause-feedback.png` })
+    await video.click()
+    await expect.poll(() => video.evaluate(v => v.paused)).toBe(false)
+    const playGlyph = page.locator('[data-portfolio-icon="circlePlay"]')
+    await expect(playGlyph).toBeVisible()
+    await expect(pauseGlyph).toHaveCount(0)
+    await expect.poll(() => playGlyph.evaluate(g => Number(getComputedStyle(g.parentElement).opacity))).toBeCloseTo(0.85, 2)
+    await page.screenshot({ path: `${dir}/${name}-play-feedback.png` })
+    await page.getByRole('button', { name: 'Pause video', exact: true }).click()
+    await expect(playGlyph).toHaveCount(0)
+    await page.getByRole('button', { name: 'Play video', exact: true }).click()
+    expect(await video.evaluate(v => v.loop)).toBe(false)
+    await video.evaluate(v => { v.currentTime = Math.max(0, v.duration - 0.1) })
+    await expect.poll(() => video.evaluate(v => v.ended), { timeout: 15_000 }).toBe(true)
+    expect(await video.evaluate(v => v.paused)).toBe(true)
+    await expect(pauseGlyph).toHaveCount(0)
+    await expect(playGlyph).toHaveCount(0)
+    await page.keyboard.press('Escape')
+    await expect(page.getByRole('dialog')).toHaveCount(0)
+    await expect(tile).toBeFocused()
+    await page.locator('[data-mosaic-project="about-me"]').click()
+    await viewerReady(page)
+    await expect(page.getByRole('region', { name: 'About Aaron Wright' })).toBeVisible()
+    await page.keyboard.press('Escape')
+    await expect(page.getByRole('dialog')).toHaveCount(0)
+    await page.goto('/work/nextphrase?ref=direct')
+    await viewerReady(page)
+    await page.getByRole('button', { name: 'Close viewer', exact: true }).click()
+    await expect(page).toHaveURL('/work?ref=direct')
+    await expect(page.getByRole('dialog')).toHaveCount(0)
+    expect(errors).toEqual([])
+    expect(assets.size).toBeGreaterThan(3)
+    record.browsers.push({ name, staticAssets: assets.size, errors })
+    console.log(`${name} hosted checks passed`)
+    await context.close()
+  }
+  record.passed = true
+  await writeFile(`${dir}/result.json`, JSON.stringify(record, null, 2))
+  console.log(JSON.stringify(record, null, 2))
+} finally {
+  await browser.close()
+  await api.dispose()
+}

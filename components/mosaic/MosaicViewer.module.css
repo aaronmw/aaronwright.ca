@@ -115,22 +115,23 @@
   transition: opacity var(--portfolio-motion-viewer-chrome, 240ms);
 }
 
-.videoPauseFlash {
+.videoPlaybackFlash {
   position: absolute;
   inset: 0;
   display: grid;
   place-items: center;
   pointer-events: none;
-  color: var(--portfolio-surface);
-  animation: videoPauseFlash 2400ms linear both;
+  color: var(--portfolio-text);
+  animation: videoPlaybackFlash 2400ms linear both;
 }
 
-.videoPauseIcon {
-  transform: scale(5);
+.videoPlaybackIcon {
+  font-size: 20vh;
+  line-height: 1;
 }
 
 /* 200ms fade in, two seconds at 85%, then 200ms fade out. */
-@keyframes videoPauseFlash {
+@keyframes videoPlaybackFlash {
   0%,
   100% {
     opacity: 0;
@@ -142,12 +143,12 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .videoPauseFlash {
-    animation: videoPauseFlashReduced 2s step-end both;
+  .videoPlaybackFlash {
+    animation: videoPlaybackFlashReduced 2s step-end both;
   }
 }
 
-@keyframes videoPauseFlashReduced {
+@keyframes videoPlaybackFlashReduced {
   from {
     opacity: 0.85;
   }

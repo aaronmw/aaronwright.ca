@@ -91,8 +91,9 @@ grid check covers that boundary too.
   tile's keyboard focus. Escape closes; arrow keys do not navigate media.
 - Each project has one media item. There is no image navigation or zoom.
   Inline, muted videos pause behind the viewer and resume on return. The viewer
-  supports pause/resume and seeking. Clicking its video pauses playback and
-  flashes a large pause icon; reaching the end pauses without a flash or loop.
+  supports pause/resume and seeking. Clicking its video toggles playback and
+  flashes a large matching pause/play icon; reaching the end pauses without a
+  flash or loop.
   Reduced motion retains still posters and
   initially paused viewer video.
 - Notes starts as one stroke-sized square at its control, travels rigidly to the

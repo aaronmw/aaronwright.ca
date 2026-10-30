@@ -33,8 +33,8 @@ by that explicit replacement plan.
 ## Verification
 
 - TypeScript: passed (`pnpm exec tsc --noEmit`).
-- Unit tests: 25 files, 224 tests passed.
-- React Doctor, changed scope: 97/100, no issues found.
+- Unit tests: final release has 26 files, 236 tests passed.
+- React Doctor: migration changed scope 97/100, no issues found; latest video controls 100/100.
 - Production build passed. All 80 browser cases passed across Chromium desktop,
   WebKit desktop, WebKit iPhone portrait and landscape. All 72 measured journeys
   completed with no errors.
@@ -257,3 +257,56 @@ explicit one-release exception or a subsequent authorized change to the contract
 Pride gate: yes for the implementation; yes for functional production confidence
 subject to the still-required corrected-draft and production checks. No claim is
 made that the performance gate passed or that the corrected draft was deployed.
+
+## Explicit exception approval and additional video changes
+
+Aaron answered “Allow this isolated exception” to the request for a one-release
+exception covering the isolated approximately 50ms versus 43.3ms laptop
+close-viewer frame-gap result, while keeping all performance budgets unchanged.
+He then explicitly requested shipping the new current changes too: 20vh foreground
+circle-play/pause feedback and click-to-toggle playback. Their implementation chat
+completed TypeScript and React Doctor (100/100); this release adds the interactions
+to existing browser coverage and verifies fresh source evidence before packaging.
+
+The exception is scoped to this release and that single profile/task/metric.
+Every completeness, source-freshness and functional check, every other budget,
+and hosted draft/production verification still applies. The repository QA scripts,
+accepted baseline and budgets stay unchanged. If needed, packaging uses a temporary
+build-command override only after a separate check confirms that the current
+complete receipt has no failures beyond the authorized approximately 50ms result.
+The original Netlify configuration is restored before upload, and the source
+fingerprint is checked again. No lasting gate bypass is introduced.
+
+The updated click-toggle/end-of-playback browser case passed against the running
+development app in Chromium, WebKit desktop, iPhone portrait and landscape.
+TypeScript passed again. Hosted smoke coverage now also checks both 20vh glyphs
+and repeats the interactions with reduced motion.
+
+Evidence retention note: the standalone Playwright invocation used its default
+output directory and cleared earlier ignored `test-results/` screenshots and
+transient diagnostic files. Their committed receipts and audit observations
+remain available. Current hosted screenshots/results are regenerated; copies of
+the hosted smoke, scoped exception validator, one-release build wrapper and
+promotion/rollback runner are now retained as `.txt` evidence beside this record.
+Future standalone Playwright checks must use an explicit child output directory.
+
+## Updated video release: normal gate passes
+
+The fresh complete receipt is `qa/results/2026-10-30T04-04-32-886Z.json`, source
+fingerprint `ee6df33c47d703be23ed9581f25ea5174709bc356fd7578205e6a87fd01106c4`.
+Bootstrapper run `0E93A2A5-EF95-48AA-9B80-366D50646205` passed 236 unit tests,
+all 80 browser cases including the new click-feedback/end behavior, and all
+72 performance journeys. Every relative budget passes against the existing
+`2026-10-30T01-01-36-132Z` baseline. No baseline, profile, metric or budget changed.
+The approved exception was **not used**; ordinary `pnpm qa:check` passes.
+
+Final implementation audit: **ready with noted risks** for hosted verification
+and release. Click feedback uses the shared solid icons, the requested 20vh
+foreground treatment, native playback state and a stale-promise guard; silent
+ending and the existing footer controls remain intact (high confidence after
+four-browser testing). CSS retains the reduced-motion variant. The Deno import
+compatibility correction has a verified edge bundle and unchanged browser chunks.
+The only known product limitation remains existing cold loading on constrained
+connections. Pride gate: yes, proud of the implementation and willing to stand
+behind it after the pending exact-draft and production checks. Aaron authorizes
+continuing through this audit without another pause.

@@ -1,0 +1,43 @@
+import json,subprocess,sys
+from pathlib import Path
+site='e0681b15-9225-4e4d-a36a-232758656a30'
+rollback='6ae3c8c0fec465a29fbc12ef'
+deploy=sys.argv[1]
+root=Path('test-results/main-grid-release')
+def api(operation,data):
+ result=subprocess.run(['npx','--yes','netlify-cli','api',operation,'--data',json.dumps(data)],capture_output=True,text=True,check=True)
+ return json.loads(result.stdout)
+def brief(d):
+ return {k:d.get(k) for k in ['id','state','locked','published_at','deploy_ssl_url']}
+record={'rollback':rollback,'target':deploy}
+current=api('getSite',{'site_id':site})['published_deploy']
+assert current['id']==rollback, 'Published target changed; stop before promotion'
+proof=json.loads((root/'draft-corrected/result.json').read_text())
+assert proof.get('passed') is True and deploy in proof['baseURL'], 'Missing exact-draft verification'
+subprocess.run(['node',str(root/'check-approved-exception.mjs')],check=True)
+deploys=api('listSiteDeploys',{'site_id':site,'per_page':10})
+pending=[d['id'] for d in deploys if d.get('state') not in ['ready','error','rejected','skipped']]
+assert not pending, 'Another deployment is pending; inspect before unlocking: '+str(pending)
+if current.get('locked'): api('unlockDeploy',{'deploy_id':rollback})
+try:
+ record['promotion']=brief(api('restoreSiteDeploy',{'site_id':site,'deploy_id':deploy}))
+ print('Promoted exact verified draft:',json.dumps(record['promotion']),flush=True)
+ with (root/'production-smoke.log').open('w') as log:
+  test=subprocess.run(['node',str(root/'hosted-smoke.mjs'),'https://aaronwright.ca','production'],stdout=log,stderr=subprocess.STDOUT)
+ if test.returncode: raise RuntimeError('Functional production smoke failed; see production-smoke.log')
+ live=api('getSite',{'site_id':site})['published_deploy']
+ assert live['id']==deploy, 'Published deployment changed during verification'
+ record['published']=brief(live)
+ record['productionPassed']=True
+ print('Production verification passed:',json.dumps(record['published']),flush=True)
+except BaseException as error:
+ record['failure']=str(error)
+ live=api('getSite',{'site_id':site})['published_deploy']
+ if live.get('locked'): api('unlockDeploy',{'deploy_id':live['id']})
+ restored=api('restoreSiteDeploy',{'site_id':site,'deploy_id':rollback})
+ api('lockDeploy',{'deploy_id':rollback})
+ record['restored']=brief(restored)
+ print('Immediately restored rollback:',json.dumps(record['restored']),flush=True)
+ raise
+finally:
+ (root/'promotion.json').write_text(json.dumps(record,indent=2))

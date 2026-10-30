@@ -111,7 +111,7 @@ test('About opens its biography and portrait, then Escape returns keyboard focus
   await expect(page).toHaveURL('/work')
 })
 
-test('inline videos pause behind the viewer; pause, seek, resume and close work', async ({
+test('inline videos pause behind the viewer; click feedback, controls and silent ending work', async ({
   page,
 }) => {
   await page.goto('/work')
@@ -137,7 +137,30 @@ test('inline videos pause behind the viewer; pause, seek, resume and close work'
       ),
     )
     .toBe(true)
+  await page
+    .getByRole('button', { name: 'Hide project details', exact: true })
+    .click()
+  await notesReady(page, false)
+  await video.click()
+  await expect
+    .poll(() => video.evaluate(element => (element as HTMLVideoElement).paused))
+    .toBe(true)
+  const pauseFlash = page.locator('[data-portfolio-icon="circlePause"]')
+  await expect(pauseFlash).toBeVisible()
+  expect(
+    await pauseFlash.evaluate(element =>
+      parseFloat(getComputedStyle(element).fontSize),
+    ),
+  ).toBeCloseTo(page.viewportSize()!.height * 0.2, 1)
+  await video.click()
+  await expect
+    .poll(() => video.evaluate(element => (element as HTMLVideoElement).paused))
+    .toBe(false)
+  const playFlash = page.locator('[data-portfolio-icon="circlePlay"]')
+  await expect(playFlash).toBeVisible()
+  await expect(pauseFlash).toHaveCount(0)
   await page.getByRole('button', { name: 'Pause video', exact: true }).click()
+  await expect(playFlash).toHaveCount(0)
   await expect
     .poll(() => video.evaluate(element => (element as HTMLVideoElement).paused))
     .toBe(true)
@@ -155,6 +178,18 @@ test('inline videos pause behind the viewer; pause, seek, resume and close work'
   await expect
     .poll(() => video.evaluate(element => (element as HTMLVideoElement).paused))
     .toBe(false)
+  expect(
+    await video.evaluate(element => (element as HTMLVideoElement).loop),
+  ).toBe(false)
+  await video.evaluate(element => {
+    const media = element as HTMLVideoElement
+    media.currentTime = media.duration - 0.1
+  })
+  await expect
+    .poll(() => video.evaluate(element => (element as HTMLVideoElement).ended))
+    .toBe(true)
+  await expect(pauseFlash).toHaveCount(0)
+  await expect(playFlash).toHaveCount(0)
   await page.getByRole('button', { name: 'Close viewer', exact: true }).click()
   await expect(page.getByRole('dialog')).toHaveCount(0)
   await everyVideoPlaying(backgrounds)

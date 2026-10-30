@@ -16,7 +16,10 @@ export function MosaicVideoControls({
   disabled: boolean
 }) {
   const [root, setRoot] = useState<HTMLDivElement | null>(null)
-  const [pauseFlash, setPauseFlash] = useState(0)
+  const [playbackFlash, setPlaybackFlash] = useState<{
+    id: number
+    paused: boolean
+  } | null>(null)
   const slide = root?.closest('.yarl__slide')
   const getVideo = () => slide?.querySelector('video')
   const store = useMemo(
@@ -33,19 +36,37 @@ export function MosaicVideoControls({
 
   useEffect(() => {
     if (!slide || disabled) return
-    const pauseVideo = (event: Event) => {
+    let active = true
+    let revision = 0
+    const toggleVideo = (event: Event) => {
       if (!(event.target instanceof HTMLVideoElement)) return
-      event.target.pause()
-      setPauseFlash(value => value + 1)
+      const video = event.target
+      revision += 1
+      const id = revision
+      if (video.paused) {
+        setPlaybackFlash(null)
+        void video
+          .play()
+          .then(() => {
+            if (active && revision === id && !video.paused)
+              setPlaybackFlash({ id, paused: false })
+          })
+          .catch(() => undefined)
+      } else {
+        video.pause()
+        setPlaybackFlash({ id, paused: true })
+      }
     }
-    const clearFlash = () => setPauseFlash(0)
+    const clearFlash = () => {
+      revision += 1
+      setPlaybackFlash(null)
+    }
     // Capture also handles a plugin video that mounts after the controls.
-    slide.addEventListener('click', pauseVideo, true)
-    slide.addEventListener('play', clearFlash, true)
+    slide.addEventListener('click', toggleVideo, true)
     slide.addEventListener('ended', clearFlash, true)
     return () => {
-      slide.removeEventListener('click', pauseVideo, true)
-      slide.removeEventListener('play', clearFlash, true)
+      active = false
+      slide.removeEventListener('click', toggleVideo, true)
       slide.removeEventListener('ended', clearFlash, true)
     }
   }, [slide, disabled])
@@ -60,18 +81,19 @@ export function MosaicVideoControls({
       }}
     >
       {!disabled &&
-        pauseFlash > 0 &&
-        timeline.paused &&
+        playbackFlash &&
+        playbackFlash.paused === timeline.paused &&
         videoContainer &&
         createPortal(
           <span
-            key={pauseFlash}
-            className={styles.videoPauseFlash}
+            key={playbackFlash.id}
+            className={styles.videoPlaybackFlash}
             aria-hidden="true"
           >
             <PortfolioIcon
-              name="circlePause"
-              className={styles.videoPauseIcon}
+              name={playbackFlash.paused ? 'circlePause' : 'circlePlay'}
+              inline
+              className={styles.videoPlaybackIcon}
             />
           </span>,
           videoContainer,
@@ -83,6 +105,7 @@ export function MosaicVideoControls({
         onClick={() => {
           const video = getVideo()
           if (!video) return
+          setPlaybackFlash(null)
           if (video.paused) void video.play().catch(() => undefined)
           else video.pause()
         }}

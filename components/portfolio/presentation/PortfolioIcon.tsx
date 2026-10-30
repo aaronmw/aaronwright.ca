@@ -13,6 +13,7 @@ const ICON_CLASSES = {
   play: 'fa-play',
   pause: 'fa-pause',
   circlePause: 'fa-circle-pause',
+  circlePlay: 'fa-circle-play',
   system: 'fa-display',
   light: 'fa-sun',
   dark: 'fa-moon',
@@ -39,7 +40,10 @@ export function PortfolioIcon({
   inline?: boolean
   className?: string
 }) {
-  const family = name === 'circlePause' ? 'fa-solid' : ICON_FAMILY_CLASS_NAME
+  const family =
+    name === 'circlePause' || name === 'circlePlay'
+      ? 'fa-solid'
+      : ICON_FAMILY_CLASS_NAME
   // Icons within text inherit its size without the control slot's glyph scaling.
   if (inline) {
     return (
