@@ -38,7 +38,7 @@ by that explicit replacement plan.
 - Production build passed. All 80 browser cases passed across Chromium desktop,
   WebKit desktop, WebKit iPhone portrait and landscape. All 72 measured journeys
   completed with no errors.
-- Hosted draft and production checks: pending.
+- Hosted draft and production: all metadata/redirect/asset checks and desktop, phone and reduced-motion interactions passed on deployment `6ae41a17d1400eff3d4393d2`.
 
 ## Deployment safeguards
 
@@ -310,3 +310,45 @@ The only known product limitation remains existing cold loading on constrained
 connections. Pride gate: yes, proud of the implementation and willing to stand
 behind it after the pending exact-draft and production checks. Aaron authorizes
 continuing through this audit without another pause.
+
+## Published release
+
+Release source commit: `e77dcb8` (the following commit records documentation only).
+The normal Netlify build ran `pnpm qa:check && pnpm build` successfully, including
+Deno edge bundling. The approved performance exception and temporary build-command
+override were **not used**. Repository build configuration remains unchanged.
+
+Uploaded `.netlify/static` as draft `6ae41a17d1400eff3d4393d2`:
+[immutable deployment](https://6ae41a17d1400eff3d4393d2--aaronwright.netlify.app),
+[Netlify build/deploy record](https://app.netlify.com/projects/aaronwright/deploys/6ae41a17d1400eff3d4393d2).
+
+Draft verification passed eleven canonical/indexable pages, ten permanent redirect
+cases (including the formerly looping empty-query destinations), four expected
+404s, eleven sitemap entries, all eleven PNG share cards and eighteen loaded
+static assets per browser context. Desktop, phone and reduced-motion phone
+interactions all passed: opening, title/URL changes, Notes, footer playback,
+20vh click pause/play feedback, silent ending, closing with returned focus,
+About and direct NextPhrase entry/closing with unrelated query preservation.
+No page errors or failing same-origin asset responses occurred. Visual inspection
+confirmed the new icons and reduced-motion grid presentation.
+
+Promoted that exact deployment at `2026-10-30T04:19:52.671Z`, without rebuilding.
+The same checks passed on [production](https://aaronwright.ca/work), including
+absence of an HTTP `noindex` directive on every canonical page. The published
+site ID was verified against the tested deployment after the smoke run. Compact
+[draft evidence](2026-10-29-main-grid-draft.json),
+[production evidence](2026-10-29-main-grid-production.json) and
+[promotion record](2026-10-29-main-grid-promotion.json) are committed here.
+Current screenshots and full logs remain under `test-results/main-grid-release/`.
+
+Previous deployment `6ae3c8c0fec465a29fbc12ef` remains available as the rollback
+target; rollback was not needed. The temporary publication lock was released for
+promotion. Owned QA servers were cleaned up; Aaron's existing development service
+was left alone. No database or new external application API was introduced.
+
+Final audit: **ready with noted risks**. All intended functionality, hosting
+behavior and production exclusion checks passed. The existing approximately
+24-second complete-grid readiness in the 1.6Mbps/4×CPU cold-load profile remains
+a documented product limitation. No performance budget was relaxed, no baseline
+was changed after the intentional prerequisite correction, and no failed receipt
+was erased. Pride gate: yes; I would stand behind this verified production release.

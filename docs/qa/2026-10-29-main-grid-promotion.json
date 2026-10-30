@@ -1,0 +1,19 @@
+{
+  "rollback": "6ae3c8c0fec465a29fbc12ef",
+  "target": "6ae41a17d1400eff3d4393d2",
+  "promotion": {
+    "id": "6ae41a17d1400eff3d4393d2",
+    "state": "ready",
+    "locked": null,
+    "published_at": "2026-10-30T04:19:52.671Z",
+    "deploy_ssl_url": "https://6ae41a17d1400eff3d4393d2--aaronwright.netlify.app"
+  },
+  "published": {
+    "id": "6ae41a17d1400eff3d4393d2",
+    "state": "ready",
+    "locked": null,
+    "published_at": "2026-10-30T04:19:52.671Z",
+    "deploy_ssl_url": "https://6ae41a17d1400eff3d4393d2--aaronwright.netlify.app"
+  },
+  "productionPassed": true
+}

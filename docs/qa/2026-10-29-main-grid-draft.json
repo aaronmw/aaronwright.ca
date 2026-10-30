@@ -1,0 +1,90 @@
+{
+  "baseURL": "https://6ae41a17d1400eff3d4393d2--aaronwright.netlify.app",
+  "at": "2026-10-30T04:17:24.101Z",
+  "pages": [
+    "/work",
+    "/work/about-me",
+    "/work/loopio",
+    "/work/freshbooks",
+    "/work/cycles-dot-money",
+    "/work/informal-systems",
+    "/work/aarons-toolbox",
+    "/work/nextphrase",
+    "/work/age-dot-fund",
+    "/work/radio-app",
+    "/work/gift-exchanges"
+  ],
+  "redirects": [
+    {
+      "from": "/",
+      "to": "/work"
+    },
+    {
+      "from": "/grid-version?project=nextphrase-dot-app&slide=intro&ref=a&ref=b",
+      "to": "/work/nextphrase?ref=a&ref=b"
+    },
+    {
+      "from": "/v2?project=loopio&modal=image",
+      "to": "/work/loopio"
+    },
+    {
+      "from": "/grid-version?project=loopio",
+      "to": "/work/loopio"
+    },
+    {
+      "from": "/work/loopio?zoom=image",
+      "to": "/work/loopio"
+    },
+    {
+      "from": "/work?project=nextphrase-dot-app",
+      "to": "/work/nextphrase"
+    },
+    {
+      "from": "/work/loopio/a-mature-product?zoom=image",
+      "to": "/work/loopio"
+    },
+    {
+      "from": "/work/loopio/a-mature-product?zoom=image&ref=old",
+      "to": "/work/loopio?ref=old"
+    },
+    {
+      "from": "/projects/loopio",
+      "to": "/work/loopio"
+    },
+    {
+      "from": "/slides/nextphrase",
+      "to": "/work/nextphrase"
+    }
+  ],
+  "cards": [
+    "portfolio",
+    "about-me",
+    "loopio",
+    "freshbooks",
+    "cycles-dot-money",
+    "informal-systems",
+    "aarons-toolbox",
+    "nextphrase",
+    "age-dot-fund",
+    "radio-app",
+    "gift-exchanges"
+  ],
+  "browsers": [
+    {
+      "name": "desktop",
+      "staticAssets": 18,
+      "errors": []
+    },
+    {
+      "name": "phone",
+      "staticAssets": 18,
+      "errors": []
+    },
+    {
+      "name": "phone-reduced",
+      "staticAssets": 18,
+      "errors": []
+    }
+  ],
+  "passed": true
+}

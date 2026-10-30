@@ -13,6 +13,7 @@ for (const slug of ['', ...routes]) {
   const path = '/work' + (slug ? '/' + slug : '')
   const response = await api.get(path)
   expect(response.status(), path).toBe(200)
+  if (baseURL === 'https://aaronwright.ca') expect(response.headers()['x-robots-tag'] ?? '').not.toMatch(/noindex/i)
   const html = await response.text()
   expect(html).toContain(`rel="canonical" href="https://aaronwright.ca${path}"`)
   expect(html).not.toMatch(/name="robots"[^>]*content="[^"]*noindex/)
