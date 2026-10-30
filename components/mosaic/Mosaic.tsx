@@ -14,6 +14,7 @@ import { createMosaicEntranceGroup } from './playMosaicEntrance'
 import type { MosaicLayerSettings } from './MosaicAdjustmentLayer'
 
 type MosaicProps = {
+  galleryTitle: string
   projects: MosaicProject[]
   layout?: MosaicLayout
   adjustmentLayer?: MosaicLayerSettings
@@ -34,7 +35,7 @@ function MosaicGrid({
   adjustmentLayer,
   onVideoDuration,
   onPackingStatus,
-}: MosaicProps) {
+}: Omit<MosaicProps, 'galleryTitle'>) {
   const { open, playbackPaused, logoReady, visitedProjects } =
     useExperimentGallery()
   const visitedProjectIds = useMemo(
@@ -134,6 +135,7 @@ function MosaicGrid({
 
 export function Mosaic({
   projects,
+  galleryTitle,
   layout = balancedLayout,
   adjustment,
   adjustmentLayer,
@@ -143,7 +145,8 @@ export function Mosaic({
   return (
     <ExperimentGallery
       projects={projects}
-      basePath="/grid-version"
+      basePath="/work"
+      galleryTitle={galleryTitle}
       className={styles.root}
       adjusting={adjustment?.active}
       toolbar={adjustment?.toolbar}

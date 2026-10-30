@@ -1,10 +1,10 @@
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { getPortfolioProject } from './portfolio'
-import { SHARE_IMAGE_SLUGS } from './seo'
+import { getShareProject, SHARE_IMAGE_SLUGS } from './seo'
 import {
   metadataText,
-  portfolioSeoCopy,
+  mosaicSeoCopy,
   SITE_NAME,
   SITE_ROLE,
 } from './siteMetadata'
@@ -73,10 +73,10 @@ const projectArtwork: Record<string, ShareArtwork> = {
 
 export function getShareCard(slug: string) {
   if (!SHARE_IMAGE_SLUGS.includes(slug)) return null
-  const project = getPortfolioProject(slug)
-  const copy = portfolioSeoCopy(project)
+  const project = getShareProject(slug)
+  const copy = mosaicSeoCopy(project)
   const artwork = projectArtwork[slug]
-  if (project && slug !== 'about-me' && !artwork) {
+  if (getPortfolioProject(slug) && slug !== 'about-me' && !artwork) {
     throw new Error(`Missing share artwork for ${slug}`)
   }
   return {

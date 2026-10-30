@@ -20,7 +20,6 @@ export function MosaicViewerButton({
       buttonRef={buttonRef}
       aria-label={label}
       title={label}
-      iconClassName=""
       className={`${styles.button} ${className}`}
       visual={children}
     />

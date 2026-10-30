@@ -1,0 +1,326 @@
+{
+  "schema": 1,
+  "id": "2026-10-30T00-14-53-648Z",
+  "createdAt": "2026-10-30T00:14:53.649Z",
+  "commit": "d197e3c4c609bcc9dbc396f7ea0f72ec53073b81",
+  "sourceHash": "90e3ad594eaa50e5ee34fc4c11adf92f61b57531034951c91ebf27e558ab618f",
+  "configHash": "02cd05ad447fbdc9269e557c0b10245fcb489f7c1d12505f75c565b1b6b3622d",
+  "mode": "release",
+  "environment": {
+    "platform": "darwin",
+    "osRelease": "27.0.0",
+    "arch": "arm64",
+    "cpu": "Apple M1 Pro",
+    "cores": 10,
+    "browserVersion": "156.0.8078.4",
+    "node": "v22.23.2"
+  },
+  "checks": {
+    "unit": true,
+    "browser": false
+  },
+  "samples": [
+    {
+      "profile": "desktop",
+      "repetition": 1,
+      "task": "cold-entry",
+      "durationMs": 4639.099999904633,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 444.90000009536743,
+      "frameGapP95Ms": 16.700000000000728,
+      "framesSampled": 250,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "desktop",
+      "repetition": 1,
+      "task": "open-project",
+      "durationMs": 2126.7999999523163,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 16.800000000000182,
+      "framesSampled": 121,
+      "frameGapsOver50Ms": 1
+    },
+    {
+      "profile": "desktop",
+      "repetition": 1,
+      "task": "toggle-notes",
+      "durationMs": 3186.2999999523163,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 16.700000000000728,
+      "framesSampled": 191,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "desktop",
+      "repetition": 1,
+      "task": "video-controls",
+      "durationMs": 329.2000000476837,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 16.799999999999272,
+      "framesSampled": 19,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "desktop",
+      "repetition": 1,
+      "task": "close-viewer",
+      "durationMs": 644.7000000476837,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 16.700000000000728,
+      "framesSampled": 37,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "desktop",
+      "repetition": 1,
+      "task": "open-about",
+      "durationMs": 922.0999999046326,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 16.799999999999272,
+      "framesSampled": 55,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "desktop",
+      "repetition": 2,
+      "task": "cold-entry",
+      "durationMs": 4435.5,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 324,
+      "frameGapP95Ms": 16.700000000000273,
+      "framesSampled": 247,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "desktop",
+      "repetition": 2,
+      "task": "open-project",
+      "durationMs": 2133.399999856949,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 16.800000000000182,
+      "framesSampled": 122,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "desktop",
+      "repetition": 2,
+      "task": "toggle-notes",
+      "durationMs": 3176.699999809265,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 16.700000000000728,
+      "framesSampled": 190,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "desktop",
+      "repetition": 2,
+      "task": "video-controls",
+      "durationMs": 327.2000000476837,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 16.799999999999272,
+      "framesSampled": 19,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "desktop",
+      "repetition": 2,
+      "task": "close-viewer",
+      "durationMs": 636.7000000476837,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 16.80000000000109,
+      "framesSampled": 36,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "desktop",
+      "repetition": 2,
+      "task": "open-about",
+      "durationMs": 911.2000000476837,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 16.700000000000728,
+      "framesSampled": 54,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "desktop",
+      "repetition": 3,
+      "task": "cold-entry",
+      "durationMs": 4399.099999904633,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 261.2999999523163,
+      "frameGapP95Ms": 16.700000000000273,
+      "framesSampled": 249,
+      "frameGapsOver50Ms": 0
+    },
+    {
+      "profile": "desktop",
+      "repetition": 3,
+      "task": "open-project",
+      "durationMs": 2114.7000000476837,
+      "maxLongTaskMs": 0,
+      "maxLongFrameMs": 0,
+      "frameGapP95Ms": 16.800000000000182,
+      "framesSampled": 122,
+      "frameGapsOver50Ms": 0
+    }
+  ],
+  "errors": [
+    "desktop/3/toggle-notes: page.waitForFunction: Target page, context or browser has been closed",
+    "desktop/3/video-controls: page.evaluate: Target page, context or browser has been closed",
+    "desktop/3/close-viewer: page.evaluate: Target page, context or browser has been closed",
+    "desktop/3/open-about: page.goto: Target page, context or browser has been closed",
+    "browserContext.close: Target page, context or browser has been closed"
+  ],
+  "failures": [
+    "Unit or cross-browser checks did not pass.",
+    "desktop/3/toggle-notes: page.waitForFunction: Target page, context or browser has been closed",
+    "desktop/3/video-controls: page.evaluate: Target page, context or browser has been closed",
+    "desktop/3/close-viewer: page.evaluate: Target page, context or browser has been closed",
+    "desktop/3/open-about: page.goto: Target page, context or browser has been closed",
+    "browserContext.close: Target page, context or browser has been closed",
+    "Incomplete sample matrix.",
+    "Missing repetitions: desktop/toggle-notes",
+    "Missing repetitions: desktop/video-controls",
+    "Missing repetitions: desktop/close-viewer",
+    "Missing repetitions: desktop/open-about",
+    "Missing repetitions: small-laptop-slow/cold-entry",
+    "Missing repetitions: small-laptop-slow/open-project",
+    "Missing repetitions: small-laptop-slow/toggle-notes",
+    "Missing repetitions: small-laptop-slow/video-controls",
+    "Missing repetitions: small-laptop-slow/close-viewer",
+    "Missing repetitions: small-laptop-slow/open-about",
+    "Missing repetitions: phone-portrait-slow/cold-entry",
+    "Missing repetitions: phone-portrait-slow/open-project",
+    "Missing repetitions: phone-portrait-slow/toggle-notes",
+    "Missing repetitions: phone-portrait-slow/video-controls",
+    "Missing repetitions: phone-portrait-slow/close-viewer",
+    "Missing repetitions: phone-portrait-slow/open-about",
+    "Missing repetitions: phone-landscape-slow/cold-entry",
+    "Missing repetitions: phone-landscape-slow/open-project",
+    "Missing repetitions: phone-landscape-slow/toggle-notes",
+    "Missing repetitions: phone-landscape-slow/video-controls",
+    "Missing repetitions: phone-landscape-slow/close-viewer",
+    "Missing repetitions: phone-landscape-slow/open-about",
+    "The baseline is incomplete or uses a different QA configuration."
+  ],
+  "status": "blocked",
+  "buildId": "O3gs6JpWAWqzZLUVwhWS4",
+  "baseURL": "http://127.0.0.1:62667",
+  "browserResults": {
+    "startTime": "2026-10-30T00:15:16.661Z",
+    "duration": 354276.907,
+    "expected": 61,
+    "skipped": 0,
+    "unexpected": 19,
+    "flaky": 0,
+    "failures": [
+      {
+        "project": "chromium-desktop",
+        "task": "the dark system preference retains the grid's dark appearance",
+        "error": "Test timeout of 30000ms exceeded."
+      },
+      {
+        "project": "chromium-desktop",
+        "task": "the light system preference retains the grid's dark appearance",
+        "error": "Test timeout of 30000ms exceeded."
+      },
+      {
+        "project": "chromium-desktop",
+        "task": "Notes travels as a square to the bottom-left, unfolds three corners, and retraces on close",
+        "error": "Error: expect(received).toBeCloseTo(expected, precision)\n\nExpected: 528\nReceived: 528.1865\n\nExpected precision:    1\nExpected difference: < 0.05\nReceived difference:   0.18650000000002365"
+      },
+      {
+        "project": "webkit-desktop",
+        "task": "the dark system preference retains the grid's dark appearance",
+        "error": "Test timeout of 30000ms exceeded."
+      },
+      {
+        "project": "webkit-desktop",
+        "task": "the light system preference retains the grid's dark appearance",
+        "error": "Test timeout of 30000ms exceeded."
+      },
+      {
+        "project": "webkit-desktop",
+        "task": "Notes travels as a square to the bottom-left, unfolds three corners, and retraces on close",
+        "error": "Error: expect(received).toBeCloseTo(expected, precision)\n\nExpected: 528\nReceived: 528.1413\n\nExpected precision:    1\nExpected difference: < 0.05\nReceived difference:   0.1413000000000011"
+      },
+      {
+        "project": "webkit-desktop",
+        "task": "rapid Notes reversals settle to the final request without stale inert content",
+        "error": "Error: expect(locator).toBeFocused() failed\n\nLocator:  locator('.yarl__root button[aria-expanded]')\nExpected: focused\nReceived: inactive\nTimeout:  8000ms\n\nCall log:\n  - Expect \"toBeFocused\" locator('.yarl__root button[aria-expanded]') with timeout 8000ms\n  - waiting for locator('.yarl__root button[aria-expanded]')\n    20 × locator resolved to <button type=\"button\" aria-controls=\"_r_0_\" aria-expanded=\"false\" title=\"Show project details\" aria-label=\"Show project details\" class=\"group/icon-button flex items-center justify-center rounded-none outline-none J3sRia_button J3sRia_blurbToggle U3HD7W_filled\">…</button>\n       - unexpected value \"inactive\"\n"
+      },
+      {
+        "project": "webkit-iphone-portrait",
+        "task": "rapid Notes reversals settle to the final request without stale inert content",
+        "error": "Test timeout of 30000ms exceeded."
+      },
+      {
+        "project": "webkit-iphone-landscape",
+        "task": "rapid Notes reversals settle to the final request without stale inert content",
+        "error": "Test timeout of 30000ms exceeded."
+      },
+      {
+        "project": "chromium-desktop",
+        "task": "open, Back, Forward, close, and refresh retain native history and return focus",
+        "error": "Error: expect(locator).toBeFocused() failed\n\nLocator:  locator('[data-mosaic-project=\"loopio\"]')\nExpected: focused\nReceived: inactive\nTimeout:  8000ms\n\nCall log:\n  - Expect \"toBeFocused\" locator('[data-mosaic-project=\"loopio\"]') with timeout 8000ms\n  - waiting for locator('[data-mosaic-project=\"loopio\"]')\n    20 × locator resolved to <button type=\"button\" class=\"ITTJxa_tile\" aria-haspopup=\"dialog\" data-mosaic-project=\"loopio\" aria-label=\"View Loopio media\" aria-describedby=\"_r_h_ _r_i_\">…</button>\n       - unexpected value \"inactive\"\n"
+      },
+      {
+        "project": "chromium-desktop",
+        "task": "NextPhrase direct links use the public slug and reduced motion keeps media still",
+        "error": "Test timeout of 30000ms exceeded."
+      },
+      {
+        "project": "webkit-desktop",
+        "task": "open, Back, Forward, close, and refresh retain native history and return focus",
+        "error": "Error: expect(locator).toBeFocused() failed\n\nLocator:  locator('[data-mosaic-project=\"loopio\"]')\nExpected: focused\nReceived: inactive\nTimeout:  8000ms\n\nCall log:\n  - Expect \"toBeFocused\" locator('[data-mosaic-project=\"loopio\"]') with timeout 8000ms\n  - waiting for locator('[data-mosaic-project=\"loopio\"]')\n    19 × locator resolved to <button type=\"button\" class=\"ITTJxa_tile\" aria-haspopup=\"dialog\" data-mosaic-project=\"loopio\" aria-label=\"View Loopio media\" aria-describedby=\"_r_h_ _r_i_\">…</button>\n       - unexpected value \"inactive\"\n"
+      },
+      {
+        "project": "webkit-desktop",
+        "task": "NextPhrase direct links use the public slug and reduced motion keeps media still",
+        "error": "Test timeout of 30000ms exceeded."
+      },
+      {
+        "project": "webkit-iphone-portrait",
+        "task": "open, Back, Forward, close, and refresh retain native history and return focus",
+        "error": "Error: expect(locator).toBeFocused() failed\n\nLocator:  locator('[data-mosaic-project=\"loopio\"]')\nExpected: focused\nReceived: inactive\nTimeout:  8000ms\n\nCall log:\n  - Expect \"toBeFocused\" locator('[data-mosaic-project=\"loopio\"]') with timeout 8000ms\n  - waiting for locator('[data-mosaic-project=\"loopio\"]')\n    20 × locator resolved to <button type=\"button\" class=\"ITTJxa_tile\" aria-haspopup=\"dialog\" data-mosaic-project=\"loopio\" aria-label=\"View Loopio media\" aria-describedby=\"_r_h_ _r_i_\">…</button>\n       - unexpected value \"inactive\"\n"
+      },
+      {
+        "project": "webkit-iphone-landscape",
+        "task": "open, Back, Forward, close, and refresh retain native history and return focus",
+        "error": "Error: expect(locator).toBeFocused() failed\n\nLocator:  locator('[data-mosaic-project=\"loopio\"]')\nExpected: focused\nReceived: inactive\nTimeout:  8000ms\n\nCall log:\n  - Expect \"toBeFocused\" locator('[data-mosaic-project=\"loopio\"]') with timeout 8000ms\n  - waiting for locator('[data-mosaic-project=\"loopio\"]')\n    18 × locator resolved to <button type=\"button\" class=\"ITTJxa_tile\" aria-haspopup=\"dialog\" data-mosaic-project=\"loopio\" aria-label=\"View Loopio media\" aria-describedby=\"_r_h_ _r_i_\">…</button>\n       - unexpected value \"inactive\"\n"
+      },
+      {
+        "project": "chromium-desktop",
+        "task": "/work hands off one image and restores stable source geometry",
+        "error": "Error: Every sampled paint must have exactly one selected-media representation\n\nexpect(received).toEqual(expected) // deep equality\n\n- Expected  -   1\n+ Received  + 122\n\n- Array []\n+ Array [\n+   Object {\n+     \"overlay\": true,\n+     \"overlayType\": \"IMG\",\n+     \"phase\": \"revealing\",\n+     \"source\": false,\n+     \"sourceHeight\": 333.515625,\n+     \"sourceWidth\": 333.515625,\n+     \"videoReplaced\": false,\n+     \"viewer\": true,\n+   },\n+   Object {\n+     \"overlay\": true,\n+     \"overlayType\": \"IMG\",\n+     \"phase\": \"revealing\",\n+     \"source\": false,\n+     \"sourceHeight\": 333.515625,\n+     \"sourceWidth\": 333.515625,\n+     \"videoReplaced\": false,\n+     \"viewer\": true,\n+   },\n+   Object {\n+     \"overlay\": true,\n+     \"overlayType\": \"IMG\",\n+     \"phase\": \"revealing\",\n+     \"source\": false,\n+     \"sourceHeight\": 333.515625,\n+     \"sourceWidth\": 333.515625,\n+     \"videoReplaced\": false,\n+     \"viewer\": true,\n+   },\n+   Object {\n+     \"overlay\": true,\n+     \"overlayType\": \"IMG\",\n+     \"phase\": \"revealing\",\n+     \"source\": false,\n+     \"sourceHeight\": 333.515625,\n+     \"sourceWidth\": 333.515625,\n+     \"videoReplaced\": false,\n+     \"viewer\": true,\n+   },\n+   Object {\n+     \"overlay\": true,\n+     \"overlayType\": \"IMG\",\n+     \"phase\": \"revealing\",\n+     \"source\": false,\n+     \"sourceHeight\": 333.515625,\n+     \"sourceWidth\": 333.515625,\n+     \"videoReplaced\": false,\n+     \"viewer\": true,\n+   },\n+   Object {\n+     \"overlay\": true,\n+     \"overlayType\": \"IMG\",\n+     \"phase\": \"revealing\",\n+     \"source\": false,\n+     \"sourceHeight\": 333.515625,\n+     \"sourceWidth\": 333.515625,\n+     \"videoReplaced\": false,\n+     \"viewer\": true,\n+   },\n+   Object {\n+     \"overlay\": true,\n+     \"overlayType\": \"IMG\",\n+     \"phase\": \"revealing\",\n+     \"source\": false,\n+     \"sourceHeight\": 333.515625,\n+     \"sourceWidth\": 333.515625,\n+     \"videoReplaced\": false,\n+     \"viewer\": true,\n+   },\n+   Object {\n+     \"overlay\": true,\n+     \"overlayType\": \"IMG\",\n+     \"phase\": \"revealing\",\n+     \"source\": false,\n+     \"sourceHeight\": 333.515625,\n+     \"sourceWidth\": 333.515625,\n+     \"videoReplaced\": false,\n+     \"viewer\": true,\n+   },\n+   Object {\n+     \"overlay\": true,\n+     \"overlayType\": \"IMG\",\n+     \"phase\": \"revealing\",\n+     \"source\": false,\n+     \"sourceHeight\": 333.515625,\n+     \"sourceWidth\": 333.515625,\n+     \"videoReplaced\": false,\n+     \"viewer\": true,\n+   },\n+   Object {\n+     \"overlay\": true,\n+     \"overlayType\": \"IMG\",\n+     \"phase\": \"revealing\",\n+     \"source\": false,\n+     \"sourceHeight\": 333.515625,\n+     \"sourceWidth\": 333.515625,\n+     \"videoReplaced\": false,\n+     \"viewer\": true,\n+   },\n+   Object {\n+     \"overlay\": true,\n+     \"overlayType\": \"IMG\",\n+     \"phase\": \"revealing\",\n+     \"source\": false,\n+     \"sourceHeight\": 333.515625,\n+     \"sourceWidth\": 333.515625,\n+     \"videoReplaced\": false,\n+     \"viewer\": true,\n+   },\n+   Object {\n+     \"overlay\": true,\n+     \"overlayType\": \"IMG\",\n+     \"phase\": \"revealing\",\n+     \"source\": false,\n+     \"sourceHeight\": 333.515625,\n+     \"sourceWidth\": 333.515625,\n+     \"videoReplaced\": false,\n+     \"viewer\": true,\n+   },\n+ ]"
+      },
+      {
+        "project": "webkit-desktop",
+        "task": "/work hands off one image and restores stable source geometry",
+        "error": "Error: Every sampled paint must have exactly one selected-media representation\n\nexpect(received).toEqual(expected) // deep equality\n\n- Expected  -  1\n+ Received  + 82\n\n- Array []\n+ Array [\n+   Object {\n+     \"overlay\": true,\n+     \"overlayType\": \"CANVAS\",\n+     \"phase\": \"revealing\",\n+     \"source\": false,\n+     \"sourceHeight\": 333.53125,\n+     \"sourceWidth\": 333.53125,\n+     \"videoReplaced\": false,\n+     \"viewer\": true,\n+   },\n+   Object {\n+     \"overlay\": true,\n+     \"overlayType\": \"CANVAS\",\n+     \"phase\": \"revealing\",\n+     \"source\": false,\n+     \"sourceHeight\": 333.53125,\n+     \"sourceWidth\": 333.53125,\n+     \"videoReplaced\": false,\n+     \"viewer\": true,\n+   },\n+   Object {\n+     \"overlay\": true,\n+     \"overlayType\": \"CANVAS\",\n+     \"phase\": \"revealing\",\n+     \"source\": false,\n+     \"sourceHeight\": 333.53125,\n+     \"sourceWidth\": 333.53125,\n+     \"videoReplaced\": false,\n+     \"viewer\": true,\n+   },\n+   Object {\n+     \"overlay\": true,\n+     \"overlayType\": \"CANVAS\",\n+     \"phase\": \"revealing\",\n+     \"source\": false,\n+     \"sourceHeight\": 333.53125,\n+     \"sourceWidth\": 333.53125,\n+     \"videoReplaced\": false,\n+     \"viewer\": true,\n+   },\n+   Object {\n+     \"overlay\": true,\n+     \"overlayType\": \"CANVAS\",\n+     \"phase\": \"revealing\",\n+     \"source\": false,\n+     \"sourceHeight\": 333.53125,\n+     \"sourceWidth\": 333.53125,\n+     \"videoReplaced\": false,\n+     \"viewer\": true,\n+   },\n+   Object {\n+     \"overlay\": true,\n+     \"overlayType\": \"CANVAS\",\n+     \"phase\": \"revealing\",\n+     \"source\": false,\n+     \"sourceHeight\": 333.53125,\n+     \"sourceWidth\": 333.53125,\n+     \"videoReplaced\": false,\n+     \"viewer\": true,\n+   },\n+   Object {\n+     \"overlay\": true,\n+     \"overlayType\": \"CANVAS\",\n+     \"phase\": \"revealing\",\n+     \"source\": false,\n+     \"sourceHeight\": 333.53125,\n+     \"sourceWidth\": 333.53125,\n+     \"videoReplaced\": false,\n+     \"viewer\": true,\n+   },\n+   Object {\n+     \"overlay\": true,\n+     \"overlayType\": \"CANVAS\",\n+     \"phase\": \"revealing\",\n+     \"source\": false,\n+     \"sourceHeight\": 333.53125,\n+     \"sourceWidth\": 333.53125,\n+     \"videoReplaced\": false,\n+     \"viewer\": true,\n+   },\n+ ]"
+      },
+      {
+        "project": "webkit-iphone-portrait",
+        "task": "/work hands off one image and restores stable source geometry",
+        "error": "Error: Every sampled paint must have exactly one selected-media representation\n\nexpect(received).toEqual(expected) // deep equality\n\n- Expected  -  1\n+ Received  + 82\n\n- Array []\n+ Array [\n+   Object {\n+     \"overlay\": true,\n+     \"overlayType\": \"CANVAS\",\n+     \"phase\": \"revealing\",\n+     \"source\": false,\n+     \"sourceHeight\": 121.484375,\n+     \"sourceWidth\": 121.484375,\n+     \"videoReplaced\": false,\n+     \"viewer\": true,\n+   },\n+   Object {\n+     \"overlay\": true,\n+     \"overlayType\": \"CANVAS\",\n+     \"phase\": \"revealing\",\n+     \"source\": false,\n+     \"sourceHeight\": 121.484375,\n+     \"sourceWidth\": 121.484375,\n+     \"videoReplaced\": false,\n+     \"viewer\": true,\n+   },\n+   Object {\n+     \"overlay\": true,\n+     \"overlayType\": \"CANVAS\",\n+     \"phase\": \"revealing\",\n+     \"source\": false,\n+     \"sourceHeight\": 121.484375,\n+     \"sourceWidth\": 121.484375,\n+     \"videoReplaced\": false,\n+     \"viewer\": true,\n+   },\n+   Object {\n+     \"overlay\": true,\n+     \"overlayType\": \"CANVAS\",\n+     \"phase\": \"revealing\",\n+     \"source\": false,\n+     \"sourceHeight\": 121.484375,\n+     \"sourceWidth\": 121.484375,\n+     \"videoReplaced\": false,\n+     \"viewer\": true,\n+   },\n+   Object {\n+     \"overlay\": true,\n+     \"overlayType\": \"CANVAS\",\n+     \"phase\": \"revealing\",\n+     \"source\": false,\n+     \"sourceHeight\": 121.484375,\n+     \"sourceWidth\": 121.484375,\n+     \"videoReplaced\": false,\n+     \"viewer\": true,\n+   },\n+   Object {\n+     \"overlay\": true,\n+     \"overlayType\": \"CANVAS\",\n+     \"phase\": \"revealing\",\n+     \"source\": false,\n+     \"sourceHeight\": 121.484375,\n+     \"sourceWidth\": 121.484375,\n+     \"videoReplaced\": false,\n+     \"viewer\": true,\n+   },\n+   Object {\n+     \"overlay\": true,\n+     \"overlayType\": \"CANVAS\",\n+     \"phase\": \"revealing\",\n+     \"source\": false,\n+     \"sourceHeight\": 121.484375,\n+     \"sourceWidth\": 121.484375,\n+     \"videoReplaced\": false,\n+     \"viewer\": true,\n+   },\n+   Object {\n+     \"overlay\": true,\n+     \"overlayType\": \"CANVAS\",\n+     \"phase\": \"revealing\",\n+     \"source\": false,\n+     \"sourceHeight\": 121.484375,\n+     \"sourceWidth\": 121.484375,\n+     \"videoReplaced\": false,\n+     \"viewer\": true,\n+   },\n+ ]"
+      },
+      {
+        "project": "webkit-iphone-landscape",
+        "task": "/work hands off one image and restores stable source geometry",
+        "error": "Error: expect(received).toBe(expected) // Object.is equality\n\nExpected: true\nReceived: false"
+      }
+    ]
+  },
+  "completedAt": "2026-10-30T00:21:42.068Z"
+}

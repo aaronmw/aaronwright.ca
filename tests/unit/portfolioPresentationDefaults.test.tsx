@@ -3,7 +3,7 @@ import { expect, it } from 'vitest'
 import { PortfolioMarkdown } from '@/components/portfolio/presentation/PortfolioText'
 import { VideoScrubber } from '@/components/portfolio/presentation/VideoScrubber'
 
-it('keeps legacy Markdown lists bulleted unless the grid opts into divided rows', () => {
+it('keeps Markdown lists bulleted unless the caller opts into divided rows', () => {
   const original = renderToStaticMarkup(
     <PortfolioMarkdown>
       {'- First statement\n- Second statement'}
@@ -20,7 +20,7 @@ it('keeps legacy Markdown lists bulleted unless the grid opts into divided rows'
   expect(grid).toContain('data-variant="divided"')
 })
 
-it('keeps the legacy seek control treatment and makes buffering an explicit opt-in', () => {
+it('keeps the default seek control treatment and makes buffering an explicit opt-in', () => {
   const props = {
     label: 'Seek through published video',
     currentTime: 25,

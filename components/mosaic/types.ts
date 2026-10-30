@@ -56,6 +56,8 @@ export type MosaicProjectCopy = {
 export type MosaicProject = MosaicProjectCopy & {
   id: string
   slug: string
+  /** Server-resolved SEO title for native-history viewer transitions. */
+  pageTitle?: string
   url?: string
   media: MosaicMedia[]
   composition: MosaicComposition

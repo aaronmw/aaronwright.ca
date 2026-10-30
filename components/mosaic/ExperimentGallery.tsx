@@ -62,6 +62,7 @@ export function useExperimentGallery() {
 export function ExperimentGallery({
   projects,
   basePath,
+  galleryTitle,
   className,
   children,
   openingDisabled = false,
@@ -70,6 +71,7 @@ export function ExperimentGallery({
 }: {
   projects: MosaicProject[]
   basePath: ExperimentBasePath
+  galleryTitle: string
   className: string
   children: ReactNode
   openingDisabled?: boolean
@@ -77,7 +79,8 @@ export function ExperimentGallery({
   adjusting?: boolean
 }) {
   const [session, setSession] = useState<Session | null>(null)
-  const { visitedProjects, markVisited, clearViewHistory } = useVisitedProjects()
+  const { visitedProjects, markVisited, clearViewHistory } =
+    useVisitedProjects()
   useMosaicDevIndicatorHidden(session !== null)
   const triggerRef = useRef<HTMLButtonElement | null>(null)
   const restoreKeyboardFocusRef = useRef(true)
@@ -126,7 +129,8 @@ export function ExperimentGallery({
   }, [])
 
   const syncLocation = useCallback(() => {
-    const location = readMosaicLocation(window.location.search, projects)
+    const location = readMosaicLocation(window.location.pathname, projects)
+    document.title = location?.project.pageTitle ?? galleryTitle
     setSession(current =>
       location
         ? {
@@ -141,7 +145,7 @@ export function ExperimentGallery({
           ? { ...current, open: false }
           : null,
     )
-  }, [projects])
+  }, [projects, galleryTitle])
 
   useEffect(() => {
     // Hydrate URL-owned state, then keep browser Back/Forward authoritative.
@@ -185,15 +189,20 @@ export function ExperimentGallery({
     window.history.pushState(
       { ...window.history.state, mosaicViewer: basePath },
       '',
-      mosaicUrl(basePath, project),
+      mosaicUrl(basePath, project, window.location.search),
     )
+    document.title = project.pageTitle ?? project.title
     setSession({ project, origin, index: 0, open: true })
   }
 
   const requestClose = useCallback(() => {
     if (window.history.state?.mosaicViewer === basePath) window.history.back()
     else {
-      window.history.replaceState(window.history.state, '', mosaicUrl(basePath))
+      window.history.replaceState(
+        window.history.state,
+        '',
+        mosaicUrl(basePath, undefined, window.location.search),
+      )
       syncLocation()
     }
   }, [basePath, syncLocation])
@@ -203,7 +212,7 @@ export function ExperimentGallery({
     window.history.replaceState(
       window.history.state,
       '',
-      mosaicUrl(basePath, session.project, index),
+      mosaicUrl(basePath, session.project, window.location.search),
     )
     setSession(current => (current ? { ...current, index } : null))
   }
@@ -222,7 +231,10 @@ export function ExperimentGallery({
   return (
     // Keep our inert main inside a stable wrapper: the lightbox owns inert on
     // body children and must not capture/restore our temporary main state.
-    <div data-mosaic-root className={`${theme.scope} ${mosaicFont.className}`}>
+    <div
+      data-mosaic-root
+      className={`${theme.scope} ${mosaicFont.className}`}
+    >
       <main
         ref={mainRef}
         className={className}

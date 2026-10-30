@@ -1,46 +1,123 @@
 import { expect } from '@playwright/test'
 
-const project = 'aarons-toolbox'
-const mediaSelector = `[data-portfolio-carousel="${project}"]`
+const project = 'loopio'
+const projectPath = `/work/${project}`
+const notesSelector = '.yarl__root [data-controls-ready]'
 
 async function activate(locator, touch) {
   if (touch) await locator.tap()
   else await locator.click()
 }
 
-// A URL can update before the carousel has stopped. Observe the outer track,
-// visible project tracks, and viewer. Reading offscreen descendants defeats
-// content-visibility and adds layout work to the interaction being measured.
+// Readiness is observable UI state, not network-idle: nine background videos loop.
+// Sampling on animation frames avoids assertion retry backoff in timed journeys.
+export async function gridReady(page) {
+  await page.waitForFunction(
+    () => {
+      const grid = document.querySelector('[data-mosaic-layout="packed"]')
+      const cells = grid?.querySelectorAll('[data-mosaic-cell]')
+      return (
+        document.fonts.status === 'loaded' &&
+        cells?.length === 10 &&
+        [...cells].every(cell => {
+          const tile = cell.querySelector('[data-mosaic-project]')
+          return (
+            cell.getAttribute('data-mosaic-entrance') === 'arrived' &&
+            cell.hasAttribute('data-mosaic-media-ready') &&
+            !tile?.closest('[inert]') &&
+            tile &&
+            getComputedStyle(tile.parentElement).opacity === '1'
+          )
+        })
+      )
+    },
+    undefined,
+    { timeout: 60_000, polling: 'raf' },
+  )
+}
+
+export async function viewerReady(page) {
+  await page.waitForFunction(
+    async () => {
+      const root = document.querySelector(
+        '.yarl__root[data-mosaic-transition-state="open"]',
+      )
+      if (!root || root.querySelector('[data-animating]')) return false
+      const media = root.querySelector(
+        '.yarl__slide_current video, .yarl__slide_current img',
+      )
+      if (media instanceof HTMLVideoElement) {
+        // Reduced motion intentionally leaves preload=none and presents a still
+        // poster. A decoded video frame is required only for normal playback.
+        if (
+          matchMedia('(prefers-reduced-motion: reduce)').matches &&
+          media.paused &&
+          media.poster
+        ) {
+          const poster = new Image()
+          poster.src = media.poster
+          await poster.decode()
+          return poster.naturalWidth > 0
+        }
+        return media.readyState >= 2 && media.videoWidth > 0
+      }
+      return (
+        media instanceof HTMLImageElement &&
+        media.complete &&
+        media.naturalWidth > 0
+      )
+    },
+    undefined,
+    { timeout: 60_000, polling: 'raf' },
+  )
+}
+
+export async function notesReady(page, expanded) {
+  await page.waitForFunction(
+    ({ selector, expanded }) => {
+      const layer = document.querySelector(selector)
+      const panel = layer?.querySelector('aside')
+      const control = layer?.querySelector('button[aria-expanded]')
+      return (
+        layer &&
+        !layer.hasAttribute('data-animating') &&
+        layer.hasAttribute('data-collapsed') !== expanded &&
+        control?.getAttribute('aria-expanded') === String(expanded) &&
+        panel?.getAttribute('aria-hidden') === String(!expanded) &&
+        getComputedStyle(panel).opacity === (expanded ? '1' : '0')
+      )
+    },
+    { selector: notesSelector, expanded },
+    { timeout: 15_000, polling: 'raf' },
+  )
+}
+
+// Observe stable interaction surfaces for 200 ms. Do not inspect video pixels,
+// playback time, segmented background crops, or infinite animation timelines.
+// GSAP-owned viewer/Notes motion exposes its completion explicitly.
 export async function settled(page) {
   await page.evaluate(() => {
     delete window.__qaSettle
   })
   await page.waitForFunction(
     () => {
+      const root = document.querySelector('.yarl__root')
+      if (
+        (root &&
+          root.getAttribute('data-mosaic-transition-state') !== 'open') ||
+        root?.querySelector('[data-animating]') ||
+        document.querySelector('[data-mosaic-transition]')
+      ) {
+        delete window.__qaSettle
+        return false
+      }
       const elements = document.querySelectorAll(
-        '[data-portfolio-vertical-carousel] > div, [data-portfolio-carousel] > div, .portfolio-viewer, .yarl__slide_current .yarl__slide_wrapper',
+        '[data-mosaic-layout], [data-mosaic-cell], .yarl__root, ' +
+          '.yarl__slide_current, .yarl__root [data-controls-ready] aside, ' +
+          '[data-mosaic-return-focus] [data-mosaic-media]',
       )
-      const visibleSections = new Map()
-      const positions = Array.from(elements)
-        .filter(element => {
-          const section = element.closest(
-            '[data-portfolio-vertical-carousel] > div > section',
-          )
-          if (!section) return true
-          if (!visibleSections.has(section)) {
-            // The section has its own fixed viewport height. Inspect its box
-            // before touching descendants that the browser may have skipped.
-            const box = section.getBoundingClientRect()
-            visibleSections.set(
-              section,
-              box.bottom > 0 &&
-                box.top < innerHeight &&
-                box.right > 0 &&
-                box.left < innerWidth,
-            )
-          }
-          return visibleSections.get(section)
-        })
+      if (!elements.length) return false
+      const positions = [...elements]
         .map(element => {
           const box = element.getBoundingClientRect()
           return [box.x, box.y, box.width, box.height]
@@ -48,9 +125,8 @@ export async function settled(page) {
             .join(',')
         })
         .join('|')
-      if (window.__qaSettle?.positions !== positions) {
+      if (window.__qaSettle?.positions !== positions)
         window.__qaSettle = { positions, since: performance.now() }
-      }
       return performance.now() - window.__qaSettle.since >= 200
     },
     undefined,
@@ -58,302 +134,189 @@ export async function settled(page) {
   )
 }
 
-export async function themeSettled(page) {
-  // Await the actual visible color/opacity transitions, without sampling
-  // carousel geometry or adding idle frames to the performance distribution.
-  await page
-    .locator(
-      '[data-portfolio-theme-root]:visible, main[data-portfolio-phase]:visible, ' +
-        '[data-portfolio-theme-trigger]:visible, [data-portfolio-theme-menu-scrim]',
-    )
-    .evaluateAll(async elements => {
-      for (;;) {
-        const animations = elements
-          .flatMap(element => element.getAnimations())
-          .filter(
-            animation => !['finished', 'idle'].includes(animation.playState),
-          )
-        if (!animations.length) return
-        // Focus and theme changes can replace a transition. A cancellation is
-        // not completion: inspect the replacement animations before returning.
-        const results = await Promise.allSettled(
-          animations.map(animation => animation.finished),
-        )
-        for (const result of results) {
-          if (
-            result.status === 'rejected' &&
-            result.reason?.name !== 'AbortError'
-          ) {
-            throw result.reason
-          }
-        }
-      }
-    })
-  await expect(page.locator('[data-portfolio-theme-menu-scrim]')).toHaveCSS(
-    'opacity',
-    '0',
+async function videoState(page, paused) {
+  await page.waitForFunction(
+    paused => {
+      const video = document.querySelector('.yarl__slide_current video')
+      return (
+        video instanceof HTMLVideoElement &&
+        video.readyState >= 2 &&
+        video.paused === paused
+      )
+    },
+    paused,
+    { timeout: 30_000, polling: 'raf' },
   )
-  await expect(page.locator('[data-portfolio-theme-trigger]')).toBeFocused()
 }
 
-async function activeSection(page, index) {
-  await expect(
-    page.locator(
-      `[data-portfolio-section-nav-side="left"][data-portfolio-section-nav-index="${index}"]`,
-    ),
-  ).toHaveAttribute('aria-current', 'page')
-}
-
-async function visibleMedia(page) {
-  const source = page
-    .locator(mediaSelector)
-    .locator('[data-portfolio-viewer-source="active"]')
-  await expect(source).toBeVisible()
-  await expect
-    .poll(
-      () =>
-        source
-          .locator('img, video')
-          .first()
-          .evaluate(media =>
-            media instanceof HTMLVideoElement
-              ? media.readyState >= 2 && media.videoWidth > 0
-              : media.complete && media.naturalWidth > 0,
-          ),
-      { timeout: 30_000 },
-    )
-    .toBe(true)
-  const box = await source.boundingBox()
-  const viewport = page.viewportSize()
-  expect(box.width).toBeGreaterThan(40)
-  expect(box.height).toBeGreaterThan(40)
-  expect(box.x).toBeGreaterThanOrEqual(-1)
-  expect(box.y).toBeGreaterThanOrEqual(-1)
-  expect(box.x + box.width).toBeLessThanOrEqual(viewport.width + 1)
-  expect(box.y + box.height).toBeLessThanOrEqual(viewport.height + 1)
-}
-
-async function swipe(page, cdp, selector, axis, touch) {
-  const box = await page.locator(selector).boundingBox()
-  expect(box).not.toBeNull()
-  // Start horizontal gestures on the rendered media, not its seek controls.
-  // Vertical gestures use the section edge, clear of narrative scroll regions
-  // and media controls, with room to cross the outer snap midpoint.
-  const media =
-    axis === 'x'
-      ? await page
-          .locator(selector)
-          .locator(
-            '[data-portfolio-viewer-source="active"] [data-portfolio-media-action]',
-          )
-          .boundingBox()
-      : null
-  if (axis === 'x') expect(media).not.toBeNull()
-  const start = media
-    ? { x: media.x + media.width * 0.75, y: media.y + media.height * 0.5 }
-    : { x: box.x + box.width * 0.9, y: box.y + box.height * 0.8 }
-  expect(
-    await page.evaluate(
-      ({ x, y }) =>
-        Boolean(
-          document
-            .elementFromPoint(x, y)
-            ?.closest('[data-portfolio-carousel-drag-lock]'),
-        ),
-      start,
-    ),
-  ).toBe(false)
-  const delta =
-    axis === 'x'
-      ? { x: -box.width * 0.6, y: -5 }
-      : // The outer snap spans the viewport, not the shorter inner media stage.
-        // Cross its midpoint so completion does not depend on flick velocity.
-        { x: 5, y: -page.viewportSize().height * 0.6 }
-  if (touch) {
-    await cdp.send('Input.dispatchTouchEvent', {
-      type: 'touchStart',
-      touchPoints: [{ ...start, id: 0 }],
-    })
-    for (let step = 1; step <= 12; step++) {
-      await cdp.send('Input.dispatchTouchEvent', {
-        type: 'touchMove',
-        touchPoints: [
-          {
-            x: start.x + (delta.x * step) / 12,
-            y: start.y + (delta.y * step) / 12,
-            id: 0,
-          },
-        ],
-      })
-      await page.waitForTimeout(16) // Gesture cadence, not an assertion sleep.
-    }
-    await cdp.send('Input.dispatchTouchEvent', {
-      type: 'touchEnd',
-      touchPoints: [],
-    })
-  } else {
-    await page.mouse.move(start.x, start.y)
-    for (let step = 0; step < 8; step++) {
-      await page.mouse.wheel(axis === 'x' ? 100 : 5, axis === 'y' ? 90 : 5)
-      await page.waitForTimeout(16)
-    }
-  }
-}
-
-// IDs map directly to TASKS.md and qa/config.json. Every task asserts an outcome.
-// Only recover after a prior task left the wrong state. A recovered run remains
-// blocked, but its other tasks can still provide diagnostic evidence.
+// Recovery happens outside measurement and cannot make a failed run eligible.
 export async function prepareTask(page, task) {
   const starts = {
-    'choose-project': '/work',
-    'horizontal-gesture': '/work/aarons-toolbox',
-    'image-viewer': '/work/aarons-toolbox/normalizer',
-    'vertical-navigation': '/work/aarons-toolbox',
-    'appearance': '/work',
+    'open-project': '/work',
+    'toggle-notes': projectPath,
+    'video-controls': projectPath,
+    'close-viewer': projectPath,
+    'open-about': '/work',
   }
   const path = starts[task]
   if (!path) return
   const current = new URL(page.url())
   if (current.pathname + current.search === path) return
   await page.goto(path, { waitUntil: 'domcontentloaded' })
-  await expect(
-    page.locator('main[data-portfolio-phase]:visible'),
-  ).toHaveAttribute('data-portfolio-phase', 'ready', { timeout: 45_000 })
+  if (path === '/work') await gridReady(page)
+  else await viewerReady(page)
   await settled(page)
-  if (path.includes('aarons-toolbox')) await visibleMedia(page)
 }
 
-export async function runTasks({ page, cdp, profile, measure }) {
+export async function runTasks({ page, profile, measure }) {
   await measure(
     'cold-entry',
     async () => {
       await page.goto('/work', { waitUntil: 'domcontentloaded' })
-      // Observe the complete visitor-ready state without assertion retry delays.
-      // Only visible startup elements are read; offscreen carousels stay untouched.
-      await page.waitForFunction(
-        () => {
-          const main = document.querySelector(
-            'main[data-portfolio-phase="ready"]',
-          )
-          if (!main || main.querySelector('[data-portfolio-startup-loader]'))
-            return false
-          const chrome = main.querySelector('[data-portfolio-browser-chrome]')
-          const menu = main.querySelector(
-            '[data-portfolio-start-section-index="5"]',
-          )
-          if (!chrome || !menu || getComputedStyle(chrome).opacity !== '1')
-            return false
-          const box = menu.getBoundingClientRect()
-          const visibility = getComputedStyle(menu).visibility
-          return (
-            box.width > 0 &&
-            box.height > 0 &&
-            visibility !== 'hidden' &&
-            visibility !== 'collapse'
-          )
-        },
-        undefined,
-        { timeout: 45_000, polling: 'raf' },
-      )
+      await gridReady(page)
       await settled(page)
     },
     {
       navigation: true,
-      // Retain the functional assertions, but exclude their protocol round trips
-      // and retry scheduling from the performance sample's completion time.
       verify: async () => {
+        await expect(page).toHaveURL('/work')
+        await expect(page.locator('[data-mosaic-project]')).toHaveCount(10)
+        await expect(page.locator('[data-mosaic-layout]')).toHaveAttribute(
+          'data-mosaic-layout',
+          'packed',
+        )
+      },
+    },
+  )
+
+  await measure(
+    'open-project',
+    async () => {
+      await activate(
+        page.locator(`[data-mosaic-project="${project}"]`),
+        profile.touch,
+      )
+      await viewerReady(page)
+      await settled(page)
+    },
+    {
+      verify: async () => {
+        await expect(page).toHaveURL(projectPath)
+        await expect(page.getByRole('dialog')).toBeVisible()
         await expect(
-          page.locator('main[data-portfolio-phase]:visible'),
-        ).toHaveAttribute('data-portfolio-phase', 'ready', { timeout: 45_000 })
-        await expect(
-          page.locator(
-            'main[data-portfolio-phase]:visible [data-portfolio-startup-loader]',
-          ),
-        ).toHaveCount(0)
-        await expect(
-          page.locator(
-            'main[data-portfolio-phase]:visible [data-portfolio-browser-chrome]',
-          ),
-        ).toHaveCSS('opacity', '1')
-        await expect(
-          page.locator('[data-portfolio-start-section-index="5"]'),
+          page.getByRole('region', { name: 'Loopio description' }),
         ).toBeVisible()
       },
     },
   )
 
-  await measure('choose-project', async () => {
+  await measure(
+    'toggle-notes',
+    async () => {
+      await activate(
+        page.getByRole('button', { name: 'Hide project details', exact: true }),
+        profile.touch,
+      )
+      await notesReady(page, false)
+      await activate(
+        page.getByRole('button', { name: 'Show project details', exact: true }),
+        profile.touch,
+      )
+      await notesReady(page, true)
+      await settled(page)
+    },
+    {
+      verify: async () => {
+        await expect(
+          page.getByRole('region', { name: 'Loopio description' }),
+        ).toBeVisible()
+        await expect(page).toHaveURL(projectPath)
+      },
+    },
+  )
+
+  await measure('video-controls', async () => {
+    await videoState(page, false)
     await activate(
-      page.locator('[data-portfolio-start-section-index="5"]'),
+      page.getByRole('button', { name: 'Pause video', exact: true }),
       profile.touch,
     )
-    await expect(page).toHaveURL(/\/work\/aarons-toolbox$/)
-    await activeSection(page, 5)
+    await videoState(page, true)
+    const seek = page.getByRole('slider', { name: /^Seek through / })
+    const box = await seek.boundingBox()
+    expect(box).not.toBeNull()
+    if (profile.touch)
+      await page.touchscreen.tap(
+        box.x + box.width * 0.5,
+        box.y + box.height * 0.5,
+      )
+    else
+      await page.mouse.click(box.x + box.width * 0.5, box.y + box.height * 0.5)
+    await page.waitForFunction(
+      () => {
+        const video = document.querySelector('.yarl__slide_current video')
+        return (
+          video instanceof HTMLVideoElement &&
+          !video.seeking &&
+          Math.abs(video.currentTime / video.duration - 0.5) < 0.08
+        )
+      },
+      undefined,
+      { timeout: 30_000, polling: 'raf' },
+    )
+    await activate(
+      page.getByRole('button', { name: 'Play video', exact: true }),
+      profile.touch,
+    )
+    await videoState(page, false)
     await settled(page)
-    await visibleMedia(page)
   })
 
-  await measure('horizontal-gesture', async () => {
-    await swipe(page, cdp, mediaSelector, 'x', profile.touch)
-    await expect(page).toHaveURL(/\/work\/aarons-toolbox\/normalizer$/)
-    await activeSection(page, 5)
-    await settled(page)
-    await visibleMedia(page)
-  })
+  await measure(
+    'close-viewer',
+    async () => {
+      await activate(
+        page.getByRole('button', { name: 'Close viewer', exact: true }),
+        profile.touch,
+      )
+      await page.waitForFunction(
+        () =>
+          !document.querySelector(
+            '.yarl__root, [data-mosaic-source-hidden], [data-mosaic-transition]',
+          ),
+        undefined,
+        { timeout: 15_000, polling: 'raf' },
+      )
+      await gridReady(page)
+      await settled(page)
+    },
+    {
+      verify: async () => {
+        await expect(page).toHaveURL('/work')
+      },
+    },
+  )
 
-  await measure('image-viewer', async () => {
-    const source = page.locator(
-      '[data-portfolio-screenshot-id="normalizer"][data-portfolio-viewer-source="active"] [data-portfolio-media-action]',
-    )
-    await activate(source, profile.touch)
-    await expect(page.locator('.portfolio-viewer')).toBeVisible()
-    await expect(page).toHaveURL(/normalizer\?modal=image$/)
-    await settled(page)
-    await activate(
-      page.getByRole('button', { name: 'Previous image', exact: true }),
-      profile.touch,
-    )
-    await expect(page).toHaveURL(/overview\?modal=image$/)
-    await settled(page)
-    await activate(
-      page.getByRole('button', { name: 'Close enlarged image', exact: true }),
-      profile.touch,
-    )
-    await expect(page.locator('.portfolio-viewer')).toHaveCount(0)
-    await expect(page).toHaveURL(/\/work\/aarons-toolbox$/)
-    await settled(page)
-    await visibleMedia(page)
-  })
-
-  await measure('vertical-navigation', async () => {
-    await swipe(page, cdp, mediaSelector, 'y', profile.touch)
-    await expect(page).toHaveURL(/\/work\/nextphrase$/)
-    await activeSection(page, 6)
-    await settled(page)
-    const logo = page.locator('[data-portfolio-home-logo]:visible').first()
-    await activate(logo, profile.touch)
-    await expect(page).toHaveURL(/\/work$/)
-    await settled(page)
-  })
-
-  await measure('appearance', async () => {
-    await activate(
-      page.locator('[data-portfolio-theme-trigger]'),
-      profile.touch,
-    )
-    await expect(page.locator('[data-portfolio-theme-menu]')).toBeVisible()
-    await activate(
-      page.getByRole('menuitemradio', { name: 'Light', exact: true }),
-      profile.touch,
-    )
-    await expect(page.locator('html')).toHaveAttribute(
-      'data-portfolio-theme',
-      'light',
-    )
-    await expect(page.locator('[data-portfolio-theme-menu]')).toHaveCount(0)
-    expect(
-      await page.evaluate(() => localStorage.getItem('portfolio-theme')),
-    ).toBe('light')
-    await themeSettled(page)
-  })
+  await measure(
+    'open-about',
+    async () => {
+      await activate(
+        page.locator('[data-mosaic-project="about-me"]'),
+        profile.touch,
+      )
+      await viewerReady(page)
+      await settled(page)
+    },
+    {
+      verify: async () => {
+        await expect(page).toHaveURL('/work/about-me')
+        await expect(
+          page.getByRole('region', { name: 'About Aaron Wright' }),
+        ).toBeVisible()
+        await expect(
+          page.getByRole('article', { name: 'Biography' }),
+        ).toBeVisible()
+      },
+    },
+  )
 }

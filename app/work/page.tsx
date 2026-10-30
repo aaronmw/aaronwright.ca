@@ -1,13 +1,24 @@
-import { getPortfolioMetadata } from '@/lib/seo';
-import { Suspense } from 'react';
-import { PortfolioBrowser } from '@/components/portfolio/PortfolioBrowser';
+import { notFound, permanentRedirect } from 'next/navigation'
+import {
+  hasViewerParameters,
+  legacyMosaicRedirectUrl,
+  type MosaicSearchParams,
+} from '@/components/mosaic/routing'
+import { mosaicProjects } from '@/lib/mosaic'
+import { getPortfolioMetadata } from '@/lib/seo'
 
-export const metadata = getPortfolioMetadata('/work');
+export const metadata = getPortfolioMetadata('/work')
 
-export default function WorkPage() {
-  return (
-    <Suspense>
-      <PortfolioBrowser />
-    </Suspense>
-  );
+export default async function WorkPage({
+  searchParams,
+}: {
+  searchParams: Promise<MosaicSearchParams>
+}) {
+  const search = await searchParams
+  if (hasViewerParameters(search)) {
+    const target = legacyMosaicRedirectUrl(search, mosaicProjects)
+    if (!target) notFound()
+    permanentRedirect(target)
+  }
+  return null
 }

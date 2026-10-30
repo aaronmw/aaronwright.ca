@@ -1,4 +1,5 @@
 import { expect, test, type Locator, type Page } from '@playwright/test'
+import { gridReady } from '../../scripts/qa/tasks.mjs'
 
 type Sample = {
   source: boolean
@@ -9,6 +10,10 @@ type Sample = {
   sourceHeight: number
   overlayType: string | null
   videoReplaced: boolean
+  portrait: boolean
+  overlayOpacity: number
+  viewerOpacity: number
+  overlayAlignment: number | null
 }
 type Observation = { samples: Sample[]; stop: () => void }
 type ObservedWindow = Window & {
@@ -18,12 +23,7 @@ type ObservedWindow = Window & {
 
 async function ready(page: Page, route: string) {
   await page.goto(route)
-  await expect(page.locator('[data-mosaic-project]')).toHaveCount(7)
-  await page
-    .locator('[data-mosaic-media] img')
-    .evaluateAll(images =>
-      Promise.all(images.map(image => (image as HTMLImageElement).decode())),
-    )
+  await gridReady(page)
 }
 
 async function settle(subject: Locator) {
@@ -48,10 +48,10 @@ async function observe(page: Page, slug: string) {
     let stopped = false
     let openVideo: HTMLVideoElement | null = null
     const samples: Sample[] = []
-    function visible(element: Element | null) {
-      if (!element || !element.isConnected) return false
+    function opacity(element: Element | null) {
+      if (!element || !element.isConnected) return 0
       const rect = element.getBoundingClientRect()
-      if (!rect.width || !rect.height) return false
+      if (!rect.width || !rect.height) return 0
       let opacity = 1
       for (
         let node: Element | null = element;
@@ -59,11 +59,10 @@ async function observe(page: Page, slug: string) {
         node = node.parentElement
       ) {
         const style = getComputedStyle(node)
-        if (style.display === 'none' || style.visibility !== 'visible')
-          return false
+        if (style.display === 'none' || style.visibility !== 'visible') return 0
         opacity *= Number(style.opacity)
       }
-      return opacity > 0
+      return opacity
     }
     function sample() {
       if (stopped) return
@@ -79,10 +78,27 @@ async function observe(page: Page, slug: string) {
       if (phase === 'open' && visual instanceof HTMLVideoElement)
         openVideo ??= visual
       const box = media.getBoundingClientRect()
+      const overlayVisual = overlay?.firstElementChild ?? null
+      const overlayBox = overlayVisual?.getBoundingClientRect()
+      const visualBox = visual?.getBoundingClientRect()
+      const overlayOpacity = opacity(overlayVisual)
+      const viewerOpacity = opacity(visual)
       samples.push({
-        source: visible(source) && visible(media),
-        overlay: visible(overlay?.firstElementChild ?? null),
-        viewer: visible(visual),
+        source: opacity(source) > 0 && opacity(media) > 0,
+        overlay: overlayOpacity > 0,
+        viewer: viewerOpacity > 0,
+        portrait: Boolean(root?.querySelector('[data-mosaic-about-portrait]')),
+        overlayOpacity,
+        viewerOpacity,
+        overlayAlignment:
+          overlayBox && visualBox
+            ? Math.max(
+                Math.abs(overlayBox.left - visualBox.left),
+                Math.abs(overlayBox.top - visualBox.top),
+                Math.abs(overlayBox.width - visualBox.width),
+                Math.abs(overlayBox.height - visualBox.height),
+              )
+            : null,
         phase,
         sourceWidth: box.width,
         sourceHeight: box.height,
@@ -116,16 +132,29 @@ async function finishObservation(page: Page) {
 
 function expectSingleOwner(samples: Sample[], overlayExpected = true) {
   expect(samples.length).toBeGreaterThan(4)
-  expect(
-    samples.filter(
-      sample =>
-        Number(sample.source) +
-          Number(sample.overlay) +
-          Number(sample.viewer) !==
-        1,
-    ),
-    'Every sampled paint must have exactly one selected-media representation',
-  ).toEqual([])
+  for (const sample of samples) {
+    // About intentionally reveals its copy over the landed portrait. A captured
+    // hover portrait can crossfade at this same handoff. Both layers must align
+    // and remain opaque as one composite; the grid source stays hidden.
+    if (sample.phase === 'revealing' && sample.portrait) {
+      expect(sample.source).toBe(false)
+      expect(sample.viewer).toBe(true)
+      expect(sample.viewerOpacity).toBeCloseTo(1, 3)
+      if (sample.overlay) {
+        expect(sample.overlayAlignment).not.toBeNull()
+        expect(sample.overlayAlignment!).toBeLessThan(0.5)
+        expect(
+          sample.overlayOpacity +
+            sample.viewerOpacity * (1 - sample.overlayOpacity),
+        ).toBeCloseTo(1, 3)
+      }
+    } else {
+      expect(
+        Number(sample.source) + Number(sample.overlay) + Number(sample.viewer),
+        'Outside the aligned About reveal, each paint has one selected-media owner',
+      ).toBe(1)
+    }
+  }
   expect(samples.some(sample => sample.overlay)).toBe(overlayExpected)
   expect(samples.some(sample => sample.viewer && sample.phase === 'open')).toBe(
     true,
@@ -171,7 +200,7 @@ async function expectArrow(page: Page, name: string) {
     .toContain(name)
 }
 
-const route = '/grid-version'
+const route = '/work'
 
 for (const video of [false, true]) {
   test(`${route} hands off one ${video ? 'video frame' : 'image'} and restores stable source geometry`, async ({
@@ -193,15 +222,35 @@ for (const video of [false, true]) {
     await settle(subject)
     await observe(page, slug)
     // Activate before the 500 ms grid fit transition completes.
-    await subject.evaluate(async element => {
+    const openingSnapshot = await subject.evaluate(async element => {
       ;(element as HTMLElement).focus()
       await new Promise<void>(resolve =>
         requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
       )
+      const portrait = element.querySelector('[data-mosaic-portrait]')
+      const base = portrait?.querySelector<HTMLImageElement>('img')
+      const hover = portrait?.querySelector<HTMLImageElement>(
+        '[data-mosaic-portrait-hover]',
+      )
+      // A decoded visible portrait overlay is captured into a canvas so its
+      // painted blend survives the handoff, including the touch portrait.
+      const compositePortrait = Boolean(
+        base?.complete &&
+        base.naturalWidth &&
+        hover?.complete &&
+        hover.naturalWidth &&
+        Number(getComputedStyle(hover).opacity) > 0,
+      )
       ;(element as HTMLButtonElement).click()
+      return compositePortrait ? 'CANVAS' : 'IMG'
     })
     const viewer = page.locator('.yarl__root')
     await expect(viewer).toHaveAttribute('data-mosaic-transition-state', 'open')
+    await page.waitForFunction(() =>
+      (window as ObservedWindow).mosaicTransitionObservation?.samples.some(
+        sample => sample.viewer && sample.phase === 'open',
+      ),
+    )
     await expect(subject).toHaveCSS('visibility', 'hidden')
     if (video) {
       await expect(page.locator('.yarl__slide_current video')).toHaveAttribute(
@@ -211,13 +260,10 @@ for (const video of [false, true]) {
       await page.keyboard.press('Escape')
     } else {
       await expect(
-        viewer.getByRole('heading', { name: 'About Me', exact: true }),
+        viewer.getByRole('heading', { name: /I design and build interfaces/ }),
       ).toBeVisible()
       await expect(
         viewer.getByRole('article', { name: 'Biography' }),
-      ).toBeVisible()
-      await expect(
-        viewer.getByRole('article', { name: 'Working style and strengths' }),
       ).toBeVisible()
       await expect(
         viewer.getByRole('button', { name: 'Zoom in', exact: true }),
@@ -232,9 +278,12 @@ for (const video of [false, true]) {
     await settle(subject)
     const samples = await finishObservation(page)
     expectSingleOwner(samples)
-    expect(
-      samples.some(sample => sample.overlayType === (video ? 'CANVAS' : 'IMG')),
-    ).toBe(true)
+    const openingFrames = samples.filter(
+      sample => sample.overlay && sample.phase === 'opening',
+    )
+    expect(openingFrames.length).toBeGreaterThan(0)
+    for (const sample of openingFrames)
+      expect(sample.overlayType).toBe(video ? 'CANVAS' : openingSnapshot)
     expect(samples.filter(sample => sample.videoReplaced)).toEqual([])
     const lastViewer = samples.findLastIndex(sample => sample.phase !== null)
     const restored = samples
@@ -276,13 +325,13 @@ test(`${route} reverses a close and ignores arrow navigation until ownership set
   await subject.press('Enter')
   const viewer = page.locator('.yarl__root')
   await expectArrow(page, 'opening-arrow')
-  await expect(page).toHaveURL(`${route}?project=loopio&slide=cover`)
+  await expect(page).toHaveURL(`${route}/loopio`)
   await expect(viewer).toHaveAttribute('data-mosaic-transition-state', 'open')
   await armArrow(page, 'closing', 'reverse', true)
   await page.keyboard.press('Escape')
   await expectArrow(page, 'reverse')
   await expect(viewer).toHaveAttribute('data-mosaic-transition-state', 'open')
-  await expect(page).toHaveURL(`${route}?project=loopio&slide=cover`)
+  await expect(page).toHaveURL(`${route}/loopio`)
   await armArrow(page, 'closing', 'closing-arrow')
   await page.keyboard.press('Escape')
   await expectArrow(page, 'closing-arrow')
@@ -299,7 +348,7 @@ test('reduced motion transfers single ownership without a spatial overlay', asyn
   page,
 }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' })
-  await ready(page, '/grid-version')
+  await ready(page, '/work')
   const subject = page.locator('[data-mosaic-project="about-me"]')
   await subject.focus()
   await observe(page, 'about-me')

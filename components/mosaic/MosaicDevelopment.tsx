@@ -27,7 +27,13 @@ import type {
   MosaicProjectCopy,
 } from './types'
 
-export function MosaicDevelopment({ projects }: { projects: MosaicProject[] }) {
+export function MosaicDevelopment({
+  projects,
+  galleryTitle,
+}: {
+  projects: MosaicProject[]
+  galleryTitle: string
+}) {
   const rootRef = useRef<HTMLDivElement>(null)
   const restoreFocus = useRef(false)
   const copyPending = useRef(false)
@@ -255,6 +261,7 @@ export function MosaicDevelopment({ projects }: { projects: MosaicProject[] }) {
     <div ref={rootRef}>
       <Mosaic
         projects={displayedProjects}
+        galleryTitle={galleryTitle}
         layout={layout}
         adjustmentLayer={adjustmentLayer}
         onVideoDuration={receiveDuration}

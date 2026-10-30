@@ -9,20 +9,22 @@ import {
 type Rect = { left: number; top: number; width: number; height: number }
 
 export function blurbMotionGeometry(panel: Rect, button: Rect, pixel: number) {
-  const x = button.left - panel.left,
-    y = button.top - panel.top
-  const center = { x: x + button.width / 2, y: y + button.height / 2 }
+  // Travel as one stroke-sized square; unfold only after its bottom-left
+  // vertex reaches the panel's bottom-left corner.
+  const x = button.left - panel.left + (button.width - pixel) / 2,
+    y = button.top - panel.top + (button.height - pixel) / 2
+  const center = { x: pixel / 2, y: panel.height - pixel / 2 }
   return {
     width: panel.width,
     height: panel.height,
     pixel,
     center,
     buttonPaths: [
-      `M ${x} ${y} L ${x + button.width} ${y} L ${x + button.width} ${y + button.height} L ${x} ${y + button.height} Z`,
-      `M ${x} ${y} L ${x + button.width} ${y}`,
-      `M ${x + button.width} ${y} L ${x + button.width} ${y + button.height}`,
-      `M ${x + button.width} ${y + button.height} L ${x} ${y + button.height}`,
-      `M ${x} ${y + button.height} L ${x} ${y}`,
+      `M ${x} ${y} L ${x + pixel} ${y} L ${x + pixel} ${y + pixel} L ${x} ${y + pixel} Z`,
+      `M ${x} ${y} L ${x + pixel} ${y}`,
+      `M ${x + pixel} ${y} L ${x + pixel} ${y + pixel}`,
+      `M ${x + pixel} ${y + pixel} L ${x} ${y + pixel}`,
+      `M ${x} ${y + pixel} L ${x} ${y}`,
     ],
   }
 }
@@ -34,7 +36,7 @@ export type BlurbMotionElements = RectangleInkElements & {
   anchor: HTMLSpanElement
 }
 
-/** Exactly one reversible timeline, from the notes-button silhouette to content. */
+/** One reversible timeline: a travelling square, panel corners, then content. */
 export function createBlurbTimeline(
   ink: RectangleInkElements,
   panel: HTMLElement,

@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "repetitions": 3,
   "profiles": [
     {
@@ -41,16 +41,28 @@
   ],
   "tasks": [
     "cold-entry",
-    "choose-project",
-    "horizontal-gesture",
-    "image-viewer",
-    "vertical-navigation",
-    "appearance"
+    "open-project",
+    "toggle-notes",
+    "video-controls",
+    "close-viewer",
+    "open-about"
   ],
   "regression": {
-    "durationMs": { "ratio": 1.3, "allowance": 300 },
-    "maxLongTaskMs": { "ratio": 1.3, "allowance": 50 },
-    "maxLongFrameMs": { "ratio": 1.3, "allowance": 50 },
-    "frameGapP95Ms": { "ratio": 1.3, "allowance": 10 }
+    "durationMs": {
+      "ratio": 1.3,
+      "allowance": 300
+    },
+    "maxLongTaskMs": {
+      "ratio": 1.3,
+      "allowance": 50
+    },
+    "maxLongFrameMs": {
+      "ratio": 1.3,
+      "allowance": 50
+    },
+    "frameGapP95Ms": {
+      "ratio": 1.3,
+      "allowance": 10
+    }
   }
 }

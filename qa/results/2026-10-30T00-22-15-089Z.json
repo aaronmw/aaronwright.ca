@@ -1,0 +1,53 @@
+{
+  "schema": 1,
+  "id": "2026-10-30T00-22-15-089Z",
+  "createdAt": "2026-10-30T00:22:15.089Z",
+  "commit": "d197e3c4c609bcc9dbc396f7ea0f72ec53073b81",
+  "sourceHash": "6b0bea4a6929ed13e2c85440f85570a8fc87c0039bf733414cd7ea2852f66860",
+  "configHash": "c6d22c6d2de91d419229b7fbae04f3039aa3f873c66ed328572b7f9c4cd3320d",
+  "mode": "release",
+  "environment": null,
+  "checks": {
+    "unit": true,
+    "browser": false
+  },
+  "samples": [],
+  "errors": [
+    "QA interrupted"
+  ],
+  "failures": [
+    "Missing production build/environment evidence.",
+    "Unit or cross-browser checks did not pass.",
+    "QA interrupted",
+    "Incomplete sample matrix.",
+    "Missing repetitions: desktop/cold-entry",
+    "Missing repetitions: desktop/open-project",
+    "Missing repetitions: desktop/toggle-notes",
+    "Missing repetitions: desktop/video-controls",
+    "Missing repetitions: desktop/close-viewer",
+    "Missing repetitions: desktop/open-about",
+    "Missing repetitions: small-laptop-slow/cold-entry",
+    "Missing repetitions: small-laptop-slow/open-project",
+    "Missing repetitions: small-laptop-slow/toggle-notes",
+    "Missing repetitions: small-laptop-slow/video-controls",
+    "Missing repetitions: small-laptop-slow/close-viewer",
+    "Missing repetitions: small-laptop-slow/open-about",
+    "Missing repetitions: phone-portrait-slow/cold-entry",
+    "Missing repetitions: phone-portrait-slow/open-project",
+    "Missing repetitions: phone-portrait-slow/toggle-notes",
+    "Missing repetitions: phone-portrait-slow/video-controls",
+    "Missing repetitions: phone-portrait-slow/close-viewer",
+    "Missing repetitions: phone-portrait-slow/open-about",
+    "Missing repetitions: phone-landscape-slow/cold-entry",
+    "Missing repetitions: phone-landscape-slow/open-project",
+    "Missing repetitions: phone-landscape-slow/toggle-notes",
+    "Missing repetitions: phone-landscape-slow/video-controls",
+    "Missing repetitions: phone-landscape-slow/close-viewer",
+    "Missing repetitions: phone-landscape-slow/open-about",
+    "The baseline is incomplete or uses a different QA configuration."
+  ],
+  "status": "blocked",
+  "buildId": "pK4Sg1Jc8086e8eOV6aYB",
+  "baseURL": "http://127.0.0.1:64566",
+  "completedAt": "2026-10-30T00:25:09.646Z"
+}

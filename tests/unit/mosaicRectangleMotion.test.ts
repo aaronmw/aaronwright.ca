@@ -91,7 +91,8 @@ it.each([
       for (const ink of [cell, notes]) {
         const corners = points(ink.shape.getAttribute('d'))
         order.forEach((corner, index) => {
-          if (index < step) expect(corners[corner]).toEqual(targets[corner])
+          if (index < step || (ink === notes && corner === 3))
+            expect(corners[corner]).toEqual(targets[corner])
           else expect(corners[corner]).not.toEqual(targets[corner])
         })
       }
@@ -102,7 +103,8 @@ it.each([
     )
     const reversed = points(notes.shape.getAttribute('d'))
     order.forEach((corner, index) => {
-      if (index < 2) expect(reversed[corner]).toEqual(targets[corner])
+      if (index < 2 || corner === 3)
+        expect(reversed[corner]).toEqual(targets[corner])
       else expect(reversed[corner]).not.toEqual(targets[corner])
     })
     unregister()

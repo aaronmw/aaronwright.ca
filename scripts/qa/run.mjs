@@ -186,15 +186,10 @@ try {
           'exec',
           'playwright',
           'test',
-          'portfolio.spec.ts',
-          'portfolio-theme.spec.ts',
-          ...(target.name === 'candidate'
-            ? [
-                'portfolioIsolation.spec.ts',
-                'mosaicRoutes.spec.ts',
-                'mosaicRelease.spec.ts',
-              ]
-            : []),
+          'mosaic.spec.ts',
+          'mosaicTransition.spec.ts',
+          'mosaicRoutes.spec.ts',
+          'mosaicRelease.spec.ts',
           '--workers=2',
           '--retries=0',
           '--reporter=list,json',

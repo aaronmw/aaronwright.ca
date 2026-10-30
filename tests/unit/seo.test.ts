@@ -3,12 +3,15 @@ import { getPortfolioMetadata, SHARE_IMAGE_SLUGS } from '../../lib/seo'
 import {
   HOME_SEO,
   metadataText,
+  mosaicSeoCopy,
   portfolioSeoCopy,
+  SITE_NAME,
   SITE_URL,
 } from '../../lib/siteMetadata'
 import { portfolioSlides } from '../../lib/portfolio'
+import { mosaicProjects } from '../../lib/mosaic'
+import { canonicalMosaicSlug } from '../../components/mosaic/routing'
 import { getProjectSlides } from '../../components/portfolio/domain/slides'
-import { pageTitle } from '../../components/portfolio/domain/routing'
 import { getShareCard } from '../../lib/shareCards'
 import {
   copyEditorEntries,
@@ -17,8 +20,8 @@ import {
 import sitemap from '../../app/sitemap'
 import robots from '../../app/robots'
 
-vi.mock('@/components/portfolio/PortfolioBrowser', () => ({
-  PortfolioBrowser: () => null,
+vi.mock('@/components/mosaic/MosaicPortfolio', () => ({
+  MosaicPortfolio: () => null,
 }))
 vi.mock('@/components/copy-editor/CopyEditor', () => ({
   CopyEditor: () => null,
@@ -33,7 +36,9 @@ vi.mock('@/lib/portfolioFonts', () => ({
   portfolioFont: { className: '', variable: '' },
 }))
 
-import { generateMetadata } from '../../app/work/[workSlug]/[[...screenshotSlug]]/page'
+import ProjectPage, {
+  generateMetadata,
+} from '../../app/work/[workSlug]/[[...screenshotSlug]]/page'
 import { metadata as editorMetadata } from '../../app/copy-editor/page'
 import { metadata as intakeMetadata } from '../../app/case-study-intake/page'
 import { metadata as brochureMetadata } from '../../app/case-study-brochures/page'
@@ -69,11 +74,11 @@ describe('portfolio search and share metadata', () => {
         images: [{ url: `${SITE_URL}/og/portfolio`, alt: expect.any(String) }],
       },
     })
-    expect(pageTitle()).toBe(HOME_SEO.title)
+    expect(mosaicSeoCopy()).toEqual(HOME_SEO)
   })
 
   it.each(portfolioSlides)(
-    'keeps $slug and all its slide/query variants attached to one project',
+    'keeps legacy $slug SEO copy and canonicalizes its slide/query variants',
     project => {
       const base = `/work/${project.slug}`
       const copy = portfolioSeoCopy(project)
@@ -94,7 +99,7 @@ describe('portfolio search and share metadata', () => {
           expect(metadata.description).toBe(copy.description)
           expect(metadata.alternates?.canonical).toBe(`${SITE_URL}${base}`)
           expect(metadata.openGraph).toMatchObject({
-            url: `${SITE_URL}${route}`,
+            url: `${SITE_URL}${base}`,
             title: copy.title,
             images: [{ url: `${SITE_URL}/og/${project.slug}` }],
           })
@@ -104,9 +109,67 @@ describe('portfolio search and share metadata', () => {
           })
         }
       }
-      expect(pageTitle(project)).toBe(copy.title)
     },
   )
+
+  it.each(mosaicProjects)(
+    'provides canonical metadata and share cards for the grid project $slug',
+    project => {
+      const slug = canonicalMosaicSlug(project.slug)
+      const base = `/work/${slug}`
+      const copy = mosaicSeoCopy(project)
+      for (const route of [
+        base,
+        `/work/${project.slug}`,
+        ...project.media.map(media => `${base}/${media.slug}`),
+      ]) {
+        const metadata = getPortfolioMetadata(`${route}?modal=image`)!
+        expect(metadata).toMatchObject({
+          title: { absolute: copy.title },
+          description: copy.description,
+          alternates: { canonical: `${SITE_URL}${base}` },
+          openGraph: {
+            title: copy.title,
+            description: copy.description,
+            url: `${SITE_URL}${base}`,
+            images: [{ url: `${SITE_URL}/og/${slug}` }],
+          },
+          twitter: {
+            card: 'summary_large_image',
+            title: copy.title,
+            description: copy.description,
+            images: [{ url: `${SITE_URL}/og/${slug}` }],
+          },
+        })
+        expect(metadata.robots).toBeUndefined()
+      }
+      const legacyProject = portfolioSlides.find(item => item.slug === slug)
+      const card = getShareCard(slug)!
+      if (legacyProject) {
+        expect(copy).toEqual(portfolioSeoCopy(legacyProject))
+        expect(Boolean(card.artwork)).toBe(slug !== 'about-me')
+      } else {
+        expect(copy).toEqual({
+          title: `${metadataText(project.title)} | ${SITE_NAME}`,
+          description: metadataText(project.summary),
+        })
+        expect(card).toMatchObject({
+          title: metadataText(project.title),
+          description: copy.description,
+        })
+        expect(card.artwork).toBeUndefined()
+      }
+    },
+  )
+
+  it('preserves NextPhrase’s established page and share-image URLs', () => {
+    expect(getPortfolioMetadata('/work/nextphrase-dot-app')).toEqual(
+      getPortfolioMetadata('/work/nextphrase'),
+    )
+    expect(SHARE_IMAGE_SLUGS).toContain('nextphrase')
+    expect(SHARE_IMAGE_SLUGS).not.toContain('nextphrase-dot-app')
+    expect(getShareCard('nextphrase')?.artwork?.clipToPhoneFrame).toBe(true)
+  })
 
   it('removes display markup and soft hyphens from metadata', () => {
     expect(
@@ -122,6 +185,8 @@ describe('portfolio search and share metadata', () => {
     '/work/loopio/missing',
     '/work/loopio/dense-work/extra',
     '/work/about-me/description',
+    '/work/cycles-dot-money/missing',
+    '/work/radio-app/demo/extra',
     '/copy-editor',
     'https://example.com/work',
   ])('rejects invalid or non-portfolio metadata paths: %s', path => {
@@ -150,30 +215,38 @@ describe('portfolio search and share metadata', () => {
         searchParams: Promise.resolve({}),
       }),
     ).rejects.toThrow('NEXT_HTTP_ERROR_FALLBACK;404')
-    await expect(
-      generateMetadata({
-        params: Promise.resolve({
-          workSlug: 'about-me',
-          screenshotSlug: ['overview'],
-        }),
-        searchParams: Promise.resolve({}),
+    const legacyAboutProps = {
+      params: Promise.resolve({
+        workSlug: 'about-me',
+        screenshotSlug: ['overview'],
       }),
-    ).rejects.toThrow('NEXT_REDIRECT')
+      searchParams: Promise.resolve({}),
+    }
+    await expect(generateMetadata(legacyAboutProps)).resolves.toMatchObject({
+      alternates: { canonical: `${SITE_URL}/work/about-me` },
+    })
+    await expect(ProjectPage(legacyAboutProps)).rejects.toMatchObject({
+      digest: 'NEXT_REDIRECT;replace;/work/about-me;308;',
+    })
   })
 
-  it('lists only seven canonical pages and preserves private-page noindex', () => {
+  it('lists eleven canonical pages and preserves private-page noindex', () => {
     expect(sitemap().map(entry => entry.url)).toEqual([
       `${SITE_URL}/work`,
-      ...portfolioSlides.map(project => `${SITE_URL}/work/${project.slug}`),
+      ...mosaicProjects.map(
+        project => `${SITE_URL}/work/${canonicalMosaicSlug(project.slug)}`,
+      ),
     ])
-    expect(sitemap()).toHaveLength(7)
+    expect(sitemap()).toHaveLength(11)
+    expect(new Set(sitemap().map(entry => entry.url)).size).toBe(11)
     expect(robots().sitemap).toBe(`${SITE_URL}/sitemap.xml`)
     for (const metadata of [editorMetadata, intakeMetadata, brochureMetadata]) {
       expect(metadata.robots).toEqual({ index: false, follow: false })
     }
   })
 
-  it('provides exactly seven static cards and rejects unknown image slugs', async () => {
+  it('provides eleven static cards and rejects unknown image slugs', async () => {
+    expect(SHARE_IMAGE_SLUGS).toHaveLength(11)
     expect(generateStaticParams()).toEqual(
       SHARE_IMAGE_SLUGS.map(slug => ({ slug })),
     )

@@ -83,15 +83,15 @@ it('reads browser-style rectangle accessors instead of spreading away dimensions
     6,
   )
   expect(rectanglePaths(geometry)[0]).toEqual([
-    'M 19 215 L 25 215 L 25 221 L 19 221 Z',
-    'M 19 215 L 25 215 L 25 221 L 0 240 Z',
-    'M 0 0 L 25 215 L 25 221 L 0 240 Z',
-    'M 0 0 L 480 0 L 25 221 L 0 240 Z',
+    'M 0 234 L 6 234 L 6 240 L 0 240 Z',
+    'M 0 234 L 6 234 L 6 240 L 0 240 Z',
+    'M 0 0 L 6 234 L 6 240 L 0 240 Z',
+    'M 0 0 L 480 0 L 6 240 L 0 240 Z',
     'M 0 0 L 480 0 L 480 240 L 0 240 Z',
   ])
 })
 
-it('keeps one logo-sized bottom-left anchor for all six panel placements', () => {
+it('lands at the panel bottom-left from the fixed button for all six placements', () => {
   const button = { left: 30, top: 1020, width: 30, height: 30 }
   for (const left of [30, 720, 1410])
     for (const top of [80, 750]) {
@@ -101,13 +101,65 @@ it('keeps one logo-sized bottom-left anchor for all six panel placements', () =>
       const paths = rectanglePaths(geometry)[0]
       const x = button.left - panel.left,
         y = button.top - panel.top
-      expect(paths[0]).toBe(
+      expect(geometry.buttonPaths[0]).toBe(
         `M ${x + 12} ${y + 12} L ${x + 18} ${y + 12} L ${x + 18} ${y + 18} L ${x + 12} ${y + 18} Z`,
       )
+      expect(paths[0]).toBe('M 0 234 L 6 234 L 6 240 L 0 240 Z')
       expect(paths[4]).toBe('M 0 0 L 480 0 L 480 240 L 0 240 Z')
-      expect(geometry.center.x + panel.left).toBe(45)
-      expect(geometry.center.y + panel.top).toBe(1035)
+      expect(geometry.center.x + panel.left).toBe(panel.left + 3)
+      expect(geometry.center.y + panel.top).toBe(panel.top + panel.height - 3)
     }
+})
+
+it('moves a rigid stroke-sized square before unfolding and retraces it on close', () => {
+  const ink = motionInk(),
+    panel = new MotionElement()
+  const geometry = blurbMotionGeometry(
+    panel.bounds,
+    { left: 30, top: 1020, width: 30, height: 30 },
+    6,
+  )
+  const timeline = createBlurbTimeline(
+    ink,
+    panel as unknown as HTMLElement,
+    geometry,
+    'red',
+  )
+  const points = () =>
+    ink.shape
+      .getAttribute('d')!
+      .match(/-?\d+(?:\.\d+)?/g)!
+      .map(Number)
+  for (const fraction of [0.25, 0.5, 0.75]) {
+    timeline.time(timeline.labels.pixel * fraction)
+    const [
+      left,
+      top,
+      right,
+      rightTop,
+      bottomRight,
+      bottom,
+      bottomLeft,
+      leftBottom,
+    ] = points()
+    expect(right - left).toBeCloseTo(6)
+    expect(bottom - top).toBeCloseTo(6)
+    expect(rightTop).toBe(top)
+    expect(bottomRight).toBe(right)
+    expect(bottomLeft).toBe(left)
+    expect(leftBottom).toBe(bottom)
+    expect(bottom).toBeGreaterThan(240)
+  }
+  timeline.seek('pixel')
+  expect(ink.shape.getAttribute('d')).toBe('M 0 234 L 6 234 L 6 240 L 0 240 Z')
+  timeline.time(timeline.labels.pixel + 0.07)
+  expect(points().slice(6)).toEqual([0, 240])
+  expect(points().slice(2, 6)).toEqual([6, 234, 6, 240])
+  timeline.progress(1).reverse().pause().seek('pixel')
+  expect(ink.shape.getAttribute('d')).toBe('M 0 234 L 6 234 L 6 240 L 0 240 Z')
+  timeline.time(timeline.labels.pixel / 2)
+  expect(points()[2] - points()[0]).toBeCloseTo(6)
+  expect(points()[5] - points()[1]).toBeCloseTo(6)
 })
 
 it('grows one corner at a time and keeps full strokes through the red fill', () => {
@@ -180,7 +232,7 @@ it('opens from the fixed button and allows immediate reversal during the first r
   motion.timeline.pause().progress(0, false)
   expect(complete).toHaveBeenLastCalledWith(false)
   expect(elements.shape.getAttribute('d')).toBe(
-    'M 0 320 L 30 320 L 30 350 L 0 350 Z',
+    'M 12 332 L 18 332 L 18 338 L 12 338 Z',
   )
   expect(elements.layer.dataset.controlsReady).toBe('')
 })
@@ -234,7 +286,7 @@ it('repeated toggles preserve the playhead, prescribed corners, and the fixed co
   expect(complete).toHaveBeenLastCalledWith(false)
   expect(elements.layer.style.values).toEqual(position)
   expect(elements.shape.getAttribute('d')).toBe(
-    'M 0 320 L 30 320 L 30 350 L 0 350 Z',
+    'M 12 332 L 18 332 L 18 338 L 12 338 Z',
   )
   motion.setExpanded(true)
   expect(motion.timeline).toBe(timeline)

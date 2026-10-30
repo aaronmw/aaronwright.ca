@@ -1,4 +1,5 @@
 import { expect, test, type Locator, type Page } from '@playwright/test'
+import { gridReady } from '../../scripts/qa/tasks.mjs'
 
 type Adjustment = {
   focal: { x: number; y: number }
@@ -37,14 +38,13 @@ async function ready(page: Page, failCopy = false) {
       },
     })
   }, failCopy)
-  await page.goto('/grid-version')
-  await expect(page.locator('[data-mosaic-project]')).toHaveCount(7)
-  await page
-    .locator('[data-mosaic-media] img')
-    .evaluateAll(images =>
-      Promise.all(images.map(image => (image as HTMLImageElement).decode())),
-    )
+  await page.goto('/work')
+  await gridReady(page)
   await enterEditor(page)
+  await tile(page).focus()
+  await page
+    .getByRole('button', { name: 'Use full video', exact: true })
+    .click()
   await expect(page.locator('main')).toHaveAttribute(
     'data-mosaic-adjusting',
     'true',
@@ -119,9 +119,12 @@ async function copied(page: Page): Promise<Export> {
       'aarons-toolbox-overview',
       'about-portrait',
       'cycles-scrollthrough',
-      'freshbooks-cover',
+      'freshbooks-before-after',
       'informal-systems-walkthrough',
-      'loopio-cover',
+      'loopio-before-after',
+      'age-scrollthrough',
+      'radio-app-demo',
+      'gift-exchanges-demo',
       'nextphrase-intro',
     ].sort(),
   )
@@ -140,8 +143,8 @@ test('editing preserves crops and peers, blocks the gallery, and restores normal
   await subject.press('Enter')
   await subject.click()
   await expect(page.getByRole('dialog')).toHaveCount(0)
-  await expect(page.locator('[data-mosaic-project]')).toHaveCount(7)
-  await expect(page.locator('[data-mosaic-media]')).toHaveCount(7)
+  await expect(page.locator('[data-mosaic-project]')).toHaveCount(10)
+  await expect(page.locator('[data-mosaic-media]')).toHaveCount(10)
   expect(await frame(subject)).toEqual(before)
   for (const peer of await page.locator('[data-mosaic-project]').all()) {
     await expect(peer).toHaveCSS('opacity', '1')
@@ -228,22 +231,27 @@ test('crop drafts stay shared across orientations, persist on re-entry, and rese
   await enterEditor(page)
   await wheel(tile(page), -50)
   const exported = await copied(page)
-  const original = baseline.cells['loopio-cover']
-  const adjusted = exported.cells['loopio-cover']
+  const original = baseline.cells['loopio-before-after']
+  const adjusted = exported.cells['loopio-before-after']
   expect(adjusted.composition.zoom).toBeGreaterThan(original.composition.zoom)
   expect(adjusted.composition.zoom).toBeGreaterThan(
-    landscapeDraft.cells['loopio-cover'].composition.zoom,
+    landscapeDraft.cells['loopio-before-after'].composition.zoom,
   )
   expect(adjusted.composition.target).toEqual(original.composition.target)
   expect(adjusted).not.toHaveProperty('landscape')
   expect(adjusted).not.toHaveProperty('portrait')
   for (const [id, cell] of Object.entries(exported.cells)) {
-    if (id !== 'loopio-cover') expect(cell).toEqual(baseline.cells[id])
+    if (id !== 'loopio-before-after') expect(cell).toEqual(baseline.cells[id])
   }
   await enterEditor(page)
   expect(await copied(page)).toEqual(exported)
   await page.reload()
+  await gridReady(page)
   await enterEditor(page)
+  await tile(page).focus()
+  await page
+    .getByRole('button', { name: 'Use full video', exact: true })
+    .click()
   expect(await copied(page)).toEqual(baseline)
 })
 
@@ -327,6 +335,7 @@ test('drag captures the pointer, pans media, and cancels on viewport change', as
   )
   await ready(page)
   const subject = tile(page)
+  await wheel(subject, -500)
   const before = await frame(subject)
   await page.mouse.move(
     before.left + before.width / 2,

@@ -1,4 +1,5 @@
 import { expect, test, type Locator, type Page } from '@playwright/test'
+import { gridReady } from '../../scripts/qa/tasks.mjs'
 
 declare global {
   interface Window {
@@ -13,8 +14,9 @@ const toolbar = (page: Page) =>
   page.getByRole('complementary', { name: 'Project cell adjustments' })
 
 async function ready(page: Page) {
-  await page.goto('/grid-version')
-  await expect(backgrounds(page)).toHaveCount(4)
+  await page.goto('/work')
+  await gridReady(page)
+  await expect(backgrounds(page)).toHaveCount(9)
   await expect
     .poll(() =>
       backgrounds(page).evaluateAll(videos =>
@@ -144,7 +146,7 @@ test('all video backgrounds play inline together and pause/resume around gallery
       }),
     ),
   ).toEqual(
-    Array.from({ length: 4 }, () => ({
+    Array.from({ length: 9 }, () => ({
       muted: true,
       inline: true,
       controls: false,
@@ -165,10 +167,9 @@ test('all video backgrounds play inline together and pause/resume around gallery
       ),
     )
     .toBe(true)
-  await expect(page.locator('[data-mosaic-project="loopio"] img')).toBeVisible()
   await expect(
     page.locator('[data-mosaic-project="loopio"] video'),
-  ).toHaveCount(0)
+  ).toHaveCount(1)
   await toolbox(page).click()
   await expect(page.getByRole('dialog')).toBeVisible()
   await playing(page, false)
@@ -202,8 +203,8 @@ test('all video backgrounds play inline together and pause/resume around gallery
 
 test('reduced motion keeps background posters still', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' })
-  await page.goto('/grid-version')
-  await expect(page.locator('[data-mosaic-project]')).toHaveCount(7)
+  await page.goto('/work')
+  await expect(page.locator('[data-mosaic-project]')).toHaveCount(10)
   await expect
     .poll(() =>
       backgrounds(page).evaluateAll(items =>
@@ -249,7 +250,8 @@ test('video loop inputs validate metadata bounds and preview bounded and very sh
   )
   await expect(start).toHaveAttribute('step', '0.01')
   await expect(end).toHaveAttribute('step', '0.01')
-  expect(Number(await end.inputValue())).toBeCloseTo(duration, 1)
+  await expect(start).toHaveValue('0.5')
+  await expect(end).toHaveValue('1.75')
   await range(page, '1', '1.4')
   await expect
     .poll(() =>
@@ -308,30 +310,23 @@ test('loop drafts export with crop settings, survive copy failure, and disappear
   const text = await json.inputValue()
   const exported = JSON.parse(text)
   expect(text).toBe(JSON.stringify(exported, null, 2))
-  expect(exported.schemaVersion).toBe(5)
+  expect(exported.schemaVersion).toBe(6)
   expect(exported.cells['aarons-toolbox-overview'].segments).toMatchObject([
     { start: 1, end: 2, fadeIn: false, fadeOut: false },
   ])
   expect(exported.cells['aarons-toolbox-overview'].composition.zoom).toBe(5)
-  for (const id of [
-    'loopio-cover',
-    'freshbooks-cover',
-    'about-portrait',
-    'nextphrase-intro',
-  ]) {
-    expect(exported.cells[id]).not.toHaveProperty('segments')
-  }
+  expect(Object.keys(exported.cells)).toHaveLength(10)
+  expect(exported.cells['about-portrait']).not.toHaveProperty('segments')
+  expect(exported.cells['gift-exchanges-demo']).not.toHaveProperty('segments')
+  expect(exported.cells['loopio-before-after'].segments).toHaveLength(2)
+  expect(exported.cells['freshbooks-before-after'].segments).toHaveLength(2)
   expect(exported.cells['informal-systems-walkthrough'].segments).toMatchObject(
-    [{ start: 1, end: 6, fadeIn: false, fadeOut: false }],
+    [{ start: 0, end: 21.905217, speed: 3, fadeIn: false, fadeOut: false }],
   )
-  expect(exported.cells['informal-systems-walkthrough'].composition.zoom).toBe(
-    2.5908862535031325,
-  )
-  expect(
-    exported.cells['informal-systems-walkthrough'].composition.focal,
-  ).toEqual({
-    x: 0.7606876985275945,
-    y: 0.12865610479141412,
+  expect(exported.cells['informal-systems-walkthrough'].composition).toEqual({
+    focal: { x: 0.5, y: 0.5 },
+    target: { x: 0.5, y: 0.5 },
+    zoom: 1,
   })
   expect(exported.cells['aarons-toolbox-overview'].composition.focal).toEqual({
     x: 0.8376783392368743,
@@ -391,11 +386,8 @@ test('loop drafts export with crop settings, survive copy failure, and disappear
   expect(full.cells['informal-systems-walkthrough']).toEqual(
     exported.cells['informal-systems-walkthrough'],
   )
-  expect(full.cells['aarons-toolbox-overview'].landscape).toEqual(
-    exported.cells['aarons-toolbox-overview'].landscape,
-  )
-  expect(full.cells['aarons-toolbox-overview'].portrait).toEqual(
-    exported.cells['aarons-toolbox-overview'].portrait,
+  expect(full.cells['aarons-toolbox-overview'].composition).toEqual(
+    exported.cells['aarons-toolbox-overview'].composition,
   )
 })
 
@@ -417,8 +409,9 @@ test('denied background autoplay preserves a poster and does not interfere with 
       return play.call(this)
     }
   })
-  await page.goto('/grid-version')
-  await expect(backgrounds(page)).toHaveCount(4)
+  await page.goto('/work')
+  await gridReady(page)
+  await expect(backgrounds(page)).toHaveCount(9)
   await playing(page, false)
   for (const media of await page.locator('[data-mosaic-video-state]').all()) {
     await expect(media).toHaveAttribute(

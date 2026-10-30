@@ -1,43 +1,70 @@
 import type { MosaicProject } from './types'
 
-export type ExperimentBasePath = '/grid-version'
+export type ExperimentBasePath = '/work'
+export type MosaicSearchParams = Record<string, string | string[] | undefined>
+const viewerParameters = ['project', 'slide', 'modal', 'zoom']
 
-export function readMosaicLocation(search: string, projects: MosaicProject[]) {
-  const params = new URLSearchParams(search)
-  const requested = params.get('project')
-  const slug = requested === 'nextphrase' ? 'nextphrase-dot-app' : requested
-  const project = projects.find(item => item.slug === slug)
-  if (!project || !project.media.length) return null
-  const index = Math.max(
-    0,
-    project.media.findIndex(item => item.slug === params.get('slide')),
+export function canonicalMosaicSlug(slug: string) {
+  return slug === 'nextphrase-dot-app' ? 'nextphrase' : slug
+}
+
+export function findMosaicProject(slug: string, projects: MosaicProject[]) {
+  return projects.find(
+    project => canonicalMosaicSlug(project.slug) === canonicalMosaicSlug(slug),
   )
-  return { project, index }
+}
+
+export function readMosaicLocation(
+  pathname: string,
+  projects: MosaicProject[],
+) {
+  const match = /^\/work\/([^/]+)\/?$/.exec(pathname)
+  if (!match) return null
+  let slug: string
+  try {
+    slug = decodeURIComponent(match[1])
+  } catch {
+    return null
+  }
+  const project = findMosaicProject(slug, projects)
+  return project?.media.length ? { project, index: 0 } : null
+}
+
+export function mosaicSearchParams(search: MosaicSearchParams) {
+  const params = new URLSearchParams()
+  for (const [key, value] of Object.entries(search)) {
+    if (value === undefined) continue
+    for (const item of Array.isArray(value) ? value : [value])
+      params.append(key, item)
+  }
+  return params
+}
+
+export function hasViewerParameters(search: MosaicSearchParams) {
+  return viewerParameters.some(key => search[key] !== undefined)
 }
 
 export function mosaicUrl(
   basePath: ExperimentBasePath,
   project?: MosaicProject,
-  index = 0,
+  search: string | URLSearchParams = '',
 ) {
-  if (!project) return basePath
-  const params = new URLSearchParams({
-    project: project.slug,
-    slide: project.media[index].slug,
-  })
-  return `${basePath}?${params}`
+  const params = new URLSearchParams(search)
+  for (const key of viewerParameters) params.delete(key)
+  const path = project
+    ? `${basePath}/${encodeURIComponent(canonicalMosaicSlug(project.slug))}`
+    : basePath
+  const query = params.toString()
+  return `${path}${query ? `?${query}` : ''}`
 }
 
 export function legacyMosaicRedirectUrl(
-  searchParams: Record<string, string | string[] | undefined>,
+  search: MosaicSearchParams,
+  projects: MosaicProject[],
 ) {
-  const params = new URLSearchParams()
-  for (const [key, value] of Object.entries(searchParams)) {
-    if (value === undefined) continue
-    for (const item of Array.isArray(value) ? value : [value]) {
-      params.append(key, item)
-    }
-  }
-  const query = params.toString()
-  return `/grid-version${query ? `?${query}` : ''}`
+  const params = mosaicSearchParams(search)
+  const requested = params.get('project')
+  const project = requested ? findMosaicProject(requested, projects) : undefined
+  if (requested && !project) return null
+  return mosaicUrl('/work', project, params)
 }

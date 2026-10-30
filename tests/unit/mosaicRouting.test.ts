@@ -6,74 +6,71 @@ import {
   readMosaicLocation,
 } from '@/components/mosaic/routing'
 
-describe('mosaic gallery URLs', () => {
-  it.each(['/grid-version'] as const)(
-    'restores the single project slide on %s',
-    basePath => {
-      const project = mosaicProjects.find(item => item.slug === 'loopio')!
-      const location = readMosaicLocation(
-        new URL(mosaicUrl(basePath, project), 'https://example.test').search,
-        mosaicProjects,
+describe('canonical mosaic URLs', () => {
+  it.each(mosaicProjects)(
+    'round trips $slug without changing the internal ID',
+    project => {
+      const path = mosaicUrl('/work', project)
+      expect(readMosaicLocation(path, mosaicProjects)).toEqual({
+        project,
+        index: 0,
+      })
+      expect(path).toBe(
+        `/work/${project.slug === 'nextphrase-dot-app' ? 'nextphrase' : project.slug}`,
       )
-      expect(location).toEqual({ project, index: 0 })
-      expect(mosaicProjects.every(item => item.media.length === 1)).toBe(true)
-      expect(
-        new URL(mosaicUrl(basePath, project), 'https://example.test')
-          .pathname,
-      ).toBe(basePath)
-      expect(mosaicUrl(basePath)).toBe(basePath)
     },
   )
 
-  it('keeps old NextPhrase links usable after the project rename', () => {
-    const project = mosaicProjects.find(
-      item => item.slug === 'nextphrase-dot-app',
-    )!
-    expect(
-      readMosaicLocation('?project=nextphrase&slide=intro', mosaicProjects),
-    ).toEqual({ project, index: 0 })
-    expect(mosaicUrl('/grid-version', project)).toBe(
-      '/grid-version?project=nextphrase-dot-app&slide=intro',
+  it('preserves repeated unrelated values and removes obsolete viewer parameters', () => {
+    const project = mosaicProjects.find(item => item.slug === 'loopio')!
+    const search =
+      '?project=nextphrase&slide=intro&modal=image&zoom=image&tag=a%26b&tag=design+systems&empty='
+    expect(mosaicUrl('/work', project, search)).toBe(
+      '/work/loopio?tag=a%26b&tag=design+systems&empty=',
+    )
+    expect(mosaicUrl('/work', undefined, search)).toBe(
+      '/work?tag=a%26b&tag=design+systems&empty=',
     )
   })
 
-  it('fits the first slide when a removed or missing slide slug is requested', () => {
-    expect(
-      readMosaicLocation('?project=loopio&slide=a-mature-product', mosaicProjects)
-        ?.index,
-    ).toBe(0)
-    expect(readMosaicLocation('?project=loopio', mosaicProjects)?.index).toBe(0)
-  })
-
-  it('leaves the mosaic usable for unknown project URLs and ordinary entry', () => {
-    expect(readMosaicLocation('?project=missing', mosaicProjects)).toBeNull()
-    expect(readMosaicLocation('', mosaicProjects)).toBeNull()
+  it.each([
+    '/work',
+    '/work/missing',
+    '/work/loopio/missing',
+    '/elsewhere/loopio',
+    '/work/%',
+  ])('rejects non-project location %s', path => {
+    expect(readMosaicLocation(path, mosaicProjects)).toBeNull()
   })
 })
 
-describe('legacy mosaic route', () => {
-  it('preserves gallery and unrelated query values, including repeated keys', () => {
-    const url = new URL(
-      legacyMosaicRedirectUrl({
-        project: 'loopio',
-        slide: 'intro',
-        tag: ['design systems', 'a&b'],
-        empty: '',
-        missing: undefined,
-      }),
-      'https://example.test',
-    )
-    expect(url.pathname).toBe('/grid-version')
-    expect(Array.from(url.searchParams)).toEqual([
-      ['project', 'loopio'],
-      ['slide', 'intro'],
-      ['tag', 'design systems'],
-      ['tag', 'a&b'],
-      ['empty', ''],
-    ])
+describe('legacy mosaic redirects', () => {
+  it('converts query viewers directly to canonical paths', () => {
+    expect(
+      legacyMosaicRedirectUrl(
+        {
+          project: 'nextphrase-dot-app',
+          slide: 'intro',
+          tag: ['one', 'two'],
+          modal: 'image',
+          zoom: 'image',
+        },
+        mosaicProjects,
+      ),
+    ).toBe('/work/nextphrase?tag=one&tag=two')
+    expect(
+      legacyMosaicRedirectUrl({ project: 'nextphrase' }, mosaicProjects),
+    ).toBe('/work/nextphrase')
   })
-
-  it('redirects ordinary entry without a trailing empty query', () => {
-    expect(legacyMosaicRedirectUrl({})).toBe('/grid-version')
+  it('removes obsolete parameters for ordinary entry', () => {
+    expect(
+      legacyMosaicRedirectUrl({ slide: 'intro', empty: '' }, mosaicProjects),
+    ).toBe('/work?empty=')
+    expect(legacyMosaicRedirectUrl({}, mosaicProjects)).toBe('/work')
+  })
+  it('signals unknown projects so the route can return 404', () => {
+    expect(
+      legacyMosaicRedirectUrl({ project: 'missing' }, mosaicProjects),
+    ).toBeNull()
   })
 })

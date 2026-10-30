@@ -1,5 +1,7 @@
 import type { Metadata } from 'next'
-import { getPortfolioProject, portfolioSlides } from './portfolio'
+import { getPortfolioProject } from './portfolio'
+import { mosaicProjects } from './mosaic'
+import { canonicalMosaicSlug } from '@/components/mosaic/routing'
 import { getProjectSlides } from '@/components/portfolio/domain/slides'
 import {
   HOME_SEO,
@@ -7,18 +9,24 @@ import {
   SITE_ROLE,
   SITE_URL,
   metadataText,
-  portfolioSeoCopy,
+  mosaicSeoCopy,
   type SeoCopy,
 } from './siteMetadata'
 
 export const SHARE_IMAGE_SIZE = { width: 1200, height: 630 } as const
 export const SHARE_IMAGE_SLUGS = [
   'portfolio',
-  ...portfolioSlides.map(project => project.slug),
+  ...mosaicProjects.map(project => canonicalMosaicSlug(project.slug)),
 ]
 
+export function getShareProject(slug: string) {
+  return mosaicProjects.find(
+    project => canonicalMosaicSlug(project.slug) === slug,
+  )
+}
+
 export function shareImageAlt(slug: string) {
-  const project = getPortfolioProject(slug)
+  const project = getShareProject(slug)
   return project
     ? `${metadataText(project.title)} — ${SITE_NAME}’s product design and frontend engineering portfolio`
     : `${SITE_NAME} — ${SITE_ROLE}`
@@ -27,7 +35,6 @@ export function shareImageAlt(slug: string) {
 function buildMetadata(
   copy: SeoCopy,
   canonicalPath: string,
-  pagePath: string,
   imageSlug: string,
 ): Metadata {
   const title = metadataText(copy.title)
@@ -49,7 +56,7 @@ function buildMetadata(
       siteName: SITE_NAME,
       title,
       description,
-      url: new URL(pagePath, SITE_URL).href,
+      url: new URL(canonicalPath, SITE_URL).href,
       images: [image],
     },
     twitter: {
@@ -67,25 +74,23 @@ export function getPortfolioMetadata(path: string): Metadata | null {
   const segments = url.pathname.split('/').filter(Boolean)
   if (segments[0] !== 'work' || segments.length > 3) return null
   if (segments.length === 1)
-    return buildMetadata(HOME_SEO, '/work', '/work', 'portfolio')
+    return buildMetadata(HOME_SEO, '/work', 'portfolio')
 
-  const project = getPortfolioProject(segments[1])
+  const slug = canonicalMosaicSlug(segments[1])
+  const project = getShareProject(slug)
   if (!project) return null
   const slideSlug = segments[2]
-  if (
-    slideSlug &&
-    !getProjectSlides(project).some(
-      slide => slide.kind !== 'description' && slide.slug === slideSlug,
-    )
-  )
-    return null
+  if (slideSlug) {
+    const legacyProject = getPortfolioProject(slug)
+    const knownMedia = project.media.some(media => media.slug === slideSlug)
+    const knownLegacySlide =
+      legacyProject &&
+      getProjectSlides(legacyProject).some(
+        slide => slide.kind !== 'description' && slide.slug === slideSlug,
+      )
+    const legacyAboutOverview = slug === 'about-me' && slideSlug === 'overview'
+    if (!knownMedia && !knownLegacySlide && !legacyAboutOverview) return null
+  }
 
-  const canonicalPath = `/work/${project.slug}`
-  const pagePath = slideSlug ? `${canonicalPath}/${slideSlug}` : canonicalPath
-  return buildMetadata(
-    portfolioSeoCopy(project),
-    canonicalPath,
-    pagePath,
-    project.slug,
-  )
+  return buildMetadata(mosaicSeoCopy(project), `/work/${slug}`, slug)
 }

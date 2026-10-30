@@ -2,369 +2,263 @@
 
 This is the visitor-task contract for aaronwright.ca. Humans and agents use the
 same outcomes. Executable journeys live in `scripts/qa/tasks.mjs`; fixed conditions
-and regression tolerances live in `qa/config.json`. Keep task IDs aligned. Other
-projects can use this format with their own tasks and implementation.
+and regression tolerances live in `qa/config.json`. Keep task IDs aligned.
 
 ## Run and ship
 
 1. Install locked dependencies and browsers if needed:
    `pnpm install --frozen-lockfile` and `pnpm exec playwright install chromium webkit`.
-2. Run `pnpm qa:run`. This explicitly builds production, starts its own temporary
-   loopback server on an **OS-assigned available port**, runs checks, writes results,
-   and stops that server. It does not reuse or stop other servers or manage the
-   ordinary dev server. The selected URL is logged and recorded in the JSON report.
-   Keep the checkout unchanged and avoid other heavy work during measurement.
+2. With process authorization, run `pnpm qa:run` through Bootstrapper's supported
+   project-service workflow. It builds production, starts its own temporary
+   loopback child server on an **OS-assigned available port**, runs checks, writes
+   results, and stops that server. It does not reuse or stop unrelated servers or
+   manage the ordinary dev server. The selected URL is logged and recorded in the
+   report. Keep the checkout unchanged and avoid heavy work during measurement.
 3. Review `qa/results/<timestamp>.md` and its JSON, including failed runs. Commit
-   these small records alongside the tested changes. Screenshots and browser
-   traces/logs stay in ignored `test-results/qa/<timestamp>/`.
-   For performance failures, complete the quick triage below before another full
-   run or a release-blocked handoff. A threshold crossing is an observation, not
-   by itself proof that the release introduced a regression.
-4. On the first complete run, review the measurements, then explicitly establish
-   the starting baseline: `pnpm qa:baseline qa/results/<timestamp>.json`.
-   The initial run is blocked until this is done; this is not a functional failure.
-   Later baseline replacements use the same explicit command and need a reason in
-   the commit description. Never accept a failing/incomplete run or update a
-   baseline just to make a regression pass.
-5. `pnpm qa:check` must pass before publishing. Netlify's repository build command
-   runs it before building. It re-evaluates the **latest** run against the accepted
-   baseline and current source fingerprint; older successful runs cannot hide a
-   newer failure. Source, media, test, task, or configuration changes require a new
-   run. Ordinary docs and report additions do not. Commit evidence before pushing.
-   Direct publish commands that skip the configured build can bypass this gate;
-   always run `pnpm qa:check` before those commands too.
+   these small records alongside the tested changes. Screenshots and traces/logs
+   stay in ignored `test-results/qa/<timestamp>/`. Complete the quick triage below
+   before repeating a full scan or handing off a performance-blocked release.
+4. After the first complete run of a new contract, review the measurements and
+   explicitly establish the baseline with `pnpm qa:baseline qa/results/<timestamp>.json`.
+   The run remains blocked until this is done; baseline incompatibility alone is
+   not a functional failure. Never accept failing/incomplete evidence or replace
+   a baseline merely to make a regression pass. Record the reason for replacement.
+5. `pnpm qa:check` must pass before publishing, including direct Netlify publish
+   commands. It re-evaluates the **latest** report against the accepted baseline
+   and current source fingerprint; an older success cannot hide a newer failure.
+   Source, media, tests, TASKS.md and configuration changes require a fresh run.
+   Ordinary docs and report additions do not. Commit evidence before pushing.
 
 There is no automatic commit, push, deployment, paid service, or LLM dependency.
-Both preview and production Netlify builds use the gate. A passing receipt verifies
-the local production build of these sources; hosting configuration and CDN behavior
-still require post-deploy observation. Changes to build-time environment variables
-require a new measured run with those same values.
+Both preview and production Netlify builds use the gate. A passing receipt covers
+the local production build; hosting and CDN behavior still need post-deploy
+observation. Build-time environment changes require a new run with those values.
 
-The October 1 port-selection change fixes a collision with Gift Exchanges' assigned
-development port, 3032. QA now launches `next start --hostname 127.0.0.1 --port 0`
-and reads the bound URL from that child process before starting checks. The OS
-allocates the port when the server binds, avoiding a probe-and-release race.
-Development routing, visitor tasks, throttling, budgets, and baseline stay unchanged.
-See [Node's port-zero behavior](https://nodejs.org/api/net.html#serverlistenport-host-backlog-callback).
+QA retains the October 1 port-zero fix: `next start --hostname 127.0.0.1 --port 0`
+lets the OS bind an available port atomically, then the runner reads its reported
+address. See [Node's port-zero behavior](https://nodejs.org/api/net.html#serverlistenport-host-backlog-callback).
 
-The same release corrects the section-reset animation test's observation timing.
-The [first complete October 1 run](qa/results/2026-10-01T23-32-21-154Z.md) passed
-all performance comparisons, but WebKit desktop and portrait sampled only one or
-two track positions after the click returned. The observer now runs on animation
-frames inside the page starting before the click, while retaining the requirement
-for more than two distinct positions, the correct final slide, and browser-history
-restoration. This repairs observation of the existing animation contract; it does
-not change application behavior, skip coverage, or relax performance budgets.
+## Grid cutover — October 29, 2026
 
-The October 1 Informal Systems walkthrough was encoded as H.264 MP4 at its original
-1680 × 1158 resolution and 30 fps, retaining the full 70.47-second recording.
-FFmpeg's `libx264 -preset slow -crf 24 -pix_fmt yuv420p -movflags +faststart`
-reduces the supplied 81,877,466-byte file to 7,552,249 bytes (90.8% smaller).
-The existing shared player keeps inactive videos source-less and outside the
-image preload queue. Browser coverage now checks that no video requests occur
-on the portfolio menu, that opening Informal Systems starts only its video with
-looping muted inline playback, and that returning home pauses it. No second
-loading implementation or codec fallback is needed. See
-[FFmpeg's MP4 fast-start documentation](https://ffmpeg.org/ffmpeg-formats.html#MOV_002fMPEG_002d4_002fISOMBFF-muxers).
+The approved release replaces the carousel portfolio with the ten-project grid
+at `/work`; `/` continues to redirect there. The old theme selector and carousel
+are retired. The grid retains its dark appearance, current media, biography,
+Notes typography and motion, shared presentation components, and development-only
+editors. There is no database connection in this portfolio.
 
-The October 2 replacement uses the corrected iMovie edit, cropped to
-1544 × 1064 at 30 fps. The H.264 `yuv420p` MP4 is 59.10 seconds and
-6,182,592 bytes; its complete decode and declared dimensions were checked before
-release. The shared media surface now owns rectangular, phone-shaped, and
-rounded clipping, with the Informal Systems corner radius kept proportional to
-the recording. The same deferred player and unclipped video scrubber remain in
-use. Shared icons are smaller within their existing slots, Prev/Next use those
-icons, and persistent narrative scrollbars use native vertical range controls.
-These source and media changes require fresh release evidence under the existing
-task contract and budgets.
+This is an intentional **version 3 task-contract change**. The former menu,
+horizontal/vertical carousel, enlarged-image and appearance journeys do not
+represent the shipped interface. Their browser suites and published-portfolio
+isolation comparison are retired. Historical receipts remain evidence of their
+original contracts; they cannot serve as the grid's performance baseline.
+
+Establish a fresh baseline only after the complete grid browser suite, unit
+checks and all 72 performance samples pass and their measurements are reviewed.
+The existing `qa/baseline.json` stays untouched until that explicit acceptance.
+All four profiles, three repetitions, measured metrics and 30%/absolute relative
+budgets below remain unchanged. A new interface is the reason for the new task
+fingerprint; it is not an exception for a failed or incomplete run.
+
+The production browser matrix runs `mosaic.spec.ts`, `mosaicTransition.spec.ts`,
+`mosaicRoutes.spec.ts`, and `mosaicRelease.spec.ts` in Chromium desktop, WebKit
+desktop, and WebKit iPhone portrait/landscape. These cover packing and focus,
+single-owner image/video transitions, native history and direct links, redirects,
+metadata, Notes choreography and reversals, playback, About, and absence of editor
+controls. Pointer-hover assertions run only where the device supports hover;
+keyboard and touch-capable interactions retain coverage on every profile.
+Development adjustment/video-editor and copy-editor tests remain available via
+`pnpm test:e2e` against a development build, outside the production gate.
+The standalone `/copy-editor` route returns 404 in production; the production
+grid check covers that boundary too.
+
+## Routes and visitor behavior
+
+- `/work` is the canonical, indexable grid. Its ten project pages are
+  `/work/about-me`, `/work/loopio`, `/work/freshbooks`, `/work/cycles-dot-money`,
+  `/work/informal-systems`, `/work/aarons-toolbox`, `/work/nextphrase`,
+  `/work/age-dot-fund`, `/work/radio-app`, and `/work/gift-exchanges`.
+  NextPhrase keeps the internal `nextphrase-dot-app` identity while publishing
+  `/work/nextphrase`. Canonical metadata and sitemap contain the public paths.
+- `/grid-version` and `/v2` permanently redirect to `/work` or the requested
+  project. Recognized legacy media/detail paths redirect to their project.
+  Unknown projects and unknown media paths return 404. The obsolete query
+  `slide` falls back to the project's one media item, as before.
+- Redirects discard `project`, `slide`, `modal`, and `zoom`, while preserving
+  unrelated query parameters, including repeated keys.
+- Opening and closing a project uses native history without remounting the grid.
+  Back, Forward, refresh, and direct links preserve the intended viewer state.
+  Browser titles follow the selected project. Closing restores the triggering
+  tile's keyboard focus. Escape closes; arrow keys do not navigate media.
+- Each project has one media item. There is no image navigation or zoom.
+  Inline, muted videos pause behind the viewer and resume on return. The viewer
+  supports pause/resume and seeking. Reduced motion retains still posters and
+  initially paused viewer video.
+- Notes starts as one stroke-sized square at its control, travels rigidly to the
+  panel's bottom-left, then unfolds the other three corners clockwise. Closing
+  retraces that sequence. Rapid reversals must preserve the current timeline and
+  settle to the final request without leaving stale inert content.
+- Notes retains a 1.625 line-height. Inline prose links have no resting underline;
+  hover and keyboard focus reveal it. About uses its current biography/portrait
+  layout and shares the viewer's close/focus lifecycle.
+- All ten packed project targets remain inside each matrix viewport, with usable
+  hit targets and no page overflow. Development controls are absent in production.
 
 ## Conditions
 
-### Staged grid release — October 28, 2026
-
-The current portfolio remains at `/work`, with `/` redirecting there. Its copy,
-URLs, media bytes and presentation are compared against published deployment
-`6abfdf405a2b121236f0bbbc`. The new public, unlisted `/grid-version` route has its
-own biography, media replacements, scoped backgrounds and list sizing; `/v2`
-preserves query parameters when redirecting to it. Shared dependency upgrades
-are included and must pass checks for both versions. There is no database.
-
-The browser release matrix additionally runs `portfolioIsolation.spec.ts`,
-`mosaicRoutes.spec.ts`, and `mosaicRelease.spec.ts`. These cover representative
-published pages in both appearances, client navigation isolation, ten packed
-grid projects, About, inline video and pause/resume, keyboard return focus,
-history, direct links, reduced motion, and absence of production editor controls.
-Paired desktop/phone screenshots are retained in the ignored QA artifacts.
-Development-editor suites remain outside the production release gate.
-
-The grid's current visitor contract opens one cover per project, without image
-navigation or zoom. Its saved configuration includes ten projects, centered new
-Loopio/FreshBooks/Informal videos, additional AGE/Radio/Gift Exchanges projects,
-and per-segment speeds, fades and framing. Older unit assertions described the
-superseded seven-project composition and 1–6s Informal excerpt; they now assert
-the current authored values and export fidelity. The grid fills its remaining
-flex height and uses packed slots. No existing portfolio assertion, measured
-journey, performance allowance, or accepted baseline is relaxed.
-
-The previous October 2 receipt is failing and stale, and its one-release
-exception is not reused. Its triage identified host contention and a corrected
-header-layout issue; neither is assumed harmless for this release. The first
-current run follows the isolation changes and functional checks, on an idle
-CPU baseline (roughly 73% idle, load 2.15). New performance failures require the
-same evidence, changed-code and primary-source triage before another full run.
-The first managed attempt (`2026-10-28T22-45-30-925Z`) could not launch either
-browser because the upgraded Playwright binaries were missing; it produced no
-performance samples and remains recorded as blocked. The browser installation
-completed before the next run. The packing geometry matrix is split by
-viewport so its 24 configurations do not share a single five-second unit-test
-timeout; all configurations, assertions, and per-test timeouts are retained.
-Chromium 156 replaces the accepted baseline's Chromium 151, requiring a reviewed
-matching reference before performance comparison can authorize publication.
-The OS kernel also changed from 25.6.0 to 27.0.0. See the
-[retained evidence, grid fixes, primary-source triage and bounded reference protocol](docs/qa/2026-10-28-grid-release.md).
-The reference uses the published app and original runtime dependencies with only
-the Playwright toolchain updated. Review its complete report before accepting it;
-the candidate must still pass unchanged performance allowances.
-
-For environment recalibration, `pnpm qa:run --reference /path/to/published-checkout`
-builds and verifies both checkouts, then alternates reference/candidate order for
-each complete six-task journey. Each build still receives all four profiles and
-three repetitions, with the same measurement code, throttling and budgets. Only
-one browser context runs at a time. Both source fingerprints and build IDs are
-checked again afterward; each checkout receives its own complete report. The
-reference must use identical task/configuration code and the same Playwright
-version. This mode records a comparison but does not accept a baseline or bypass
-`qa:check`. Review the published-source provenance and all results before an
-environment-driven baseline replacement.
-
-The October 29 calibration uses this paired schedule because the unchanged
-published app also drifted against the earlier reference. One complete paired
-run is declared before observing its results; no repetition is discarded and
-no best run is selected. See the [calibration record](docs/qa/2026-10-29-paired-calibration.md).
-
-For debugging task definitions, `pnpm qa:run --tasks-only` omits the long browser
-suite. It still records a **blocked diagnostic** run and cannot establish a
-baseline or authorize release. Follow it with a complete run before shipping.
-
-| Profile              | Viewport   | Input       | CPU slowdown | Network                                      |
-| -------------------- | ---------- | ----------- | ------------ | -------------------------------------------- |
-| desktop              | 1440 × 900 | mouse/wheel | 1×           | unthrottled                                  |
-| small-laptop-slow    | 1280 × 720 | mouse/wheel | 4×           | 1.6 Mbps down / 0.75 Mbps up, 150 ms latency |
-| phone-portrait-slow  | 390 × 844  | touch       | 4×           | same slow network                            |
-| phone-landscape-slow | 844 × 390  | touch       | 4×           | same slow network                            |
+| Profile              | Viewport   | Input | CPU slowdown | Network                                      |
+| -------------------- | ---------- | ----- | ------------ | -------------------------------------------- |
+| desktop              | 1440 × 900 | mouse | 1×           | unthrottled                                  |
+| small-laptop-slow    | 1280 × 720 | mouse | 4×           | 1.6 Mbps down / 0.75 Mbps up, 150 ms latency |
+| phone-portrait-slow  | 390 × 844  | touch | 4×           | same slow network                            |
+| phone-landscape-slow | 844 × 390  | touch | 4×           | same slow network                            |
 
 Performance journeys run serially in Chromium, three repetitions per profile,
-each with a fresh context, disabled browser cache, blocked service workers,
-normal motion, and dark system appearance. Touch uses browser touch input events,
-not mouse drags. Existing public-portfolio Playwright suites also run in Chrome and
-WebKit desktop plus WebKit iPhone portrait/landscape, with their declared device
-skips. The private copy editor is outside this visitor release gate; its existing
-test remains available through `pnpm test:e2e`.
-
-The public browser matrix contains 30 scenarios across four profiles, including
-one check that QA waits for visible motion without reading offscreen carousel
-descendants. Seven scenarios require mouse drags or wheel input and are explicitly skipped on each
-touch profile (14 skips). Theme keyboard/focus/persistence, viewer lifecycle,
-history, content, and responsive geometry checks run on all four profiles. These
-are capability exclusions, not quarantined failures. The measured Chromium tasks
-exercise actual touch events on both phone sizes; WebKit emulation does not cover
-those swipe sequences or physical iPhone behavior.
-
-## Navigation and layout contract
-
-- Both carousel axes stop at their ends; they do not wrap. Aaron confirmed this
-  behavior while reconciling the original wrapping assertions.
-- Project metadata stays fixed while the slide narrative and media change.
-- Wide layouts place narrative beside media; narrow layouts stack them. A touch
-  device can use either arrangement depending on its viewport.
-- About Me has two text panels (biography and working style/strengths), shown
-  together when space permits. It has no image-viewer controls.
-- The home logo must receive a normal click/tap. Decorative navigation rails must
-  not intercept it. Viewer navigation must retain keyboard access, including Escape.
-- The actual image or video, beyond its surrounding stage, must have a short edge
-  of at least 80 CSS pixels in the four browser-matrix viewports. This catches
-  landscape layouts where fixed text columns and padding consume the media area.
-- The page waits for fonts, carousel initialization, and media visible on the
-  initial route. The text menu needs no images; deep links wait only for their
-  active media. A text-free FiveByFive shows six lit perimeter squares stepping
-  clockwise during this wait, without rotating the grid. Reduced motion keeps
-  those six squares static. Reveal has no added delay or entrance fade.
-- The top and bottom frame rules start grey and fill with the accent red from
-  left to right, together, as images decode. They remain fully red after success.
-  Contact-dialog frame rules share that same live progress. Failed images retain
-  their grey share and are described to assistive technology, without visible
-  loading text. Background loading continues after the startup spinner disappears.
-- Background image loading uses one worker; active media can load immediately.
-  Videos load on demand on every device. Previously visited video may retain its
-  source and buffer.
+each in a fresh context with disabled browser cache, blocked service workers,
+normal motion, and dark system appearance. Phone tasks activate controls with
+actual touch input, including the video seek bar. Emulation does not cover a
+physical phone's GPU, thermal state, browser chrome, or ergonomics.
 
 ## Required tasks
 
-| ID                  | Visitor action                                          | Required outcome                                                                                                |
-| ------------------- | ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| cold-entry          | Open `/work` with an empty browser cache.               | Fonts and carousel initialization finish; the project menu is usable while images load.                         |
-| choose-project      | Choose Aaron's Toolbox from the menu.                   | Correct route and section marker, settled vertical track, ready media contained in the viewport.                |
-| horizontal-gesture  | Wheel horizontally or swipe left through the media.     | Normalizer becomes active; the selected project stays Aaron's Toolbox; the new image loads and fits.            |
-| image-viewer        | Open Normalizer, go to the previous image, then close.  | Viewer opens, navigates to Overview, closes, and restores the project with the correct route and visible media. |
-| vertical-navigation | Wheel/swipe vertically to NextPhrase, then return home. | Only the project changes; route and section marker agree; Back to top returns to the menu.                      |
-| appearance          | Open Appearance and select Light.                       | Menu and scrim close without reordering visible options; then Light is stored, visible theme transitions finish, and focus returns to the trigger. |
+| ID             | Visitor action                            | Required outcome                                                                                                                              |
+| -------------- | ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| cold-entry     | Open `/work` with an empty cache.         | Fonts are ready; all ten packed cells have arrived, their media is ready, surfaces are visible, and controls are interactive.                 |
+| open-project   | Open Loopio.                              | `/work/loopio`, completed viewer transition, ready media, and visible project Notes.                                                          |
+| toggle-notes   | Hide then show Notes.                     | Both motion sequences finish; final Notes content is visible and interactive.                                                                 |
+| video-controls | Pause, seek to the midpoint, then resume. | Actual media state agrees with controls; seeking completes near the requested position and playback resumes.                                  |
+| close-viewer   | Close Loopio.                             | Viewer is removed, `/work` is restored, the grid is ready, and Loopio is usable again. Keyboard-open focus restoration is covered separately. |
+| open-about     | Open About.                               | `/work/about-me`, completed transition, decoded portrait, and visible biography.                                                              |
 
-Cold-entry now observes page readiness, removal of the startup spinner, and visible
-page content. First-screen readiness and background frame progress are an
-intentional loading-contract change; the next measured release needs a reviewed
-baseline with this task fingerprint.
-Readiness checks target the visible page, excluding temporary hidden streaming
-copies. Viewer deep links assert the requested viewer is opaque; ordinary entry
-asserts opaque page chrome, which the viewer intentionally hides while open.
+Readiness is explicit UI state sampled on animation frames. It does not use
+network-idle: nine background videos intentionally loop. Viewer readiness requires
+its open phase, ready media and completed Notes animation. Notes readiness checks
+requested expansion, settled collapse, visibility and accessible state together.
 
-Each task waits for UI state and settled track geometry. A changed URL alone is
-insufficient. JavaScript exceptions, console errors, and same-origin HTTP errors
-fail a measured journey. Failures record profile, repetition, task, error and
-screenshot. After a task fails, the runner restores the next task's starting route
-outside the measurement window so unrelated tasks can still run. Recovery never
-turns a failed run into eligible baseline or release evidence.
+Each task then observes fixed grid/viewer/panel geometry for 200 ms. The observer
+ignores video frames, playback time, segmented crop changes and infinite timelines;
+those must not prevent settlement. Viewer and Notes motion expose completion
+state, while restored focus-media geometry remains observable. Cold-entry uses
+animation-frame readiness instead of locator retry backoff to delimit timing.
+Functional assertions after the sample still block the receipt if they fail.
 
-Protocol version 2 (September 22) corrects the geometry observer to read the outer
-track, in-view project tracks, and viewer only. Section boxes remain observable
-while scrolling, but offscreen descendants are not forced out of
-`content-visibility: auto` on every frame. Visible tracks still must hold their
-geometry for 200 ms; a browser regression check covers both actual motion and
-forbidden offscreen reads. The appearance task now awaits the native animation
-completion promises on the visible theme surfaces, trigger, and scrim, then
-checks the clear scrim and restored focus. It does not poll carousel geometry or
-add an arbitrary sampling delay during the color transition. Normal and reduced
-motion are covered by the existing menu tests.
+JavaScript exceptions, console errors, and same-origin HTTP errors fail a measured
+journey. Failures retain profile, repetition, task, error and screenshot. If the
+prior task leaves the wrong route, recovery loads the next starting route outside
+the measurement window and waits for its appropriate grid or viewer readiness.
+Recovery never makes a failed run eligible for release or baseline acceptance.
 
-This intentionally changes the observation cost and appearance completion
-boundary. Version 1 timing samples cannot serve as a comparable baseline. A new,
-complete version 2 run must be reviewed and explicitly accepted; the existing
-30%/absolute regression allowances are unchanged. This recalibration is for the
-corrected protocol and the close-before-apply interaction, not an exemption for
-the previous failed runs.
+`pnpm qa:run --tasks-only` omits the browser suite for bounded diagnostics. It
+always records a **blocked diagnostic** report and cannot establish a baseline or
+authorize release. Follow it with a complete run before shipping.
 
-The vertical touch journey moves 60% of the outer viewport height. Using the
-shorter inner media stage as the distance reference could end before the outer
-snap midpoint and legitimately return to the same project when the gesture was
-slow. This task checks a committed swipe, not the minimum flick velocity.
-
-Horizontal gestures start inside the actual media. Vertical gestures start at
-the section edge, clear of narrative scrolling and video seek controls. Both
-assert that their starting point is outside the carousel drag-lock area. A fixed
-point at 70% of the carousel height could land on the video seek bar after a
-responsive layout correction; the resulting seek was not a carousel failure.
-This target correction changes the protocol fingerprint and requires a reviewed
-baseline. Prior reports remain historical evidence.
+`pnpm qa:run --reference /path/to/reference-checkout` retains the paired mode:
+build and verify both checkouts, then alternate reference/candidate order for
+each complete six-task journey. Both receive every profile and repetition, one
+context at a time, and both fingerprints/build IDs are rechecked. They must use
+the same task/configuration code and Playwright version. A pre-grid portfolio
+cannot be a matching reference for these grid tasks. This mode records evidence;
+it neither accepts a baseline nor bypasses `qa:check`.
 
 ## Measurements and comparison
 
 - **Task duration:** browser clock from task start through asserted completion,
-  including loading and animation settling. Includes automation overhead; this is
-  a repeatable journey diagnostic, not INP or a Core Web Vitals score.
+  including loading and motion settling. Includes automation overhead; this is a
+  repeatable journey diagnostic, not INP or a Core Web Vitals score.
 - **Longest main-thread task:** largest Long Tasks API duration during the task.
 - **Longest animation frame:** largest Long Animation Frames API duration.
 - **p95 animation-frame gap:** requestAnimationFrame interval diagnostic. Raw
-  records also include sampled frame count and gaps over 50 ms. This cannot measure
-  GPU-rendered frame rate or prove an animation looks smooth.
+  records include sampled frame count and gaps over 50 ms. This cannot measure
+  GPU-rendered frame rate or prove that animation looks smooth.
 
 Compare the median of three repetitions per task/profile. A regression must exceed
 both 30% and an absolute noise allowance: 300 ms for duration, 50 ms for longest
-task/frame, and 10 ms for p95 frame gap. These are initial change-detection
-tolerances, **not acceptable-user-experience targets**. A consistently slow baseline
-can pass relative comparison. Review initial results and tighten budgets as needed.
+task/frame, and 10 ms for p95 frame gap. These are relative change-detection
+tolerances, **not acceptable-user-experience targets**. A slow baseline can pass
+relative comparison. Review initial results and tighten budgets when justified.
 
 Missing metrics/repetitions fail closed. Comparisons require the same OS, CPU,
-core count, Node and Chromium versions, task implementation, and profile settings.
-After changing those, review a new baseline explicitly. Throttling is relative to
-the host; it does not reproduce a phone's GPU, thermal state, Safari engine,
-browser chrome, or touch ergonomics. Use a physical phone for those.
+core count, Node and Chromium versions, task implementation and profile settings.
+Changes require an explicitly reviewed matching baseline. Throttling is relative
+to the host; use a physical phone for device-specific behavior.
 
-## Agent-assisted exploratory pass
+## Agent-assisted performance-failure triage
 
-### Quick performance-failure triage
+Complete this before diagnosing a regression, repeating a full scan, or handing
+off a blocked release. Start with existing evidence and keep investigation
+proportional to the miss; do not turn a borderline result into an open-ended task.
 
-October 1's optimized-video release hit the landscape image-viewer long-task and
-long-frame budgets. See [the evidence and bounded diagnostic plan](docs/qa/2026-10-01-video-release-triage.md).
-
-October 2's first release run hit 16 performance limits and two browser failures.
-See [the quick evidence, changed-code and primary-source triage, and bounded next
-step](docs/qa/2026-10-02-release-triage.md). Aaron approved the decision audit and
-a one-release exception to the failed/stale receipt after the focused functional
-checks passed. This exception does not change the baseline, budgets, or complete
-QA requirement for future releases.
-
-Include this in the agent-assisted release scan whenever a performance limit is
-exceeded. Start with existing evidence and keep the investigation proportional to
-the miss; do not turn a borderline result into an open-ended optimization task.
-
-1. **Put the number in context.** Report the metric, profile, baseline, allowed
-   limit, measured median, and absolute/percentage differences. Show individual
-   repetitions and relevant sample counts. Compare only matching protocols and
-   environments; different-source history is context, not a noise distribution.
-   Distinguish a relative regression budget from an independently supported user
-   experience threshold. A zero long-task/long-frame value means no qualifying
-   entry was observed, not that the browser did no work. Check whether a percentile
-   with very few frames is effectively a maximum.
-2. **Inspect the release diff and measurement code.** Look for a plausible path
-   from changed code to the failing interaction: work added, scheduling changes,
-   layout reads, animation timing, resource loading, or altered task boundaries.
-   Identify specific files and mechanisms, with evidence for and against each.
-   Inspect observer overhead too. No obvious relevant diff does not prove noise;
-   finding a plausible mechanism does not prove causation.
-3. **Do quick, targeted research.** Consult primary browser/specification or tool
-   documentation about that metric's variability, recording threshold, throttling,
-   and any suspected mechanism. Usually one or two focused searches suffice.
-   Reuse still-applicable sources already checked in the task. Cite the supporting
-   links and explain their relevance; do not import a Lighthouse score or field
-   INP threshold as a pass/fail rule for this custom lab measurement. Research
-   cannot supply a universal "normal fluctuation" percentage for this site.
-4. **Classify and choose a bounded next step.** Record likely ordinary variation,
+1. **Put the number in context.** Record metric, profile, baseline, allowed limit,
+   median, absolute/percentage differences, individual repetitions and relevant
+   frame counts. Compare matching protocols/environments only. Different-source
+   history is context, not a noise distribution. Zero long-task/frame values mean
+   no qualifying event was observed, not no work. A percentile with few frames
+   may effectively be a maximum.
+2. **Inspect changed code and measurement.** Identify plausible work, scheduling,
+   layout reads, loading or completion-boundary changes affecting the interaction.
+   Consider observer overhead. No obvious diff does not prove noise; a plausible
+   mechanism does not prove causation. Record evidence for and against each.
+3. **Do focused primary-source research.** Consult browser/specification or tool
+   documentation about variability, thresholds, throttling and the suspected
+   mechanism. Usually one or two sources suffice. Explain relevance; do not
+   import Lighthouse scores or field INP limits as this suite's pass/fail rule.
+   Research does not provide a universal normal-fluctuation percentage.
+4. **Classify and bound the next step.** State likely ordinary variation,
    suspected application regression, suspected measurement/environment effect,
-   or inconclusive, with confidence and remaining uncertainty. Separate a
-   repeatable measured increase from attribution to the release. If existing data
-   cannot settle a consequential result, choose one targeted diagnostic or a
-   small, predeclared set of matched base/current runs with identical conditions
-   and instrumentation. Alternate their order when practical and retain all
-   results. Do not mix traced and untraced timings or rerun until one passes.
+   or inconclusive, with confidence and remaining uncertainty. If needed, choose
+   one diagnostic or a predeclared set of matched runs with identical conditions.
+   Alternate order where practical, retain every run, and never rerun until green.
 
-Save the assessment under `docs/qa/` and link the relevant run reports. The handoff
-must state what the evidence suggests and why, any plausible changed-code cause,
-the research sources, and the release disposition. This is an agent research
-step, not a network or LLM dependency of the deterministic QA commands. It does
-not waive `pnpm qa:check`, change budgets, or authorize baseline replacement. If a
-measurement bug is confirmed, document and validate the correction before
-establishing a baseline for the corrected protocol.
+Save the assessment in `docs/qa/` with report links. State what the evidence suggests,
+plausible changed-code causes, primary sources and release disposition. A confirmed
+measurement bug needs a documented correction and validation before establishing
+its new baseline. This research step never waives the release gate or budgets.
 
-Useful primary references: [Lighthouse's variability guidance](https://github.com/GoogleChrome/lighthouse/blob/main/docs/variability.md)
-for repeated measurement and resource contention, the [Long Tasks specification](https://www.w3.org/TR/longtasks-1/)
-for its reporting threshold, and [Chrome's content-visibility guidance](https://web.dev/articles/content-visibility)
-for DOM reads that force skipped rendering. Use the source appropriate to the
-finding, rather than treating this list as a mandatory research checklist.
+Useful references: [Lighthouse variability](https://github.com/GoogleChrome/lighthouse/blob/main/docs/variability.md),
+[Long Tasks specification](https://www.w3.org/TR/longtasks-1/), and
+[Chrome content-visibility guidance](https://web.dev/articles/content-visibility).
+Use the source appropriate to the finding rather than treating these as a checklist.
 
-### Exploratory checks
+## Historical evidence and exploratory checks
 
-An agent can read this file, run the fixed suite, inspect evidence, and then explore
-beyond it: breakpoint edges, very short windows, rapid/reversed gestures, text
-scroll handoff, viewer zoom/history, resize mid-transition, reduced motion, and
-video restart. Describe the viewport, input, task, observed failure, and reproducible
-steps. Record findings in `docs/qa/` with links to evidence.
+Current cutover verification and release disposition are recorded in
+[the main grid release record](docs/qa/2026-10-29-main-grid-release.md).
 
-Exploration is supplemental; it is not currently an automated LLM release gate.
-Do not include agent thinking time in performance measurements. When an agent finds
-a repeatable defect, add the smallest deterministic check and update this contract
-if needed. Do not auto-heal assertions, skip failures, change budgets, or replace a
-baseline to obtain a green release. Intentional behavior changes should update the
-contract and test together, with the reason recorded.
+Earlier protocol evidence remains in
+[October 1 video triage](docs/qa/2026-10-01-video-release-triage.md),
+[October 2 release triage](docs/qa/2026-10-02-release-triage.md),
+[October 28 staged-grid release](docs/qa/2026-10-28-grid-release.md), and
+[October 29 paired calibration](docs/qa/2026-10-29-paired-calibration.md).
+The October 2 one-release exception is not reused. The October 29 startup observer
+fix is retained conceptually: functional readiness sampled on animation frames
+avoids retry-backoff idle frames diluting startup p95. Version 1/2 timing samples
+remain historical; they do not calibrate the new grid interaction contract.
 
+Exploration supplements the fixed suite: breakpoint edges, short windows, rapid
+Notes reversals, close/reopen history, text scroll handoff, resize mid-transition,
+reduced motion and video restart. Record viewport, input, observed behavior and
+reproduction in `docs/qa/` with evidence. Add the smallest deterministic check for
+a repeatable defect. Do not auto-heal assertions, skip failures, change budgets or
+replace a baseline to get green. Record intentional contract changes and reasons.
 
-### October 29 startup-observation correction
+### Grid cold-load investigation for the replacement
 
-Cold-entry now detects the existing ready phase, absent loader, fully visible
-chrome and visible menu on an animation frame, then completes the unchanged
-200 ms geometry-settlement check. The performance sample ends there; the same
-functional assertions still run and block the receipt if any fails. Playwright 1.64.1's locator assertion retry
-loop backs off to 500 ms. Using that loop to delimit a timed journey introduced
-variable idle frames after readiness, diluting startup p95 by different amounts
-for different builds. The completion condition, measured metrics, three
-repetitions and all budgets remain unchanged. The same observer is used on the
-published-source reference. It requires a fresh calibration because the task
-instrumentation changed. See the [timestamps, source inspection and validation](docs/qa/2026-10-29-paired-calibration.md).
+The initial grid measurements exposed a meaningful existing slow-network cost:
+about 24 seconds for all ten animated cells to become usable with cache disabled,
+1.6 Mbps bandwidth and 4× CPU throttling. A single bounded network diagnostic
+recorded first usable cell at 15.1s and all cells at 23.7s; the HTML response began
+at 8.7ms and finished at 229ms. Large existing posters and concurrent video frame
+loads dominate transfer (Gift Exchanges poster alone delivered about 638 KB).
+The media assets, grid entrance policy and video readiness controllers are
+unchanged by the route replacement. This is a limitation of the current grid
+experience, not evidence of a newly introduced routing regression. Desktop cold
+entry was about 4.6s. Media optimization is deferred to preserve this release's
+existing content/interaction baseline; do not conceal these cold-load values.
+
+[Chrome's network reference](https://developer.chrome.com/docs/devtools/network/reference#throttling)
+describes throttling and cache-disabled first-visit measurement, while the
+[video loading reference](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/video#preload)
+explains that preload is a hint and playback requires downloading media. The
+source keeps normal-motion cells hidden until a decoded frame is ready, and uses
+posters for reduced motion/autoplay fallback. The diagnostic and release results
+are recorded in [the release evidence](docs/qa/2026-10-29-main-grid-release.md).
+This investigation does not change profiles, budgets, readiness criteria or assets.

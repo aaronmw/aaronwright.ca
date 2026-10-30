@@ -1,8 +1,5 @@
-import { getPortfolioMetadata } from '@/lib/seo';
-import { HomeProjectGrid } from '@/components/HomeProjectGrid';
-
-export const metadata = getPortfolioMetadata('/work');
+import { permanentRedirect } from 'next/navigation'
 
 export default function Home() {
-  return <HomeProjectGrid />;
+  permanentRedirect('/work')
 }

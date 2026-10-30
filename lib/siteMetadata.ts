@@ -1,4 +1,6 @@
-import type { PortfolioProject } from './portfolio'
+import type { MosaicProject } from '@/components/mosaic/types'
+import { canonicalMosaicSlug } from '@/components/mosaic/routing'
+import { getPortfolioProject, type PortfolioProject } from './portfolio'
 
 export type SeoCopy = { title: string; description: string }
 
@@ -35,5 +37,15 @@ export function portfolioSeoCopy(project?: PortfolioProject): SeoCopy {
         : `${project.seo.title} | ${SITE_NAME}`,
     ),
     description: metadataText(project.seo.description),
+  }
+}
+
+export function mosaicSeoCopy(project?: MosaicProject): SeoCopy {
+  if (!project) return HOME_SEO
+  const legacyProject = getPortfolioProject(canonicalMosaicSlug(project.slug))
+  if (legacyProject) return portfolioSeoCopy(legacyProject)
+  return {
+    title: `${metadataText(project.title)} | ${SITE_NAME}`,
+    description: metadataText(project.summary),
   }
 }
