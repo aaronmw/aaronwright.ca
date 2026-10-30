@@ -134,3 +134,81 @@ no failing test was waived and no result was edited to obtain acceptance.
 Source fingerprint: `eb2738528698fbdae88c2122b7bda8ce0a3b2a3608ccb1961131fc02378682a3`.
 Managed final QA run: `E80F9DBF-E786-4F21-B2AB-55D5ACEB6627`.
 The temporary QA server was cleaned up by its managed command.
+
+## Hosted redirect correction and concurrent video work
+
+Draft `6ae3e8b0d28e0b6d44d99df6` was uploaded from `.netlify/static` after
+commit `15aa8a9`. All eleven canonical pages and share cards, four 404 cases,
+sitemap, desktop/mobile interactions and static assets passed. Visual review
+confirmed the current grid/Notes presentation and branded fallback artwork.
+Redirect verification correctly blocked promotion: Netlify reattached obsolete
+query keys when Next returned an empty-query redirect, producing a canonical-URL
+loop. Production remained locked on `6ae3c8c0fec465a29fbc12ef`.
+
+The correction is a scoped edge response handler using the shared query-cleanup
+helper. Next remains responsible for project/media validation and destination
+selection; the handler strips only obsolete keys from same-origin `/work`
+redirects, retaining status, repeated unrelated values and 404s. Ordinary requests
+bypass the response wrapper. This was chosen over dummy query parameters or
+copying project routing into a second resolver. Confidence: high in the pure
+response logic (12 focused tests), pending actual CDN verification.
+
+Aaron's completed request in “Add expanded video pause feedback”
+(`01a18a46-9ebb-7fe2-8791-c1067ed2691b`) landed in this checkout before the fresh
+QA build. It adds click-to-pause feedback and native non-looping end behavior.
+Its TypeScript and changed-scope React Doctor checks passed (100/100). These
+changes are included in the current release under the requested complete-tree
+commit/deploy scope, with additional local and hosted behavior checks.
+
+Run `2026-10-30T00-53-20-194Z` passed 236 unit tests and all 80 browser cases.
+Its performance sequence exposed an obsolete prerequisite: the 4.17-second clip
+now ends during the 3.18-second Notes journey. Two video-control checks waited
+30 seconds for continued playback; screenshots show the final frame, full seek
+bar and Play control. The managed run was stopped, preserving its incomplete
+receipt. This is an intentional behavior change, not timing variation.
+
+A bounded local diagnostic observed `ended: true`, `paused: true`,
+`currentTime === duration === 4.170833`, and `loop: false`. Restarting only ended
+clips before timing restored the same pause/seek/resume journey in 334ms. All six
+journeys passed. The helper now performs that explicit prerequisite before
+measurement; it cannot recover or conceal a failed measured action. See TASKS.md
+for the changed-code and primary-source assessment. The protocol fingerprint
+changes, so the next complete result needs explicit baseline review/acceptance;
+old grid medians remain comparative context, with budgets untouched.
+
+Four additional pause-feedback checks passed against the running development app:
+Chromium and WebKit, each with normal and reduced motion. They verify a video
+click pauses, the overlay reaches 85% opacity, replay clears it, `loop` remains
+false, and reaching the end pauses with no overlay. Mobile screenshot review
+confirmed the centered 5× solid glyph. Evidence is in
+`test-results/main-grid-release/pause-feedback.json` and `pause-*.png`.
+
+## Final local receipt and audit addendum
+
+Managed run `771E1DCB-06C8-4527-8AFB-728A653B80C2` completed with 236 unit
+tests, all 80 browser cases, and all 72 measured journeys passing with no errors.
+The temporary server was cleaned up. Its receipt is
+`qa/results/2026-10-30T01-01-36-132Z.json`, source fingerprint
+`61e760316ff53c0d46f16fc2b8ed6f626df947d03beac74ee8b8ab6746c3cde1`.
+
+A contextual comparison against the prior complete grid run used the unchanged
+30% plus absolute noise budgets for every metric and all 24 journey/profile
+medians. The environment matched and none exceeded a budget. Full comparison is
+saved in `test-results/main-grid-release/prerequisite-comparison.json`. The
+corrected prerequisite receipt was explicitly accepted as the baseline because
+its helper fingerprint changed; no assertion, metric, profile, repetition or
+budget was relaxed. `pnpm qa:check` now passes. Raw receipts remain unedited,
+including their initial baseline-incompatibility status.
+
+Audit verdict: **ready with noted risks** for commit and hosted-draft validation.
+The redirect adapter is narrowly scoped to observed hosting behavior and shares
+query semantics with the app; it does not duplicate route validation (high
+confidence in logic, CDN verification still required before promotion). Native
+non-looping video preserves Aaron's new end-of-playback request without extra
+application timers (high confidence after browser checks). Restarting an ended
+clip outside the measured journey preserves the intended starting condition;
+measured actions are unchanged (high confidence, baseline comparison recorded).
+The slow-network cold-load limitation remains deferred. No hidden functional
+failure or budget exception is accepted. Pride gate: yes, proud of the result;
+yes, willing to stand behind it in production after the mandatory hosted checks.
+Aaron's approved plan authorizes continuing through this audit without a pause.

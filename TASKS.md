@@ -91,7 +91,9 @@ grid check covers that boundary too.
   tile's keyboard focus. Escape closes; arrow keys do not navigate media.
 - Each project has one media item. There is no image navigation or zoom.
   Inline, muted videos pause behind the viewer and resume on return. The viewer
-  supports pause/resume and seeking. Reduced motion retains still posters and
+  supports pause/resume and seeking. Clicking its video pauses playback and
+  flashes a large pause icon; reaching the end pauses without a flash or loop.
+  Reduced motion retains still posters and
   initially paused viewer video.
 - Notes starts as one stroke-sized square at its control, travels rigidly to the
   panel's bottom-left, then unfolds the other three corners clockwise. Closing
@@ -262,3 +264,33 @@ source keeps normal-motion cells hidden until a decoded frame is ready, and uses
 posters for reduced motion/autoplay fallback. The diagnostic and release results
 are recorded in [the release evidence](docs/qa/2026-10-29-main-grid-release.md).
 This investigation does not change profiles, budgets, readiness criteria or assets.
+
+### Hosted redirect boundary
+
+The first replacement draft exposed Netlify's automatic query propagation when a
+server redirect has no destination query. It reattached obsolete viewer keys and
+could loop on the canonical project URL. A scoped edge response adapter now cleans
+only those keys after Next validates and resolves the redirect. It does not
+resolve projects, alter 404s, add dummy parameters, or wrap ordinary grid requests.
+The hosted draft must verify both parameter-only links and links with repeated
+unrelated values; local Next alone cannot reproduce this CDN behavior. See
+[Netlify's response modification API](https://docs.netlify.com/build/edge-functions/api/#modify-a-response).
+
+### Non-looping video prerequisite correction
+
+Aaron's concurrent expanded-video change intentionally stops playback at the end.
+Run `2026-10-30T00-53-20-194Z` passed all 80 browser cases, then timed out twice
+waiting for the video to still be playing after the Notes journey. The recorded
+screenshots show the final frame, full scrubber and Play control. This is a stale
+journey prerequisite, not a measured slowdown: the old loop kept the clip playing,
+whereas `loop: false` allows the short clip to finish during Notes. The run was
+stopped and retained as ineligible evidence.
+
+[MDN's ended-event reference](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/ended_event)
+confirms that reaching the end stops playback and that looping suppresses this
+event. Preparation now restarts only an ended video, before measurement; pause,
+seek, resume, readiness assertions, profiles, repetitions and budgets stay intact.
+Click feedback and silent stopping are checked independently on the hosted draft.
+This helper change invalidates the protocol fingerprint. Review the next complete
+receipt against the preceding grid medians for context before accepting the
+corrected prerequisite baseline; never waive a functional failure or change a budget.

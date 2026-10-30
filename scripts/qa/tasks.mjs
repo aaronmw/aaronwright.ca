@@ -161,11 +161,24 @@ export async function prepareTask(page, task) {
   const path = starts[task]
   if (!path) return
   const current = new URL(page.url())
-  if (current.pathname + current.search === path) return
-  await page.goto(path, { waitUntil: 'domcontentloaded' })
-  if (path === '/work') await gridReady(page)
-  else await viewerReady(page)
-  await settled(page)
+  if (current.pathname + current.search !== path) {
+    await page.goto(path, { waitUntil: 'domcontentloaded' })
+    if (path === '/work') await gridReady(page)
+    else await viewerReady(page)
+    await settled(page)
+  }
+  // Expanded videos now stop at the end. The preceding Notes journey may
+  // outlast this short clip; restore this journey's playing start state before
+  // timing the same pause/seek/resume actions. Never recover a failed action.
+  if (
+    task === 'video-controls' &&
+    (await page
+      .locator('.yarl__slide_current video')
+      .evaluate(video => video.ended))
+  ) {
+    await page.getByRole('button', { name: 'Play video', exact: true }).click()
+    await videoState(page, false)
+  }
 }
 
 export async function runTasks({ page, profile, measure }) {

@@ -60,7 +60,7 @@ export function MosaicViewer(props: MosaicViewerProps) {
           muted: true,
           playsInline: true,
           controls: false,
-          loop: true,
+          loop: false,
           preload: 'none',
         }
       : {

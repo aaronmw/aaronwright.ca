@@ -44,13 +44,18 @@ export function hasViewerParameters(search: MosaicSearchParams) {
   return viewerParameters.some(key => search[key] !== undefined)
 }
 
+export function cleanMosaicSearchParams(search: string | URLSearchParams) {
+  const params = new URLSearchParams(search)
+  for (const key of viewerParameters) params.delete(key)
+  return params
+}
+
 export function mosaicUrl(
   basePath: ExperimentBasePath,
   project?: MosaicProject,
   search: string | URLSearchParams = '',
 ) {
-  const params = new URLSearchParams(search)
-  for (const key of viewerParameters) params.delete(key)
+  const params = cleanMosaicSearchParams(search)
   const path = project
     ? `${basePath}/${encodeURIComponent(canonicalMosaicSlug(project.slug))}`
     : basePath

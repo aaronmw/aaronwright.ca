@@ -28,6 +28,7 @@
 }
 
 .root :global(.yarl__video_container) {
+  position: relative;
   --mosaic-video-bottom-space: calc(
     var(--mosaic-viewer-bottom) + var(--portfolio-logo-size) +
       var(--logo-stroke-width)
@@ -112,6 +113,47 @@
   pointer-events: none;
   opacity: 0;
   transition: opacity var(--portfolio-motion-viewer-chrome, 240ms);
+}
+
+.videoPauseFlash {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  color: var(--portfolio-surface);
+  animation: videoPauseFlash 2400ms linear both;
+}
+
+.videoPauseIcon {
+  transform: scale(5);
+}
+
+/* 200ms fade in, two seconds at 85%, then 200ms fade out. */
+@keyframes videoPauseFlash {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  8.333333%,
+  91.666667% {
+    opacity: 0.85;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .videoPauseFlash {
+    animation: videoPauseFlashReduced 2s step-end both;
+  }
+}
+
+@keyframes videoPauseFlashReduced {
+  from {
+    opacity: 0.85;
+  }
+  to {
+    opacity: 0;
+  }
 }
 .root[data-mosaic-transition-state='open'] .videoControls {
   opacity: 1;

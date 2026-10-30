@@ -12,6 +12,7 @@ const ICON_CLASSES = {
   replay: 'fa-arrow-rotate-left',
   play: 'fa-play',
   pause: 'fa-pause',
+  circlePause: 'fa-circle-pause',
   system: 'fa-display',
   light: 'fa-sun',
   dark: 'fa-moon',
@@ -38,12 +39,13 @@ export function PortfolioIcon({
   inline?: boolean
   className?: string
 }) {
+  const family = name === 'circlePause' ? 'fa-solid' : ICON_FAMILY_CLASS_NAME
   // Icons within text inherit its size without the control slot's glyph scaling.
   if (inline) {
     return (
       <i
         data-portfolio-icon={name}
-        className={`${ICON_FAMILY_CLASS_NAME} ${ICON_CLASSES[name]} ${className ?? ''}`}
+        className={`${family} ${ICON_CLASSES[name]} ${className ?? ''}`}
         aria-hidden="true"
       />
     )
@@ -56,7 +58,7 @@ export function PortfolioIcon({
       aria-hidden="true"
     >
       <i
-        className={`portfolio-icon-glyph ${ICON_FAMILY_CLASS_NAME} ${ICON_CLASSES[name]}`}
+        className={`portfolio-icon-glyph ${family} ${ICON_CLASSES[name]}`}
       />
     </span>
   )
