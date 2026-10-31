@@ -1,0 +1,10 @@
+{
+  "site_id": "e0681b15-9225-4e4d-a36a-232758656a30",
+  "site_name": "aaronwright",
+  "deploy_id": "6ae55de3385e6689c57aa911",
+  "deploy_url": "https://6ae55de3385e6689c57aa911--aaronwright.netlify.app",
+  "logs": "https://app.netlify.com/projects/aaronwright/deploys/6ae55de3385e6689c57aa911",
+  "function_logs": "https://app.netlify.com/projects/aaronwright/logs/functions",
+  "edge_function_logs": "https://app.netlify.com/projects/aaronwright/logs/edge-functions",
+  "url": "https://aaronwright.ca"
+}

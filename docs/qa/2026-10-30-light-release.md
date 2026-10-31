@@ -134,3 +134,35 @@ Verdict: **ready with noted risks**. Aaron's explicit authorization to run relea
 QA and deploy if it passes permits proceeding through the audit without a pause.
 
 
+
+## Published and verified
+
+Release source commit: `83fc986`. Netlify's production deployment completed with
+its normal QA-gated build. Deployment `6ae55de3385e6689c57aa911` was confirmed as
+the site's published deployment in `ready` state after hosted checks.
+
+- [Production](https://aaronwright.ca/work)
+- [Immutable deployment](https://6ae55de3385e6689c57aa911--aaronwright.netlify.app)
+- [Build/deploy log](https://app.netlify.com/projects/aaronwright/deploys/6ae55de3385e6689c57aa911)
+- [Deployment receipt](2026-10-30-light-deploy.json)
+- [Hosted results](2026-10-30-light-production.json)
+
+Hosted checks passed all eleven canonical pages, ten redirects (including query
+cleanup), six expected 404 cases, eleven share cards, and sitemap entries.
+Desktop, phone and reduced-motion phone contexts used dark OS emulation and
+verified white surfaces and fixed-light metadata. They passed playback controls,
+click feedback, silent ending, Notes, focus restoration, direct links, logo-to-
+About navigation and all three About destination links. Each loaded eighteen
+static assets with no page errors or failing same-origin responses.
+
+Visual inspection confirmed the white desktop grid and settled desktop/phone
+About presentation. About screenshots were recaptured after the biography reached
+full opacity; initial smoke screenshots caught its entrance fade. Physical-device
+and subjective acceptance remain Aaron's review, not an automated claim.
+
+`pnpm qa:check` also passes after deployment. No source changes followed the
+accepted receipt; this final commit records evidence only. QA temporary servers
+finished and cleaned themselves up; Aaron's development service remains untouched.
+Final audit remains **ready with noted risks**: known constrained cold-load cost,
+retained first-run performance failure, and documented loss of earlier ignored
+artifacts. Production checks are complete; pride gate remains yes.
