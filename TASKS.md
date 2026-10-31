@@ -66,10 +66,34 @@ single-owner image/video transitions, native history and direct links, redirects
 metadata, Notes choreography and reversals, playback, About, and absence of editor
 controls. Pointer-hover assertions run only where the device supports hover;
 keyboard and touch-capable interactions retain coverage on every profile.
-Development adjustment/video-editor and copy-editor tests remain available via
+Development adjustment/video-editor tests remain available via
 `pnpm test:e2e` against a development build, outside the production gate.
-The standalone `/copy-editor` route returns 404 in production; the production
-grid check covers that boundary too.
+The removed `/copy-editor`, `/case-study-intake`, and `/case-study-brochures`
+routes return 404 in development and production.
+
+## Fixed light appearance and authoring-page removal — October 30, 2026
+
+The portfolio always uses light appearance without a selector or saved theme
+preference. Surfaces are pure white across the grid, viewer, Notes, About, loading
+indicators, and inline development tools. Media, authored video fades, and
+white-on-red controls retain their colors. Native controls, browser theme color,
+and the favicon remain light regardless of System appearance or live OS changes.
+This supersedes the grid cutover's fixed-dark contract and the unshipped System
+appearance proposal, following Aaron's explicit fixed-light release instruction.
+
+Appearance cases in the existing release suite cover both OS modes, a conflicting
+legacy dark preference, live changes with Notes open, paused playback continuity,
+focus restoration, the fixed favicon, and About. Development cases cover the
+inline tools and removed routes. The three standalone authoring pages and their
+exclusive UI are removed; the Markdown export script and copy data remain.
+
+Layout and loading geometry are unchanged and share the same surface tokens.
+Performance profiles retain dark OS emulation for comparable conditions; the site
+now renders light under those conditions. The existing performance baseline and
+budgets remain unchanged. Gift Exchanges now uses its authored 1.16–8.89 second
+excerpt with black fades; its export assertion verifies that range instead of
+the former full-length contract. Fresh release QA is required before publishing; record
+its outcome and any remaining visual acceptance in the release evidence.
 
 ## Routes and visitor behavior
 
@@ -321,3 +345,14 @@ confidence; no evidence of an added browser workload. One predeclared confirmati
 run will use the unchanged app, profiles, measurements and accepted baseline.
 Retain both results. Do not repeatedly scan, replace the baseline or relax the
 budget to get green. A repeated failure remains blocked for an explicit decision.
+
+### Fixed-light release performance triage — October 30
+
+The complete fixed-light receipt `2026-10-31T02-56-22-307Z` passes 249 unit tests,
+80 browser cases and all 72 journeys, but fails desktop open-project longest-frame
+and laptop close-viewer p95 budgets. The [release record](docs/qa/2026-10-30-light-release.md)
+contains exact samples, baseline/limit comparisons, changed-code hypotheses and
+primary-source research. Classification is inconclusive: reporting thresholds
+and short-sample scheduling are plausible, as is changed grid playback/paint work.
+One unchanged full confirmation run is predeclared. A repeated failure blocks
+release; no baseline or budget change is authorized by this triage.

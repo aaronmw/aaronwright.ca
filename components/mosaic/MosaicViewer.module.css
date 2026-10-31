@@ -221,8 +221,7 @@
   justify-items: end;
 }
 .blurb {
-  --portfolio-text: var(--portfolio-neutral-50);
-  --portfolio-text-body: var(--portfolio-neutral-50);
+  --portfolio-text-body: var(--portfolio-text);
   --portfolio-accent: var(--portfolio-accent-decoration);
   position: relative;
   z-index: 1;
@@ -235,8 +234,8 @@
   max-height: 100%;
   padding: 0;
   border: var(--logo-stroke-width) solid var(--portfolio-accent-decoration);
-  background: var(--portfolio-surface-dark);
-  color: var(--portfolio-neutral-50);
+  background: var(--portfolio-surface);
+  color: var(--portfolio-text);
   font-size: 16px;
   line-height: 1.625;
   text-align: left;
@@ -253,35 +252,11 @@
   overscroll-behavior: contain;
 }
 .blurbContent:focus-visible {
-  outline: 2px solid var(--portfolio-neutral-50);
+  outline: 2px solid var(--portfolio-text);
   outline-offset: -3px;
 }
 .projectLink {
-  composes: filled from '../portfolio/presentation/PortfolioButtonHover.module.css';
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  height: calc(var(--portfolio-logo-size) * 2);
   margin: 0 var(--logo-stroke-width) var(--logo-stroke-width);
-  padding-inline: var(--logo-stroke-width);
-  color: var(--portfolio-neutral-50);
-  background: var(--portfolio-accent-decoration);
-  font-weight: 700;
-  text-align: center;
-  text-decoration: none;
-}
-.projectLink:focus-visible {
-  outline: 2px solid var(--portfolio-neutral-50);
-  outline-offset: -3px;
-}
-@media (forced-colors: active) {
-  .projectLink {
-    border: 1px solid LinkText;
-  }
-  .projectLink:focus-visible {
-    outline-color: Highlight;
-  }
 }
 .blurbAnchor,
 .blurbToggle {
@@ -374,8 +349,27 @@
 }
 
 .aboutCopy {
+  container: about-copy / inline-size;
   min-width: 0;
   opacity: 0;
+}
+
+.aboutFooter {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--portfolio-logo-size);
+  margin-top: var(--about-section-gap);
+}
+
+@container about-copy (min-width: 48rem) {
+  .aboutFooter {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* The footer's section gap owns the space after the final paragraph. */
+.aboutBiography :global([data-portfolio-selectable-text]) {
+  padding-bottom: 0;
 }
 
 .aboutBiography {

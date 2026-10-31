@@ -27,7 +27,7 @@ export type MosaicLayerSettings = {
 
 export const DEFAULT_ADJUSTMENT_LAYER: MosaicLayerSettings = {
   blendMode: 'saturation',
-  colour: 'rgba(255,255,255,0.9)',
+  colour: 'rgba(255,255,255,0)',
 }
 
 export function MosaicAdjustmentLayer({

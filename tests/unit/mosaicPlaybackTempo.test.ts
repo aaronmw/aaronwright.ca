@@ -30,8 +30,8 @@ function paintAt(time: number) {
 }
 
 it('stays slow indefinitely and ramps only the hovered tile over one second', () => {
-  const tempo = createMosaicPlaybackTempo()
-  const otherTempo = createMosaicPlaybackTempo()
+  const tempo = createMosaicPlaybackTempo(0.2)
+  const otherTempo = createMosaicPlaybackTempo(0.2)
   const firstVideo = vi.fn()
   const secondVideo = vi.fn()
   const stopFirst = tempo.subscribe(firstVideo)
@@ -58,7 +58,7 @@ it('stays slow indefinitely and ramps only the hovered tile over one second', ()
 })
 
 it('reverses from its current speed when hover ends, reaching exactly 0.2 again', () => {
-  const tempo = createMosaicPlaybackTempo()
+  const tempo = createMosaicPlaybackTempo(0.2)
   const video = vi.fn()
   const stop = tempo.subscribe(video)
   tempo.setHovered(true)
@@ -78,7 +78,7 @@ it('reverses from its current speed when hover ends, reaching exactly 0.2 again'
 })
 
 it('keeps normal speed while either hover or keyboard focus remains active', () => {
-  const tempo = createMosaicPlaybackTempo()
+  const tempo = createMosaicPlaybackTempo(0.2)
   const video = vi.fn()
   const stop = tempo.subscribe(video)
   tempo.setFocused(true)
@@ -100,7 +100,7 @@ it('keeps normal speed while either hover or keyboard focus remains active', () 
 })
 
 it('cancels work when videos unmount and resumes from elapsed time without replaying the ramp', () => {
-  const tempo = createMosaicPlaybackTempo()
+  const tempo = createMosaicPlaybackTempo(0.2)
   const stop = tempo.subscribe(vi.fn())
   tempo.setHovered(true)
   paintAt(250)
@@ -118,7 +118,7 @@ it('cancels work when videos unmount and resumes from elapsed time without repla
 })
 
 it('delivers the exact normal rate even if a frame crosses the ramp deadline', () => {
-  const tempo = createMosaicPlaybackTempo()
+  const tempo = createMosaicPlaybackTempo(0.2)
   const video = vi.fn<(scale: number) => void>(() => {
     now += 2
   })
@@ -131,4 +131,48 @@ it('delivers the exact normal rate even if a frame crosses the ramp deadline', (
   expect(video).toHaveBeenLastCalledWith(1)
   expect(frames.size).toBe(0)
   stop()
+})
+
+it('defaults to authored speed with no hover or focus animation work', () => {
+  const tempo = createMosaicPlaybackTempo()
+  const video = vi.fn()
+  const stop = tempo.subscribe(video)
+  tempo.setHovered(true)
+  tempo.setFocused(true)
+  tempo.setHovered(false)
+  tempo.setFocused(false)
+  expect(tempo.getTimeScale()).toBe(1)
+  expect(video).toHaveBeenCalledExactlyOnceWith(1)
+  expect(frames.size).toBe(0)
+  stop()
+})
+
+it('updates idle speed live without losing focus state or interrupting a ramp', () => {
+  const tempo = createMosaicPlaybackTempo()
+  const stop = tempo.subscribe(vi.fn())
+  tempo.setIdleSpeed(0.2)
+  paintAt(500)
+  expect(tempo.getTimeScale()).toBeCloseTo(0.6)
+  tempo.setFocused(true)
+  paintAt(1000)
+  expect(tempo.getTimeScale()).toBeCloseTo(0.8)
+  tempo.setIdleSpeed(0.4)
+  paintAt(1500)
+  expect(tempo.getTimeScale()).toBe(1)
+  tempo.setFocused(false)
+  paintAt(2500)
+  expect(tempo.getTimeScale()).toBe(0.4)
+  tempo.setIdleSpeed(1)
+  paintAt(3500)
+  expect(tempo.getTimeScale()).toBe(1)
+  expect(frames.size).toBe(0)
+  stop()
+})
+
+it('ignores invalid idle speeds instead of pausing or accelerating videos', () => {
+  const tempo = createMosaicPlaybackTempo(0.2)
+  for (const speed of [NaN, Infinity, -1, 0, 0.01, 2]) {
+    tempo.setIdleSpeed(speed)
+    expect(tempo.getTimeScale()).toBe(0.2)
+  }
 })

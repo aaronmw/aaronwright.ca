@@ -482,6 +482,17 @@ const giftExchangesProject: MosaicProject = {
       width: 1920,
       height: 1080,
       video: true,
+      segments: [
+        {
+          id: 'full-video',
+          start: 1.16,
+          end: 8.89,
+          fadeIn: true,
+          fadeOut: true,
+          fadeOutColor: 'black',
+          fadeInColor: 'black',
+        },
+      ],
     },
   ],
   composition: {

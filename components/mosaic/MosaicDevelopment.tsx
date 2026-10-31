@@ -15,6 +15,7 @@ import { MosaicAdjustmentToolbar } from './MosaicAdjustmentToolbar'
 import { MosaicProjectEditor } from './MosaicProjectEditor'
 import { DEFAULT_ADJUSTMENT_LAYER } from './MosaicAdjustmentLayer'
 import { MosaicAdjustmentLayerControls } from './MosaicAdjustmentLayerControls'
+import { DEFAULT_IDLE_PLAYBACK_SPEED } from './mosaicPlaybackTempo'
 import {
   getSegmentComposition,
   serializeMosaicCompositions,
@@ -59,6 +60,9 @@ export function MosaicDevelopment({
   const [layout, setLayout] = useState<MosaicLayout>(balancedLayout)
   const [adjustmentLayer, setAdjustmentLayer] = useState(
     DEFAULT_ADJUSTMENT_LAYER,
+  )
+  const [idlePlaybackSpeed, setIdlePlaybackSpeed] = useState(
+    DEFAULT_IDLE_PLAYBACK_SPEED,
   )
   const [packingStatus, setPackingStatus] = useState<PackingStatus>({
     pending: false,
@@ -196,6 +200,7 @@ export function MosaicDevelopment({
         ...JSON.parse(serializeMosaicCompositions(displayedProjects)),
         layout,
         adjustmentLayer,
+        idlePlaybackSpeed,
       },
       null,
       2,
@@ -235,6 +240,7 @@ export function MosaicDevelopment({
             viewport: { width: window.innerWidth, height: window.innerHeight },
             layout: next,
             adjustmentLayer,
+            idlePlaybackSpeed,
             adjustments: JSON.parse(
               serializeMosaicCompositions(displayedProjects),
             ),
@@ -264,6 +270,7 @@ export function MosaicDevelopment({
         galleryTitle={galleryTitle}
         layout={layout}
         adjustmentLayer={adjustmentLayer}
+        idlePlaybackSpeed={idlePlaybackSpeed}
         onVideoDuration={receiveDuration}
         onPackingStatus={setPackingStatus}
         adjustment={{
@@ -278,6 +285,8 @@ export function MosaicDevelopment({
           },
           toolbar: (
             <MosaicAdjustmentToolbar
+              idlePlaybackSpeed={idlePlaybackSpeed}
+              changeIdlePlaybackSpeed={setIdlePlaybackSpeed}
               layerControls={
                 <MosaicAdjustmentLayerControls
                   settings={adjustmentLayer}
@@ -307,6 +316,7 @@ export function MosaicDevelopment({
                         ),
                         layout,
                         adjustmentLayer,
+                        idlePlaybackSpeed,
                       },
                       null,
                       2,

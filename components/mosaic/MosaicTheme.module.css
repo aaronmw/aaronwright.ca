@@ -1,20 +1,10 @@
 /* Shared portfolio scope, including portaled viewers and transition layers. */
 .scope {
   --mosaic-logo-size: calc(var(--logo-stroke-width) * 5);
-  --portfolio-surface-dark: #000;
   --portfolio-list-marker-size: calc(var(--logo-stroke-width) * 5);
 }
 
 .scope :global(.portfolio-markdown a:not(:hover):not(:focus-visible)),
 .scope :global(.portfolio-prose-link:not(:hover):not(:focus-visible)) {
   text-decoration-line: none;
-}
-
-:global(html:not([data-portfolio-theme='light'])) .scope {
-  --portfolio-surface: var(--portfolio-surface-dark);
-  --portfolio-surface-translucent: color-mix(
-    in srgb,
-    var(--portfolio-surface) 80%,
-    transparent
-  );
 }

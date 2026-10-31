@@ -563,7 +563,7 @@ it('slows subsequent segments and their fades, then recovers without seeking or 
     video as unknown as HTMLVideoElement,
     {
       ...config,
-      tempo: createMosaicPlaybackTempo(),
+      tempo: createMosaicPlaybackTempo(0.2),
       media: {
         ...config.media,
         segments: [
@@ -621,7 +621,7 @@ it('preserves the idle scale through a faded seek and a loop restart', async () 
     video as unknown as HTMLVideoElement,
     {
       ...config,
-      tempo: createMosaicPlaybackTempo(),
+      tempo: createMosaicPlaybackTempo(0.2),
       media: {
         ...config.media,
         segments: [
@@ -653,7 +653,7 @@ it('scales full-video loops without resuming paused playback', () => {
   const video = new PendingSeekVideo()
   const sequence = {
     ...config,
-    tempo: createMosaicPlaybackTempo(),
+    tempo: createMosaicPlaybackTempo(0.2),
     media: { ...config.media, segments: undefined },
   }
   const controller = createMosaicVideoPlayback(
@@ -696,7 +696,7 @@ it('handles native minimum rates for very slow authored segments without failing
     video as unknown as HTMLVideoElement,
     {
       ...config,
-      tempo: createMosaicPlaybackTempo(),
+      tempo: createMosaicPlaybackTempo(0.2),
       media: {
         ...config.media,
         segments: [{ ...config.media.segments[0], speed: 0.1 }],

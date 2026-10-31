@@ -1,4 +1,7 @@
-import { portfolioAccentColor, portfolioNeutralPalette } from './portfolioPalette'
+import {
+  portfolioAccentColor,
+  portfolioSurfaceColors,
+} from './portfolioPalette'
 
 const LOGO_COORDS = [
   [1, 1],
@@ -18,8 +21,8 @@ const LOGO_COORDS = [
   [5, 5],
 ]
 
-export function faviconDataUrl(theme: 'light' | 'dark' = 'dark') {
-  const background = portfolioNeutralPalette[theme === 'light' ? 50 : 950]
+export function faviconDataUrl() {
+  const background = portfolioSurfaceColors.light
   const squares = LOGO_COORDS.map(
     ([x, y]) =>
       `<rect x="${x}" y="${y}" width="1" height="1" fill="${portfolioAccentColor}"/>`,

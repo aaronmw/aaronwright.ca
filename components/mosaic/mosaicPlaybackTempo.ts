@@ -1,13 +1,25 @@
-const IDLE_TIME_SCALE = 0.2
+export const DEFAULT_IDLE_PLAYBACK_SPEED = 1
+export const MIN_IDLE_PLAYBACK_SPEED = 0.1
 const TRANSITION_MS = 1000
 
+function validIdleSpeed(value: number) {
+  return (
+    Number.isFinite(value) && value >= MIN_IDLE_PLAYBACK_SPEED && value <= 1
+  )
+}
+
 /** Each tile owns its tempo; segment changes never reset its interaction state. */
-export function createMosaicPlaybackTempo() {
+export function createMosaicPlaybackTempo(
+  initialIdleSpeed = DEFAULT_IDLE_PLAYBACK_SPEED,
+) {
   const listeners = new Set<(scale: number) => void>()
+  let idleSpeed = validIdleSpeed(initialIdleSpeed)
+    ? initialIdleSpeed
+    : DEFAULT_IDLE_PLAYBACK_SPEED
   let hovered = false
   let focused = false
-  let from = IDLE_TIME_SCALE
-  let target = IDLE_TIME_SCALE
+  let from = idleSpeed
+  let target = idleSpeed
   let transitionStart = 0
   let frame: number | undefined
 
@@ -29,7 +41,7 @@ export function createMosaicPlaybackTempo() {
   }
 
   function updateTarget() {
-    const next = hovered || focused ? 1 : IDLE_TIME_SCALE
+    const next = hovered || focused ? 1 : idleSpeed
     if (target === next) return
     from = getTimeScale()
     target = next
@@ -49,6 +61,11 @@ export function createMosaicPlaybackTempo() {
 
   return {
     getTimeScale,
+    setIdleSpeed(value: number) {
+      if (!validIdleSpeed(value)) return
+      idleSpeed = value
+      updateTarget()
+    },
     setHovered(value: boolean) {
       hovered = value
       updateTarget()

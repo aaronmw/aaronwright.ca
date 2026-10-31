@@ -18,6 +18,7 @@ type MosaicProps = {
   projects: MosaicProject[]
   layout?: MosaicLayout
   adjustmentLayer?: MosaicLayerSettings
+  idlePlaybackSpeed?: number
   adjustment?: {
     active: boolean
     preview?: { mediaId: string | null; request: MosaicVideoPreview }
@@ -33,6 +34,7 @@ function MosaicGrid({
   layout = balancedLayout,
   adjustment,
   adjustmentLayer,
+  idlePlaybackSpeed,
   onVideoDuration,
   onPackingStatus,
 }: Omit<MosaicProps, 'galleryTitle'>) {
@@ -95,6 +97,7 @@ function MosaicGrid({
           project={project}
           visited={visitedProjectIds.has(project.id)}
           adjustmentLayer={adjustmentLayer}
+          idlePlaybackSpeed={idlePlaybackSpeed}
           entrance={entrances?.[index]}
           entranceGroup={entranceGroup}
           skipEntrance={packingFailed}
@@ -139,6 +142,7 @@ export function Mosaic({
   layout = balancedLayout,
   adjustment,
   adjustmentLayer,
+  idlePlaybackSpeed,
   onVideoDuration,
   onPackingStatus,
 }: MosaicProps) {
@@ -156,6 +160,7 @@ export function Mosaic({
         layout={layout}
         adjustment={adjustment}
         adjustmentLayer={adjustmentLayer}
+        idlePlaybackSpeed={idlePlaybackSpeed}
         onPackingStatus={onPackingStatus}
         onVideoDuration={onVideoDuration}
       />

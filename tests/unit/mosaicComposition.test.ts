@@ -345,6 +345,7 @@ describe('mosaic composition configuration and export', () => {
       'informal-systems-walkthrough': [[0, 21.905217, 3]],
       'aarons-toolbox-overview': [[0.5, 1.75, 1]],
       'nextphrase-intro': [[0, 4.5, 1]],
+      'gift-exchanges-demo': [[1.16, 8.89, 1]],
       'cycles-scrollthrough': [[2.99, 35.41, 5]],
       'age-scrollthrough': [[0, 9.125783, 3]],
       'radio-app-demo': [

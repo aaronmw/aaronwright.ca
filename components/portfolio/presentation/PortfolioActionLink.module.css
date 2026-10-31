@@ -1,0 +1,75 @@
+/* The surface owns height; edge slots and the label own horizontal spacing. */
+.filled {
+  --action-height: calc(var(--portfolio-logo-size) * 2);
+  --action-slot-size: var(--action-height);
+  --action-fill: var(--portfolio-accent-decoration);
+  --action-hover: var(--portfolio-red-800);
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  min-width: 0;
+  height: var(--action-height);
+  padding: 0;
+  border: 0;
+  background: var(--action-fill);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: left;
+  text-decoration: none;
+}
+
+.filled[data-tone='linkedin'] {
+  --action-fill: #0a66c2;
+  --action-hover: color-mix(in srgb, var(--action-fill) 80%, black);
+}
+
+.filled[data-tone='figma'] {
+  --action-fill: #874fff;
+  --action-hover: color-mix(in srgb, var(--action-fill) 80%, black);
+}
+
+.filled:hover {
+  background: var(--action-hover);
+  text-decoration: none;
+}
+
+.filled:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: -3px;
+}
+
+.label {
+  flex: 1;
+  min-width: 0;
+  padding-inline: var(--portfolio-logo-size);
+}
+
+.filled[data-leading-icon] .label {
+  padding-inline-start: 0;
+}
+
+.filled[data-trailing-icon] .label {
+  padding-inline-end: 0;
+}
+
+.iconSlot {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: var(--action-slot-size);
+  height: var(--action-slot-size);
+}
+
+@media (forced-colors: active) {
+  .filled {
+    --action-slot-size: calc(var(--action-height) - 2px);
+    border: 1px solid LinkText;
+  }
+
+  .filled:focus-visible {
+    outline-color: Highlight;
+  }
+}

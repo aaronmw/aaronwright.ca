@@ -1,6 +1,7 @@
 import { stopNavigationEventsPropagation } from 'yet-another-react-lightbox'
 import { ProjectNarrative } from '@/components/portfolio/presentation/PortfolioText'
 import { PortfolioLogoMark } from '@/components/portfolio/presentation/PortfolioLogoMark'
+import { PortfolioActionLink } from '@/components/portfolio/presentation/PortfolioActionLink'
 import { MosaicPortrait } from './MosaicPortrait'
 import type { MosaicProject } from './types'
 import styles from './MosaicViewer.module.css'
@@ -43,6 +44,30 @@ export function MosaicAbout({ project }: { project: MosaicProject }) {
                 bodyMarkdown: project.about.overviewMarkdown,
               }}
             />
+            <footer className={styles.aboutFooter}>
+              <PortfolioActionLink
+                href="https://www.linkedin.com/in/aaron-m-wright"
+                tone="linkedin"
+                leadingIcon="linkedin"
+                external
+              >
+                LinkedIn
+              </PortfolioActionLink>
+              <PortfolioActionLink
+                href="https://www.figma.com/@aaronmw"
+                tone="figma"
+                leadingIcon="figma"
+                external
+              >
+                Figma Community
+              </PortfolioActionLink>
+              <PortfolioActionLink
+                href="mailto:aaron@aaronwright.ca"
+                leadingIcon="email"
+              >
+                Email me
+              </PortfolioActionLink>
+            </footer>
           </article>
         </div>
       </section>

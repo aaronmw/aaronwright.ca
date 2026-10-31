@@ -9,12 +9,12 @@
   width: calc(var(--mosaic-logo-size) * 3);
   height: calc(var(--mosaic-logo-size) * 3);
   color: var(--portfolio-accent-decoration);
-  background: var(--portfolio-surface-dark);
+  background: var(--portfolio-surface);
   opacity: 0;
 }
 
 .logo:focus-visible {
-  outline: 2px solid var(--portfolio-neutral-50);
+  outline: 2px solid var(--portfolio-text);
   outline-offset: 2px;
 }
 
@@ -30,7 +30,7 @@
 
 .loadingIndicator {
   /* Cover the centred logo without obscuring the held project media. */
-  background: var(--portfolio-surface-dark);
+  background: var(--portfolio-surface);
 }
 
 /* Preserve source layout while the single transition/viewer visual owns it. */

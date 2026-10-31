@@ -82,12 +82,13 @@ export function ExperimentGallery({
   const { visitedProjects, markVisited, clearViewHistory } =
     useVisitedProjects()
   useMosaicDevIndicatorHidden(session !== null)
-  const triggerRef = useRef<HTMLButtonElement | null>(null)
+  const triggerRef = useRef<HTMLElement | null>(null)
   const restoreKeyboardFocusRef = useRef(true)
-  const restoreFocusRef = useRef<HTMLButtonElement | null>(null)
+  const restoreFocusRef = useRef<HTMLElement | null>(null)
   const mainRef = useRef<HTMLElement | null>(null)
   const logoRef = useRef<HTMLAnchorElement | null>(null)
   const [logoReady, setLogoReady] = useState(false)
+  const aboutProject = projects.find(project => project.about)
 
   useEffect(() => {
     preloadMosaicViewer()
@@ -179,12 +180,12 @@ export function ExperimentGallery({
 
   function open(
     project: MosaicProject,
-    origin: MosaicOrigin,
-    trigger: HTMLButtonElement,
+    origin: MosaicOrigin | null,
+    trigger: HTMLElement,
   ) {
     if (session || openingDisabled || adjusting) return
     restoreKeyboardFocusRef.current = trigger.matches(':focus-visible')
-    holdMosaicSource(trigger)
+    if (origin) holdMosaicSource(trigger)
     triggerRef.current = trigger
     window.history.pushState(
       { ...window.history.state, mosaicViewer: basePath },
@@ -255,11 +256,20 @@ export function ExperimentGallery({
           {children}
           <Link
             ref={logoRef}
-            href="/work"
-            aria-label="Aaron Wright — portfolio"
+            href={mosaicUrl(basePath, aboutProject)}
+            aria-label={aboutProject ? 'About Aaron Wright' : 'Aaron Wright — portfolio'}
+            aria-haspopup={aboutProject ? 'dialog' : undefined}
             className={styles.logo}
             data-mosaic-logo
             prefetch={false}
+            onClick={event => {
+              if (
+                !aboutProject || event.defaultPrevented || event.button !== 0 ||
+                event.metaKey || event.ctrlKey || event.shiftKey || event.altKey
+              ) return
+              event.preventDefault()
+              open(aboutProject, null, event.currentTarget)
+            }}
           >
             <PortfolioLogoMark />
           </Link>

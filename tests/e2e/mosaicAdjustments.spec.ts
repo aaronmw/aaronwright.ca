@@ -368,3 +368,46 @@ test('drag captures the pointer, pans media, and cancels on viewport change', as
   await page.mouse.up()
   await covered(subject)
 })
+
+for (const colorScheme of ['light', 'dark'] as const) {
+  test(`inline development controls stay light with ${colorScheme} System appearance`, async ({
+    page,
+    request,
+  }) => {
+    for (const route of [
+      '/copy-editor',
+      '/case-study-intake',
+      '/case-study-brochures',
+    ]) {
+      expect((await request.get(route)).status()).toBe(404)
+    }
+    await page.emulateMedia({ colorScheme, reducedMotion: 'reduce' })
+    await page.goto('/work')
+    await gridReady(page)
+    await page
+      .getByRole('button', { name: 'Project development tools' })
+      .click()
+    const panel = page.getByRole('complementary', {
+      name: 'Project cell adjustments',
+    })
+    await expect(panel).toBeVisible()
+    await expect(panel).toHaveCSS('background-color', 'rgb(255, 255, 255)')
+    await page.getByRole('button', { name: 'Adjust project cells' }).click()
+    await tile(page).focus()
+    await page.emulateMedia({
+      colorScheme: colorScheme === 'light' ? 'dark' : 'light',
+      reducedMotion: 'reduce',
+    })
+    await expect(panel).toHaveCSS('background-color', 'rgb(255, 255, 255)')
+    await expect(page.locator('main')).toHaveAttribute(
+      'data-mosaic-adjusting',
+      'true',
+    )
+    await expect(panel).toHaveCSS(
+      'color',
+      await page
+        .locator('body')
+        .evaluate(element => getComputedStyle(element).color),
+    )
+  })
+}

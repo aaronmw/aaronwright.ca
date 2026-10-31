@@ -54,7 +54,7 @@ export function VideoScrubber({
         />
         <span
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-portfolio-white"
+          className="pointer-events-none absolute inset-0 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-portfolio-text"
         >
           <span className="absolute left-[calc(var(--logo-stroke-width)*2)] right-[calc(var(--logo-stroke-width)*2)] top-[calc(var(--logo-stroke-width)*2)] h-[var(--logo-stroke-width)] bg-portfolio-black/30">
             <span className="absolute inset-y-0 left-[calc(var(--portfolio-logo-size)/2_-_var(--logo-stroke-width)*2)] right-[calc(var(--portfolio-logo-size)/2_-_var(--logo-stroke-width)*2)]">

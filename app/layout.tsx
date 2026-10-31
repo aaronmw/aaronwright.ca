@@ -1,14 +1,17 @@
-import '@/styles/globals.css';
-import '@fortawesome/fontawesome-svg-core/styles.css';
-import { FaviconSync } from '@/components/FaviconSync';
-import { InteractivePopEffects } from '@/components/InteractivePopEffects';
-import { config } from '@fortawesome/fontawesome-svg-core';
-import type { Metadata, Viewport } from 'next';
-import { HOME_SEO, SITE_URL } from '@/lib/siteMetadata';
-import { portfolioPaletteStyle } from '@/lib/portfolioPalette';
-import { portfolioTokenStyle } from '@/lib/portfolioTokens';
+import '@/styles/globals.css'
+import '@fortawesome/fontawesome-svg-core/styles.css'
+import { FaviconSync } from '@/components/FaviconSync'
+import { InteractivePopEffects } from '@/components/InteractivePopEffects'
+import { config } from '@fortawesome/fontawesome-svg-core'
+import type { Metadata, Viewport } from 'next'
+import { HOME_SEO, SITE_URL } from '@/lib/siteMetadata'
+import {
+  portfolioPaletteStyle,
+  portfolioSurfaceColors,
+} from '@/lib/portfolioPalette'
+import { portfolioTokenStyle } from '@/lib/portfolioTokens'
 
-config.autoAddCss = false;
+config.autoAddCss = false
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -18,18 +21,20 @@ export const metadata: Metadata = {
     shortcut: '/favicon.ico',
     apple: '/apple-touch-icon.png',
   },
-};
+}
 
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
-};
+  colorScheme: 'only light',
+  themeColor: portfolioSurfaceColors.light,
+}
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
   return (
     <html
@@ -50,5 +55,5 @@ export default function RootLayout({
         <InteractivePopEffects />
       </body>
     </html>
-  );
+  )
 }

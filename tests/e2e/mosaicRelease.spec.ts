@@ -35,7 +35,13 @@ test('production grid has ten projects and no retired theme or development contr
   page,
   request,
 }) => {
-  expect((await request.get('/copy-editor')).status()).toBe(404)
+  for (const route of [
+    '/copy-editor',
+    '/case-study-intake',
+    '/case-study-brochures',
+  ]) {
+    expect((await request.get(route)).status()).toBe(404)
+  }
   const errors: string[] = []
   page.on('pageerror', error => errors.push(error.message))
   page.on('response', response => {
@@ -61,26 +67,117 @@ test('production grid has ten projects and no retired theme or development contr
   expect(errors).toEqual([])
 })
 
+const surfaceColor = 'rgb(255, 255, 255)'
+
 for (const colorScheme of ['dark', 'light'] as const) {
-  test(`the ${colorScheme} system preference retains the grid's dark appearance`, async ({
+  test(`the portfolio stays light with ${colorScheme} System appearance and live changes`, async ({
     page,
   }) => {
     await page.emulateMedia({ colorScheme, reducedMotion: 'reduce' })
-    // A preference saved by the retired portfolio must not override the grid.
-    await page.addInitScript(() =>
-      localStorage.setItem('portfolio-theme', 'light'),
+    const opposite = colorScheme === 'dark' ? 'light' : 'dark'
+    // Preferences saved by the retired selector must not override fixed light mode.
+    await page.addInitScript(
+      preference => localStorage.setItem('portfolio-theme', preference),
+      'dark',
     )
     await page.goto('/work')
     await gridReady(page)
+    await expect(page.locator('html')).toHaveCSS(
+      'color-scheme',
+      /^(?:only light|light only)$/,
+    )
+    await expect(page.locator('meta[name="color-scheme"]')).toHaveAttribute(
+      'content',
+      'only light',
+    )
+    await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute(
+      'content',
+      '#ffffff',
+    )
+    await expect(page.locator('body')).toHaveCSS(
+      'background-color',
+      surfaceColor,
+    )
     await expect(page.locator('main')).toHaveCSS(
       'background-color',
-      'rgb(0, 0, 0)',
+      surfaceColor,
     )
-    await page.locator('[data-mosaic-project="loopio"]').click()
+    const favicon = page.locator('link[rel="icon"]').first()
+    await expect(favicon).toHaveAttribute(
+      'href',
+      new RegExp(encodeURIComponent('#ffffff')),
+    )
+    const project = page.locator('[data-mosaic-project="loopio"]')
+    await project.focus()
+    await expect(project).toHaveCSS('outline-style', 'solid')
+    await expect(project).toHaveCSS(
+      'outline-color',
+      await page
+        .locator('body')
+        .evaluate(element => getComputedStyle(element).color),
+    )
+    await project.press('Enter')
     await viewerReady(page)
+    const notes = page.getByRole('complementary', {
+      name: 'Loopio overview',
+    })
+    await expect(notes).toHaveCSS('background-color', surfaceColor)
+    const video = await page
+      .locator('.yarl__slide')
+      .locator('video')
+      .elementHandle()
+    expect(video).not.toBeNull()
+    // Reduced-motion playback remains paused at the same time across a theme change.
+    const before = await video!.evaluate(element => {
+      const media = element as HTMLVideoElement
+      return {
+        time: media.currentTime,
+        paused: media.paused,
+        src: media.currentSrc,
+      }
+    })
+    await page.emulateMedia({ colorScheme: opposite, reducedMotion: 'reduce' })
+    await expect(page.locator('.yarl__container')).toHaveCSS(
+      'background-color',
+      surfaceColor,
+    )
+    await expect(notes).toHaveCSS('background-color', surfaceColor)
+    await expect(notes).toHaveAttribute('aria-hidden', 'false')
     await expect(
-      page.getByRole('complementary', { name: 'Loopio overview' }),
-    ).toHaveCSS('background-color', 'rgb(0, 0, 0)')
+      page.getByRole('button', { name: 'Hide project details' }),
+    ).toHaveAttribute('aria-expanded', 'true')
+    await expect(page).toHaveURL('/work/loopio')
+    expect(
+      await video!.evaluate(element => {
+        const media = element as HTMLVideoElement
+        return {
+          time: media.currentTime,
+          paused: media.paused,
+          src: media.currentSrc,
+        }
+      }),
+    ).toEqual(before)
+    expect(await video!.evaluate(element => element.isConnected)).toBe(true)
+    await expect(favicon).toHaveAttribute(
+      'href',
+      new RegExp(encodeURIComponent('#ffffff')),
+    )
+    await page.keyboard.press('Escape')
+    await expect(page.getByRole('dialog')).toHaveCount(0)
+    await expect(project).toBeFocused()
+    await expect(page.locator('main')).toHaveCSS(
+      'background-color',
+      surfaceColor,
+    )
+    await page.locator('[data-mosaic-project="about-me"]').click()
+    await viewerReady(page)
+    await expect(page.locator('.yarl__container')).toHaveCSS(
+      'background-color',
+      surfaceColor,
+    )
+    await expect(
+      page.getByRole('region', { name: 'About Aaron Wright' }),
+    ).toBeVisible()
   })
 }
 

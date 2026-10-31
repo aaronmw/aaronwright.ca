@@ -2,6 +2,7 @@
 
 import {
   useCallback,
+  useEffect,
   useId,
   useRef,
   useState,
@@ -10,6 +11,8 @@ import {
 } from 'react'
 import type { MosaicOrigin, MosaicProject, MosaicVideoPreview } from './types'
 import styles from './Mosaic.module.css'
+import treatment from './mediaTreatment.module.css'
+import { mediaMask } from './mediaClip'
 import { MosaicCoverMedia } from './MosaicCoverMedia'
 import { MosaicProjectLabel } from './MosaicProjectLabel'
 import { MosaicVisitedBadge } from './MosaicVisitedBadge'
@@ -20,7 +23,10 @@ import { useMosaicEntrance } from './useMosaicEntrance'
 import { MosaicEntranceInk } from './MosaicEntranceInk'
 import { useMosaicMediaReveal } from './useMosaicMediaReveal'
 import type { MosaicEntranceGroup } from './playMosaicEntrance'
-import { createMosaicPlaybackTempo } from './mosaicPlaybackTempo'
+import {
+  createMosaicPlaybackTempo,
+  DEFAULT_IDLE_PLAYBACK_SPEED,
+} from './mosaicPlaybackTempo'
 import { preloadMosaicViewer } from './MosaicViewerLoader'
 import {
   MosaicAdjustmentLayer,
@@ -41,11 +47,13 @@ export function MosaicTile({
   entrance,
   entranceGroup,
   adjustmentLayer,
+  idlePlaybackSpeed = DEFAULT_IDLE_PLAYBACK_SPEED,
   skipEntrance = false,
 }: {
   entrance?: MosaicTileEntrance
   entranceGroup: MosaicEntranceGroup
   adjustmentLayer?: MosaicLayerSettings
+  idlePlaybackSpeed?: number
   skipEntrance?: boolean
   preview?: MosaicVideoPreview
   project: MosaicProject
@@ -64,7 +72,12 @@ export function MosaicTile({
 }) {
   const summaryId = useId()
   const visitedId = useId()
-  const [playbackTempo] = useState(createMosaicPlaybackTempo)
+  const [playbackTempo] = useState(() =>
+    createMosaicPlaybackTempo(idlePlaybackSpeed),
+  )
+  useEffect(() => {
+    playbackTempo.setIdleSpeed(idlePlaybackSpeed)
+  }, [playbackTempo, idlePlaybackSpeed])
   const entry = useMosaicEntrance(entrance, skipEntrance, entranceGroup)
   const [mediaReady, setMediaReady] = useState(false)
   const surfaceRef = useRef<HTMLDivElement>(null)
@@ -112,7 +125,10 @@ export function MosaicTile({
       >
         <button
           type="button"
-          className={styles.tile}
+          className={`${styles.tile} ${first.clip ? treatment.masked : ''}`}
+          style={first.clip ? {
+            '--mosaic-media-mask': mediaMask(first.clip),
+          } as CSSProperties : undefined}
           data-mosaic-project={project.slug}
           aria-label={`${adjusting ? 'Adjust' : 'View'} ${project.title.replace(/\u00ad/g, '')} media`}
           aria-haspopup={adjusting ? undefined : 'dialog'}
@@ -160,8 +176,8 @@ export function MosaicTile({
             project={project}
             summaryId={summaryId}
           />
-          {visited ? <MosaicVisitedBadge id={visitedId} /> : null}
         </button>
+        {visited ? <MosaicVisitedBadge id={visitedId} /> : null}
       </div>
     </div>
   )

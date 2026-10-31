@@ -17,6 +17,9 @@ const ICON_CLASSES = {
   system: 'fa-display',
   light: 'fa-sun',
   dark: 'fa-moon',
+  linkedin: 'fa-linkedin',
+  figma: 'fa-figma',
+  email: 'fa-envelope',
 } as const
 
 export type PortfolioIconName = keyof typeof ICON_CLASSES
@@ -41,9 +44,11 @@ export function PortfolioIcon({
   className?: string
 }) {
   const family =
-    name === 'circlePause' || name === 'circlePlay'
-      ? 'fa-solid'
-      : ICON_FAMILY_CLASS_NAME
+    name === 'linkedin' || name === 'figma'
+      ? 'fa-brands'
+      : name === 'circlePause' || name === 'circlePlay'
+        ? 'fa-solid'
+        : ICON_FAMILY_CLASS_NAME
   // Icons within text inherit its size without the control slot's glyph scaling.
   if (inline) {
     return (

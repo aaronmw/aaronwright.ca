@@ -2,7 +2,7 @@
   /* Canonical experiment controls. A single gap owns internal seams and the perimeter. */
   --mosaic-gap: calc(var(--logo-stroke-width) * 5);
   --mosaic-inactive-opacity: 0.22;
-  --mosaic-surface: var(--portfolio-surface-dark);
+  --mosaic-surface: var(--portfolio-surface);
   position: relative;
   isolation: isolate;
   display: flex;
@@ -73,7 +73,7 @@
 }
 
 .cell[data-mosaic-entrance='flying'] {
-  /* Only the SVG moves: never slide a full-size black cell over its neighbors. */
+  /* Only the SVG moves: never slide a full-size cell over its neighbors. */
   overflow: visible;
   background: transparent;
 }
@@ -107,7 +107,7 @@
   width: min(100cqw, calc(100cqh * var(--mosaic-ratio)));
   height: min(100cqh, calc(100cqw / var(--mosaic-ratio)));
   background: var(--mosaic-surface);
-  /* Use the same dark seam as the surrounding grid. */
+  /* Use the same seam as the surrounding grid. */
   box-shadow: 0 0 0 var(--mosaic-gap) var(--mosaic-surface);
 }
 
@@ -155,8 +155,21 @@
 }
 
 .tile:focus-visible {
-  outline: 3px solid var(--portfolio-neutral-50);
+  outline: 3px solid var(--portfolio-text);
   outline-offset: -6px;
+}
+
+.tile[data-mosaic-project='about-me']::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  border: var(--logo-stroke-width) solid var(--portfolio-accent-decoration);
+  pointer-events: none;
+}
+
+.tile[data-mosaic-project='about-me']:focus-visible {
+  outline-offset: calc(-1 * var(--logo-stroke-width) - 6px);
 }
 
 .tile:hover {
@@ -206,6 +219,7 @@
   line-height: 1;
   white-space: nowrap;
   pointer-events: none;
+  transition: opacity calc(var(--portfolio-motion-state) * 2) ease;
 }
 
 .visitedIcon {
@@ -280,7 +294,10 @@
 
 .root:not([data-mosaic-adjusting])
   .grid:has(.tile:is(:focus-visible, [data-mosaic-return-focus]:focus))
-  .tile:not(:focus-visible, [data-mosaic-return-focus]:focus) {
+  :is(
+    .tile:not(:focus-visible, [data-mosaic-return-focus]:focus),
+    .tile:not(:focus-visible, [data-mosaic-return-focus]:focus) + .visitedBadge
+  ) {
   opacity: var(--mosaic-inactive-opacity);
 }
 
@@ -307,7 +324,7 @@
     .grid:not(
       :has(.tile:is(:focus-visible, [data-mosaic-return-focus]:focus))
     ):has(.tile:hover)
-    .tile:not(:hover) {
+    :is(.tile:not(:hover), .tile:not(:hover) + .visitedBadge) {
     opacity: var(--mosaic-inactive-opacity);
   }
 }
@@ -329,6 +346,7 @@
   cursor: grabbing;
 }
 .root[data-mosaic-adjusting] .tile,
+.root[data-mosaic-adjusting] .visitedBadge,
 .root[data-mosaic-adjusting] .media {
   transition: none;
 }
@@ -341,6 +359,7 @@
     transition: none;
   }
   .tile,
+  .visitedBadge,
   .media,
   .label,
   .adjustmentLayer {
@@ -348,7 +367,11 @@
   }
 }
 
-.grid:has(.tile[data-mosaic-source-fit]) .tile:not([data-mosaic-source-fit]) {
+.grid:has(.tile[data-mosaic-source-fit])
+  :is(
+    .tile:not([data-mosaic-source-fit]),
+    .tile:not([data-mosaic-source-fit]) + .visitedBadge
+  ) {
   opacity: var(--mosaic-inactive-opacity);
 }
 

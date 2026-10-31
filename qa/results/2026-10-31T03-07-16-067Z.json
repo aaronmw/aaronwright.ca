@@ -1,0 +1,53 @@
+{
+  "schema": 1,
+  "id": "2026-10-31T03-07-16-067Z",
+  "createdAt": "2026-10-31T03:07:16.068Z",
+  "commit": "8b6aef846b914e1afaa4ad8a3a98029d8b9af3d4",
+  "sourceHash": "9930e88ba404f5641c8014bed19f76a5f432d7081846f3c2b04d06bd389feac0",
+  "configHash": "5a4be763d50c306d58c942e52f156fbcdf4dff0b58c3829ecc50e7fe3f1973f5",
+  "mode": "release",
+  "environment": null,
+  "checks": {
+    "unit": false,
+    "browser": false
+  },
+  "samples": [],
+  "errors": [
+    "ENOENT: no such file or directory, open '/Users/aaronwright/Projects/aaronwright-dot-ca/test-results/qa/2026-10-31T03-07-16-067Z/unit.log'"
+  ],
+  "failures": [
+    "Missing production build/environment evidence.",
+    "Unit or cross-browser checks did not pass.",
+    "ENOENT: no such file or directory, open '/Users/aaronwright/Projects/aaronwright-dot-ca/test-results/qa/2026-10-31T03-07-16-067Z/unit.log'",
+    "Incomplete sample matrix.",
+    "Missing repetitions: desktop/cold-entry",
+    "Missing repetitions: desktop/open-project",
+    "Missing repetitions: desktop/toggle-notes",
+    "Missing repetitions: desktop/video-controls",
+    "Missing repetitions: desktop/close-viewer",
+    "Missing repetitions: desktop/open-about",
+    "Missing repetitions: small-laptop-slow/cold-entry",
+    "Missing repetitions: small-laptop-slow/open-project",
+    "Missing repetitions: small-laptop-slow/toggle-notes",
+    "Missing repetitions: small-laptop-slow/video-controls",
+    "Missing repetitions: small-laptop-slow/close-viewer",
+    "Missing repetitions: small-laptop-slow/open-about",
+    "Missing repetitions: phone-portrait-slow/cold-entry",
+    "Missing repetitions: phone-portrait-slow/open-project",
+    "Missing repetitions: phone-portrait-slow/toggle-notes",
+    "Missing repetitions: phone-portrait-slow/video-controls",
+    "Missing repetitions: phone-portrait-slow/close-viewer",
+    "Missing repetitions: phone-portrait-slow/open-about",
+    "Missing repetitions: phone-landscape-slow/cold-entry",
+    "Missing repetitions: phone-landscape-slow/open-project",
+    "Missing repetitions: phone-landscape-slow/toggle-notes",
+    "Missing repetitions: phone-landscape-slow/video-controls",
+    "Missing repetitions: phone-landscape-slow/close-viewer",
+    "Missing repetitions: phone-landscape-slow/open-about",
+    "Measurement environment changed. Recalibrate on the same machine/browser before comparing."
+  ],
+  "status": "blocked",
+  "buildId": "QR0GGaiME4na1z05USvTq",
+  "baseURL": "http://127.0.0.1:50958",
+  "completedAt": "2026-10-31T03:07:32.466Z"
+}

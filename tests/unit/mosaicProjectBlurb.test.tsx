@@ -1,6 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import { MosaicProjectBlurb } from '@/components/mosaic/MosaicProjectBlurb'
+import { MosaicProjectLink } from '@/components/mosaic/MosaicProjectLink'
 import { MosaicProjectEditor } from '@/components/mosaic/MosaicProjectEditor'
 import { serializeMosaicCompositions } from '@/components/mosaic/composition'
 import { mosaicProjects } from '@/lib/mosaic'
@@ -8,6 +9,23 @@ import { mosaicProjects } from '@/lib/mosaic'
 const project = mosaicProjects.find(item => item.slug === 'nextphrase-dot-app')!
 
 describe('expanded project blurb', () => {
+  it.each(mosaicProjects.filter(project => project.url))(
+    'preserves the $slug destination and external-link affordance',
+    project => {
+      const markup = renderToStaticMarkup(
+        <MosaicProjectLink href={project.url!} title={project.title} />,
+      )
+      expect(markup).toContain(`href="${project.url}"`)
+      expect(markup).toContain(`Visit ${project.title.replace(/\u00ad/g, '')}`)
+      expect(markup).not.toContain('\u00ad')
+      expect(markup).toContain('target="_blank"')
+      expect(markup).toContain('rel="noopener noreferrer"')
+      expect(markup).toContain('(opens in a new tab)')
+      expect(markup).toContain('data-portfolio-icon="external"')
+      expect(markup).toContain('fa-sharp fa-solid fa-arrow-up-right-from-square')
+    },
+  )
+
   it('omits the overlay when no longer blurb has been written', () => {
     for (const longSummary of [undefined, '', '  \n ']) {
       expect(

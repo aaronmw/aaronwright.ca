@@ -1,6 +1,8 @@
 import { useRef, type ReactNode } from 'react'
 import { faCopy, faSliders, faShuffle } from '@fortawesome/free-solid-svg-icons'
 import { AdjustmentButton } from './MosaicAdjustmentButton'
+import { AdjustmentInput } from './MosaicAdjustmentField'
+import { MIN_IDLE_PLAYBACK_SPEED } from './mosaicPlaybackTempo'
 import { MosaicAdjustmentPanel } from './MosaicAdjustmentPanel'
 import { MosaicLoopEditor, type VideoLoopControls } from './MosaicLoopEditor'
 import type { PackingApproach } from './packing'
@@ -31,6 +33,8 @@ export function MosaicAdjustmentToolbar({
   videoLoop,
   projectEditor,
   layerControls,
+  idlePlaybackSpeed,
+  changeIdlePlaybackSpeed,
 }: {
   approach: PackingApproach
   changeApproach: (approach: PackingApproach) => void
@@ -53,6 +57,8 @@ export function MosaicAdjustmentToolbar({
   videoLoop?: VideoLoopControls
   projectEditor?: ReactNode
   layerControls?: ReactNode
+  idlePlaybackSpeed: number
+  changeIdlePlaybackSpeed: (speed: number) => void
 }) {
   const { clearViewHistory } = useExperimentGallery()
   const clearHistoryButton = (
@@ -178,6 +184,26 @@ export function MosaicAdjustmentToolbar({
         </div>
       )}
       {layerControls}
+      <div className={styles.layerControls}>
+        <AdjustmentInput
+          label="Idle Playback Speed"
+          type="number"
+          min={MIN_IDLE_PLAYBACK_SPEED}
+          max={1}
+          step="any"
+          className={styles.toleranceInput}
+          defaultValue={idlePlaybackSpeed}
+          disabled={pending || shufflePending}
+          onChange={event => {
+            const input = event.currentTarget
+            if (input.validity.valid && Number.isFinite(input.valueAsNumber))
+              changeIdlePlaybackSpeed(input.valueAsNumber)
+          }}
+          onBlur={event => {
+            event.currentTarget.value = String(idlePlaybackSpeed)
+          }}
+        />
+      </div>
       {shuffleJson ? (
         <div className={styles.fallback}>
           <textarea

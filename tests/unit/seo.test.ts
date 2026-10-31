@@ -23,15 +23,6 @@ import robots from '../../app/robots'
 vi.mock('@/components/mosaic/MosaicPortfolio', () => ({
   MosaicPortfolio: () => null,
 }))
-vi.mock('@/components/copy-editor/CopyEditor', () => ({
-  CopyEditor: () => null,
-}))
-vi.mock('@/components/case-study-intake/CaseStudyIntake', () => ({
-  CaseStudyIntake: () => null,
-}))
-vi.mock('@/components/case-study-brochures/CaseStudyBrochureEditor', () => ({
-  CaseStudyBrochureEditor: () => null,
-}))
 vi.mock('@/lib/portfolioFonts', () => ({
   portfolioFont: { className: '', variable: '' },
 }))
@@ -39,9 +30,6 @@ vi.mock('@/lib/portfolioFonts', () => ({
 import ProjectPage, {
   generateMetadata,
 } from '../../app/work/[workSlug]/[[...screenshotSlug]]/page'
-import { metadata as editorMetadata } from '../../app/copy-editor/page'
-import { metadata as intakeMetadata } from '../../app/case-study-intake/page'
-import { metadata as brochureMetadata } from '../../app/case-study-brochures/page'
 import { GET, generateStaticParams } from '../../app/og/[slug]/route'
 
 describe('portfolio search and share metadata', () => {
@@ -188,6 +176,8 @@ describe('portfolio search and share metadata', () => {
     '/work/cycles-dot-money/missing',
     '/work/radio-app/demo/extra',
     '/copy-editor',
+    '/case-study-intake',
+    '/case-study-brochures',
     'https://example.com/work',
   ])('rejects invalid or non-portfolio metadata paths: %s', path => {
     expect(getPortfolioMetadata(path)).toBeNull()
@@ -230,7 +220,7 @@ describe('portfolio search and share metadata', () => {
     })
   })
 
-  it('lists eleven canonical pages and preserves private-page noindex', () => {
+  it('lists only the eleven canonical portfolio pages', () => {
     expect(sitemap().map(entry => entry.url)).toEqual([
       `${SITE_URL}/work`,
       ...mosaicProjects.map(
@@ -240,9 +230,6 @@ describe('portfolio search and share metadata', () => {
     expect(sitemap()).toHaveLength(11)
     expect(new Set(sitemap().map(entry => entry.url)).size).toBe(11)
     expect(robots().sitemap).toBe(`${SITE_URL}/sitemap.xml`)
-    for (const metadata of [editorMetadata, intakeMetadata, brochureMetadata]) {
-      expect(metadata.robots).toEqual({ index: false, follow: false })
-    }
   })
 
   it('provides eleven static cards and rejects unknown image slugs', async () => {
@@ -259,7 +246,7 @@ describe('portfolio search and share metadata', () => {
     expect(response.status).toBe(404)
   })
 
-  it('uses canonical SEO originals in the copy editor and retains existing drafts', () => {
+  it('uses canonical SEO originals in the copy export and retains draft migration compatibility', () => {
     const entries = new Map(
       copyEditorEntries.map(entry => [entry.id, entry.value]),
     )

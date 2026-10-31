@@ -4,13 +4,6 @@
 @plugin "@tailwindcss/typography";
 
 @theme {
-  --color-brief-paper: #f3f1eb;
-  --color-brief-ink: #191917;
-  --color-brief-muted: #68665f;
-  --color-brief-line: rgb(25 25 23 / 0.16);
-  --color-brief-field: #e9e6de;
-  --color-brief-field-hover: #e4e1d8;
-  --color-brief-signal: #e00000;
   --color-resume-paper: var(--portfolio-neutral-50);
   --color-resume-ink: var(--portfolio-neutral-950);
   --color-resume-line: color-mix(
@@ -19,7 +12,6 @@
     transparent
   );
   --resume-content-width: 78ch;
-  --font-brief: Arial, Helvetica, sans-serif;
 }
 
 @theme inline {
@@ -62,42 +54,27 @@ html,
 body {
   min-height: 100%;
   margin: 0;
-  background: var(--portfolio-neutral-950);
+  background: var(--portfolio-surface);
+  color: var(--portfolio-text);
   letter-spacing: 0em;
 }
 
-:root,
-html[data-portfolio-theme='dark'] {
-  /* Foreground accent for text and functional controls. */
-  --portfolio-accent: var(--portfolio-red-500);
-  --portfolio-surface-dark: var(--portfolio-neutral-950);
-  --portfolio-surface: var(--portfolio-surface-dark);
-  --portfolio-text: var(--portfolio-neutral-50);
-  --portfolio-text-body: var(--portfolio-neutral-300);
-  --portfolio-text-dimmed: var(--portfolio-neutral-400);
-  --portfolio-shaded: var(--portfolio-neutral-800);
-  --portfolio-surface-translucent: color-mix(
-    in srgb,
-    var(--portfolio-surface) 80%,
-    transparent
-  );
-}
-
-html[data-portfolio-theme='light'] {
+:root {
+  color-scheme: only light;
   --portfolio-accent: var(--portfolio-red-600);
-  --portfolio-surface: var(--portfolio-neutral-50);
+  --portfolio-surface: var(--portfolio-surface-light);
   --portfolio-text: var(--portfolio-neutral-950);
   --portfolio-text-body: var(--portfolio-neutral-700);
   --portfolio-text-dimmed: var(--portfolio-neutral-500);
   --portfolio-shaded: var(--portfolio-neutral-200);
+  --portfolio-shaded-hover: var(--portfolio-neutral-300);
+  --portfolio-border: var(--portfolio-neutral-300);
+  --portfolio-field: var(--portfolio-neutral-100);
   --portfolio-surface-translucent: color-mix(
     in srgb,
     var(--portfolio-surface) 90%,
     transparent
   );
-}
-
-:root {
   --portfolio-overlay: color-mix(
     in srgb,
     var(--portfolio-neutral-950) 50%,
@@ -232,8 +209,13 @@ button {
 
 .portfolio-list > li {
   display: grid;
-  grid-template-columns: var(--portfolio-list-marker-size, var(--portfolio-logo-size)) minmax(0, 1fr);
-  column-gap: calc(var(--portfolio-list-marker-size, var(--portfolio-logo-size)) / 2);
+  grid-template-columns: var(
+      --portfolio-list-marker-size,
+      var(--portfolio-logo-size)
+    ) minmax(0, 1fr);
+  column-gap: calc(
+    var(--portfolio-list-marker-size, var(--portfolio-logo-size)) / 2
+  );
   margin-block: 0;
   padding: 0;
 }
@@ -261,7 +243,8 @@ button {
   display: block;
   margin-inline: -12px;
   padding: 0.25lh 12px;
-  border-top: 1px solid color-mix(in srgb, var(--portfolio-accent-decoration) 50%, transparent);
+  border-top: 1px solid
+    color-mix(in srgb, var(--portfolio-accent-decoration) 50%, transparent);
 }
 
 .portfolio-list[data-variant='divided'] > li > .portfolio-list-bullet {
